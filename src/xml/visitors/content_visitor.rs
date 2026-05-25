@@ -42,7 +42,7 @@ impl Visitor for ContentVisitor {
     }
 
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {
-        let _part_measure = self.part_measure.take().unwrap();
+        let part_measure = self.part_measure.take().unwrap();
 
         let page_number = _ctx.layout_ctx.page.page_number;
         let system_index = _ctx.layout_ctx.system.index;
@@ -54,6 +54,7 @@ impl Visitor for ContentVisitor {
         let section = _ctx.layout.sections.entry(section_number).or_default();
         let _part_group = section.groups.entry(part_group_number).or_default();
 
+        // get or create the page
         let page = _ctx
             .visual_score
             .pages
@@ -66,6 +67,7 @@ impl Visitor for ContentVisitor {
                 systems: HashMap::new(),
             });
 
+        // get or create the system on the page
         let system = page.systems.entry(system_index).or_default();
         system.m_left = _ctx.layout_ctx.system.margin_left.unwrap_or(system.m_left);
         system.m_right = _ctx
@@ -75,6 +77,20 @@ impl Visitor for ContentVisitor {
             .unwrap_or(system.m_right);
         system.distance = _ctx.layout_ctx.system.distance.unwrap_or(system.distance);
         system.top = _ctx.layout_ctx.system.distance_top.unwrap_or(system.top);
+
+        // get or create the section in this system.
+        let section = system.sections.entry(section_number).or_default();
+
+        // get or create the part group in this section.
+        let part_group = section.part_groups.entry(part_group_number).or_default();
+
+        // get or create the part in this part group.
+        let part = part_group.parts.entry(part_id).or_default();
+        part.set_visibility(_ctx.layout_ctx.part_hidden_specified);
+        part.ensure_staves(part_measure.content.iter().map(|c| c.staff()).collect());
+        part.hide_staves(&_ctx.layout_ctx.staff.explicitly_hidden);
+        part.show_staves(&_ctx.layout_ctx.staff.explicitly_shown);
+        part.set_distances(&_ctx.layout_ctx.staff.distances);
     }
 
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}

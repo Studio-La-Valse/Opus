@@ -1,10 +1,11 @@
 use crate::core::xy::XY;
+use crate::score::visual::content::Content;
 use crate::score::visual::layoutable::Layoutable;
 
 #[derive(Default)]
 pub struct PartMeasure {
     pub specified_width: Option<f64>,
-    pub content: Vec<Box<dyn Layoutable>>,
+    pub content: Vec<Box<dyn Content>>,
     pub width: f32,
     pub height: f32,
     pub origin: XY,

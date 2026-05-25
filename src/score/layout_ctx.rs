@@ -1,10 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Visibility {
     Auto,
     Hidden,
     Shown,
+}
+
+impl Default for Visibility {
+    fn default() -> Self {
+        Visibility::Auto
+    }
 }
 
 #[derive(Debug, Clone)]
