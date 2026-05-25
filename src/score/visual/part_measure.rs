@@ -1,6 +1,5 @@
 use crate::core::xy::XY;
 use crate::score::visual::layoutable::Layoutable;
-use crate::score::visual::note::Note;
 
 #[derive(Default)]
 pub struct PartMeasure {

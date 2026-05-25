@@ -5,9 +5,7 @@ pub struct Note {
     pub staff: u32,
 }
 
-impl Note {
-
-}
+impl Note {}
 
 impl Layoutable for Note {
     fn measure(&mut self, _available: XY) {}

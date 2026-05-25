@@ -142,6 +142,20 @@ impl Layout {
         self.page_margins_even = user_layout.page_margins_even.or(self.page_margins_even);
         self.page_margins_odd = user_layout.page_margins_odd.or(self.page_margins_odd);
     }
+
+    pub fn get_margins(&self, page_number: u32) -> PageMargins {
+        let is_even = page_number % 2 == 0;
+
+        if is_even {
+            self.page_margins_even
+                .or(self.page_margins_both)
+                .unwrap_or_default()
+        } else {
+            self.page_margins_odd
+                .or(self.page_margins_both)
+                .unwrap_or_default()
+        }
+    }
 }
 
 #[derive(Default)]
