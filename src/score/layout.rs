@@ -38,6 +38,7 @@ impl Default for PageMargins {
     }
 }
 
+#[derive(Default)]
 pub struct  Part {
     pub name: String,
     pub abbr: String,
@@ -48,33 +49,18 @@ pub struct  Part {
     pub brace: Option<String>
 }
 
+#[derive(Default)]
 pub struct Section {
     pub brace: Option<String>,
     pub groups: HashMap<i32, PartGroup>,
 }
 
-impl Default for Section {
-    fn default() -> Section {
-        Section {
-            brace: None,
-            groups: HashMap::new()
-        }
-    }
-}
-
+#[derive(Default)]
 pub struct PartGroup {
     pub brace: Option<String>,
     pub name: Option<String>,
 }
 
-impl Default for PartGroup {
-    fn default() -> Self {
-        Self {
-            brace: None,
-            name: None,
-        }
-    }
-}
 pub struct Layout {
     pub page_color: Color,
     pub foreground_color: Color,
@@ -148,6 +134,7 @@ impl Layout {
     }
 }
 
+#[derive(Default)]
 pub struct UserLayout {
     pub page_color: Option<Color>,
     pub foreground_color: Option<Color>,
@@ -159,21 +146,4 @@ pub struct UserLayout {
     pub page_margins_both: Option<PageMargins>,
     pub page_margins_even: Option<PageMargins>,
     pub page_margins_odd: Option<PageMargins>,
-}
-
-impl Default for UserLayout {
-    fn default() -> UserLayout {
-        UserLayout {
-            page_color: None,
-            foreground_color: None,
-
-            staff_line_thickness: None,
-            bar_line_heavy_thickness: None,
-            bar_line_light_thickness: None,
-
-            page_margins_odd: None,
-            page_margins_even: None,
-            page_margins_both: None,
-        }
-    }
 }

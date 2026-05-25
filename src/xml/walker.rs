@@ -1,5 +1,4 @@
-﻿
-use roxmltree::{Document, Node};
+﻿use roxmltree::{Document, Node};
 use crate::xml::visitor::Visitor;
 
 pub struct Walker<V> {
@@ -37,18 +36,17 @@ impl<V: Visitor> Walker<V> {
     }
 
     pub fn walk_part(&mut self, node: &Node) {
-        self.visitor.enter_part(&node);
+        self.visitor.enter_part(node);
 
         for child in node.children().filter(|n| n.is_element()) {
-            match child.tag_name().name() {
-                "measure" => self.walk_measure(&child),
-                _ => { } // todo: ignore for now, panic! later.
+            if child.tag_name().name() == "measure" {
+                self.walk_measure(&child)
             }
         }
     }
 
     pub fn walk_measure(&mut self, node: &Node) {
-        self.visitor.enter_measure(&node);
+        self.visitor.enter_measure(node);
 
         for child in node.children().filter(|n| n.is_element()) {
             match child.tag_name().name() {

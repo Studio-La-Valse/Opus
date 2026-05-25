@@ -46,21 +46,6 @@ pub struct LayoutCtx {
     pub measure: MeasureInfo,
 }
 
-impl LayoutCtx {
-
-    /// Returns all staff numbers that were explicitly mentioned anywhere.
-    pub fn staff_numbers_specified(&self) -> HashSet<u32> {
-        self.staff
-            .distances
-            .keys()
-            .copied()
-            .chain(self.staff.explicitly_hidden.iter().copied())
-            .chain(self.staff.explicitly_shown.iter().copied())
-            .chain([1])
-            .collect()
-    }
-}
-
 impl Default for LayoutCtx {
     fn default() -> Self {
         LayoutCtx {

@@ -1,13 +1,9 @@
 use clap::Parser;
 use std::fs::read_to_string;
+use std::time::{Instant};
 use roxmltree::ParsingOptions;
 use roxmltree::Document;
-use opus::score::layout::{UserLayout, Layout};
-use opus::xml::layout_ctx::LayoutCtx;
-use opus::xml::visitor::{DefaultVisitor, Visitor};
-use opus::xml::visitors::layout_ctx_visitor::LayoutContextVisitor;
-use opus::xml::visitors::layout_visitor::LayoutVisitor;
-use opus::xml::walker::Walker;
+use opus::*;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -23,6 +19,8 @@ fn main() {
         allow_dtd: true,
         ..ParsingOptions::default()
     };
+
+    let time = Instant::now();
 
     let data = read_to_string(file).expect("Something went wrong reading the file");
 
@@ -41,4 +39,7 @@ fn main() {
     
     Walker { visitor }
         .walk(&document);
+
+    let elapsed_time = time.elapsed();
+    println!("Elapsed: {}ms", elapsed_time.as_millis())
 }

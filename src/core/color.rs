@@ -9,4 +9,5 @@ pub struct Color {
 impl Color {
     pub const WHITE: Color = Color {a: 1.0, r: 255, g: 255, b: 255};
     pub const BLACK: Color = Color {a: 1.0, r: 0, g: 0, b: 0};
+    pub const TRANSPARENT: Color = Color { a: 0., r: 0, g: 0, b: 0 }; 
 }

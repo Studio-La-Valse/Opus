@@ -31,16 +31,10 @@ impl<'a> Visitor for LayoutVisitor<'a> {
     }
 
     fn enter_defaults(&mut self, element:&Node) {
-        // -------------------------
-        // scaling
-        // -------------------------
         let scaling = element.req_child("scaling");
         self.layout.defaults.scaling_millimeters = scaling.req_child("millimeters").req_f32();
         self.layout.defaults.scaling_tenths = scaling.req_child("tenths").req_f32();
 
-        // -------------------------
-        // page-layout
-        // -------------------------
         let page_layout = element.req_child("page-layout");
         self.layout.defaults.page_height = page_layout.req_child("page-height").req_f32();
         self.layout.defaults.page_width = page_layout.req_child("page-width").req_f32();
@@ -61,9 +55,6 @@ impl<'a> Visitor for LayoutVisitor<'a> {
             }
         }
 
-        // -------------------------
-        // appearance
-        // -------------------------
         if let Some(appearance) = element.children().find(|n| n.has_tag("appearance")) {
             for lw in appearance.children().filter(|n| n.has_tag("line-width")) {
                 let t = lw.req_attr("type");
@@ -78,9 +69,6 @@ impl<'a> Visitor for LayoutVisitor<'a> {
             }
         }
 
-        // -------------------------
-        // system-layout
-        // -------------------------
         if let Some(system_layout) = element.children().find(|n| n.has_tag("system-layout")) {
             if let Some(sm) = system_layout.children().find(|n| n.has_tag("system-margins")) {
                 self.layout.system_margin_left = sm.req_child("left-margin").req_f32();
@@ -96,9 +84,6 @@ impl<'a> Visitor for LayoutVisitor<'a> {
             }
         }
 
-        // -------------------------
-        // staff-layout
-        // -------------------------
         if let Some(staff_layout) = element.children().find(|n| n.has_tag("staff-layout")) {
             let sd = staff_layout.req_child("staff-distance").req_f32();
             self.layout.staff_distance = sd;
@@ -107,7 +92,7 @@ impl<'a> Visitor for LayoutVisitor<'a> {
 
 
     fn exit_defaults(&mut self) {
-        self.layout.apply_user_layout(&self.user_layout);
+        self.layout.apply_user_layout(self.user_layout);
     }
 
     fn enter_part_list(&mut self, element: &Node) {
@@ -128,7 +113,7 @@ impl<'a> Visitor for LayoutVisitor<'a> {
                     "start" if !first_order_group_open => {
                         let brace_type = brace_type(&child);
 
-                        let group_first = self.layout.sections.entry(first_order_index).or_insert_with(|| Default::default());
+                        let group_first = self.layout.sections.entry(first_order_index).or_default();
                         group_first.brace = brace_type;
 
                         first_order_group_open = true;
@@ -137,26 +122,24 @@ impl<'a> Visitor for LayoutVisitor<'a> {
                         second_order_group_open = false;
                     }
 
-                    "start" => {
-                        if !second_order_group_open {
-                            let group_first = self.layout.sections.entry(first_order_index).or_insert_with(|| Default::default());
+                    "start" if !second_order_group_open => {
+                        let group_first = self.layout.sections.entry(first_order_index).or_default();
 
-                            let name = child
-                                .children()
-                                .find(|n| n.has_tag_name("group-name"))
-                                .and_then(|n| n.text())
-                                .map(|s| s.to_string());
+                        let name = child
+                            .children()
+                            .find(|n| n.has_tag_name("group-name"))
+                            .and_then(|n| n.text())
+                            .map(|s| s.to_string());
 
-                            let brace = brace_type(&child);
+                        let brace = brace_type(&child);
 
-                            let group_second =
-                                group_first.groups.entry(second_order_index).or_insert_with(|| Default::default());
+                        let group_second =
+                            group_first.groups.entry(second_order_index).or_default();
 
-                            group_second.name = name;
-                            group_second.brace = brace;
+                        group_second.name = name;
+                        group_second.brace = brace;
 
-                            second_order_group_open = true;
-                        }
+                        second_order_group_open = true;
                     }
 
                     "stop" if second_order_group_open => {
@@ -164,14 +147,12 @@ impl<'a> Visitor for LayoutVisitor<'a> {
                         second_order_group_open = false;
                     }
 
-                    "stop" => {
-                        if first_order_group_open {
-                            first_order_index += 1;
-                            first_order_group_open = false;
+                    "stop" if first_order_group_open => {
+                        first_order_index += 1;
+                        first_order_group_open = false;
 
-                            second_order_index = 0;
-                            second_order_group_open = false;
-                        }
+                        second_order_index = 0;
+                        second_order_group_open = false;
                     }
 
                     _ => {}

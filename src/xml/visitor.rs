@@ -31,57 +31,31 @@ impl DefaultVisitor {
 }
 
 impl Visitor for DefaultVisitor {
-    fn enter(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter(&mut self, _node: &Node) { }
 
-    fn enter_work(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_work(&mut self, _node: &Node) { }
 
-    fn enter_defaults(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_defaults(&mut self, _node: &Node){ }
 
-    fn exit_defaults(&mut self) {
-        println!("exiting defaults");
-    }
+    fn exit_defaults(&mut self) { }
 
-    fn enter_part_list(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_part_list(&mut self, _node: &Node) { }
 
-    fn enter_part(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_part(&mut self, _node: &Node) { }
 
-    fn enter_measure(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_measure(&mut self, _node: &Node) { }
 
-    fn enter_print(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_print(&mut self, _node: &Node) { }
 
-    fn enter_attributes(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_attributes(&mut self, _node: &Node) { }
 
-    fn enter_note(&mut self, _node: &Node) {
-        println!("entering {}", _node.tag_name().name());
-    }
+    fn enter_note(&mut self, _node: &Node) { }
 
-    fn exit_measure(&mut self) {
-        println!("exiting measure");
-    }
+    fn exit_measure(&mut self) { }
 
-    fn exit_part(&mut self) {
-        println!("exiting part");
-    }
+    fn exit_part(&mut self) { }
 
-    fn exit(&mut self) {
-        println!("exiting root");
-    }
+    fn exit(&mut self) { }
 }
 
 
