@@ -196,19 +196,19 @@ impl Visitor for LayoutVisitor {
         }
     }
 
-    fn enter_part(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+    fn enter_part(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_measure(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+    fn enter_measure(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_print(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+    fn enter_print(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+    fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+    fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn exit_measure(&mut self, ctx: &mut WalkerCtx) {}
+    fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}
 
-    fn exit_part(&mut self, ctx: &mut WalkerCtx) {}
+    fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
 
-    fn exit(&mut self, ctx: &mut WalkerCtx) {}
+    fn exit(&mut self, _ctx: &mut WalkerCtx) {}
 }
