@@ -1,6 +1,7 @@
 use crate::core::color::Color;
 use std::collections::HashMap;
 
+#[derive(Copy, Clone)]
 pub struct Defaults {
     pub scaling_millimeters: f32,
     pub scaling_tenths: f32,
@@ -38,7 +39,7 @@ impl Default for PageMargins {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Part {
     pub name: String,
     pub abbr: String,
@@ -49,18 +50,19 @@ pub struct Part {
     pub brace: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Section {
     pub brace: Option<String>,
     pub groups: HashMap<i32, PartGroup>,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct PartGroup {
     pub brace: Option<String>,
     pub name: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct Layout {
     pub page_color: Color,
     pub foreground_color: Color,

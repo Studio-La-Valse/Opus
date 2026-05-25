@@ -46,6 +46,26 @@ pub struct LayoutCtx {
     pub measure: MeasureInfo,
 }
 
+impl LayoutCtx {
+    pub fn reset(&mut self) {
+        self.system.index = 0;
+
+        self.page.page_number = 1;
+        self.staff.number = 1;
+
+        self.system.margin_left = None;
+        self.system.margin_right = None;
+        self.system.distance = None;
+        self.system.distance_top = None;
+
+        self.staff.distances.clear();
+
+        self.part_hidden_specified = Visibility::Auto;
+        self.staff.explicitly_hidden.clear();
+        self.staff.explicitly_shown.clear();
+    }
+}
+
 impl Default for LayoutCtx {
     fn default() -> Self {
         LayoutCtx {

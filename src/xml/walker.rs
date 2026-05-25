@@ -1,12 +1,12 @@
 use crate::xml::visitor::Visitor;
 use roxmltree::{Document, Node};
 
-pub struct Walker<V> {
-    pub visitor: V,
+pub struct Walker<'a> {
+    pub visitor: Visitor<'a>,
 }
 
-impl<V: Visitor> Walker<V> {
-    pub fn new(visitor: V) -> Self {
+impl<'a> Walker<'a> {
+    pub fn new(visitor: Visitor<'a>) -> Self {        
         Walker { visitor }
     }
 

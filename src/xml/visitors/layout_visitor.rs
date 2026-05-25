@@ -1,14 +1,7 @@
 use crate::score::layout::{Layout, PageMargins, Part, UserLayout};
 use crate::xml::utils::xml::N;
-use crate::xml::visitor::Visitor;
 use roxmltree::Node;
 
-pub struct LayoutVisitor<'a> {
-    pub layout: &'a mut Layout,
-    pub user_layout: &'a mut UserLayout,
-}
-
-impl<'a> LayoutVisitor<'a> {}
 
 fn brace_type(node: &Node) -> Option<String> {
     node.children()
@@ -17,21 +10,23 @@ fn brace_type(node: &Node) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-impl<'a> Visitor for LayoutVisitor<'a> {
-    fn enter(&mut self, _node: &Node) {}
+pub struct LayoutVisitor {
 
-    fn enter_work(&mut self, element: &Node) {
-        self.layout.work_title = element.req_element("work-title").req_text().into();
+}
+
+impl LayoutVisitor {
+    pub fn enter_work(&mut self, element: &Node, layout: &mut Layout) {
+        layout.work_title = element.req_element("work-title").req_text().into();
     }
 
-    fn enter_defaults(&mut self, element: &Node) {
+    pub fn enter_defaults(&mut self, element: &Node, layout: &mut Layout) {
         let scaling = element.req_child("scaling");
-        self.layout.defaults.scaling_millimeters = scaling.req_child("millimeters").req_f32();
-        self.layout.defaults.scaling_tenths = scaling.req_child("tenths").req_f32();
+        layout.defaults.scaling_millimeters = scaling.req_child("millimeters").req_f32();
+        layout.defaults.scaling_tenths = scaling.req_child("tenths").req_f32();
 
         let page_layout = element.req_child("page-layout");
-        self.layout.defaults.page_height = page_layout.req_child("page-height").req_f32();
-        self.layout.defaults.page_width = page_layout.req_child("page-width").req_f32();
+        layout.defaults.page_height = page_layout.req_child("page-height").req_f32();
+        layout.defaults.page_width = page_layout.req_child("page-width").req_f32();
 
         for pm in page_layout.children().filter(|n| n.has_tag("page-margins")) {
             let margins = PageMargins {
@@ -42,9 +37,9 @@ impl<'a> Visitor for LayoutVisitor<'a> {
             };
 
             match pm.req_attr("type") {
-                "both" => self.layout.page_margins_both = Some(margins),
-                "odd" => self.layout.page_margins_odd = Some(margins),
-                "even" => self.layout.page_margins_even = Some(margins),
+                "both" => layout.page_margins_both = Some(margins),
+                "odd" => layout.page_margins_odd = Some(margins),
+                "even" => layout.page_margins_even = Some(margins),
                 other => panic!("Invalid page-margins type '{}'", other),
             }
         }
@@ -55,9 +50,9 @@ impl<'a> Visitor for LayoutVisitor<'a> {
                 let v = lw.req_f32();
 
                 match t {
-                    "staff" => self.layout.staff_line_thickness = v,
-                    "light barline" => self.layout.bar_line_light_thickness = v,
-                    "heavy barline" => self.layout.bar_line_heavy_thickness = v,
+                    "staff" => layout.staff_line_thickness = v,
+                    "light barline" => layout.bar_line_light_thickness = v,
+                    "heavy barline" => layout.bar_line_heavy_thickness = v,
                     _ => {}
                 }
             }
@@ -68,38 +63,38 @@ impl<'a> Visitor for LayoutVisitor<'a> {
                 .children()
                 .find(|n| n.has_tag("system-margins"))
             {
-                self.layout.system_margin_left = sm.req_child("left-margin").req_f32();
-                self.layout.system_margin_right = sm.req_child("right-margin").req_f32();
+                layout.system_margin_left = sm.req_child("left-margin").req_f32();
+                layout.system_margin_right = sm.req_child("right-margin").req_f32();
             }
 
             if let Some(n) = system_layout
                 .children()
                 .find(|n| n.has_tag("system-distance"))
             {
-                self.layout.system_distance = n.req_f32();
+                layout.system_distance = n.req_f32();
             }
 
             if let Some(n) = system_layout
                 .children()
                 .find(|n| n.has_tag("top-system-distance"))
             {
-                self.layout.top_system_distance = n.req_f32();
+                layout.top_system_distance = n.req_f32();
             }
         }
 
         if let Some(staff_layout) = element.children().find(|n| n.has_tag("staff-layout")) {
             let sd = staff_layout.req_child("staff-distance").req_f32();
-            self.layout.staff_distance = sd;
+            layout.staff_distance = sd;
         }
     }
 
-    fn exit_defaults(&mut self) {
-        self.layout.apply_user_layout(self.user_layout);
+    pub fn exit_defaults(&mut self, layout: &mut Layout, user_layout: &UserLayout) {
+        layout.apply_user_layout(user_layout);
     }
 
-    fn enter_part_list(&mut self, element: &Node) {
-        self.layout.parts.clear();
-        self.layout.sections.clear();
+    pub fn enter_part_list(&mut self, element: &Node, layout: &mut Layout) {
+        layout.parts.clear();
+        layout.sections.clear();
 
         let mut first_order_index: i32 = 0;
         let mut second_order_index: i32 = 0;
@@ -116,7 +111,7 @@ impl<'a> Visitor for LayoutVisitor<'a> {
                         let brace_type = brace_type(&child);
 
                         let group_first =
-                            self.layout.sections.entry(first_order_index).or_default();
+                            layout.sections.entry(first_order_index).or_default();
                         group_first.brace = brace_type;
 
                         first_order_group_open = true;
@@ -127,7 +122,7 @@ impl<'a> Visitor for LayoutVisitor<'a> {
 
                     "start" if !second_order_group_open => {
                         let group_first =
-                            self.layout.sections.entry(first_order_index).or_default();
+                            layout.sections.entry(first_order_index).or_default();
 
                         let name = child
                             .children()
@@ -188,7 +183,7 @@ impl<'a> Visitor for LayoutVisitor<'a> {
                     brace: None,
                 };
 
-                self.layout.parts.insert(id, part);
+                layout.parts.insert(id, part);
 
                 if !first_order_group_open {
                     first_order_index += 1;
@@ -199,20 +194,4 @@ impl<'a> Visitor for LayoutVisitor<'a> {
             }
         }
     }
-
-    fn enter_part(&mut self, _node: &Node) {}
-
-    fn enter_measure(&mut self, _node: &Node) {}
-
-    fn enter_print(&mut self, _node: &Node) {}
-
-    fn enter_attributes(&mut self, _node: &Node) {}
-
-    fn enter_note(&mut self, _node: &Node) {}
-
-    fn exit_measure(&mut self) {}
-
-    fn exit_part(&mut self) {}
-
-    fn exit(&mut self) {}
 }
