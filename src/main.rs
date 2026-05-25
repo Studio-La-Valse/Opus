@@ -1,5 +1,4 @@
 use clap::Parser;
-use opus::score::visual::visual_score::VisualScore;
 use opus::xml::visitor::DefaultVisitor;
 use opus::xml::visitors::content_visitor::ContentVisitor;
 use opus::xml::visitors::layout_ctx_visitor::LayoutContextVisitor;
@@ -34,16 +33,16 @@ fn main() {
     let mut layout_ctx = LayoutCtx::default();
     let mut user_layout = UserLayout::default();
     let mut layout = Layout::default();
-    let mut visual = VisualScore {};
+    let mut visual = Default::default();
 
     let visitor = DefaultVisitor {}
         .add_callback(LayoutVisitor {})
         .add_callback(LayoutContextVisitor {})
-        .add_callback(ContentVisitor {});
+        .add_callback(ContentVisitor { part_measure: None });
 
     let mut ctx = WalkerCtx::new(&mut user_layout, &mut layout, &mut layout_ctx, &mut visual);
 
-    Walker::new(visitor, &mut ctx).walk(&document);
+    Walker::new(visitor).walk(&document, &mut ctx);
 
     let elapsed_time = time.elapsed();
     println!("Elapsed: {}ms", elapsed_time.as_millis())
