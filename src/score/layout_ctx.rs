@@ -1,4 +1,4 @@
-﻿use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub enum Visibility {
@@ -51,9 +51,7 @@ impl Default for LayoutCtx {
         LayoutCtx {
             part_id: "".to_string(),
             part_hidden_specified: Visibility::Auto,
-            page: PageInfo {
-                page_number: 1
-            },
+            page: PageInfo { page_number: 1 },
             system: SystemInfo {
                 index: 0,
                 margin_left: None,
@@ -66,12 +64,12 @@ impl Default for LayoutCtx {
                 distances: HashMap::new(),
                 visibility: Visibility::Auto,
                 explicitly_hidden: HashSet::new(),
-                explicitly_shown: HashSet::new()
+                explicitly_shown: HashSet::new(),
             },
             measure: MeasureInfo {
                 number: 0,
                 width: None,
-            }
+            },
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿use roxmltree::Node;
-
+use roxmltree::Node;
 
 pub trait N<'a> {
     fn req_attribute(&self, name: &str) -> &str;
@@ -12,17 +11,15 @@ pub trait N<'a> {
     fn has_tag(&self, name: &str) -> bool;
 }
 
-
 impl<'a> N<'a> for Node<'a, 'a> {
     fn req_attribute(&self, name: &str) -> &str {
-        self.attribute(name)
-            .unwrap_or_else(||
-                panic!(
-                    "attribute '{}' not found under '{}'",
-                    name,
-                    self.tag_name().name()
-                )
+        self.attribute(name).unwrap_or_else(|| {
+            panic!(
+                "attribute '{}' not found under '{}'",
+                name,
+                self.tag_name().name()
             )
+        })
     }
 
     fn req_element(&self, name: &str) -> Node<'a, 'a> {
@@ -41,7 +38,6 @@ impl<'a> N<'a> for Node<'a, 'a> {
         self.text()
             .unwrap_or_else(|| panic!("No text found under element"))
     }
-
 
     fn req_child(&self, name: &str) -> Node<'a, 'a> {
         self.children()

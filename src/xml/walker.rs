@@ -1,12 +1,11 @@
-﻿use roxmltree::{Document, Node};
 use crate::xml::visitor::Visitor;
+use roxmltree::{Document, Node};
 
 pub struct Walker<V> {
     pub visitor: V,
 }
 
 impl<V: Visitor> Walker<V> {
-
     pub fn new(visitor: V) -> Self {
         Walker { visitor }
     }
@@ -23,12 +22,12 @@ impl<V: Visitor> Walker<V> {
             match child.tag_name().name() {
                 "work" => self.visitor.enter_work(&child),
                 "defaults" => {
-                    self.visitor.enter_defaults(&child) ;
+                    self.visitor.enter_defaults(&child);
                     self.visitor.exit_defaults();
-                },
+                }
                 "part-list" => self.visitor.enter_part_list(&child),
                 "part" => self.walk_part(&child),
-                _ => { } // todo: ignore for now, panic! later.
+                _ => {} // todo: ignore for now, panic! later.
             }
         }
 
@@ -53,7 +52,7 @@ impl<V: Visitor> Walker<V> {
                 "print" => self.visitor.enter_print(&child),
                 "attributes" => self.visitor.enter_attributes(&child),
                 "note" => self.visitor.enter_note(&child),
-                _ => { } // todo: ignore for now, panic! later.
+                _ => {} // todo: ignore for now, panic! later.
             }
         }
 

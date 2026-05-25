@@ -1,5 +1,5 @@
-﻿use std::collections::HashMap;
 use crate::core::color::Color;
+use std::collections::HashMap;
 
 pub struct Defaults {
     pub scaling_millimeters: f32,
@@ -39,14 +39,14 @@ impl Default for PageMargins {
 }
 
 #[derive(Default)]
-pub struct  Part {
+pub struct Part {
     pub name: String,
     pub abbr: String,
 
     pub section: i32,
     pub part_group: i32,
 
-    pub brace: Option<String>
+    pub brace: Option<String>,
 }
 
 #[derive(Default)]
@@ -122,12 +122,20 @@ impl Default for Layout {
 impl Layout {
     pub fn apply_user_layout(&mut self, user_layout: &UserLayout) {
         self.page_color = user_layout.page_color.unwrap_or(self.page_color);
-        self.foreground_color = user_layout.foreground_color.unwrap_or(self.foreground_color);
-        
-        self.staff_line_thickness = user_layout.staff_line_thickness.unwrap_or(self.staff_line_thickness);
-        self.bar_line_heavy_thickness = user_layout.bar_line_heavy_thickness.unwrap_or(self.bar_line_light_thickness);
-        self.bar_line_light_thickness = user_layout.bar_line_light_thickness.unwrap_or(self.bar_line_light_thickness);
-        
+        self.foreground_color = user_layout
+            .foreground_color
+            .unwrap_or(self.foreground_color);
+
+        self.staff_line_thickness = user_layout
+            .staff_line_thickness
+            .unwrap_or(self.staff_line_thickness);
+        self.bar_line_heavy_thickness = user_layout
+            .bar_line_heavy_thickness
+            .unwrap_or(self.bar_line_light_thickness);
+        self.bar_line_light_thickness = user_layout
+            .bar_line_light_thickness
+            .unwrap_or(self.bar_line_light_thickness);
+
         self.page_margins_both = user_layout.page_margins_both.or(self.page_margins_both);
         self.page_margins_even = user_layout.page_margins_even.or(self.page_margins_even);
         self.page_margins_odd = user_layout.page_margins_odd.or(self.page_margins_odd);

@@ -1,14 +1,13 @@
-﻿use roxmltree::Node;
+use roxmltree::Node;
 
 use crate::score::layout_ctx::{LayoutCtx, Visibility};
 use crate::xml::visitor::Visitor;
 
 pub struct LayoutContextVisitor<'a> {
-    pub layout_ctx: &'a mut LayoutCtx
+    pub layout_ctx: &'a mut LayoutCtx,
 }
 
 impl<'a> LayoutContextVisitor<'a> {
-
     fn reset(&mut self) {
         self.layout_ctx.system.index = 0;
 
@@ -33,40 +32,29 @@ impl<'a> Visitor for LayoutContextVisitor<'a> {
         self.reset()
     }
 
-    fn enter_work(&mut self, _node: &Node) {
+    fn enter_work(&mut self, _node: &Node) {}
 
-    }
+    fn enter_defaults(&mut self, _node: &Node) {}
 
-    fn enter_defaults(&mut self, _node: &Node) {
+    fn exit_defaults(&mut self) {}
 
-    }
-
-    fn exit_defaults(&mut self) {
-
-    }
-
-    fn enter_part_list(&mut self, _node: &Node) {
-
-    }
+    fn enter_part_list(&mut self, _node: &Node) {}
 
     fn enter_part(&mut self, _node: &Node) {
         self.reset();
 
-        self.layout_ctx.part_id = _node.attribute("id")
-            .unwrap()
-            .to_string()
+        self.layout_ctx.part_id = _node.attribute("id").unwrap().to_string()
     }
 
     fn enter_measure(&mut self, _node: &Node) {
-        self.layout_ctx.measure.number =
-            _node.attribute("number")
-                .expect("measure missing @number")
-                .parse::<u32>()
-                .expect("measure number was not an integer");
+        self.layout_ctx.measure.number = _node
+            .attribute("number")
+            .expect("measure missing @number")
+            .parse::<u32>()
+            .expect("measure number was not an integer");
 
         self.layout_ctx.measure.width =
-            _node.attribute("width")
-                .and_then(|s| s.parse::<f32>().ok());
+            _node.attribute("width").and_then(|s| s.parse::<f32>().ok());
 
         self.layout_ctx.system.margin_left = None;
         self.layout_ctx.system.margin_right = None;
@@ -83,9 +71,9 @@ impl<'a> Visitor for LayoutContextVisitor<'a> {
 
         let new_system = new_page
             || element
-            .attribute("new-system")
-            .map(|v| v == "yes")
-            .unwrap_or(false);
+                .attribute("new-system")
+                .map(|v| v == "yes")
+                .unwrap_or(false);
 
         if new_page {
             self.layout_ctx.page.page_number += 1;
@@ -97,8 +85,9 @@ impl<'a> Visitor for LayoutContextVisitor<'a> {
 
         // system-layout
         if let Some(system_layout) = element.children().find(|n| n.has_tag_name("system-layout")) {
-            if let Some(system_margins) =
-                system_layout.children().find(|n| n.has_tag_name("system-margins"))
+            if let Some(system_margins) = system_layout
+                .children()
+                .find(|n| n.has_tag_name("system-margins"))
             {
                 let left_margin = system_margins
                     .children()
@@ -175,10 +164,11 @@ impl<'a> Visitor for LayoutContextVisitor<'a> {
     }
 
     fn enter_attributes(&mut self, element: &Node) {
-        for staff_details in element.children().filter(|n| n.has_tag_name("staff-details")) {
-            let print_object = staff_details
-                .attribute("print-object")
-                .unwrap_or("yes");
+        for staff_details in element
+            .children()
+            .filter(|n| n.has_tag_name("staff-details"))
+        {
+            let print_object = staff_details.attribute("print-object").unwrap_or("yes");
 
             let is_hidden = print_object == "no";
 
@@ -220,15 +210,9 @@ impl<'a> Visitor for LayoutContextVisitor<'a> {
         }
     }
 
-    fn exit_measure(&mut self) {
+    fn exit_measure(&mut self) {}
 
-    }
+    fn exit_part(&mut self) {}
 
-    fn exit_part(&mut self) {
-
-    }
-
-    fn exit(&mut self) {
-
-    }
+    fn exit(&mut self) {}
 }
