@@ -1,69 +1,36 @@
-﻿// use roxmltree::Node;
-// use crate::{Layout, LayoutCtx, Visitor};
-// use crate::score::visual::visual_score::VisualScore;
-// 
-// pub struct ContentVisitor<'a> {
-//     visual_score: &'a mut VisualScore<'a>
-// }
-// 
-// impl<'a> ContentVisitor<'a> {
-//     pub fn new(visual_score: &'a mut VisualScore<'a>) -> Self {
-//         Self {visual_score}
-//     }
-// }
-// 
-// impl<'a> Visitor for ContentVisitor<'a> {
-// 
-// 
-//     fn enter(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn enter_work(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn enter_defaults(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn exit_defaults(&mut self) {
-// 
-//     }
-// 
-//     fn enter_part_list(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn enter_part(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn enter_measure(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn enter_print(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn enter_attributes(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn enter_note(&mut self, _node: &Node) {
-// 
-//     }
-// 
-//     fn exit_measure(&mut self) {
-// 
-//     }
-// 
-//     fn exit_part(&mut self) {
-// 
-//     }
-// 
-//     fn exit(&mut self) {
-// 
-//     }
-// }
+use crate::score::visual::visual_score::VisualScore;
+use crate::xml::walker_ctx::WalkerCtx;
+use crate::{Layout, LayoutCtx, Visitor};
+use roxmltree::Node;
+
+pub struct ContentVisitor {}
+
+impl ContentVisitor {}
+
+impl Visitor for ContentVisitor {
+    fn enter(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_work(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_defaults(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn exit_defaults(&mut self, ctx: &mut WalkerCtx) {}
+
+    fn enter_part_list(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_part(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_measure(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_print(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn exit_measure(&mut self, ctx: &mut WalkerCtx) {}
+
+    fn exit_part(&mut self, ctx: &mut WalkerCtx) {}
+
+    fn exit(&mut self, ctx: &mut WalkerCtx) {}
+}

@@ -1,11 +1,5 @@
-﻿use crate::Layout;
+use crate::Layout;
 
-pub struct VisualScore<'a> {
-    pub layout: &'a mut Layout
-}
+pub struct VisualScore {}
 
-impl<'a> VisualScore<'a> {
-    pub fn new(layout: &'a mut Layout) -> Self {
-        Self { layout }
-    }
-}
+impl VisualScore {}

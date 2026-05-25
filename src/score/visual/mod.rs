@@ -1,1 +1,1 @@
-﻿pub mod visual_score;
+pub mod visual_score;

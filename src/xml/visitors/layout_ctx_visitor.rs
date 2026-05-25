@@ -1,40 +1,46 @@
 use roxmltree::Node;
 
+use crate::Visitor;
 use crate::score::layout_ctx::{LayoutCtx, Visibility};
+use crate::xml::walker_ctx::WalkerCtx;
 
-pub struct LayoutContextVisitor {
+pub struct LayoutContextVisitor {}
 
-}
-
-impl LayoutContextVisitor {
-
-    pub fn enter(&mut self, _node: &Node, layout_ctx: &mut LayoutCtx) {
-        layout_ctx.reset();
+impl Visitor for LayoutContextVisitor {
+    fn enter(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
+        ctx.layout_ctx.reset();
     }
 
-    pub fn enter_part(&mut self, _node: &Node, layout_ctx: &mut LayoutCtx) {
-        layout_ctx.reset();
+    fn enter_work(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
 
-        layout_ctx.part_id = _node.attribute("id").unwrap().to_string()
+    fn enter_defaults(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn exit_defaults(&mut self, ctx: &mut WalkerCtx) {}
+
+    fn enter_part_list(&mut self, node: &Node, ctx: &mut WalkerCtx) {}
+
+    fn enter_part(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
+        ctx.layout_ctx.reset();
+
+        ctx.layout_ctx.part_id = _node.attribute("id").unwrap().to_string()
     }
 
-    pub  fn enter_measure(&mut self, _node: &Node, layout_ctx: &mut LayoutCtx) {
-        layout_ctx.measure.number = _node
+    fn enter_measure(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
+        ctx.layout_ctx.measure.number = _node
             .attribute("number")
             .expect("measure missing @number")
             .parse::<u32>()
             .expect("measure number was not an integer");
 
-        layout_ctx.measure.width =
-            _node.attribute("width").and_then(|s| s.parse::<f32>().ok());
+        ctx.layout_ctx.measure.width = _node.attribute("width").and_then(|s| s.parse::<f32>().ok());
 
-        layout_ctx.system.margin_left = None;
-        layout_ctx.system.margin_right = None;
-        layout_ctx.system.distance = None;
-        layout_ctx.system.distance_top = None;
+        ctx.layout_ctx.system.margin_left = None;
+        ctx.layout_ctx.system.margin_right = None;
+        ctx.layout_ctx.system.distance = None;
+        ctx.layout_ctx.system.distance_top = None;
     }
 
-    pub fn enter_print(&mut self, element: &Node, layout_ctx: &mut LayoutCtx) {
+    fn enter_print(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         // new-page / new-system
         let new_page = element
             .attribute("new-page")
@@ -43,16 +49,16 @@ impl LayoutContextVisitor {
 
         let new_system = new_page
             || element
-            .attribute("new-system")
-            .map(|v| v == "yes")
-            .unwrap_or(false);
+                .attribute("new-system")
+                .map(|v| v == "yes")
+                .unwrap_or(false);
 
         if new_page {
-            layout_ctx.page.page_number += 1;
+            ctx.layout_ctx.page.page_number += 1;
         }
 
         if new_system {
-            layout_ctx.system.index += 1;
+            ctx.layout_ctx.system.index += 1;
         }
 
         // system-layout
@@ -74,11 +80,11 @@ impl LayoutContextVisitor {
                     .and_then(|s| s.parse::<f32>().ok());
 
                 if let Some(v) = left_margin {
-                    layout_ctx.system.margin_left = Some(v);
+                    ctx.layout_ctx.system.margin_left = Some(v);
                 }
 
                 if let Some(v) = right_margin {
-                    layout_ctx.system.margin_right = Some(v);
+                    ctx.layout_ctx.system.margin_right = Some(v);
                 }
             }
 
@@ -89,7 +95,7 @@ impl LayoutContextVisitor {
                 .and_then(|s| s.parse::<f32>().ok());
 
             if let Some(v) = system_distance {
-                layout_ctx.system.distance = Some(v);
+                ctx.layout_ctx.system.distance = Some(v);
             }
 
             let system_distance_top = system_layout
@@ -99,11 +105,11 @@ impl LayoutContextVisitor {
                 .and_then(|s| s.parse::<f32>().ok());
 
             if let Some(v) = system_distance_top {
-                layout_ctx.system.distance_top = Some(v);
+                ctx.layout_ctx.system.distance_top = Some(v);
             }
         }
 
-        layout_ctx.staff.distances.clear();
+        ctx.layout_ctx.staff.distances.clear();
 
         let staff_layout = match element.children().find(|n| n.has_tag_name("staff-layout")) {
             Some(n) => n,
@@ -128,13 +134,13 @@ impl LayoutContextVisitor {
             .and_then(|s| s.parse::<f32>().ok())
             .unwrap_or(0.0);
 
-        layout_ctx
+        ctx.layout_ctx
             .staff
             .distances
             .insert(staff_number, staff_distance_value);
     }
 
-    pub fn enter_attributes(&mut self, element: &Node, layout_ctx: &mut LayoutCtx) {
+    fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         for staff_details in element
             .children()
             .filter(|n| n.has_tag_name("staff-details"))
@@ -148,36 +154,42 @@ impl LayoutContextVisitor {
                     .attribute("number")
                     .and_then(|s| s.parse::<u32>().ok())
                 {
-                    layout_ctx.staff.explicitly_hidden.insert(num);
-                    layout_ctx.staff.explicitly_shown.remove(&num);
+                    ctx.layout_ctx.staff.explicitly_hidden.insert(num);
+                    ctx.layout_ctx.staff.explicitly_shown.remove(&num);
                 } else {
-                    layout_ctx.staff.visibility = Visibility::Hidden;
+                    ctx.layout_ctx.staff.visibility = Visibility::Hidden;
                 }
             }
 
             let restore = print_object == "yes";
             if restore {
-                layout_ctx.staff.visibility = Visibility::Shown;
+                ctx.layout_ctx.staff.visibility = Visibility::Shown;
 
                 if let Some(num) = staff_details
                     .attribute("number")
                     .and_then(|s| s.parse::<u32>().ok())
                 {
-                    layout_ctx.staff.explicitly_hidden.remove(&num);
-                    layout_ctx.staff.explicitly_shown.insert(num);
+                    ctx.layout_ctx.staff.explicitly_hidden.remove(&num);
+                    ctx.layout_ctx.staff.explicitly_shown.insert(num);
                 }
             }
         }
     }
 
-    pub fn enter_note(&mut self, element: &Node, layout_ctx: &mut LayoutCtx) {
+    fn enter_note(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         if let Some(staff) = element
             .children()
             .find(|n| n.has_tag_name("staff"))
             .and_then(|n| n.text())
             .and_then(|s| s.parse::<u32>().ok())
         {
-            layout_ctx.staff.number = staff;
+            ctx.layout_ctx.staff.number = staff;
         }
     }
+
+    fn exit_measure(&mut self, ctx: &mut WalkerCtx) {}
+
+    fn exit_part(&mut self, ctx: &mut WalkerCtx) {}
+
+    fn exit(&mut self, ctx: &mut WalkerCtx) {}
 }
