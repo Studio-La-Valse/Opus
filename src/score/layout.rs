@@ -144,7 +144,7 @@ impl Layout {
     }
 
     pub fn get_margins(&self, page_number: u32) -> PageMargins {
-        let is_even = page_number % 2 == 0;
+        let is_even = page_number.is_multiple_of(2);
 
         if is_even {
             self.page_margins_even

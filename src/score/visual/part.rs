@@ -13,7 +13,6 @@ impl Part {
         match visibility {
             Visibility::Auto => {
                 // Auto means: do nothing
-                return;
             }
 
             Visibility::Hidden | Visibility::Shown => {
