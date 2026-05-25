@@ -1,5 +1,5 @@
 use crate::Visitor;
-use crate::score::layout::{Layout, PageMargins, Part, UserLayout};
+use crate::score::layout::{PageMargins, Part};
 use crate::xml::utils::xml::N;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;

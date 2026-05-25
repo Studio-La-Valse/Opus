@@ -1,7 +1,7 @@
 use roxmltree::Node;
 
 use crate::Visitor;
-use crate::score::layout_ctx::{LayoutCtx, Visibility};
+use crate::score::layout_ctx::Visibility;
 use crate::xml::walker_ctx::WalkerCtx;
 
 pub struct LayoutContextVisitor {}
