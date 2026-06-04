@@ -1,8 +1,10 @@
-[package]
-name = "opus"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = [
+    "lib",
+    "app",
+    "wasm"
+]
+resolver = "3"
 
-[dependencies]
-clap = { version = "4.6.1", features = ["derive"] }
+[workspace.dependencies]
 roxmltree = "0.21.1"
