@@ -156,7 +156,12 @@ impl Content for Part {
 
         result.extend(self.measures.values().map(|m| m as &dyn Content));
 
-        result.extend(self.staves.values().filter(|s| !s.hidden).map(|s| s as &dyn Content));
+        result.extend(
+            self.staves
+                .values()
+                .filter(|s| !s.hidden)
+                .map(|s| s as &dyn Content),
+        );
 
         result
     }

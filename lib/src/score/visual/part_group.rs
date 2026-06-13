@@ -1,11 +1,11 @@
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::layout_ctx::Visibility;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
 use std::collections::BTreeMap;
-use crate::layout_ctx::Visibility;
 
 #[derive(Default)]
 pub struct PartGroup {

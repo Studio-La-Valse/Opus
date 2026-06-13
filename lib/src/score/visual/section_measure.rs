@@ -35,9 +35,14 @@ impl Content for SectionMeasure {
         let stroke_color = Color::BLACK;
         let stroke_width = 1.;
 
-        let right_line = Line { start: self.xy.mv(self.width, 0.), end: self.xy.mv(self.width, self.height), stroke_width, stroke_color };
+        let right_line = Line {
+            start: self.xy.mv(self.width, 0.),
+            end: self.xy.mv(self.width, self.height),
+            stroke_width,
+            stroke_color,
+        };
         elements.push(right_line.into());
-        
+
         elements
     }
 }

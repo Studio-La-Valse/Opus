@@ -1,6 +1,6 @@
 use crate::core::xy::XY;
-use crate::drawable::element::Element;
 use crate::drawable::content::Content;
+use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 
 #[derive(Default)]

@@ -1,13 +1,13 @@
+use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::drawable::elements::line::Line;
+use crate::layout_ctx::Visibility;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
 use std::collections::BTreeMap;
-use crate::color::Color;
-use crate::drawable::elements::line::Line;
-use crate::layout_ctx::Visibility;
 
 #[derive(Default)]
 pub struct System {
@@ -147,7 +147,12 @@ impl Content for System {
         let stroke_color = Color::BLACK;
         let stroke_width = 1.;
 
-        let left_line = Line { start: self.xy, end: self.xy.mv(0., self.height), stroke_width, stroke_color };
+        let left_line = Line {
+            start: self.xy,
+            end: self.xy.mv(0., self.height),
+            stroke_width,
+            stroke_color,
+        };
         elements.push(left_line.into());
 
         // no right line, that is drawn by section measures.

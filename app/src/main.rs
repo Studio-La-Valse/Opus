@@ -1,9 +1,8 @@
-use std::fs;
 use clap::Parser;
-use lib::drawable::element::{to_svg, Element};
+use lib::drawable::bfs_iter::bfs_elements;
+use lib::drawable::element::{Element, to_svg};
 use lib::layout::{Layout, UserLayout};
 use lib::layout_ctx::LayoutCtx;
-use lib::drawable::bfs_iter::bfs_elements;
 use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
@@ -14,6 +13,7 @@ use lib::walker::Walker;
 use lib::walker_ctx::WalkerCtx;
 use lib::xy::XY;
 use roxmltree::{Document, ParsingOptions};
+use std::fs;
 use std::fs::read_to_string;
 use std::time::Instant;
 

@@ -24,7 +24,7 @@ impl From<Rect> for Element {
 pub fn to_svg(elements: &[Element]) -> String {
     let (min_x, min_y, max_x, max_y) = compute_bounds(elements);
 
-    let width  = max_x - min_x;
+    let width = max_x - min_x;
     let height = max_y - min_y;
 
     let mut out = String::new();
@@ -93,4 +93,3 @@ pub fn compute_bounds(elements: &[Element]) -> (f32, f32, f32, f32) {
 
     (min_x, min_y, max_x, max_y)
 }
-

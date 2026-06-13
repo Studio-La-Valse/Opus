@@ -2,12 +2,12 @@ use crate::core::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::score::layout::PageMargins;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::system::System;
 use std::collections::BTreeMap;
-use crate::drawable::elements::line::Line;
 
 pub struct Page {
     pub number: u32,
@@ -25,7 +25,7 @@ pub struct Page {
 impl Page {}
 
 impl Layoutable for Page {
-    fn measure(&mut self, available: &XY           ) {
+    fn measure(&mut self, available: &XY) {
         for (_idx, system) in self.systems.iter_mut() {
             system.measure(available);
         }
@@ -81,13 +81,18 @@ impl Content for Page {
         };
         elements.push(rect.into());
 
-        let stroke_color = Color { a: 0.5, r: 0, g: 0, b: 0};
+        let stroke_color = Color {
+            a: 0.5,
+            r: 0,
+            g: 0,
+            b: 0,
+        };
         let stroke_width = 0.5;
         let left = Line {
             start: self.xy.mv(self.margins.left, 0.),
             end: self.xy.mv(self.margins.left, self.height),
             stroke_width,
-            stroke_color
+            stroke_color,
         };
         elements.push(left.into());
 
@@ -95,7 +100,7 @@ impl Content for Page {
             start: self.xy.mv(self.width - self.margins.right, 0.),
             end: self.xy.mv(self.width - self.margins.right, self.height),
             stroke_width,
-            stroke_color
+            stroke_color,
         };
         elements.push(right.into());
 
@@ -103,7 +108,7 @@ impl Content for Page {
             start: self.xy.mv(0., self.margins.top),
             end: self.xy.mv(self.width, self.margins.top),
             stroke_width,
-            stroke_color
+            stroke_color,
         };
         elements.push(top.into());
 
@@ -111,7 +116,7 @@ impl Content for Page {
             start: self.xy.mv(0., self.height - self.margins.bottom),
             end: self.xy.mv(self.width, self.height - self.margins.bottom),
             stroke_width,
-            stroke_color
+            stroke_color,
         };
         elements.push(bottom.into());
 

@@ -1,11 +1,11 @@
+use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::drawable::elements::line::Line;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
-use crate::color::Color;
-use crate::drawable::elements::line::Line;
 
 #[derive(Default)]
 pub struct Staff {
@@ -61,20 +61,36 @@ impl Content for Staff {
             return elements;
         }
 
-        let mut start = XY { x: self.xy.x, y: self.xy.y };
-        let mut end = XY { x: self.xy.x + self.width, y: self.xy.y };
+        let mut start = XY {
+            x: self.xy.x,
+            y: self.xy.y,
+        };
+        let mut end = XY {
+            x: self.xy.x + self.width,
+            y: self.xy.y,
+        };
 
         let stroke_color = Color::BLACK;
         let stroke_width = 1.;
 
         for _i in 0..5 {
-
-            let line = Line { start, end, stroke_color, stroke_width };
+            let line = Line {
+                start,
+                end,
+                stroke_color,
+                stroke_width,
+            };
 
             elements.push(line.into());
 
-            start = XY { x: start.x, y: start.y + 10. };
-            end = XY { x: end.x, y: end.y + 10. };
+            start = XY {
+                x: start.x,
+                y: start.y + 10.,
+            };
+            end = XY {
+                x: end.x,
+                y: end.y + 10.,
+            };
         }
 
         elements
