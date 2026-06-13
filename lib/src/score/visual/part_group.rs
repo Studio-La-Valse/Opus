@@ -4,19 +4,40 @@ use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use crate::layout_ctx::Visibility;
 
 #[derive(Default)]
 pub struct PartGroup {
-    pub parts: HashMap<String, Part>,
-    pub measures: HashMap<u32, PartGroupMeasure>,
+    pub parts: BTreeMap<String, Part>,
+    pub measures: BTreeMap<u32, PartGroupMeasure>,
 
     pub xy: XY,
     pub width: f32,
     pub height: f32,
 }
 
-impl PartGroup {}
+impl PartGroup {
+    pub fn first_visible_staff_distance(&self) -> f32 {
+        let mut dist = 0.;
+        let mut found = false;
+
+        for (_idx, part) in self.parts.iter() {
+            if found {
+                break;
+            }
+
+            if part.visibility == Visibility::Hidden {
+                continue;
+            }
+
+            dist = part.first_visible_staff_distance();
+            found = true;
+        }
+
+        dist
+    }
+}
 
 impl Layoutable for PartGroup {
     fn measure(&mut self, _: &XY) {
@@ -51,7 +72,7 @@ impl Layoutable for PartGroup {
         let mut _origin = self.xy;
         for (_idx, part) in self.parts.iter_mut() {
             part.arrange(&_origin);
-            _origin.mv(0., part.height);
+            _origin = _origin.mv(0., part.height);
         }
     }
 }

@@ -5,10 +5,10 @@ use crate::score::visual::staff_measure::StaffMeasure;
 use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub struct ContentVisitor {
-    pub staff_measures: HashMap<u32, StaffMeasure>,
+    pub staff_measures: BTreeMap<u32, StaffMeasure>,
 }
 
 impl ContentVisitor {}
@@ -67,7 +67,7 @@ impl Visitor for ContentVisitor {
                 color: _ctx.layout.page_color,
                 foreground: _ctx.layout.foreground_color,
                 margins: _ctx.layout.get_margins(page_number),
-                systems: HashMap::new(),
+                systems: BTreeMap::new(),
             });
 
         // get or create the system on the page
@@ -111,7 +111,7 @@ impl Visitor for ContentVisitor {
         }
 
         // implement the collected staff measures
-        for (idx, staff_measure) in self.staff_measures.drain() {
+        while let Some((idx, staff_measure)) = self.staff_measures.pop_first() {
             let staff = part.staves.get_mut(&idx).unwrap();
             staff.measures.insert(measure_number, staff_measure);
         }

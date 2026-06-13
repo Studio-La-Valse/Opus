@@ -3,7 +3,9 @@ use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::staff_measure::StaffMeasure;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use crate::color::Color;
+use crate::drawable::elements::line::Line;
 
 #[derive(Default)]
 pub struct Staff {
@@ -11,7 +13,7 @@ pub struct Staff {
     pub width: f32,
     pub height: f32,
 
-    pub measures: HashMap<u32, StaffMeasure>,
+    pub measures: BTreeMap<u32, StaffMeasure>,
 
     pub hidden: bool,
     pub distance_specified: Option<f32>,
@@ -24,12 +26,13 @@ impl Staff {
 }
 
 impl Layoutable for Staff {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, _available: &XY) {
         self.height = f32::from(Self::SIZE);
+        self.width = 0.;
+
         if self.hidden {
             self.height = 0.;
         }
-        self.width = available.x;
 
         for (_idx, measure) in self.measures.iter_mut() {
             let available = &XY {
@@ -52,6 +55,28 @@ impl Content for Staff {
     }
 
     fn elements(&self) -> Vec<Element> {
-        vec![]
+        let mut elements: Vec<Element> = Vec::new();
+
+        if self.hidden {
+            return elements;
+        }
+
+        let mut start = XY { x: self.xy.x, y: self.xy.y };
+        let mut end = XY { x: self.xy.x + self.width, y: self.xy.y };
+
+        let stroke_color = Color::BLACK;
+        let stroke_width = 1.;
+
+        for _i in 0..5 {
+
+            let line = Line { start, end, stroke_color, stroke_width };
+
+            elements.push(line.into());
+
+            start = XY { x: start.x, y: start.y + 10. };
+            end = XY { x: end.x, y: end.y + 10. };
+        }
+
+        elements
     }
 }

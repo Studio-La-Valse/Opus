@@ -1,15 +1,18 @@
 use crate::core::xy::XY;
-use crate::score::drawable::content::Content;
-use crate::score::drawable::element::Element;
+use crate::drawable::content::Content;
+use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use crate::color::Color;
+use crate::drawable::elements::line::Line;
+use crate::layout_ctx::Visibility;
 
 #[derive(Default)]
 pub struct System {
-    pub sections: HashMap<u32, Section>,
-    pub measures: HashMap<u32, SystemMeasure>,
+    pub sections: BTreeMap<u32, Section>,
+    pub measures: BTreeMap<u32, SystemMeasure>,
 
     pub xy: XY,
     pub width: f32,
@@ -47,6 +50,43 @@ impl System {
             }
         }
     }
+
+    fn handle_first_visible_staff(&mut self) {
+        let mut found: bool = false;
+
+        for (_idx, section) in self.sections.iter_mut() {
+            if found {
+                break;
+            }
+
+            for (_idx, part_group) in section.part_groups.iter_mut() {
+                if found {
+                    break;
+                }
+
+                for (_idx, part) in part_group.parts.iter_mut() {
+                    if found {
+                        break;
+                    }
+
+                    if part.visibility == Visibility::Hidden {
+                        continue;
+                    }
+
+                    for (_idx, staff) in part.staves.iter_mut() {
+                        if staff.hidden {
+                            continue;
+                        }
+
+                        // first visible staff found.
+                        staff.distance_final = 0.;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl Layoutable for System {
@@ -55,6 +95,7 @@ impl Layoutable for System {
         self.height = 0.;
 
         self.consolidate_measure_widths();
+        self.handle_first_visible_staff();
 
         for (_idx, section) in self.sections.iter_mut() {
             let available = XY::INFINITE;
@@ -84,7 +125,7 @@ impl Layoutable for System {
         let mut _origin = self.xy;
         for (_idx, section) in self.sections.iter_mut() {
             section.arrange(&_origin);
-            _origin.mv(0., section.height);
+            _origin = _origin.mv(0., section.height);
         }
     }
 }
@@ -101,6 +142,16 @@ impl Content for System {
     }
 
     fn elements(&self) -> Vec<Element> {
-        vec![]
+        let mut elements: Vec<Element> = Vec::new();
+
+        let stroke_color = Color::BLACK;
+        let stroke_width = 1.;
+
+        let left_line = Line { start: self.xy, end: self.xy.mv(0., self.height), stroke_width, stroke_color };
+        elements.push(left_line.into());
+
+        // no right line, that is drawn by section measures.
+
+        elements
     }
 }

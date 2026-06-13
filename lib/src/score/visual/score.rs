@@ -1,13 +1,13 @@
 use crate::core::xy::XY;
-use crate::score::drawable::content::Content;
-use crate::score::drawable::element::Element;
+use crate::drawable::content::Content;
+use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::page::Page;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub struct Score {
-    pub pages: HashMap<u32, Page>,
+    pub pages: BTreeMap<u32, Page>,
 }
 
 impl Score {}
@@ -25,7 +25,7 @@ impl Layoutable for Score {
         for (_idx, page) in self.pages.iter_mut() {
             page.arrange(&_origin);
             _origin = _origin.mv(page.width, 0.);
-            _origin = _origin.mv(10., 0.);
+            _origin = _origin.mv(200., 0.);
         }
     }
 }

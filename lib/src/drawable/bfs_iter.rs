@@ -1,5 +1,5 @@
-use crate::score::drawable::content::Content;
-use crate::score::drawable::element::Element;
+use crate::drawable::content::Content;
+use crate::drawable::element::Element;
 use std::collections::VecDeque;
 
 pub struct BfsIter<'a> {

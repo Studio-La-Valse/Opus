@@ -1,6 +1,6 @@
 use crate::core::xy::XY;
 use crate::drawable::element::Element;
-use crate::score::drawable::content::Content as _content;
+use crate::drawable::content::Content as _content;
 use crate::score::visual::content::Content;
 use crate::score::visual::layoutable::Layoutable;
 

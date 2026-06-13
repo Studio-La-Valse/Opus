@@ -1,8 +1,9 @@
+use std::fs;
 use clap::Parser;
-use lib::drawable::element::Element;
+use lib::drawable::element::{to_svg, Element};
 use lib::layout::{Layout, UserLayout};
 use lib::layout_ctx::LayoutCtx;
-use lib::score::drawable::bfs_iter::bfs_elements;
+use lib::drawable::bfs_iter::bfs_elements;
 use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
@@ -31,6 +32,10 @@ fn main() {
     let data = read_to_string(file).expect("Something went wrong reading the file");
 
     let _elements = run(data);
+
+    let svg = to_svg(&_elements);
+
+    fs::write("./svg.svg", svg).unwrap();
 
     let elapsed_time = time.elapsed();
     println!("Elapsed: {}ms", elapsed_time.as_millis())

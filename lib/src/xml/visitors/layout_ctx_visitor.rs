@@ -154,16 +154,19 @@ impl Visitor for LayoutContextVisitor {
                     .attribute("number")
                     .and_then(|s| s.parse::<u32>().ok())
                 {
+                    // if a stuff number is specified, hide the staff.
                     ctx.layout_ctx.staff.explicitly_hidden.insert(num);
                     ctx.layout_ctx.staff.explicitly_shown.remove(&num);
                 } else {
-                    ctx.layout_ctx.staff.visibility = Visibility::Hidden;
+                    // if not specified, hide the entire part.
+                    ctx.layout_ctx.part_hidden_specified = Visibility::Hidden;
                 }
             }
 
             let restore = print_object == "yes";
             if restore {
-                ctx.layout_ctx.staff.visibility = Visibility::Shown;
+                // if any staff is printed, set part visibility to shown.
+                ctx.layout_ctx.part_hidden_specified = Visibility::Shown;
 
                 if let Some(num) = staff_details
                     .attribute("number")

@@ -1,4 +1,4 @@
-use crate::score::drawable::element::Element;
+use crate::drawable::element::Element;
 
 pub trait Content {
     fn content(&self) -> Vec<&dyn Content>;

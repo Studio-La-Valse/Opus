@@ -1,5 +1,5 @@
 use crate::core::color::Color;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Copy, Clone)]
 pub struct Defaults {
@@ -53,7 +53,7 @@ pub struct Part {
 #[derive(Default, Clone)]
 pub struct Section {
     pub brace: Option<String>,
-    pub groups: HashMap<u32, PartGroup>,
+    pub groups: BTreeMap<u32, PartGroup>,
 }
 
 #[derive(Default, Clone)]
@@ -86,8 +86,8 @@ pub struct Layout {
     pub bar_line_light_thickness: f32,
     pub bar_line_heavy_thickness: f32,
 
-    pub parts: HashMap<String, Part>,
-    pub sections: HashMap<u32, Section>,
+    pub parts: BTreeMap<String, Part>,
+    pub sections: BTreeMap<u32, Section>,
 }
 
 impl Default for Layout {
@@ -115,8 +115,8 @@ impl Default for Layout {
             bar_line_heavy_thickness: 5.,
             bar_line_light_thickness: 1.875,
 
-            parts: HashMap::new(),
-            sections: HashMap::new(),
+            parts: BTreeMap::new(),
+            sections: BTreeMap::new(),
         }
     }
 }

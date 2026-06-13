@@ -1,9 +1,9 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Visibility {
     #[default]
-    Auto,
+    Unset,
     Hidden,
     Shown,
 }
@@ -25,7 +25,7 @@ pub struct SystemInfo {
 #[derive(Debug, Clone)]
 pub struct StaffInfo {
     pub number: u32,
-    pub distances: HashMap<u32, f32>,
+    pub distances: BTreeMap<u32, f32>,
     pub visibility: Visibility,
     pub explicitly_hidden: HashSet<u32>,
     pub explicitly_shown: HashSet<u32>,
@@ -61,7 +61,7 @@ impl LayoutCtx {
 
         self.staff.distances.clear();
 
-        self.part_hidden_specified = Visibility::Auto;
+        self.part_hidden_specified = Visibility::Unset;
         self.staff.explicitly_hidden.clear();
         self.staff.explicitly_shown.clear();
     }
@@ -71,7 +71,7 @@ impl Default for LayoutCtx {
     fn default() -> Self {
         LayoutCtx {
             part_id: "".to_string(),
-            part_hidden_specified: Visibility::Auto,
+            part_hidden_specified: Visibility::Unset,
             page: PageInfo { page_number: 1 },
             system: SystemInfo {
                 index: 0,
@@ -82,8 +82,8 @@ impl Default for LayoutCtx {
             },
             staff: StaffInfo {
                 number: 1,
-                distances: HashMap::new(),
-                visibility: Visibility::Auto,
+                distances: BTreeMap::new(),
+                visibility: Visibility::Unset,
                 explicitly_hidden: HashSet::new(),
                 explicitly_shown: HashSet::new(),
             },
