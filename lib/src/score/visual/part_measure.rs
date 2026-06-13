@@ -2,6 +2,7 @@ use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
+use crate::visual::element::ScoreElement;
 
 #[derive(Default)]
 pub struct PartMeasure {
@@ -22,6 +23,12 @@ impl PartMeasure {
             height: 0.,
             origin: XY::ZERO,
         }
+    }
+}
+
+impl ScoreElement for PartMeasure {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        vec![]
     }
 }
 

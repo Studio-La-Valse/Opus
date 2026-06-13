@@ -4,12 +4,16 @@ use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
+use crate::layout::{Layout, UserLayout};
 use crate::score::layout::PageMargins;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::system::System;
+use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
 pub struct Page {
+    pub systems: BTreeMap<u32, System>,
+
     pub number: u32,
 
     pub xy: XY,
@@ -19,10 +23,34 @@ pub struct Page {
     pub margins: PageMargins,
     pub color: Color,
     pub foreground: Color,
-    pub systems: BTreeMap<u32, System>,
 }
 
 impl Page {}
+
+impl ScoreElement for Page {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        for (_idx, staff) in self.systems.iter_mut() {
+            result.push(staff);
+        }
+
+        result
+    }
+
+    fn apply_layout(&mut self, layout: &Layout, user_layout: &UserLayout) {
+        self.color = layout.page_color;
+
+        let user_page_color = user_layout.page_color;
+        if let Some(user_page_color) = user_page_color {
+            self.color = user_page_color;
+        }
+
+        for child in self.children() {
+            child.apply_layout(layout, user_layout);
+        }
+    }
+}
 
 impl Layoutable for Page {
     fn measure(&mut self, available: &XY) {
@@ -75,17 +103,15 @@ impl Content for Page {
             xy: self.xy,
             width: self.width,
             height: self.height,
-            color: Color::WHITE,
-            stroke_color: Color::BLACK,
+            color: self.color,
+            stroke_color: self.foreground,
             stroke_width: 0.01,
         };
         elements.push(rect.into());
 
         let stroke_color = Color {
             a: 0.5,
-            r: 0,
-            g: 0,
-            b: 0,
+            ..self.foreground
         };
         let stroke_width = 0.5;
         let left = Line {

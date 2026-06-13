@@ -5,6 +5,7 @@ use crate::layout_ctx::Visibility;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
+use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -36,6 +37,22 @@ impl PartGroup {
         }
 
         dist
+    }
+}
+
+impl ScoreElement for PartGroup {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        for (_idx, staff) in self.parts.iter_mut() {
+            result.push(staff);
+        }
+
+        for (_idx, measure) in self.measures.iter_mut() {
+            result.push(measure);
+        }
+
+        result
     }
 }
 

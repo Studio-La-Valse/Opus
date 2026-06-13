@@ -2,6 +2,7 @@ use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
+use crate::visual::element::ScoreElement;
 
 #[derive(Default)]
 pub struct PartGroupMeasure {
@@ -11,6 +12,12 @@ pub struct PartGroupMeasure {
 }
 
 impl PartGroupMeasure {}
+
+impl ScoreElement for PartGroupMeasure {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        vec![]
+    }
+}
 
 impl Layoutable for PartGroupMeasure {
     fn measure(&mut self, available: &XY) {

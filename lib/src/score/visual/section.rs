@@ -4,6 +4,7 @@ use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::section_measure::SectionMeasure;
+use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -31,6 +32,22 @@ impl Section {
         }
 
         dist
+    }
+}
+
+impl ScoreElement for Section {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        for (_idx, staff) in self.part_groups.iter_mut() {
+            result.push(staff);
+        }
+
+        for (_idx, measure) in self.measures.iter_mut() {
+            result.push(measure);
+        }
+
+        result
     }
 }
 

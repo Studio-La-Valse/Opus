@@ -91,9 +91,7 @@ impl Visitor for LayoutVisitor {
         }
     }
 
-    fn exit_defaults(&mut self, ctx: &mut WalkerCtx) {
-        ctx.layout.apply_user_layout(ctx.user_layout);
-    }
+    fn exit_defaults(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn enter_part_list(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         ctx.layout.parts.clear();

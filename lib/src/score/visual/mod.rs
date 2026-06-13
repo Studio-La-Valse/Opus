@@ -1,4 +1,5 @@
 pub mod content;
+pub mod element;
 pub mod layoutable;
 pub mod note;
 pub mod page;

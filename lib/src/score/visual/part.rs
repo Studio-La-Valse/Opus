@@ -5,6 +5,7 @@ use crate::score::layout_ctx::Visibility;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
+use crate::visual::element::ScoreElement;
 use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default)]
@@ -92,6 +93,22 @@ impl Part {
         }
 
         dist
+    }
+}
+
+impl ScoreElement for Part {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        for (_idx, staff) in self.staves.iter_mut() {
+            result.push(staff);
+        }
+
+        for (_idx, measure) in self.measures.iter_mut() {
+            result.push(measure);
+        }
+
+        result
     }
 }
 

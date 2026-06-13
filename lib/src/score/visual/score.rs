@@ -3,6 +3,7 @@ use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::page::Page;
+use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -11,6 +12,18 @@ pub struct Score {
 }
 
 impl Score {}
+
+impl ScoreElement for Score {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        for (_idx, staff) in self.pages.iter_mut() {
+            result.push(staff);
+        }
+
+        result
+    }
+}
 
 impl Layoutable for Score {
     fn measure(&mut self, available: &XY) {

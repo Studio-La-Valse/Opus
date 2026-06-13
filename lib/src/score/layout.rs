@@ -122,27 +122,6 @@ impl Default for Layout {
 }
 
 impl Layout {
-    pub fn apply_user_layout(&mut self, user_layout: &UserLayout) {
-        self.page_color = user_layout.page_color.unwrap_or(self.page_color);
-        self.foreground_color = user_layout
-            .foreground_color
-            .unwrap_or(self.foreground_color);
-
-        self.staff_line_thickness = user_layout
-            .staff_line_thickness
-            .unwrap_or(self.staff_line_thickness);
-        self.bar_line_heavy_thickness = user_layout
-            .bar_line_heavy_thickness
-            .unwrap_or(self.bar_line_light_thickness);
-        self.bar_line_light_thickness = user_layout
-            .bar_line_light_thickness
-            .unwrap_or(self.bar_line_light_thickness);
-
-        self.page_margins_both = user_layout.page_margins_both.or(self.page_margins_both);
-        self.page_margins_even = user_layout.page_margins_even.or(self.page_margins_even);
-        self.page_margins_odd = user_layout.page_margins_odd.or(self.page_margins_odd);
-    }
-
     pub fn get_margins(&self, page_number: u32) -> PageMargins {
         let is_even = page_number.is_multiple_of(2);
 
@@ -166,8 +145,4 @@ pub struct UserLayout {
     pub staff_line_thickness: Option<f32>,
     pub bar_line_light_thickness: Option<f32>,
     pub bar_line_heavy_thickness: Option<f32>,
-
-    pub page_margins_both: Option<PageMargins>,
-    pub page_margins_even: Option<PageMargins>,
-    pub page_margins_odd: Option<PageMargins>,
 }

@@ -3,6 +3,7 @@ use crate::drawable::content::Content as _content;
 use crate::drawable::element::Element;
 use crate::score::visual::content::Content;
 use crate::score::visual::layoutable::Layoutable;
+use crate::visual::element::ScoreElement;
 
 #[derive(Default)]
 pub struct StaffMeasure {
@@ -14,6 +15,12 @@ pub struct StaffMeasure {
 }
 
 impl StaffMeasure {}
+
+impl ScoreElement for StaffMeasure {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        vec![]
+    }
+}
 
 impl Layoutable for StaffMeasure {
     fn measure(&mut self, available: &XY) {

@@ -3,10 +3,12 @@ use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
+use crate::layout::{Layout, UserLayout};
 use crate::layout_ctx::Visibility;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
+use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -17,6 +19,8 @@ pub struct System {
     pub xy: XY,
     pub width: f32,
     pub height: f32,
+
+    pub color: Color,
 
     pub m_left: f32,
     pub m_right: f32,
@@ -89,6 +93,35 @@ impl System {
     }
 }
 
+impl ScoreElement for System {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        for (_idx, staff) in self.sections.iter_mut() {
+            result.push(staff);
+        }
+
+        for (_idx, measure) in self.measures.iter_mut() {
+            result.push(measure);
+        }
+
+        result
+    }
+
+    fn apply_layout(&mut self, layout: &Layout, user_layout: &UserLayout) {
+        self.color = layout.foreground_color;
+
+        let user_color = user_layout.foreground_color;
+        if let Some(user_page_color) = user_color {
+            self.color = user_page_color;
+        }
+
+        for child in self.children() {
+            child.apply_layout(layout, user_layout);
+        }
+    }
+}
+
 impl Layoutable for System {
     fn measure(&mut self, _: &XY) {
         self.width = 0.;
@@ -144,7 +177,7 @@ impl Content for System {
     fn elements(&self) -> Vec<Element> {
         let mut elements: Vec<Element> = Vec::new();
 
-        let stroke_color = Color::BLACK;
+        let stroke_color = self.color;
         let stroke_width = 1.;
 
         let left_line = Line {

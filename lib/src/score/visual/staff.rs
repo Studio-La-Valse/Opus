@@ -3,8 +3,10 @@ use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
+use crate::layout::{Layout, UserLayout};
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -15,6 +17,8 @@ pub struct Staff {
 
     pub measures: BTreeMap<u32, StaffMeasure>,
 
+    pub color: Color,
+
     pub hidden: bool,
     pub distance_specified: Option<f32>,
     pub distance_final: f32,
@@ -23,6 +27,28 @@ pub struct Staff {
 impl Staff {
     // 5 lines, 4 spaces, 10 tenths for each space according to MusicXML spec.
     pub const SIZE: i8 = 40;
+}
+
+impl ScoreElement for Staff {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        self.measures
+            .values_mut()
+            .map(|m| m as &mut dyn ScoreElement)
+            .collect()
+    }
+
+    fn apply_layout(&mut self, layout: &Layout, user_layout: &UserLayout) {
+        self.color = layout.foreground_color;
+
+        let user_color = user_layout.foreground_color;
+        if let Some(user_color) = user_color {
+            self.color = user_color;
+        }
+
+        for child in self.children() {
+            child.apply_layout(layout, user_layout);
+        }
+    }
 }
 
 impl Layoutable for Staff {
@@ -70,7 +96,7 @@ impl Content for Staff {
             y: self.xy.y,
         };
 
-        let stroke_color = Color::BLACK;
+        let stroke_color = self.color;
         let stroke_width = 1.;
 
         for _i in 0..5 {

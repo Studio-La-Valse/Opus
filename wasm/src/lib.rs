@@ -1,6 +1,6 @@
 use lib::drawable::bfs_iter::bfs_elements;
 use lib::drawable::element::Element;
-use lib::layout::{Layout, UserLayout};
+use lib::layout::Layout;
 use lib::layout_ctx::LayoutCtx;
 use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
@@ -61,7 +61,6 @@ pub fn compute_layout() {
             .expect("Document not loaded! Call load_xml first.");
 
         let mut layout_ctx = LayoutCtx::default();
-        let mut user_layout = UserLayout::default();
         let mut layout = Layout::default();
         let mut visual = Score::default();
 
@@ -72,7 +71,7 @@ pub fn compute_layout() {
                 staff_measures: Default::default(),
             });
 
-        let mut ctx = WalkerCtx::new(&mut user_layout, &mut layout, &mut layout_ctx, &mut visual);
+        let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual);
         Walker::new(visitor).walk(doc, &mut ctx);
 
         visual.measure(&XY::INFINITE);
