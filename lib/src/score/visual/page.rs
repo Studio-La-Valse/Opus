@@ -25,7 +25,7 @@ pub struct Page {
 impl Page {}
 
 impl Layoutable for Page {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY           ) {
         for (_idx, system) in self.systems.iter_mut() {
             system.measure(available);
         }
