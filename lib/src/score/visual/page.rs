@@ -40,10 +40,16 @@ impl ScoreElement for Page {
 
     fn apply_layout(&mut self, layout: &Layout, user_layout: &UserLayout) {
         self.color = layout.page_color;
+        self.foreground = layout.foreground_color;
 
         let user_page_color = user_layout.page_color;
         if let Some(user_page_color) = user_page_color {
             self.color = user_page_color;
+        }
+
+        let user_foreground_color = user_layout.foreground_color;
+        if let Some(user_foreground_color) = user_foreground_color {
+            self.foreground = user_foreground_color;
         }
 
         for child in self.children() {
