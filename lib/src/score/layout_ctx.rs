@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
+use crate::score::core::clef::Clef;
 
-#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Visibility {
     #[default]
     Unset,
@@ -8,12 +9,12 @@ pub enum Visibility {
     Shown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PageInfo {
     pub page_number: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SystemInfo {
     pub index: u32,
     pub margin_left: Option<f32>,
@@ -22,7 +23,7 @@ pub struct SystemInfo {
     pub distance_top: Option<f32>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct StaffInfo {
     pub number: u32,
     pub distances: BTreeMap<u32, f32>,
@@ -31,13 +32,13 @@ pub struct StaffInfo {
     pub explicitly_shown: HashSet<u32>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct MeasureInfo {
     pub number: u32,
     pub width: Option<f32>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct LayoutCtx {
     pub part_id: String,
     pub part_hidden_specified: Visibility,
@@ -45,6 +46,8 @@ pub struct LayoutCtx {
     pub system: SystemInfo,
     pub staff: StaffInfo,
     pub measure: MeasureInfo,
+
+    pub clef: BTreeMap<u32, Clef>,
 }
 
 impl LayoutCtx {
@@ -64,6 +67,8 @@ impl LayoutCtx {
         self.part_hidden_specified = Visibility::Unset;
         self.staff.explicitly_hidden.clear();
         self.staff.explicitly_shown.clear();
+
+        self.clef.clear();
     }
 }
 
@@ -91,6 +96,7 @@ impl Default for LayoutCtx {
                 number: 0,
                 width: None,
             },
+            clef: BTreeMap::new(),
         }
     }
 }

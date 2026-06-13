@@ -39,7 +39,7 @@ impl Visitor for LayoutVisitor {
                 bottom: pm.req_child("bottom-margin").req_f32(),
             };
 
-            match pm.req_attr("type") {
+            match pm.req_attribute("type") {
                 "both" => ctx.layout.page_margins_both = Some(margins),
                 "odd" => ctx.layout.page_margins_odd = Some(margins),
                 "even" => ctx.layout.page_margins_even = Some(margins),
@@ -49,7 +49,7 @@ impl Visitor for LayoutVisitor {
 
         if let Some(appearance) = element.children().find(|n| n.has_tag("appearance")) {
             for lw in appearance.children().filter(|n| n.has_tag("line-width")) {
-                let t = lw.req_attr("type");
+                let t = lw.req_attribute("type");
                 let v = lw.req_f32();
 
                 match t {
@@ -201,6 +201,14 @@ impl Visitor for LayoutVisitor {
     fn enter_print(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
+    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
+        
+    }
+
+    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
+        
+    }
 
     fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 

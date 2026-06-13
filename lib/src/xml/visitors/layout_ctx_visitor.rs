@@ -1,6 +1,7 @@
 use roxmltree::Node;
-
+use crate::score::core::clef::Clef;
 use crate::score::layout_ctx::Visibility;
+use crate::utils::xml::N;
 use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 
@@ -141,40 +142,57 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {
-        for staff_details in element
-            .children()
-            .filter(|n| n.has_tag_name("staff-details"))
-        {
-            let print_object = staff_details.attribute("print-object").unwrap_or("yes");
-
-            let is_hidden = print_object == "no";
-
-            if is_hidden {
-                if let Some(num) = staff_details
-                    .attribute("number")
-                    .and_then(|s| s.parse::<u32>().ok())
-                {
-                    // if a stuff number is specified, hide the staff.
-                    ctx.layout_ctx.staff.explicitly_hidden.insert(num);
-                    ctx.layout_ctx.staff.explicitly_shown.remove(&num);
-                } else {
-                    // if not specified, hide the entire part.
-                    ctx.layout_ctx.part_hidden_specified = Visibility::Hidden;
-                }
+        for node in element.children() {
+            if node.has_tag_name("staff-details") {
+                self.enter_staff_details(&node, ctx);
             }
 
-            let restore = print_object == "yes";
-            if restore {
-                // if any staff is printed, set part visibility to shown.
-                ctx.layout_ctx.part_hidden_specified = Visibility::Shown;
+            if node.has_tag_name("clef") {
+                self.enter_clef(&node, ctx);
+            }
+        }
+    }
 
-                if let Some(num) = staff_details
-                    .attribute("number")
-                    .and_then(|s| s.parse::<u32>().ok())
-                {
-                    ctx.layout_ctx.staff.explicitly_hidden.remove(&num);
-                    ctx.layout_ctx.staff.explicitly_shown.insert(num);
-                }
+    fn enter_clef(&mut self, element: &Node, ctx: &mut WalkerCtx) {
+        let staff = element.get_attribute("number").map(|s| s.parse::<u32>().unwrap()).unwrap_or(1);
+        let sign_node = element.req_child("sign");
+        let sign = sign_node.req_text();
+        let line = element.get_child("line").map(|l| l.req_i32());
+
+        let clef = Clef::parse(sign, line);
+        ctx.layout_ctx.clef.insert(staff, clef);
+    }
+
+    fn enter_staff_details(&mut self, element: &Node, ctx: &mut WalkerCtx) {
+        let print_object = element.attribute("print-object").unwrap_or("yes");
+
+        let is_hidden = print_object == "no";
+
+        if is_hidden {
+            if let Some(num) = element
+                .attribute("number")
+                .and_then(|s| s.parse::<u32>().ok())
+            {
+                // if a stuff number is specified, hide the staff.
+                ctx.layout_ctx.staff.explicitly_hidden.insert(num);
+                ctx.layout_ctx.staff.explicitly_shown.remove(&num);
+            } else {
+                // if not specified, hide the entire part.
+                ctx.layout_ctx.part_hidden_specified = Visibility::Hidden;
+            }
+        }
+
+        let restore = print_object == "yes";
+        if restore {
+            // if any staff is printed, set part visibility to shown.
+            ctx.layout_ctx.part_hidden_specified = Visibility::Shown;
+
+            if let Some(num) = element
+                .attribute("number")
+                .and_then(|s| s.parse::<u32>().ok())
+            {
+                ctx.layout_ctx.staff.explicitly_hidden.remove(&num);
+                ctx.layout_ctx.staff.explicitly_shown.insert(num);
             }
         }
     }

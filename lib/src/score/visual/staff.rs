@@ -72,6 +72,13 @@ impl Layoutable for Staff {
 
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
+
+        let mut _origin = self.xy;
+        for (_idx, measure) in self.measures.iter_mut() {
+            measure.arrange(&_origin);
+
+            _origin = _origin.mv(measure.width, 0.)
+        }
     }
 }
 

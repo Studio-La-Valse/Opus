@@ -6,6 +6,9 @@ use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
+use crate::score::core::pitch::Pitch;
+use crate::score::core::step::Step;
+use crate::utils::xml::N;
 
 pub struct ContentVisitor {
     pub staff_measures: BTreeMap<u32, StaffMeasure>,
@@ -34,12 +37,60 @@ impl Visitor for ContentVisitor {
 
     fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
-        let staff_idx = _ctx.layout_ctx.staff.number;
-        let staff_measure = self.staff_measures.entry(staff_idx).or_default();
+    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
 
-        let note = Note { staff: staff_idx };
-        staff_measure.content.push(Box::new(note));
+    }
+
+    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
+
+    }
+
+    fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        let staff_idx = ctx.layout_ctx.staff.number;
+        let staff_measure = self.staff_measures.entry(staff_idx).or_default();
+        let clef = ctx.layout_ctx.clef.get(&staff_idx).unwrap();
+
+        // Skip rests early
+        if node.children().any(|n| n.tag_name().name() == "rest") {
+            return;
+        }
+
+        // Parse default-x
+        let default_x: f32 = match node.get_attribute("default-x") {
+            Some(s) => s.parse().unwrap(),
+            None => return, // no position → ignore note
+        };
+
+        // Extract <pitch>
+        let pitch_node = match node.get_child("pitch") {
+            Some(n) => n,
+            None => return,
+        };
+
+        // Extract <step>
+        let step = {
+            let step_node = pitch_node.req_child("step");
+            let step_str = step_node.req_text();
+
+            let alter = pitch_node
+                .get_child("alter")
+                .map(|n| n.req_i32())
+                .unwrap_or(0);
+
+            Step::parse(step_str, alter)
+        };
+
+        // Extract <octave>
+        let octave = pitch_node.req_child("octave").req_i32();
+
+        // Build note
+        let pitch = Pitch { step, octave };
+
+        let staff_line = clef.line_index_at_pitch(&pitch);
+
+        let note = Note::new(pitch, default_x, staff_line);
+
+        staff_measure.notes.push(note);
     }
 
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {

@@ -110,8 +110,8 @@ impl Content for Page {
             width: self.width,
             height: self.height,
             color: self.color,
-            stroke_color: self.foreground,
-            stroke_width: 0.01,
+            stroke_color: Some(self.foreground),
+            stroke_width: Some(0.01),
         };
         elements.push(rect.into());
 
