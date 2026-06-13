@@ -1,7 +1,7 @@
+use lib::drawable::bfs_iter::bfs_elements;
 use lib::drawable::element::Element;
 use lib::layout::{Layout, UserLayout};
 use lib::layout_ctx::LayoutCtx;
-use lib::score::drawable::bfs_iter::bfs_elements;
 use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
