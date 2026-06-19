@@ -1,5 +1,6 @@
 use crate::core::color::Color;
 use std::collections::BTreeMap;
+use crate::smufl::smufl_font::SmuflFont;
 
 #[derive(Copy, Clone)]
 pub struct Defaults {
@@ -137,7 +138,6 @@ impl Layout {
     }
 }
 
-#[derive(Default)]
 pub struct UserLayout {
     pub page_color: Option<Color>,
     pub foreground_color: Option<Color>,
@@ -145,4 +145,20 @@ pub struct UserLayout {
     pub staff_line_thickness: Option<f32>,
     pub bar_line_light_thickness: Option<f32>,
     pub bar_line_heavy_thickness: Option<f32>,
+
+    pub font: SmuflFont,
+}
+
+impl UserLayout {
+    pub fn new (font: SmuflFont) -> UserLayout {
+        UserLayout {
+            font,
+
+            page_color: None,
+            foreground_color: None,
+            staff_line_thickness: None,
+            bar_line_light_thickness: None,
+            bar_line_heavy_thickness: None,
+        }
+    }
 }

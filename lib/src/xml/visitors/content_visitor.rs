@@ -1,14 +1,14 @@
 use crate::core::xy::XY;
+use crate::score::core::pitch::Pitch;
+use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::utils::xml::N;
 use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
-use crate::score::core::pitch::Pitch;
-use crate::score::core::step::Step;
-use crate::utils::xml::N;
 
 pub struct ContentVisitor {
     pub staff_measures: BTreeMap<u32, StaffMeasure>,
@@ -37,13 +37,9 @@ impl Visitor for ContentVisitor {
 
     fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
+    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    }
-
-    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
-
-    }
+    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx = ctx.layout_ctx.staff.number;

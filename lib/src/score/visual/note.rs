@@ -2,10 +2,10 @@ use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
-use crate::drawable::elements::rect::Rect;
 use crate::layout::{Layout, UserLayout};
 use crate::score::core::pitch::Pitch;
 use crate::score::visual::layoutable::Layoutable;
+use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::visual::element::ScoreElement;
 
 pub struct Note {
@@ -18,6 +18,8 @@ pub struct Note {
     pub staff_line: i32,
 
     pub color: Color,
+
+    pub glyph: Option<SmuflGlyph>,
 }
 
 impl Note {
@@ -25,11 +27,13 @@ impl Note {
         Note {
             xy: XY::default(),
             width: f32::default(),
-            height: f32:: default(),
+            height: f32::default(),
 
             pitch,
             default_x,
             staff_line,
+
+            glyph: None,
 
             color: Color::default(),
         }
@@ -51,6 +55,8 @@ impl ScoreElement for Note {
         for child in self.children() {
             child.apply_layout(_layout, _user_layout);
         }
+
+        self.glyph = Some(_user_layout.font.notehead_black())
     }
 }
 
@@ -74,14 +80,11 @@ impl Content for Note {
     fn elements(&self) -> Vec<Element> {
         let mut result: Vec<Element> = Vec::new();
 
-        let rect = Rect {
-            xy: self.xy,
-            width: self.width,
-            height: self.height,
-            color: self.color,
-            ..Default::default()
-        };
-        result.push(rect.into());
+        let glyph = self.glyph.as_ref().unwrap();
+        let text = glyph.as_text(self.color, self.xy);
+        let bbox = glyph.bbox;
+        
+        result.push(text.into());
 
         result
     }

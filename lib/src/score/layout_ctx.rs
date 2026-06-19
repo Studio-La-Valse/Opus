@@ -1,5 +1,5 @@
-use std::collections::{BTreeMap, HashSet};
 use crate::score::core::clef::Clef;
+use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Visibility {

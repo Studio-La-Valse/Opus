@@ -1,9 +1,9 @@
-use roxmltree::Node;
 use crate::score::core::clef::Clef;
 use crate::score::layout_ctx::Visibility;
 use crate::utils::xml::N;
 use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
+use roxmltree::Node;
 
 pub struct LayoutContextVisitor {}
 
@@ -154,7 +154,10 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn enter_clef(&mut self, element: &Node, ctx: &mut WalkerCtx) {
-        let staff = element.get_attribute("number").map(|s| s.parse::<u32>().unwrap()).unwrap_or(1);
+        let staff = element
+            .get_attribute("number")
+            .map(|s| s.parse::<u32>().unwrap())
+            .unwrap_or(1);
         let sign_node = element.req_child("sign");
         let sign = sign_node.req_text();
         let line = element.get_child("line").map(|l| l.req_i32());

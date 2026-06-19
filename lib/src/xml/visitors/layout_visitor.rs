@@ -202,13 +202,9 @@ impl Visitor for LayoutVisitor {
 
     fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
-        
-    }
+    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
-        
-    }
+    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 

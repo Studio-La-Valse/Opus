@@ -1,10 +1,8 @@
-﻿use crate::score::core::step::Step;
+use crate::score::core::step::Step;
 
 pub struct Pitch {
     pub step: Step,
-    pub octave: i32
+    pub octave: i32,
 }
 
-impl Pitch {
-
-}
+impl Pitch {}

@@ -1,5 +1,6 @@
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
+use crate::drawable::elements::text::Text;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -7,6 +8,7 @@ use serde::Serialize;
 pub enum Element {
     Line(Line),
     Rect(Rect),
+    Text(Text),
 }
 
 impl From<Line> for Element {
@@ -18,6 +20,12 @@ impl From<Line> for Element {
 impl From<Rect> for Element {
     fn from(r: Rect) -> Self {
         Element::Rect(r)
+    }
+}
+
+impl From<Text> for Element {
+    fn from(t: Text) -> Self {
+        Element::Text(t)
     }
 }
 
@@ -59,6 +67,17 @@ pub fn to_svg(elements: &[Element]) -> String {
                 w = r.width,
                 h = r.height,
             )),
+            Element::Text(t) => out.push_str(&format!(
+                r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" text-anchor="{ha}" dominant-baseline="{va}">{content}</text>"#,
+                x = t.xy.x,
+                y = t.xy.y,
+                fill = t.color.to_hex(),
+                fs = t.font_size,
+                ff = t.font,
+                ha = t.horizontal_alignment.to_svg(),
+                va = t.vertical_alignment.to_svg(),
+                content = xml_escape(&t.text),
+            )),
         }
     }
 
@@ -88,8 +107,23 @@ pub fn compute_bounds(elements: &[Element]) -> (f32, f32, f32, f32) {
                 max_x = max_x.max(r.xy.x + r.width);
                 max_y = max_y.max(r.xy.y + r.height);
             }
+            Element::Text(t) => {
+                min_x = min_x.min(t.xy.x);
+                min_y = min_y.min(t.xy.y);
+                max_x = max_x.max(t.xy.x);
+                max_y = max_y.max(t.xy.y);
+            }
         }
     }
 
     (min_x, min_y, max_x, max_y)
+}
+
+// Very small XML escape helper
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
 }

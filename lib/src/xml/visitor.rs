@@ -4,33 +4,33 @@ use roxmltree::Node;
 
 pub trait Visitor: Sized {
     fn enter(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_work(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_defaults(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn exit_defaults(&mut self, ctx: &mut WalkerCtx);
-    
+
     fn enter_part_list(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_part(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_measure(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_print(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx);
-   
+
     fn enter_clef(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_staff_details(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx);
-    
+
     fn exit_measure(&mut self, ctx: &mut WalkerCtx);
-    
+
     fn exit_part(&mut self, ctx: &mut WalkerCtx);
-    
+
     fn exit(&mut self, ctx: &mut WalkerCtx);
 
     fn add_callback<C: Visitor>(self, callback: C) -> Chain<Self, C> {
@@ -61,9 +61,9 @@ impl Visitor for DefaultVisitor {
 
     fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx){}
+    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx){}
+    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
@@ -120,12 +120,12 @@ impl<A: Visitor, B: Visitor> Visitor for Chain<A, B> {
         self.b.enter_attributes(node, ctx);
     }
 
-    fn enter_clef(&mut self, node: &Node, ctx: &mut WalkerCtx){
+    fn enter_clef(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         self.a.enter_clef(node, ctx);
         self.b.enter_clef(node, ctx);
     }
 
-    fn enter_staff_details(&mut self, node: &Node, ctx: &mut WalkerCtx){
+    fn enter_staff_details(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         self.a.enter_staff_details(node, ctx);
         self.b.enter_staff_details(node, ctx);
     }

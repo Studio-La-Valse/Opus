@@ -7,7 +7,7 @@ pub trait N<'a> {
     fn req_child(&self, name: &str) -> Node<'a, 'a>;
     fn req_f32(&self) -> f32;
     fn req_i32(&self) -> i32;
-    
+
     fn get_child(&self, name: &str) -> Option<Node<'a, 'a>>;
     fn get_attribute(&self, name: &str) -> Option<&str>;
 

@@ -18,16 +18,25 @@ use roxmltree::{Document, ParsingOptions};
 use std::fs;
 use std::fs::read_to_string;
 use std::time::Instant;
+use lib::smufl::smufl_font::SmuflFont;
 
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(long)]
     file: String,
+
+    #[arg(long)]
+    font: String,
+
+    #[arg(long)]
+    meta: String,
 }
 
 fn main() {
     let args = Args::parse();
     let file = args.file;
+    let font = args.font;
+    let meta = args.meta;
 
     let mut time = Instant::now();
 
@@ -64,6 +73,8 @@ fn main() {
     println!("Walking doc tree: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
+    let font = SmuflFont::new(font, &meta);
+
     let user_layout = UserLayout {
         page_color: Some(Color {
             a: 1.,
@@ -79,7 +90,7 @@ fn main() {
             b: 150,
         }),
 
-        .. UserLayout::default()
+        ..UserLayout::new(font)
     };
     visual.apply_layout(&layout, &user_layout);
 

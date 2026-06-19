@@ -18,7 +18,10 @@ impl StaffMeasure {}
 
 impl ScoreElement for StaffMeasure {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        self.notes.iter_mut().map(|n| n as &mut dyn ScoreElement).collect()
+        self.notes
+            .iter_mut()
+            .map(|n| n as &mut dyn ScoreElement)
+            .collect()
     }
 }
 
