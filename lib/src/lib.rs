@@ -5,7 +5,7 @@ pub mod score;
 pub use score::*;
 
 pub mod drawable;
-pub mod xml;
 pub mod smufl;
+pub mod xml;
 
 pub use xml::*;

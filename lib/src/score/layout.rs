@@ -1,6 +1,6 @@
 use crate::core::color::Color;
-use std::collections::BTreeMap;
 use crate::smufl::smufl_font::SmuflFont;
+use std::collections::BTreeMap;
 
 #[derive(Copy, Clone)]
 pub struct Defaults {
@@ -150,7 +150,7 @@ pub struct UserLayout {
 }
 
 impl UserLayout {
-    pub fn new (font: SmuflFont) -> UserLayout {
+    pub fn new(font: SmuflFont) -> UserLayout {
         UserLayout {
             font,
 

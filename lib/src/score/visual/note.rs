@@ -1,7 +1,9 @@
+use crate::bounding_box::BoundingBox;
 use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::drawable::elements::rect::Rect;
 use crate::layout::{Layout, UserLayout};
 use crate::score::core::pitch::Pitch;
 use crate::score::visual::layoutable::Layoutable;
@@ -66,7 +68,7 @@ impl Layoutable for Note {
         self.height = 10.;
     }
     fn arrange(&mut self, _origin: &XY) {
-        let d_y = self.staff_line as f32 * 5. - 5.;
+        let d_y = self.staff_line as f32 * 5.;
 
         self.xy = _origin.mv(self.default_x, d_y);
     }
@@ -80,11 +82,53 @@ impl Content for Note {
     fn elements(&self) -> Vec<Element> {
         let mut result: Vec<Element> = Vec::new();
 
-        let glyph = self.glyph.as_ref().unwrap();
-        let text = glyph.as_text(self.color, self.xy);
-        let bbox = glyph.bbox;
-        
-        result.push(text.into());
+        let glyph = self.glyph.as_ref();
+        if let Some(glyph) = glyph {
+            let text = glyph.as_text(self.color, self.xy);
+            let bbox = glyph.bbox;
+
+            result.push(text.into());
+
+            if let Some(bbox) = bbox {
+                let scaled = BoundingBox {
+                    x_min: bbox.x_min * 10.,
+                    y_min: bbox.y_min * 10.,
+                    x_max: bbox.x_max * 10.,
+                    y_max: bbox.y_max * 10.,
+                };
+
+                let translated = BoundingBox {
+                    x_min: scaled.x_min + self.xy.x,
+                    y_min: scaled.y_min + self.xy.y,
+                    x_max: scaled.x_max + self.xy.x,
+                    y_max: scaled.y_max + self.xy.y,
+                };
+
+                let rect = Rect {
+                    xy: XY {
+                        x: translated.x_min,
+                        y: translated.y_min,
+                    },
+                    width: translated.x_max - translated.x_min,
+                    height: translated.y_max - translated.y_min,
+                    color: Color::TRANSPARENT,
+                    stroke_width: Some(0.25),
+                    stroke_color: Some(self.color),
+                };
+
+                result.push(rect.into())
+            }
+        }
+
+        let origin = Rect {
+            xy: self.xy.mv(-1., -1.),
+            width: 2.,
+            height: 2.,
+            color: self.color,
+            stroke_color: None,
+            stroke_width: None,
+        };
+        result.push(origin.into());
 
         result
     }

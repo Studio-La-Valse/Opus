@@ -1,5 +1,5 @@
-﻿use serde::Deserialize;
 use crate::bounding_box::BoundingBox;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct BoundingBoxMetadata {
@@ -9,13 +9,13 @@ pub struct BoundingBoxMetadata {
     pub sw: [f32; 2],
 }
 
-impl Into<BoundingBox> for &BoundingBoxMetadata {
-    fn into(self) -> BoundingBox {
+impl From<&BoundingBoxMetadata> for BoundingBox {
+    fn from(value: &BoundingBoxMetadata) -> Self {
         BoundingBox {
-            x_min: self.sw[0],
-            y_min: self.sw[1],
-            x_max: self.ne[0],
-            y_max: self.ne[1],
+            x_min: value.sw[0],
+            y_min: value.sw[1],
+            x_max: value.ne[0],
+            y_max: value.ne[1],
         }
     }
 }

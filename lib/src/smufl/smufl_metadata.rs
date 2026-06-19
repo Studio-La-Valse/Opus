@@ -1,9 +1,8 @@
-﻿use std::collections::HashMap;
+use crate::smufl::glyph_boxes::GlyphBoxes;
 use serde::Deserialize;
-use crate::smufl::bounding_box_metadata::BoundingBoxMetadata;
 
 #[derive(Debug, Deserialize)]
 pub struct SmuflMetadata {
     #[serde(rename = "glyphBBoxes")]
-    pub glyph_bboxes: HashMap<String, BoundingBoxMetadata>,
+    pub glyph_boxes: GlyphBoxes,
 }

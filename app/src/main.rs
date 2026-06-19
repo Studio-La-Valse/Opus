@@ -4,6 +4,7 @@ use lib::drawable::bfs_iter::bfs_elements;
 use lib::drawable::element::{Element, to_svg};
 use lib::layout::{Layout, UserLayout};
 use lib::layout_ctx::LayoutCtx;
+use lib::smufl::smufl_font::SmuflFont;
 use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
@@ -18,7 +19,6 @@ use roxmltree::{Document, ParsingOptions};
 use std::fs;
 use std::fs::read_to_string;
 use std::time::Instant;
-use lib::smufl::smufl_font::SmuflFont;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -41,6 +41,7 @@ fn main() {
     let mut time = Instant::now();
 
     let data = read_to_string(file).expect("Something went wrong reading the file");
+    let font = SmuflFont::new(font, &meta);
 
     println!("Reading to string: {}ms", time.elapsed().as_millis());
     time = Instant::now();
@@ -72,8 +73,6 @@ fn main() {
 
     println!("Walking doc tree: {}ms", time.elapsed().as_millis());
     time = Instant::now();
-
-    let font = SmuflFont::new(font, &meta);
 
     let user_layout = UserLayout {
         page_color: Some(Color {

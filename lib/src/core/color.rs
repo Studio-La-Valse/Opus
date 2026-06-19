@@ -29,6 +29,12 @@ impl Color {
     };
 
     pub fn to_hex(&self) -> String {
-        format!("#{:02X}{:02X}{:02X}", self.r, self.g, self.b)
+        format!(
+            "#{:02X}{:02X}{:02X}{:02X}",
+            self.r,
+            self.g,
+            self.b,
+            (self.a * 255.) as i32
+        )
     }
 }
