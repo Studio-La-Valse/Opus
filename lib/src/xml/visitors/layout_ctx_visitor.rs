@@ -143,6 +143,22 @@ impl Visitor for LayoutContextVisitor {
 
     fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         for node in element.children() {
+            if node.has_tag_name("divisions") {
+                ctx.layout_ctx.divisions = node.req_u32();
+            }
+
+            if node.has_tag_name("time") {
+                for node in node.children() {
+                    if node.has_tag_name("beats") {
+                        ctx.layout_ctx.beats = node.req_u32();
+                    }
+
+                    if node.has_tag_name("beat-type") {
+                        ctx.layout_ctx.beat_type = node.req_u32();
+                    }
+                }
+            }
+
             if node.has_tag_name("staff-details") {
                 self.enter_staff_details(&node, ctx);
             }
@@ -201,14 +217,23 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn enter_note(&mut self, element: &Node, ctx: &mut WalkerCtx) {
-        if let Some(staff) = element
-            .children()
-            .find(|n| n.has_tag_name("staff"))
-            .and_then(|n| n.text())
-            .and_then(|s| s.parse::<u32>().ok())
-        {
-            ctx.layout_ctx.staff.number = staff;
+        for node in element.children() {
+            if node.has_tag_name("duration") {
+                ctx.layout_ctx.duration = node.req_u32()
+            }
+
+            if node.has_tag_name("voice") {
+                ctx.layout_ctx.voice = node.req_u32()
+            }
+
+            if node.has_tag_name("staff") {
+                ctx.layout_ctx.staff.number = node.req_u32();
+            }
         }
+    }
+
+    fn exit_note(&mut self, ctx: &mut WalkerCtx) {
+        ctx.layout_ctx.position += ctx.layout_ctx.duration;
     }
 
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}

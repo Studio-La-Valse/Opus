@@ -9,6 +9,7 @@ use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
+use crate::visual::staff_measure::ChordIndex;
 
 pub struct ContentVisitor {
     pub staff_measures: BTreeMap<u32, StaffMeasure>,
@@ -44,7 +45,6 @@ impl Visitor for ContentVisitor {
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx = ctx.layout_ctx.staff.number;
         let staff_measure = self.staff_measures.entry(staff_idx).or_default();
-        let clef = ctx.layout_ctx.clef.get(&staff_idx).unwrap();
 
         // Skip rests early
         if node.children().any(|n| n.tag_name().name() == "rest") {
@@ -82,12 +82,17 @@ impl Visitor for ContentVisitor {
         // Build note
         let pitch = Pitch { step, octave };
 
+        let clef = ctx.layout_ctx.clef.get(&staff_idx).unwrap();
         let staff_line = clef.line_index_at_pitch(&pitch);
 
         let note = Note::new(pitch, default_x, staff_line);
 
-        staff_measure.notes.push(note);
+        let position = ctx.layout_ctx.position;
+        let voice = ctx.layout_ctx.voice;
+        staff_measure.chords.entry(ChordIndex{position, voice}).or_default().notes.push(note);
     }
+
+    fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {
         let page_number = _ctx.layout_ctx.page.page_number;
@@ -141,6 +146,7 @@ impl Visitor for ContentVisitor {
 
         // get or create the part in this part group.
         let part = part_group.parts.entry(part_id).or_default();
+        part.ensure_staves(vec![1].into_iter().collect());
         part.set_visibility(_ctx.layout_ctx.part_hidden_specified);
         part.ensure_staves(self.staff_measures.keys().cloned().collect());
         part.hide_staves(&_ctx.layout_ctx.staff.explicitly_hidden);

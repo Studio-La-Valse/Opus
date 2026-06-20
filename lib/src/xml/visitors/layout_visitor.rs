@@ -208,6 +208,8 @@ impl Visitor for LayoutVisitor {
 
     fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
+    fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
+
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}

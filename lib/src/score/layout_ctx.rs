@@ -48,6 +48,13 @@ pub struct LayoutCtx {
     pub measure: MeasureInfo,
 
     pub clef: BTreeMap<u32, Clef>,
+
+    pub divisions: u32,
+    pub duration: u32,
+    pub beats: u32,
+    pub beat_type: u32,
+    pub position: u32,
+    pub voice: u32
 }
 
 impl LayoutCtx {
@@ -69,6 +76,11 @@ impl LayoutCtx {
         self.staff.explicitly_shown.clear();
 
         self.clef.clear();
+
+        self.divisions = 8; // specifies the amounts of divisions in one beat (so in one 1/beat_type)
+        self.beats = 4;
+        self.beat_type = 4;
+        self.voice = 1;
     }
 }
 
@@ -97,6 +109,13 @@ impl Default for LayoutCtx {
                 width: None,
             },
             clef: BTreeMap::new(),
+
+            duration: 0,
+            divisions: 8,
+            beats: 4,
+            beat_type: 4,
+            position: 0,
+            voice: 1,
         }
     }
 }

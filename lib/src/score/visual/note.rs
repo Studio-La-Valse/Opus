@@ -68,10 +68,10 @@ impl Layoutable for Note {
         self.width = 10.;
         self.height = 10.;
     }
-    fn arrange(&mut self, _origin: &XY) {
+    fn arrange(&mut self, origin: &XY) {
         let d_y = self.staff_line as f32 * 5.;
 
-        self.xy = _origin.mv(self.default_x, d_y);
+        self.xy = origin.mv(self.default_x, d_y);
     }
 }
 

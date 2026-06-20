@@ -13,3 +13,4 @@ pub mod staff;
 pub mod staff_measure;
 pub mod system;
 pub mod system_measure;
+mod chord;
