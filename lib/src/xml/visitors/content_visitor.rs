@@ -6,10 +6,10 @@ use crate::score::visual::page::Page;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::utils::xml::N;
 use crate::visitor::Visitor;
+use crate::visual::staff_measure::ChordIndex;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
-use crate::visual::staff_measure::ChordIndex;
 
 pub struct ContentVisitor {
     pub staff_measures: BTreeMap<u32, StaffMeasure>,
@@ -41,6 +41,10 @@ impl Visitor for ContentVisitor {
     fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
+    fn enter_backup(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
+    fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx = ctx.layout_ctx.staff.number;
@@ -89,7 +93,12 @@ impl Visitor for ContentVisitor {
 
         let position = ctx.layout_ctx.position;
         let voice = ctx.layout_ctx.voice;
-        staff_measure.chords.entry(ChordIndex{position, voice}).or_default().notes.push(note);
+        staff_measure
+            .chords
+            .entry(ChordIndex { position, voice })
+            .or_default()
+            .notes
+            .push(note);
     }
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}

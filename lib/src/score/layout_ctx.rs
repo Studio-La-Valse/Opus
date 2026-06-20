@@ -54,7 +54,9 @@ pub struct LayoutCtx {
     pub beats: u32,
     pub beat_type: u32,
     pub position: u32,
-    pub voice: u32
+    pub voice: u32,
+
+    pub chord: bool,
 }
 
 impl LayoutCtx {
@@ -81,6 +83,8 @@ impl LayoutCtx {
         self.beats = 4;
         self.beat_type = 4;
         self.voice = 1;
+
+        self.chord = false;
     }
 }
 
@@ -116,6 +120,8 @@ impl Default for LayoutCtx {
             beat_type: 4,
             position: 0,
             voice: 1,
+
+            chord: false,
         }
     }
 }

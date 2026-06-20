@@ -1,10 +1,10 @@
-use std::collections::BTreeMap;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChordIndex {

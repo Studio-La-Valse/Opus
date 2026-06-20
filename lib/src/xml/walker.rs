@@ -38,7 +38,12 @@ impl<V: Visitor> Walker<V> {
                                 match child.tag_name().name() {
                                     "print" => self.visitor.enter_print(&child, ctx),
                                     "attributes" => self.visitor.enter_attributes(&child, ctx),
-                                    "note" => self.visitor.enter_note(&child, ctx),
+                                    "note" => {
+                                        self.visitor.enter_note(&child, ctx);
+                                        self.visitor.exit_note(ctx);
+                                    }
+                                    "forward" => self.visitor.enter_forward(&child, ctx),
+                                    "backup" => self.visitor.enter_backup(&child, ctx),
                                     _ => {} // todo: ignore for now, panic! later.
                                 }
                             }

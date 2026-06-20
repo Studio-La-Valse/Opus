@@ -206,6 +206,10 @@ impl Visitor for LayoutVisitor {
 
     fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
+    fn enter_backup(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
+    fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
     fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}

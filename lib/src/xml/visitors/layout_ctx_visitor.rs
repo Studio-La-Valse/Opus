@@ -39,6 +39,8 @@ impl Visitor for LayoutContextVisitor {
         ctx.layout_ctx.system.margin_right = None;
         ctx.layout_ctx.system.distance = None;
         ctx.layout_ctx.system.distance_top = None;
+
+        ctx.layout_ctx.position = 0;
     }
 
     fn enter_print(&mut self, element: &Node, ctx: &mut WalkerCtx) {
@@ -216,8 +218,35 @@ impl Visitor for LayoutContextVisitor {
         }
     }
 
+    fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        let duration = node.req_child("duration").req_u32();
+        ctx.layout_ctx.position -= duration;
+    }
+
+    fn enter_forward(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        let duration = node.req_child("duration").req_u32();
+        ctx.layout_ctx.position += duration;
+
+        if ctx.layout_ctx.position > ctx.layout_ctx.divisions * ctx.layout_ctx.beats {
+            panic!(
+                "Invalid document: entered position {} in measure with {} beats and {} divisions. Part {}, measure {}",
+                ctx.layout_ctx.position,
+                ctx.layout_ctx.beats,
+                ctx.layout_ctx.divisions,
+                ctx.layout_ctx.part_id,
+                ctx.layout_ctx.measure.number
+            );
+        }
+    }
+
     fn enter_note(&mut self, element: &Node, ctx: &mut WalkerCtx) {
+        ctx.layout_ctx.chord = false;
+
         for node in element.children() {
+            if node.has_tag_name("chord") {
+                ctx.layout_ctx.chord = true;
+            }
+
             if node.has_tag_name("duration") {
                 ctx.layout_ctx.duration = node.req_u32()
             }
@@ -233,7 +262,22 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn exit_note(&mut self, ctx: &mut WalkerCtx) {
+        if ctx.layout_ctx.chord {
+            return;
+        }
+
         ctx.layout_ctx.position += ctx.layout_ctx.duration;
+
+        if ctx.layout_ctx.position > ctx.layout_ctx.divisions * ctx.layout_ctx.beats {
+            panic!(
+                "Invalid document: entered position {} in measure with {} beats and {} divisions. Part {}, measure {}",
+                ctx.layout_ctx.position,
+                ctx.layout_ctx.beats,
+                ctx.layout_ctx.divisions,
+                ctx.layout_ctx.part_id,
+                ctx.layout_ctx.measure.number
+            );
+        }
     }
 
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}

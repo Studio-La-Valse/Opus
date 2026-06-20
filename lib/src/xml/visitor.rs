@@ -25,6 +25,10 @@ pub trait Visitor: Sized {
 
     fn enter_staff_details(&mut self, node: &Node, ctx: &mut WalkerCtx);
 
+    fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx);
+
+    fn enter_forward(&mut self, node: &Node, ctx: &mut WalkerCtx);
+
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx);
 
     fn exit_note(&mut self, ctx: &mut WalkerCtx);
@@ -66,6 +70,10 @@ impl Visitor for DefaultVisitor {
     fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
+    fn enter_backup(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
+    fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
@@ -134,12 +142,21 @@ impl<A: Visitor, B: Visitor> Visitor for Chain<A, B> {
         self.b.enter_staff_details(node, ctx);
     }
 
+    fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        self.a.enter_backup(node, ctx);
+        self.b.enter_backup(node, ctx);
+    }
+
+    fn enter_forward(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        self.a.enter_forward(node, ctx);
+        self.b.enter_forward(node, ctx);
+    }
+
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         self.a.enter_note(node, ctx);
         self.b.enter_note(node, ctx);
     }
 
-    
     fn exit_note(&mut self, ctx: &mut WalkerCtx) {
         self.b.exit_note(ctx);
         self.a.exit_note(ctx);
