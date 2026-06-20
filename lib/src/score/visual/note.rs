@@ -3,6 +3,7 @@ use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::layout::{Layout, UserLayout};
 use crate::score::core::pitch::Pitch;
@@ -83,53 +84,95 @@ impl Content for Note {
         let mut result: Vec<Element> = Vec::new();
 
         let glyph = self.glyph.as_ref();
+
         if let Some(glyph) = glyph {
             let text = glyph.as_text(self.color, self.xy);
             let bbox = glyph.bbox;
 
-            result.push(text.into());
+            let bbox = scale(&bbox, &self.xy);
 
-            if let Some(bbox) = bbox {
-                let scaled = BoundingBox {
-                    x_min: bbox.x_min * 10.,
-                    y_min: bbox.y_min * 10.,
-                    x_max: bbox.x_max * 10.,
-                    y_max: bbox.y_max * 10.,
-                };
+            let rect = Rect {
+                xy: XY {
+                    x: bbox.x_min,
+                    y: bbox.y_min,
+                },
+                width: bbox.x_max - bbox.x_min,
+                height: bbox.y_max - bbox.y_min,
+                color: Color::TRANSPARENT,
+                stroke_width: Some(0.25),
+                stroke_color: Some(Color {
+                    a: 1.,
+                    r: 255,
+                    g: 0,
+                    b: 0,
+                }),
+            };
 
-                let translated = BoundingBox {
-                    x_min: scaled.x_min + self.xy.x,
-                    y_min: scaled.y_min + self.xy.y,
-                    x_max: scaled.x_max + self.xy.x,
-                    y_max: scaled.y_max + self.xy.y,
-                };
+            result.push(rect.into());
+
+            let origin = Line {
+                start: self.xy,
+                end: self.xy.mv(bbox.width(), 0.),
+                stroke_color: Color {
+                    a: 1.,
+                    r: 255,
+                    g: 0,
+                    b: 0,
+                },
+                stroke_width: 0.2,
+            };
+            result.push(origin.into());
+
+            for cutout in [
+                glyph.cutouts.nw,
+                glyph.cutouts.ne,
+                glyph.cutouts.se,
+                glyph.cutouts.sw,
+            ]
+            .into_iter()
+            .flatten()
+            {
+                let bbox = scale(&cutout, &self.xy);
 
                 let rect = Rect {
                     xy: XY {
-                        x: translated.x_min,
-                        y: translated.y_min,
+                        x: bbox.x_min,
+                        y: bbox.y_min,
                     },
-                    width: translated.x_max - translated.x_min,
-                    height: translated.y_max - translated.y_min,
-                    color: Color::TRANSPARENT,
-                    stroke_width: Some(0.25),
-                    stroke_color: Some(self.color),
+                    width: bbox.x_max - bbox.x_min,
+                    height: bbox.y_max - bbox.y_min,
+                    color: Color {
+                        a: 1.,
+                        r: 255,
+                        g: 0,
+                        b: 0,
+                    },
+                    stroke_width: None,
+                    stroke_color: None,
                 };
 
-                result.push(rect.into())
+                result.push(rect.into());
             }
+
+            result.push(text.into());
         }
 
-        let origin = Rect {
-            xy: self.xy.mv(-1., -1.),
-            width: 2.,
-            height: 2.,
-            color: self.color,
-            stroke_color: None,
-            stroke_width: None,
-        };
-        result.push(origin.into());
+        return result;
 
-        result
+        fn scale(bbox: &BoundingBox, xy: &XY) -> BoundingBox {
+            let scaled = BoundingBox {
+                x_min: bbox.x_min * 10.,
+                y_min: bbox.y_min * 10.,
+                x_max: bbox.x_max * 10.,
+                y_max: bbox.y_max * 10.,
+            };
+
+            BoundingBox {
+                x_min: scaled.x_min + xy.x,
+                y_min: scaled.y_min + xy.y,
+                x_max: scaled.x_max + xy.x,
+                y_max: scaled.y_max + xy.y,
+            }
+        }
     }
 }

@@ -1,14 +1,15 @@
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
 use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+use crate::smufl::smufl_metadata::Cutouts;
 use crate::xy::XY;
-use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone)]
 pub struct SmuflGlyph {
     pub codepoint: char,
     pub font: String,
-    pub bbox: Option<BoundingBox>,
+    pub bbox: BoundingBox,
+    pub cutouts: Cutouts,
 }
 
 impl SmuflGlyph {
