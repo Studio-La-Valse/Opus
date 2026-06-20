@@ -6,7 +6,6 @@ use crate::score::visual::page::Page;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::utils::xml::N;
 use crate::visitor::Visitor;
-use crate::visual::staff_measure::ChordIndex;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
@@ -90,15 +89,21 @@ impl Visitor for ContentVisitor {
         let staff_line = clef.line_index_at_pitch(&pitch);
 
         let note = Note::new(pitch, default_x, staff_line);
+        let chord = ctx.layout_ctx.chord;
 
-        let position = ctx.layout_ctx.position;
-        let voice = ctx.layout_ctx.voice;
+        if !chord {
+            // create new chord
+            staff_measure.chords.push(Default::default())
+        }
+
+        // Always append to last chord
         staff_measure
             .chords
-            .entry(ChordIndex { position, voice })
-            .or_default()
+            .iter_mut()
+            .last()
+            .unwrap()
             .notes
-            .push(note);
+            .push(note)
     }
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
