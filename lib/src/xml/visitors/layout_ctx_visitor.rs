@@ -242,15 +242,21 @@ impl Visitor for LayoutContextVisitor {
     fn enter_note(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         ctx.layout_ctx.chord = false;
 
+        if element.get_child("chord").is_some() {
+            ctx.layout_ctx.chord = true;
+
+            // we move the position backwards (by the previous note duration),
+            // so that when we enter a note upstream (a subsequent callback),
+            // the position is correct.
+            // When exiting a note, the position is always pushed forwards
+            // the duration of this note.
+            ctx.layout_ctx.position -= ctx.layout_ctx.duration;
+        }
+
+        let duration = element.req_child("duration").req_u32();
+        ctx.layout_ctx.duration = duration;
+
         for node in element.children() {
-            if node.has_tag_name("chord") {
-                ctx.layout_ctx.chord = true;
-            }
-
-            if node.has_tag_name("duration") {
-                ctx.layout_ctx.duration = node.req_u32()
-            }
-
             if node.has_tag_name("voice") {
                 ctx.layout_ctx.voice = node.req_u32()
             }
@@ -262,10 +268,9 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn exit_note(&mut self, ctx: &mut WalkerCtx) {
-        if ctx.layout_ctx.chord {
-            return;
-        }
-
+        // We move the position forwards the duration of the note, even it is a chord.
+        // When we enter a chord note, the position is moved backwards, so that
+        // the position is correct upstream (a subsequent callback).
         ctx.layout_ctx.position += ctx.layout_ctx.duration;
 
         if ctx.layout_ctx.position > ctx.layout_ctx.divisions * ctx.layout_ctx.beats {
