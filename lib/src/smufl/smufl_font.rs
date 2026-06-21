@@ -1,5 +1,5 @@
 use crate::bounding_box::BoundingBox;
-use crate::smufl::smufl_glyph::SmuflGlyph;
+use crate::smufl::glyphs::notehead_black::NoteheadBlack;
 use crate::smufl::smufl_metadata::{Cutouts, SmuflMetadata};
 use std::fs;
 
@@ -16,19 +16,21 @@ impl SmuflFont {
         SmuflFont { name, meta }
     }
 
-    pub fn notehead_black(&self) -> SmuflGlyph {
-        let codepoint: char = '\u{E0A4}';
-
+    pub fn notehead_black(&self) -> NoteheadBlack {
         let glyph_box = &self.meta.glyph_boxes.notehead_black;
         let bbox: BoundingBox = glyph_box.into();
 
         let anchors = &self.meta.glyph_anchors.notehead_black;
         let cutouts: Cutouts = anchors.to_boxes(&bbox);
 
-        SmuflGlyph {
-            codepoint,
+        let stem_anchor_left = anchors.anchor_left();
+        let stem_anchor_right = anchors.anchor_right();
+
+        NoteheadBlack {
             bbox,
             cutouts,
+            stem_anchor_left,
+            stem_anchor_right,
             font: self.name.to_string(),
         }
     }

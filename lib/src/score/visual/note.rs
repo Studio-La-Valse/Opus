@@ -8,6 +8,7 @@ use crate::drawable::elements::rect::Rect;
 use crate::layout::{Layout, UserLayout};
 use crate::score::core::pitch::Pitch;
 use crate::score::visual::layoutable::Layoutable;
+use crate::smufl::glyphs::notehead_black::NoteheadBlack;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::visual::element::ScoreElement;
 
@@ -22,7 +23,7 @@ pub struct Note {
 
     pub color: Color,
 
-    pub glyph: Option<SmuflGlyph>,
+    pub glyph: Option<NoteheadBlack>,
 }
 
 impl Note {
@@ -39,6 +40,36 @@ impl Note {
             glyph: None,
 
             color: Color::default(),
+        }
+    }
+
+    /// Scales a normalized bounding box to current position and scale.
+    pub fn scale_box(&self, bbox: &BoundingBox) -> BoundingBox {
+        let scaled = BoundingBox {
+            x_min: bbox.x_min * 10.,
+            y_min: bbox.y_min * 10.,
+            x_max: bbox.x_max * 10.,
+            y_max: bbox.y_max * 10.,
+        };
+
+        BoundingBox {
+            x_min: scaled.x_min + self.xy.x,
+            y_min: scaled.y_min + self.xy.y,
+            x_max: scaled.x_max + self.xy.x,
+            y_max: scaled.y_max + self.xy.y,
+        }
+    }
+
+    /// Scales a normalized point to current position and scale.
+    pub fn scale_pt(&self, xy: &XY) -> XY {
+        let scaled = XY {
+            x: xy.x * 10.,
+            y: xy.y * 10.,
+        };
+
+        XY {
+            x: scaled.x + self.xy.x,
+            y: scaled.y + self.xy.y,
         }
     }
 }
@@ -65,9 +96,15 @@ impl ScoreElement for Note {
 
 impl Layoutable for Note {
     fn measure(&mut self, _available: &XY) {
-        self.width = 10.;
         self.height = 10.;
+
+        let glyph = self.glyph.as_ref().unwrap();
+        let bbox = self.scale_box(&glyph.bbox);
+
+        self.width = bbox.width();
     }
+
+    // here, origin is the origin of the staff measure.
     fn arrange(&mut self, origin: &XY) {
         let d_y = self.staff_line as f32 * 5.;
 
@@ -87,9 +124,7 @@ impl Content for Note {
 
         if let Some(glyph) = glyph {
             let text = glyph.as_text(self.color, self.xy);
-            let bbox = glyph.bbox;
-
-            let bbox = scale(&bbox, &self.xy);
+            let bbox = self.scale_box(&glyph.bbox);
 
             let rect = Rect {
                 xy: XY {
@@ -112,7 +147,7 @@ impl Content for Note {
 
             let origin = Line {
                 start: self.xy,
-                end: self.xy.mv(bbox.width(), 0.),
+                end: self.xy.mv(self.width, 0.),
                 stroke_color: Color {
                     a: 1.,
                     r: 255,
@@ -132,7 +167,7 @@ impl Content for Note {
             .into_iter()
             .flatten()
             {
-                let bbox = scale(&cutout, &self.xy);
+                let bbox = self.scale_box(&cutout);
 
                 let rect = Rect {
                     xy: XY {
@@ -157,22 +192,6 @@ impl Content for Note {
             result.push(text.into());
         }
 
-        return result;
-
-        fn scale(bbox: &BoundingBox, xy: &XY) -> BoundingBox {
-            let scaled = BoundingBox {
-                x_min: bbox.x_min * 10.,
-                y_min: bbox.y_min * 10.,
-                x_max: bbox.x_max * 10.,
-                y_max: bbox.y_max * 10.,
-            };
-
-            BoundingBox {
-                x_min: scaled.x_min + xy.x,
-                y_min: scaled.y_min + xy.y,
-                x_max: scaled.x_max + xy.x,
-                y_max: scaled.y_max + xy.y,
-            }
-        }
+        result
     }
 }

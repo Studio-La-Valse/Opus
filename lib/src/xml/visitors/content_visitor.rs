@@ -6,6 +6,7 @@ use crate::score::visual::page::Page;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::utils::xml::N;
 use crate::visitor::Visitor;
+use crate::visual::stem::{Stem, UpDown};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
@@ -97,13 +98,26 @@ impl Visitor for ContentVisitor {
         }
 
         // Always append to last chord
-        staff_measure
-            .chords
-            .iter_mut()
-            .last()
-            .unwrap()
-            .notes
-            .push(note)
+        let chord = staff_measure.chords.iter_mut().last().unwrap();
+
+        if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem")
+            && let Some(default_y) = stem
+                .attribute("default-y")
+                .map(|a| a.trim().parse::<f32>().unwrap())
+        {
+            let text = stem.req_text();
+            let dir = match text {
+                "up" => Some(UpDown::Up),
+                "down" => Some(UpDown::Down),
+                _ => None,
+            };
+            if let Some(dir) = dir {
+                let stem = Stem::new(dir, default_y);
+                chord.stem = Some(stem);
+            }
+        }
+
+        chord.notes.push(note)
     }
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}

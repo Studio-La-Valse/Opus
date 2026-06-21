@@ -26,6 +26,9 @@ struct Args {
     file: String,
 
     #[arg(long)]
+    out: String,
+
+    #[arg(long)]
     font: String,
 
     #[arg(long)]
@@ -35,6 +38,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let file = args.file;
+    let out = args.out;
     let font = args.font;
     let meta = args.meta;
 
@@ -105,7 +109,7 @@ fn main() {
     let elements: Vec<Element> = bfs_elements(&visual).collect();
 
     let svg = to_svg(&elements);
-    fs::write("./svg.svg", svg).unwrap();
+    fs::write(out, svg).unwrap();
 
     println!("Write to svg: {}ms", time.elapsed().as_millis());
 }

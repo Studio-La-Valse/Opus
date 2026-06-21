@@ -1,4 +1,5 @@
 use crate::bounding_box::BoundingBox;
+use crate::xy::XY;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -54,6 +55,12 @@ pub struct GlyphAnchors {
 
     #[serde(rename = "cutOutSW")]
     pub sw: Option<[f32; 2]>,
+
+    #[serde(rename = "stemDownNW")]
+    pub anchor_left: Option<[f32; 2]>,
+
+    #[serde(rename = "stemUpSE")]
+    pub anchor_right: Option<[f32; 2]>,
 }
 
 impl GlyphAnchors {
@@ -83,6 +90,22 @@ impl GlyphAnchors {
                 x_max: sw[0],
                 y_max: bbox.y_max,
             }),
+        }
+    }
+
+    pub fn anchor_left(&self) -> XY {
+        let anchor_left = self.anchor_left.unwrap();
+        XY {
+            x: anchor_left[0],
+            y: -anchor_left[1],
+        }
+    }
+
+    pub fn anchor_right(&self) -> XY {
+        let anchor_right = self.anchor_right.unwrap();
+        XY {
+            x: anchor_right[0],
+            y: -anchor_right[1],
         }
     }
 }
