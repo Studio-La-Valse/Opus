@@ -11,6 +11,7 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::smufl::glyphs::notehead_black::NoteheadBlack;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::visual::element::ScoreElement;
+use crate::visual::stem::Stem;
 
 pub struct Note {
     pub xy: XY,
@@ -20,14 +21,16 @@ pub struct Note {
     pub pitch: Pitch,
     pub default_x: f32,
     pub staff_line: i32,
+    pub staff: u32,
 
     pub color: Color,
 
     pub glyph: Option<NoteheadBlack>,
+    pub stem: Option<Stem>,
 }
 
 impl Note {
-    pub fn new(pitch: Pitch, default_x: f32, staff_line: i32) -> Self {
+    pub fn new(pitch: Pitch, default_x: f32, staff: u32, staff_line: i32) -> Self {
         Note {
             xy: XY::default(),
             width: f32::default(),
@@ -35,9 +38,11 @@ impl Note {
 
             pitch,
             default_x,
+            staff,
             staff_line,
 
             glyph: None,
+            stem: None,
 
             color: Color::default(),
         }

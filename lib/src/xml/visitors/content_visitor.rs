@@ -3,16 +3,15 @@ use crate::score::core::pitch::Pitch;
 use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
-use crate::score::visual::staff_measure::StaffMeasure;
-use crate::utils::xml::N;
+use crate::utils::xml::{N};
 use crate::visitor::Visitor;
-use crate::visual::stem::{Stem, UpDown};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
+use crate::visual::part_measure::PartMeasure;
 
 pub struct ContentVisitor {
-    pub staff_measures: BTreeMap<u32, StaffMeasure>,
+    pub part_measure: Option<PartMeasure>,
 }
 
 impl ContentVisitor {}
@@ -31,7 +30,7 @@ impl Visitor for ContentVisitor {
     fn enter_part(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_measure(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
-        self.staff_measures = Default::default();
+        self.part_measure = Some(Default::default());
     }
 
     fn enter_print(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
@@ -47,8 +46,8 @@ impl Visitor for ContentVisitor {
     fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
-        let staff_idx = ctx.layout_ctx.staff.number;
-        let staff_measure = self.staff_measures.entry(staff_idx).or_default();
+        let staff = ctx.layout_ctx.staff.number;
+        let part_measure :&mut PartMeasure = self.part_measure.as_mut().unwrap();
 
         // Skip rests early
         if node.children().any(|n| n.tag_name().name() == "rest") {
@@ -86,38 +85,45 @@ impl Visitor for ContentVisitor {
         // Build note
         let pitch = Pitch { step, octave };
 
-        let clef = ctx.layout_ctx.clef.get(&staff_idx).unwrap();
+        let clef = ctx.layout_ctx.clef.get(&staff).unwrap();
         let staff_line = clef.line_index_at_pitch(&pitch);
 
-        let note = Note::new(pitch, default_x, staff_line);
-        let chord = ctx.layout_ctx.chord;
+        let note = Note::new(pitch, default_x, staff, staff_line);
+        // let chord = ctx.layout_ctx.chord;
+        //
+        // if !chord {
+        //     // create new chord
+        //     part_measure.chords.push(Default::default())
+        // }
+        //
+        // // Always append to last chord
+        // let chord = part_measure.chords.iter_mut().last().unwrap();
+        //
+        // if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem")
+        //     && let Some(default_y) = stem
+        //         .attribute("default-y")
+        //         .map(|a| a.trim().parse::<f32>().unwrap())
+        // {
+        //     let text = stem.req_text();
+        //     let dir = match text {
+        //         "up" => Some(UpDown::Up),
+        //         "down" => Some(UpDown::Down),
+        //         _ => None,
+        //     };
+        //     if let Some(dir) = dir {
+        //         let mut stem = Stem::new(dir, default_y);
+        //
+        //         for beam in node.children().filter(|n| n.tag_name().name() == "beam") {
+        //             let number = beam.req_attribute("number").req_u32();
+        //             let beam_type = <&str as Into<BeamType>>::into(node.req_text());
+        //             stem.beams.insert(number, beam_type);
+        //         }
+        //
+        //         chord.stem = Some(stem);
+        //     }
+        // }
 
-        if !chord {
-            // create new chord
-            staff_measure.chords.push(Default::default())
-        }
-
-        // Always append to last chord
-        let chord = staff_measure.chords.iter_mut().last().unwrap();
-
-        if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem")
-            && let Some(default_y) = stem
-                .attribute("default-y")
-                .map(|a| a.trim().parse::<f32>().unwrap())
-        {
-            let text = stem.req_text();
-            let dir = match text {
-                "up" => Some(UpDown::Up),
-                "down" => Some(UpDown::Down),
-                _ => None,
-            };
-            if let Some(dir) = dir {
-                let stem = Stem::new(dir, default_y);
-                chord.stem = Some(stem);
-            }
-        }
-
-        chord.notes.push(note)
+        part_measure.notes.push(note)
     }
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
@@ -176,25 +182,17 @@ impl Visitor for ContentVisitor {
         let part = part_group.parts.entry(part_id).or_default();
         part.ensure_staves(vec![1].into_iter().collect());
         part.set_visibility(_ctx.layout_ctx.part_hidden_specified);
-        part.ensure_staves(self.staff_measures.keys().cloned().collect());
         part.hide_staves(&_ctx.layout_ctx.staff.explicitly_hidden);
         part.show_staves(&_ctx.layout_ctx.staff.explicitly_shown);
         part.set_distances(
             &_ctx.layout_ctx.staff.distances,
             &_ctx.layout.staff_distance,
         );
-        let _ = part.measures.entry(measure_number).or_default();
+        let part_measure = self.part_measure.take().unwrap();
+        part.measures.insert(measure_number, part_measure);
 
-        // create all required staves
-        for (_idx, staff) in part.staves.iter_mut() {
-            // ensure all staff measures
-            let _ = staff.measures.entry(measure_number).or_default();
-        }
-
-        // implement the collected staff measures
-        while let Some((idx, staff_measure)) = self.staff_measures.pop_first() {
-            let staff = part.staves.get_mut(&idx).unwrap();
-            staff.measures.insert(measure_number, staff_measure);
+        for (_, staff) in part.staves.iter_mut() {
+            staff.measures.entry(measure_number).or_default();
         }
     }
 

@@ -148,12 +148,6 @@ impl Layoutable for Part {
         self.xy = *origin;
 
         let mut _origin = self.xy;
-        for (_idx, measure) in self.measures.iter_mut() {
-            measure.arrange(origin);
-            _origin = _origin.mv(measure.width, 0.);
-        }
-
-        let mut _origin = self.xy;
         for (_idx, staff) in self.staves.iter_mut() {
             if staff.hidden {
                 continue;
@@ -164,6 +158,29 @@ impl Layoutable for Part {
             staff.arrange(&_origin);
             _origin = _origin.mv(0., staff.height);
         }
+
+
+        for (_, measure) in self.measures.iter_mut() {
+            measure.staff_distances_from_top.clear();
+
+            let mut distance_travelled = 0.;
+            for (_idx, staff) in self.staves.iter_mut() {
+                if staff.hidden {
+                    continue;
+                }
+
+                distance_travelled += staff.distance_final;
+                measure.staff_distances_from_top.insert(*_idx, distance_travelled);
+                distance_travelled += staff.height;
+            }
+        }
+
+        let mut _origin = self.xy;
+        for (_idx, measure) in self.measures.iter_mut() {
+            measure.arrange(&_origin);
+            _origin = _origin.mv(measure.width, 0.);
+        }
+
     }
 }
 

@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use crate::color::Color;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
@@ -14,6 +15,27 @@ pub enum UpDown {
     Down,
 }
 
+pub enum BeamType {
+    Start,
+    Continue,
+    End,
+    HookStart,
+    HookEnd
+}
+
+impl From<&str> for BeamType {
+    fn from(value: &str) -> BeamType {
+        match value {
+            "begin" => BeamType::Start,
+            "continue" => BeamType::Continue,
+            "end" => BeamType::End,
+            "hookstart" => BeamType::HookStart,
+            "hookend" => BeamType::HookEnd,
+            _ => panic!("Unknown beam type {}", value)
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct Stem {
     // provided by the musicxml document
@@ -28,6 +50,8 @@ pub struct Stem {
     pub direction: UpDown,
 
     pub color: Color,
+
+    pub beams: BTreeMap<u32, BeamType>
 }
 
 impl Stem {

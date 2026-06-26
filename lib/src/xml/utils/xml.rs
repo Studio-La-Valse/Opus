@@ -53,24 +53,21 @@ impl<'a> N<'a> for Node<'a, 'a> {
         self.text()
             .unwrap_or_else(|| panic!("Missing text value"))
             .trim()
-            .parse::<f32>()
-            .unwrap_or_else(|_| panic!("Invalid f64 value"))
+            .req_f32()
     }
 
     fn req_i32(&self) -> i32 {
         self.text()
             .unwrap_or_else(|| panic!("Missing text value"))
             .trim()
-            .parse::<i32>()
-            .unwrap_or_else(|_| panic!("Invalid f64 value"))
+            .req_i32()
     }
 
     fn req_u32(&self) -> u32 {
         self.text()
             .unwrap_or_else(|| panic!("Missing text value"))
             .trim()
-            .parse::<u32>()
-            .unwrap_or_else(|_| panic!("Invalid f64 value"))
+            .req_u32()
     }
 
     fn get_child(&self, name: &str) -> Option<Node<'a, 'a>> {
@@ -84,5 +81,25 @@ impl<'a> N<'a> for Node<'a, 'a> {
 
     fn has_tag(&self, name: &str) -> bool {
         self.tag_name().name() == name
+    }
+}
+
+pub trait ToNumber {
+    fn req_i32(&self) -> i32;
+    fn req_u32(&self) -> u32;
+    fn req_f32(&self) -> f32;
+}
+
+impl ToNumber for &str {
+    fn req_i32(&self) -> i32 {
+        self.parse::<i32>().unwrap()
+    }
+
+    fn req_u32(&self) -> u32 {
+        self.parse::<u32>().unwrap()
+    }
+
+    fn req_f32(&self) -> f32 {
+        self.parse::<f32>().unwrap()
     }
 }

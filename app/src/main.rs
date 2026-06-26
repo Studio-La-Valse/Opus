@@ -67,9 +67,7 @@ fn main() {
     let visitor = DefaultVisitor {}
         .add_callback(LayoutVisitor {})
         .add_callback(LayoutContextVisitor {})
-        .add_callback(ContentVisitor {
-            staff_measures: Default::default(),
-        });
+        .add_callback(ContentVisitor { part_measure: None });
 
     let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual);
 

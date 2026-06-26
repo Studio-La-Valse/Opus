@@ -14,7 +14,9 @@ pub struct StaffMeasure {
     pub chords: Vec<Chord>,
 }
 
-impl StaffMeasure {}
+impl StaffMeasure {
+
+}
 
 impl ScoreElement for StaffMeasure {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
