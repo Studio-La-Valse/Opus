@@ -17,10 +17,20 @@ pub struct Part {
     pub width: f32,
     pub height: f32,
 
+    pub id: String,
+
     pub visibility: Visibility,
 }
 
 impl Part {
+
+    pub fn new(id: String) -> Self {
+        Self {
+            id,
+            ..Default::default()
+        }
+    }
+
     pub fn set_visibility(&mut self, visibility: Visibility) {
         match visibility {
             Visibility::Unset => {

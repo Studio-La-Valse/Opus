@@ -9,6 +9,7 @@
       <excludeFolder url="file://$MODULE_DIR$/smufl" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/xmlsamples" />
+      <excludeFolder url="file://$MODULE_DIR$/xmltest" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

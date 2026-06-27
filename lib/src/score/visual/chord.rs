@@ -69,8 +69,22 @@ impl Layoutable for Chord {
             let anchor = note.scale_pt(&anchor);
             stem.arrange(&anchor);
 
+            let default_y: f32;
+            if let Some(def_y) = &stem.default_y {
+                default_y = *def_y;
+            } else {
+                let default_length = match stem.direction {
+                    UpDown::Up => -50.,
+                    UpDown::Down => 50.,
+                };
+
+                let tip = &anchor.mv(0., default_length);
+                let staff_m_origin = &origin.mv(0., *self.staff_distances_from_top.get(&stem.staff).unwrap());
+                default_y = staff_m_origin.y - tip.y;
+            }
+
             let length = ((origin.y + self.staff_distances_from_top.get(&stem.staff).unwrap())
-                - stem.default_y)
+                - default_y)
                 - anchor.y;
             stem.length = length;
         }

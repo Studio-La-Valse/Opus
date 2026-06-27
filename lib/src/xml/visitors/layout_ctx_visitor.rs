@@ -1,6 +1,6 @@
 use crate::score::core::clef::Clef;
 use crate::score::layout_ctx::Visibility;
-use crate::utils::xml::N;
+use crate::utils::xml::{ToNumber, N};
 use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
@@ -114,33 +114,16 @@ impl Visitor for LayoutContextVisitor {
 
         ctx.layout_ctx.staff.distances.clear();
 
-        let staff_layout = match element.children().find(|n| n.has_tag_name("staff-layout")) {
-            Some(n) => n,
-            None => return,
+        for staff_layout in element.children().filter(|n| n.has_tag_name("staff-layout")) {
+            let staff_distance = staff_layout.req_child("staff-distance").req_f32();
+
+            let staff_number = staff_layout.req_attribute("number").req_u32();
+
+            ctx.layout_ctx
+                .staff
+                .distances
+                .insert(staff_number, staff_distance);
         };
-
-        let staff_distance = match staff_layout
-            .children()
-            .find(|n| n.has_tag_name("staff-distance"))
-        {
-            Some(n) => n,
-            None => return,
-        };
-
-        let staff_number = staff_layout
-            .attribute("number")
-            .and_then(|s| s.parse::<u32>().ok())
-            .unwrap_or(1);
-
-        let staff_distance_value = staff_distance
-            .text()
-            .and_then(|s| s.parse::<f32>().ok())
-            .unwrap_or(0.0);
-
-        ctx.layout_ctx
-            .staff
-            .distances
-            .insert(staff_number, staff_distance_value);
     }
 
     fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {

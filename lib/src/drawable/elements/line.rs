@@ -2,7 +2,7 @@ use crate::core::color::Color;
 use crate::core::xy::XY;
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Copy, Clone)]
 pub struct Line {
     pub start: XY,
     pub end: XY,

@@ -10,7 +10,8 @@ use crate::visual::part_measure::PartMeasure;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
+use crate::visual::part::Part;
 
 pub struct ContentVisitor {
     pub part_measure: Option<PartMeasure>,
@@ -32,7 +33,7 @@ impl Visitor for ContentVisitor {
     fn enter_part(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_measure(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {
-        self.part_measure = Some(Default::default());
+        self.part_measure = Some(PartMeasure::new(_ctx.layout_ctx.measure.number));
     }
 
     fn enter_print(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
@@ -99,10 +100,9 @@ impl Visitor for ContentVisitor {
         let chord = part_measure.chords.last_mut().unwrap();
 
         if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem")
-            && let Some(default_y) = stem
-                .attribute("default-y")
-                .map(|a| a.trim().parse::<f32>().unwrap())
         {
+            let default_y = stem.attribute("default-y").map(|a| a.req_f32());
+
             let text = stem.req_text();
             let dir = match text {
                 "up" => Some(UpDown::Up),
@@ -138,6 +138,9 @@ impl Visitor for ContentVisitor {
         let part_group_number = part.part_group;
         let section = _ctx.layout.sections.entry(section_number).or_default();
         let _part_group = section.groups.entry(part_group_number).or_default();
+
+        // take the part measure from the option
+        let part_measure = self.part_measure.take().unwrap();
 
         // get or create the page
         let page = _ctx
@@ -178,8 +181,12 @@ impl Visitor for ContentVisitor {
         let _ = part_group.measures.entry(measure_number).or_default();
 
         // get or create the part in this part group.
-        let part = part_group.parts.entry(part_id).or_default();
+        let part = part_group.parts.entry(part_id.clone()).or_insert_with(|| Part::new(part_id));
         part.ensure_staves(vec![1].into_iter().collect());
+        for chord in part_measure.chords.iter() {
+            let notes: HashSet<u32> = chord.notes.iter().map(|n| n.staff).collect();
+            part.ensure_staves(notes);
+        }
         part.set_visibility(_ctx.layout_ctx.part_hidden_specified);
         part.hide_staves(&_ctx.layout_ctx.staff.explicitly_hidden);
         part.show_staves(&_ctx.layout_ctx.staff.explicitly_shown);
@@ -187,7 +194,7 @@ impl Visitor for ContentVisitor {
             &_ctx.layout_ctx.staff.distances,
             &_ctx.layout.staff_distance,
         );
-        let part_measure = self.part_measure.take().unwrap();
+
         part.measures.insert(measure_number, part_measure);
 
         for (_, staff) in part.staves.iter_mut() {

@@ -39,7 +39,7 @@ impl From<&str> for BeamType {
 #[derive(Default)]
 pub struct Stem {
     // provided by the musicxml document
-    pub default_y: f32,
+    pub default_y: Option<f32>,
 
     // worked out by arranging notes,
     // then calculating from stem anchor to default_y
@@ -56,13 +56,17 @@ pub struct Stem {
 }
 
 impl Stem {
-    pub fn new(direction: UpDown, staff: u32, default_y: f32) -> Self {
+    pub fn new(direction: UpDown, staff: u32, default_y: Option<f32>) -> Self {
         Self {
             default_y,
             direction,
             staff,
             ..Default::default()
         }
+    }
+
+    pub fn tip(&self) -> XY {
+        self.xy.mv(0., self.length)
     }
 }
 
