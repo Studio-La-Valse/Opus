@@ -6,12 +6,15 @@ use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
 use crate::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
+use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub struct Chord {
     pub notes: Vec<Note>,
 
     pub stem: Option<Stem>,
+
+    pub staff_distances_from_top: BTreeMap<u32, f32>,
 }
 
 impl Chord {}
@@ -43,10 +46,11 @@ impl Layoutable for Chord {
         }
     }
 
-    // here, origin is the origin of the staff measure.
+    /// here, origin is the origin of the part measure.
     fn arrange(&mut self, origin: &XY) {
         for note in self.notes.iter_mut() {
-            note.arrange(origin);
+            let dy = self.staff_distances_from_top.get(&note.staff).unwrap();
+            note.arrange(&origin.mv(0., *dy));
         }
 
         if let Some(stem) = self.stem.as_mut() {
@@ -65,7 +69,9 @@ impl Layoutable for Chord {
             let anchor = note.scale_pt(&anchor);
             stem.arrange(&anchor);
 
-            let length = (origin.y - stem.default_y) - anchor.y;
+            let length = ((origin.y + self.staff_distances_from_top.get(&stem.staff).unwrap())
+                - stem.default_y)
+                - anchor.y;
             stem.length = length;
         }
     }

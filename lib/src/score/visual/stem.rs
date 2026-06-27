@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use crate::color::Color;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
@@ -7,6 +6,7 @@ use crate::layout::{Layout, UserLayout};
 use crate::visual::element::ScoreElement;
 use crate::visual::layoutable::Layoutable;
 use crate::xy::XY;
+use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub enum UpDown {
@@ -20,7 +20,7 @@ pub enum BeamType {
     Continue,
     End,
     HookStart,
-    HookEnd
+    HookEnd,
 }
 
 impl From<&str> for BeamType {
@@ -31,7 +31,7 @@ impl From<&str> for BeamType {
             "end" => BeamType::End,
             "hookstart" => BeamType::HookStart,
             "hookend" => BeamType::HookEnd,
-            _ => panic!("Unknown beam type {}", value)
+            _ => panic!("Unknown beam type: '{}'", value),
         }
     }
 }
@@ -50,15 +50,17 @@ pub struct Stem {
     pub direction: UpDown,
 
     pub color: Color,
+    pub staff: u32,
 
-    pub beams: BTreeMap<u32, BeamType>
+    pub beams: BTreeMap<u32, BeamType>,
 }
 
 impl Stem {
-    pub fn new(direction: UpDown, default_y: f32) -> Self {
+    pub fn new(direction: UpDown, staff: u32, default_y: f32) -> Self {
         Self {
             default_y,
             direction,
+            staff,
             ..Default::default()
         }
     }

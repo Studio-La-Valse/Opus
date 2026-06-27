@@ -1,10 +1,10 @@
-use std::collections::BTreeMap;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::score::visual::layoutable::Layoutable;
+use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
-use crate::visual::note::Note;
+use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub struct PartMeasure {
@@ -17,13 +17,13 @@ pub struct PartMeasure {
 
     pub staff_distances_from_top: BTreeMap<u32, f32>,
 
-    pub notes: Vec<Note>,
+    pub chords: Vec<Chord>,
 }
 
 impl PartMeasure {
     pub fn new() -> Self {
         Self {
-            ..  Default::default()
+            ..Default::default()
         }
     }
 }
@@ -31,7 +31,7 @@ impl PartMeasure {
 impl ScoreElement for PartMeasure {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-        for note in self.notes.iter_mut() {
+        for note in self.chords.iter_mut() {
             result.push(note);
         }
 
@@ -43,18 +43,23 @@ impl Layoutable for PartMeasure {
     fn measure(&mut self, available: &XY) {
         self.height = available.y;
 
-        for note in self.notes.iter_mut() {
+        for note in self.chords.iter_mut() {
             note.measure(available);
         }
     }
 
+    /// Here, origin is the origin of the part measure
     fn arrange(&mut self, origin: &XY) {
         self.origin = *origin;
 
-        for note in self.notes.iter_mut() {
-            if let Some(dy) = self.staff_distances_from_top.get(&note.staff) {
-                note.arrange(&origin.mv(0., *dy));
+        for chord in self.chords.iter_mut() {
+            chord.staff_distances_from_top.clear();
+
+            for (idx, dy) in self.staff_distances_from_top.iter() {
+                chord.staff_distances_from_top.insert(*idx, *dy);
             }
+
+            chord.arrange(origin);
         }
     }
 }
@@ -62,7 +67,7 @@ impl Layoutable for PartMeasure {
 impl Content for PartMeasure {
     fn content(&self) -> Vec<&dyn Content> {
         let mut result: Vec<&dyn Content> = Vec::new();
-        for note in &self.notes {
+        for note in &self.chords {
             result.push(note);
         }
 

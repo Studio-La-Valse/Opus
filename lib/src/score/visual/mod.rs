@@ -1,6 +1,7 @@
-mod chord;
-pub mod element;
 pub mod layoutable;
+
+pub mod chord;
+pub mod element;
 pub mod note;
 pub mod page;
 pub mod part;

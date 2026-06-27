@@ -3,12 +3,14 @@ use crate::score::core::pitch::Pitch;
 use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
-use crate::utils::xml::{N};
+use crate::utils::xml::{N, ToNumber};
 use crate::visitor::Visitor;
+use crate::visual::chord::Chord;
+use crate::visual::part_measure::PartMeasure;
+use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::BTreeMap;
-use crate::visual::part_measure::PartMeasure;
 
 pub struct ContentVisitor {
     pub part_measure: Option<PartMeasure>,
@@ -47,7 +49,7 @@ impl Visitor for ContentVisitor {
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let staff = ctx.layout_ctx.staff.number;
-        let part_measure :&mut PartMeasure = self.part_measure.as_mut().unwrap();
+        let part_measure: &mut PartMeasure = self.part_measure.as_mut().unwrap();
 
         // Skip rests early
         if node.children().any(|n| n.tag_name().name() == "rest") {
@@ -89,41 +91,38 @@ impl Visitor for ContentVisitor {
         let staff_line = clef.line_index_at_pitch(&pitch);
 
         let note = Note::new(pitch, default_x, staff, staff_line);
-        // let chord = ctx.layout_ctx.chord;
-        //
-        // if !chord {
-        //     // create new chord
-        //     part_measure.chords.push(Default::default())
-        // }
-        //
-        // // Always append to last chord
-        // let chord = part_measure.chords.iter_mut().last().unwrap();
-        //
-        // if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem")
-        //     && let Some(default_y) = stem
-        //         .attribute("default-y")
-        //         .map(|a| a.trim().parse::<f32>().unwrap())
-        // {
-        //     let text = stem.req_text();
-        //     let dir = match text {
-        //         "up" => Some(UpDown::Up),
-        //         "down" => Some(UpDown::Down),
-        //         _ => None,
-        //     };
-        //     if let Some(dir) = dir {
-        //         let mut stem = Stem::new(dir, default_y);
-        //
-        //         for beam in node.children().filter(|n| n.tag_name().name() == "beam") {
-        //             let number = beam.req_attribute("number").req_u32();
-        //             let beam_type = <&str as Into<BeamType>>::into(node.req_text());
-        //             stem.beams.insert(number, beam_type);
-        //         }
-        //
-        //         chord.stem = Some(stem);
-        //     }
-        // }
+        let is_chord_node = node.children().any(|n| n.tag_name().name() == "chord");
+        if !is_chord_node {
+            part_measure.chords.push(Chord::default())
+        }
 
-        part_measure.notes.push(note)
+        let chord = part_measure.chords.last_mut().unwrap();
+
+        if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem")
+            && let Some(default_y) = stem
+                .attribute("default-y")
+                .map(|a| a.trim().parse::<f32>().unwrap())
+        {
+            let text = stem.req_text();
+            let dir = match text {
+                "up" => Some(UpDown::Up),
+                "down" => Some(UpDown::Down),
+                _ => None,
+            };
+            if let Some(dir) = dir {
+                let mut stem = Stem::new(dir, staff, default_y);
+
+                for beam in node.children().filter(|n| n.tag_name().name() == "beam") {
+                    let number = beam.req_attribute("number").req_u32();
+                    let beam_type: BeamType = beam.req_text().into();
+                    stem.beams.insert(number, beam_type);
+                }
+
+                chord.stem = Some(stem);
+            }
+        }
+
+        chord.notes.push(note)
     }
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}

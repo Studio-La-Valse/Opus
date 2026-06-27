@@ -11,7 +11,6 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::smufl::glyphs::notehead_black::NoteheadBlack;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::visual::element::ScoreElement;
-use crate::visual::stem::Stem;
 
 pub struct Note {
     pub xy: XY,
@@ -26,7 +25,6 @@ pub struct Note {
     pub color: Color,
 
     pub glyph: Option<NoteheadBlack>,
-    pub stem: Option<Stem>,
 }
 
 impl Note {
@@ -42,7 +40,6 @@ impl Note {
             staff_line,
 
             glyph: None,
-            stem: None,
 
             color: Color::default(),
         }
@@ -81,7 +78,8 @@ impl Note {
 
 impl ScoreElement for Note {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        vec![]
+        let children: Vec<&mut dyn ScoreElement> = Vec::new();
+        children
     }
 
     fn apply_layout(&mut self, _layout: &Layout, _user_layout: &UserLayout) {
@@ -109,17 +107,17 @@ impl Layoutable for Note {
         self.width = bbox.width();
     }
 
-    // here, origin is the origin of the staff measure.
+    /// here, origin is the origin of the staff measure.
     fn arrange(&mut self, origin: &XY) {
         let d_y = self.staff_line as f32 * 5.;
-
         self.xy = origin.mv(self.default_x, d_y);
     }
 }
 
 impl Content for Note {
     fn content(&self) -> Vec<&dyn Content> {
-        Vec::new()
+        let content: Vec<&dyn Content> = Vec::new();
+        content
     }
 
     fn elements(&self) -> Vec<Element> {

@@ -159,7 +159,6 @@ impl Layoutable for Part {
             _origin = _origin.mv(0., staff.height);
         }
 
-
         for (_, measure) in self.measures.iter_mut() {
             measure.staff_distances_from_top.clear();
 
@@ -170,7 +169,9 @@ impl Layoutable for Part {
                 }
 
                 distance_travelled += staff.distance_final;
-                measure.staff_distances_from_top.insert(*_idx, distance_travelled);
+                measure
+                    .staff_distances_from_top
+                    .insert(*_idx, distance_travelled);
                 distance_travelled += staff.height;
             }
         }
@@ -180,7 +181,6 @@ impl Layoutable for Part {
             measure.arrange(&_origin);
             _origin = _origin.mv(measure.width, 0.);
         }
-
     }
 }
 
