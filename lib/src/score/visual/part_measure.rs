@@ -24,6 +24,7 @@ pub struct PartMeasure {
 
     /// Chords for each voice
     pub chords: BTreeMap<u32, Vec<Chord>>,
+
     pub beams: Vec<Line>,
 }
 
@@ -38,11 +39,22 @@ impl PartMeasure {
     pub fn arrange_beams(&mut self) {
         self.beams.clear();
 
+        let beam_thickness = 2.4;
+        let beam_spacing = 1.1;
+
         let mut groups = create_beam_groups(&mut self.chords);
 
         for group in groups.iter_mut() {
-            let beams = arrange_beams(group);
+            let ray = match create_ray(group) {
+                Some(ray) => ray,
+                None => continue,
+            };
+
+            let direction = infer_direction(group);
+            let beams = arrange_beams(group, &ray, &direction, &beam_thickness, &beam_spacing);
             self.beams.extend(beams);
+
+            adjust_stem_lengths(group, &ray, &direction, &beam_thickness, &beam_spacing);
         }
     }
 }
@@ -164,72 +176,121 @@ pub fn create_beam_groups(chords: &mut BTreeMap<u32, Vec<Chord>>) -> Vec<Vec<&mu
     result
 }
 
-pub fn arrange_beams(chords: &mut Vec<&mut Chord>) -> Vec<Line> {
-    let mut beams: Vec<Line> = vec![];
+fn create_ray(chords: &mut Vec<&mut Chord>) -> Option<Ray> {
+    let len = chords.len();
 
-    if chords.len() <= 1 {
-        return beams;
+    if len < 2 {
+        return None;
     }
 
     let first_stem = chords.first().unwrap().stem.as_ref().unwrap();
     let last_stem = chords.last().unwrap().stem.as_ref().unwrap();
 
     let ray = Ray::from_pt(first_stem.tip(), last_stem.tip());
+    Some(ray)
+}
 
-    let mut lines: BTreeMap<u32, Line> = BTreeMap::new();
-    let beam_thickness = 1.5;
-    let beam_spacing = 0.8;
+fn infer_direction(chords: &mut Vec<&mut Chord>) -> UpDown {
+    let stems: Vec<&Stem> = chords.iter().map(|s| s.stem.as_ref().unwrap()).collect();
 
-    // Attach ray to stems
-    for chord in chords.iter_mut() {
-        let stem = chord.stem.as_mut().unwrap();
-        stem.attach_ray(&ray);
+    if stems.is_empty() {
+        panic!("Chords contain no stems, cannot infer beam group direction.");
     }
 
-    let mut offset_ray = Ray { ..ray };
+    let first_dir = stems[0].direction;
 
-    // Build beams
-    for chord in chords.iter_mut() {
-        let stem = chord.stem.as_mut().unwrap();
+    if stems.len() == 1 {
+        return first_dir.invert();
+    }
 
-        for (idx, beam_type) in stem.beams.iter() {
-            match beam_type {
+    let mut is_cross = false;
+
+    for stem in &stems {
+        if stem.direction != first_dir {
+            is_cross = true;
+            break;
+        }
+    }
+
+    if !is_cross {
+        first_dir.invert()
+    } else {
+        first_dir
+    }
+}
+
+pub fn arrange_beams(
+    chords: &mut Vec<&mut Chord>,
+    ray: &Ray,
+    direction: &UpDown,
+    beam_thickness: &f32,
+    beam_spacing: &f32,
+) -> Vec<Line> {
+    let mut beams: Vec<Line> = vec![];
+    let len = chords.len();
+
+    if len <= 1 {
+        return beams;
+    }
+
+    for i in 0..len {
+        let left_chord = &chords[i];
+
+        let left_stem = match &left_chord.stem {
+            Some(stem) => stem,
+            None => continue,
+        };
+
+        for (beam_idx, left_beam) in left_stem.beams.iter() {
+            match left_beam {
                 BeamType::Start => {
-                    let offset = match stem.direction {
-                        UpDown::Up => ((idx - 1) as f32) * (beam_thickness + beam_spacing),
-                        UpDown::Down => ((idx - 1) as f32) * -(beam_thickness + beam_spacing),
-                    };
+                    let offset = create_offset(direction, beam_idx, beam_thickness, beam_spacing);
 
-                    offset_ray = ray.mv(0., offset);
-                    let tip = Ray {
-                        origin: stem.xy,
+                    let offset_ray = ray.mv(0., offset);
+                    let left_point = Ray {
+                        origin: left_stem.xy,
                         dir: XY { x: 0., y: 1. },
                     }
                     .intersect(offset_ray)
                     .unwrap();
 
-                    lines.insert(
-                        *idx,
-                        Line {
-                            start: tip,
-                            end: tip,
-                            stroke_width: beam_thickness,
-                            stroke_color: Color::BLACK,
-                        },
-                    );
-                }
-                BeamType::End => {
-                    let tip = Ray {
-                        origin: stem.xy,
-                        dir: XY { x: 0., y: 1. },
+                    let mut right_point: Option<XY> = None;
+
+                    for right_chord in chords.iter().take(len).skip(i + 1) {
+                        let right_stem = match &right_chord.stem {
+                            Some(stem) => stem,
+                            None => continue,
+                        };
+
+                        let right_beam = match right_stem.beams.get(beam_idx) {
+                            Some(beam) => beam,
+                            None => continue,
+                        };
+
+                        match right_beam {
+                            BeamType::End => {
+                                right_point = Some(
+                                    Ray {
+                                        origin: right_stem.xy,
+                                        dir: XY { x: 0., y: 1. },
+                                    }
+                                    .intersect(offset_ray)
+                                    .unwrap(),
+                                );
+                                break;
+                            }
+                            _ => continue,
+                        }
                     }
-                    .intersect(offset_ray)
-                    .unwrap();
-                    let mut line = lines.remove(idx).unwrap();
-                    line.end = tip;
-                    beams.push(line);
+
+                    beams.push(Line {
+                        start: left_point,
+                        end: right_point.unwrap(),
+                        stroke_color: Color::BLACK,
+                        stroke_width: *beam_thickness,
+                    })
                 }
-                _ => {}
+                _ => continue,
             }
         }
     }
@@ -237,6 +298,47 @@ pub fn arrange_beams(chords: &mut Vec<&mut Chord>) -> Vec<Line> {
     beams
 }
 
-pub fn between_two_stems(_left: &Stem, _right: &Stem) {
-    todo!()
+fn create_offset(
+    direction: &UpDown,
+    beam_idx: &u32,
+    beam_thickness: &f32,
+    beam_spacing: &f32,
+) -> f32 {
+    match direction {
+        UpDown::Up => ((beam_idx - 1) as f32) * -(beam_thickness + beam_spacing),
+        UpDown::Down => ((beam_idx - 1) as f32) * (beam_thickness + beam_spacing),
+    }
+}
+
+fn adjust_stem_lengths(
+    chords: &mut Vec<&mut Chord>,
+    ray: &Ray,
+    direction: &UpDown,
+    beam_thickness: &f32,
+    beam_spacing: &f32,
+) {
+    for chord in chords.iter_mut() {
+        let stem = match chord.stem.as_mut() {
+            Some(stem) => stem,
+            None => continue,
+        };
+
+        let beam_idx: &u32 = if &stem.direction != direction {
+            match stem.beams.keys().next() {
+                Some(beam) => beam,
+                None => continue,
+            }
+        } else {
+            match stem.beams.keys().last() {
+                Some(beam) => beam,
+                None => continue,
+            }
+        };
+
+        let offset = create_offset(direction, beam_idx, beam_thickness, beam_spacing);
+
+        let offset_ray = ray.mv(0., offset);
+
+        stem.attach_ray(&offset_ray);
+    }
 }

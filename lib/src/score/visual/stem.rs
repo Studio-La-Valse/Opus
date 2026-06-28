@@ -9,11 +9,20 @@ use crate::visual::layoutable::Layoutable;
 use crate::xy::XY;
 use std::collections::BTreeMap;
 
-#[derive(Default)]
+#[derive(Default, Eq, PartialEq, Copy, Clone, Debug)]
 pub enum UpDown {
     #[default]
     Up,
     Down,
+}
+
+impl UpDown {
+    pub fn invert(self) -> Self {
+        match self {
+            UpDown::Up => UpDown::Down,
+            UpDown::Down => UpDown::Up,
+        }
+    }
 }
 
 pub enum BeamType {
