@@ -1,6 +1,6 @@
 use crate::score::core::clef::Clef;
 use crate::score::layout_ctx::Visibility;
-use crate::utils::xml::{ToNumber, N};
+use crate::utils::xml::{N, ToNumber};
 use crate::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
@@ -114,7 +114,10 @@ impl Visitor for LayoutContextVisitor {
 
         ctx.layout_ctx.staff.distances.clear();
 
-        for staff_layout in element.children().filter(|n| n.has_tag_name("staff-layout")) {
+        for staff_layout in element
+            .children()
+            .filter(|n| n.has_tag_name("staff-layout"))
+        {
             let staff_distance = staff_layout.req_child("staff-distance").req_f32();
 
             let staff_number = staff_layout.req_attribute("number").req_u32();
@@ -123,7 +126,7 @@ impl Visitor for LayoutContextVisitor {
                 .staff
                 .distances
                 .insert(staff_number, staff_distance);
-        };
+        }
     }
 
     fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {

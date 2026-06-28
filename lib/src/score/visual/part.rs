@@ -23,7 +23,6 @@ pub struct Part {
 }
 
 impl Part {
-
     pub fn new(id: String) -> Self {
         Self {
             id,

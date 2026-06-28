@@ -6,12 +6,12 @@ use crate::score::visual::page::Page;
 use crate::utils::xml::{N, ToNumber};
 use crate::visitor::Visitor;
 use crate::visual::chord::Chord;
+use crate::visual::part::Part;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::{BTreeMap, HashSet};
-use crate::visual::part::Part;
 
 pub struct ContentVisitor {
     pub part_measure: Option<PartMeasure>,
@@ -50,6 +50,7 @@ impl Visitor for ContentVisitor {
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let staff = ctx.layout_ctx.staff.number;
+        let voice = ctx.layout_ctx.voice;
         let part_measure: &mut PartMeasure = self.part_measure.as_mut().unwrap();
 
         // Skip rests early
@@ -93,14 +94,15 @@ impl Visitor for ContentVisitor {
 
         let note = Note::new(pitch, default_x, staff, staff_line);
         let is_chord_node = node.children().any(|n| n.tag_name().name() == "chord");
+
+        let chords = part_measure.chords.entry(voice).or_default();
         if !is_chord_node {
-            part_measure.chords.push(Chord::default())
+            chords.push(Chord::default())
         }
 
-        let chord = part_measure.chords.last_mut().unwrap();
+        let chord = chords.last_mut().unwrap();
 
-        if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem")
-        {
+        if let Some(stem) = node.children().find(|n| n.tag_name().name() == "stem") {
             let default_y = stem.attribute("default-y").map(|a| a.req_f32());
 
             let text = stem.req_text();
@@ -181,9 +183,12 @@ impl Visitor for ContentVisitor {
         let _ = part_group.measures.entry(measure_number).or_default();
 
         // get or create the part in this part group.
-        let part = part_group.parts.entry(part_id.clone()).or_insert_with(|| Part::new(part_id));
+        let part = part_group
+            .parts
+            .entry(part_id.clone())
+            .or_insert_with(|| Part::new(part_id));
         part.ensure_staves(vec![1].into_iter().collect());
-        for chord in part_measure.chords.iter() {
+        for chord in part_measure.chords.iter().flat_map(|c| c.1) {
             let notes: HashSet<u32> = chord.notes.iter().map(|n| n.staff).collect();
             part.ensure_staves(notes);
         }

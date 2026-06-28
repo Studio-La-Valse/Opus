@@ -3,6 +3,7 @@ use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::layout::{Layout, UserLayout};
+use crate::ray::Ray;
 use crate::visual::element::ScoreElement;
 use crate::visual::layoutable::Layoutable;
 use crate::xy::XY;
@@ -67,6 +68,20 @@ impl Stem {
 
     pub fn tip(&self) -> XY {
         self.xy.mv(0., self.length)
+    }
+
+    pub fn attach_ray(&mut self, ray: &Ray) {
+        let dir = match self.direction {
+            UpDown::Up => -1.,
+            UpDown::Down => 1.,
+        };
+        let other = Ray {
+            origin: self.xy,
+            dir: XY { x: 0., y: dir },
+        };
+        let intersection = ray.intersect(other).unwrap();
+
+        self.length = intersection.y - self.xy.y;
     }
 }
 

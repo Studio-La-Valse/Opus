@@ -79,7 +79,8 @@ impl Layoutable for Chord {
                 };
 
                 let tip = &anchor.mv(0., default_length);
-                let staff_m_origin = &origin.mv(0., *self.staff_distances_from_top.get(&stem.staff).unwrap());
+                let staff_m_origin =
+                    &origin.mv(0., *self.staff_distances_from_top.get(&stem.staff).unwrap());
                 default_y = staff_m_origin.y - tip.y;
             }
 

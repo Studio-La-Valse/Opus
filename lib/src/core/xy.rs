@@ -20,4 +20,8 @@ impl XY {
             y: self.y + y,
         }
     }
+
+    pub fn length(&self) -> f32 {
+        self.x.hypot(self.y)
+    }
 }
