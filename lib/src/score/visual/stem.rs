@@ -2,6 +2,7 @@ use crate::color::Color;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
+use crate::duration::BaseDuration;
 use crate::layout::{Layout, UserLayout};
 use crate::ray::Ray;
 use crate::visual::element::ScoreElement;
@@ -25,6 +26,7 @@ impl UpDown {
     }
 }
 
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum BeamType {
     Start,
     Continue,
@@ -46,7 +48,6 @@ impl From<&str> for BeamType {
     }
 }
 
-#[derive(Default)]
 pub struct Stem {
     // provided by the musicxml document
     pub default_y: Option<f32>,
@@ -62,16 +63,27 @@ pub struct Stem {
     pub color: Color,
     pub staff: u32,
 
+    pub duration: BaseDuration,
     pub beams: BTreeMap<u32, BeamType>,
 }
 
 impl Stem {
-    pub fn new(direction: UpDown, staff: u32, default_y: Option<f32>) -> Self {
+    pub fn new(
+        direction: UpDown,
+        duration: BaseDuration,
+        staff: u32,
+        default_y: Option<f32>,
+    ) -> Self {
         Self {
             default_y,
             direction,
+            duration,
             staff,
-            ..Default::default()
+            length: 0.,
+            thickness: 0.,
+            xy: XY::ZERO,
+            color: Color::TRANSPARENT,
+            beams: BTreeMap::new(),
         }
     }
 

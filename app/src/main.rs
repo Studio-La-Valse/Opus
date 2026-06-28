@@ -9,6 +9,7 @@ use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
 use lib::visitors::layout_visitor::LayoutVisitor;
+use lib::visitors::rebeam_visitor::RebeamVisitor;
 use lib::visual::element::ScoreElement;
 use lib::visual::layoutable::Layoutable;
 use lib::visual::score::Score;
@@ -67,7 +68,8 @@ fn main() {
     let visitor = DefaultVisitor {}
         .add_callback(LayoutVisitor {})
         .add_callback(LayoutContextVisitor {})
-        .add_callback(ContentVisitor { part_measure: None });
+        .add_callback(ContentVisitor { part_measure: None })
+        .add_callback(RebeamVisitor {});
 
     let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual);
 

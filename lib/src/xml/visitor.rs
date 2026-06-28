@@ -103,8 +103,8 @@ impl<A: Visitor, B: Visitor> Visitor for Chain<A, B> {
     }
 
     fn exit_defaults(&mut self, ctx: &mut WalkerCtx) {
-        self.b.exit_defaults(ctx);
         self.a.exit_defaults(ctx);
+        self.b.exit_defaults(ctx);
     }
 
     fn enter_part_list(&mut self, node: &Node, ctx: &mut WalkerCtx) {
@@ -158,22 +158,22 @@ impl<A: Visitor, B: Visitor> Visitor for Chain<A, B> {
     }
 
     fn exit_note(&mut self, ctx: &mut WalkerCtx) {
-        self.b.exit_note(ctx);
         self.a.exit_note(ctx);
+        self.b.exit_note(ctx);
     }
 
     fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
-        self.b.exit_measure(ctx);
         self.a.exit_measure(ctx);
+        self.b.exit_measure(ctx);
     }
 
     fn exit_part(&mut self, ctx: &mut WalkerCtx) {
-        self.b.exit_part(ctx);
         self.a.exit_part(ctx);
+        self.b.exit_part(ctx);
     }
 
     fn exit(&mut self, ctx: &mut WalkerCtx) {
-        self.b.exit(ctx);
         self.a.exit(ctx);
+        self.b.exit(ctx);
     }
 }

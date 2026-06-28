@@ -1,4 +1,5 @@
 use crate::core::xy::XY;
+use crate::duration::BaseDuration;
 use crate::score::core::pitch::Pitch;
 use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
@@ -112,7 +113,9 @@ impl Visitor for ContentVisitor {
                 _ => None,
             };
             if let Some(dir) = dir {
-                let mut stem = Stem::new(dir, staff, default_y);
+                let type_str = node.req_child("type");
+                let dur = type_to_duration(type_str.req_text());
+                let mut stem = Stem::new(dir, dur, staff, default_y);
 
                 for beam in node.children().filter(|n| n.tag_name().name() == "beam") {
                     let number = beam.req_attribute("number").req_u32();
@@ -210,4 +213,20 @@ impl Visitor for ContentVisitor {
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn exit(&mut self, _ctx: &mut WalkerCtx) {}
+}
+
+fn type_to_duration(type_str: &str) -> BaseDuration {
+    match type_str {
+        "maxima" => BaseDuration::Maxima,
+        "longa" => BaseDuration::Longa,
+        "breve" => BaseDuration::Breve,
+        "whole" => BaseDuration::Whole,
+        "half" => BaseDuration::Half,
+        "quarter" => BaseDuration::Quarter,
+        "eighth" => BaseDuration::Eighth,
+        "16th" => BaseDuration::Sixteenth,
+        "32nd" => BaseDuration::ThirtySecond,
+        "64th" => BaseDuration::SixtyFourth,
+        _ => panic!("Unknown type: {}", type_str),
+    }
 }

@@ -56,37 +56,51 @@ impl Layoutable for Chord {
         if let Some(stem) = self.stem.as_mut() {
             let key = |n: &&Note| OrderedFloat(n.xy.y);
 
-            let note = match stem.direction {
-                UpDown::Up => self.notes.iter().max_by_key(key),
-                UpDown::Down => self.notes.iter().min_by_key(key),
+            let lowest_note = self.notes.iter().max_by_key(key);
+            let highest_note = self.notes.iter().min_by_key(key);
+
+            let tale_note = match stem.direction {
+                UpDown::Up => lowest_note,
+                UpDown::Down => highest_note,
             }
             .unwrap();
 
-            let anchor = match stem.direction {
-                UpDown::Up => note.glyph.as_ref().unwrap().stem_anchor_right,
-                UpDown::Down => note.glyph.as_ref().unwrap().stem_anchor_left,
+            let tale_anchor = match stem.direction {
+                UpDown::Up => tale_note.glyph.as_ref().unwrap().stem_anchor_right,
+                UpDown::Down => tale_note.glyph.as_ref().unwrap().stem_anchor_left,
             };
-            let anchor = note.scale_pt(&anchor);
-            stem.arrange(&anchor);
+            let tale_anchor = tale_note.scale_pt(&tale_anchor);
+            stem.arrange(&tale_anchor);
 
-            let default_y: f32;
-            if let Some(def_y) = &stem.default_y {
-                default_y = *def_y;
+            let default_y: f32 = if let Some(def_y) = &stem.default_y {
+                *def_y
             } else {
                 let default_length = match stem.direction {
-                    UpDown::Up => -50.,
-                    UpDown::Down => 50.,
+                    UpDown::Up => -30.,
+                    UpDown::Down => 30.,
                 };
 
-                let tip = &anchor.mv(0., default_length);
+                let tip_note = match stem.direction {
+                    UpDown::Up => highest_note,
+                    UpDown::Down => lowest_note,
+                }
+                .unwrap();
+
+                let tip_anchor = match stem.direction {
+                    UpDown::Up => tip_note.glyph.as_ref().unwrap().stem_anchor_right,
+                    UpDown::Down => tip_note.glyph.as_ref().unwrap().stem_anchor_left,
+                };
+                let tip_anchor = tip_note.scale_pt(&tip_anchor);
+
+                let tip = &tip_anchor.mv(0., default_length);
                 let staff_m_origin =
                     &origin.mv(0., *self.staff_distances_from_top.get(&stem.staff).unwrap());
-                default_y = staff_m_origin.y - tip.y;
-            }
+                staff_m_origin.y - tip.y
+            };
 
             let length = ((origin.y + self.staff_distances_from_top.get(&stem.staff).unwrap())
                 - default_y)
-                - anchor.y;
+                - tale_anchor.y;
             stem.length = length;
         }
     }
