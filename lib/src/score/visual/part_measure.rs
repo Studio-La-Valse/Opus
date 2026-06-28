@@ -309,19 +309,13 @@ fn infer_direction(chords: &[&mut Chord]) -> UpDown {
         return first_dir.invert();
     }
 
-    let mut is_cross = false;
     for stem in &stems {
         if stem.direction != first_dir {
-            is_cross = true;
-            break;
+            return first_dir;
         }
     }
 
-    if !is_cross {
-        first_dir.invert()
-    } else {
-        first_dir
-    }
+    first_dir.invert()
 }
 
 fn arrange_beams(
