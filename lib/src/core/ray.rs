@@ -11,7 +11,7 @@ impl Ray {
         Self { origin: o, dir }
     }
 
-    pub fn from_pt(o: XY, pt: XY) -> Self {
+    pub fn from_pts(o: XY, pt: XY) -> Self {
         Self {
             origin: o,
             dir: XY {

@@ -4,12 +4,12 @@ use lib::drawable::bfs_iter::bfs_elements;
 use lib::drawable::element::{Element, to_svg};
 use lib::layout::{Layout, UserLayout};
 use lib::layout_ctx::LayoutCtx;
+use lib::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use lib::smufl::smufl_font::SmuflFont;
 use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
 use lib::visitors::layout_visitor::LayoutVisitor;
-use lib::visitors::rebeam_visitor::RebeamVisitor;
 use lib::visual::element::ScoreElement;
 use lib::visual::layoutable::Layoutable;
 use lib::visual::score::Score;
@@ -68,8 +68,7 @@ fn main() {
     let visitor = DefaultVisitor {}
         .add_callback(LayoutVisitor {})
         .add_callback(LayoutContextVisitor {})
-        .add_callback(ContentVisitor { part_measure: None })
-        .add_callback(RebeamVisitor {});
+        .add_callback(ContentVisitor { part_measure: None });
 
     let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual);
 
@@ -98,6 +97,14 @@ fn main() {
     visual.apply_layout(&layout, &user_layout);
 
     println!("Applying user layout: {}ms", time.elapsed().as_millis());
+    time = Instant::now();
+
+    let strat_impl = Box::new(SimpleRebeamStrategy {});
+    let strategy = Box::new(OnlyWhenRequiredRebeamStrategy { imp: strat_impl });
+
+    visual.rebeam(strategy.as_ref());
+
+    println!("Rebeaming: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
     visual.measure(&XY::INFINITE);

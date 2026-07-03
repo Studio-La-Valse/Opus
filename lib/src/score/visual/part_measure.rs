@@ -3,7 +3,10 @@ use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
+use crate::drawable::elements::polygon::Polygon;
+use crate::layout::{Layout, UserLayout};
 use crate::ray::Ray;
+use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
@@ -25,7 +28,8 @@ pub struct PartMeasure {
     /// Chords for each voice
     pub chords: BTreeMap<u32, Vec<Chord>>,
 
-    pub beams: Vec<Line>,
+    pub stem_thickness: f32,
+    pub beams: Vec<Polygon>,
 }
 
 impl PartMeasure {
@@ -36,23 +40,11 @@ impl PartMeasure {
         }
     }
 
-    pub fn requires_rebeam(&mut self) -> bool {
-        let chord_groups = collect(&mut self.chords);
-
-        for chords in chord_groups {
-            if requires_rebeam(&chords) {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    pub fn rebeam(&mut self) {
+    pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
         let chord_groups = collect(&mut self.chords);
 
         for mut chords in chord_groups {
-            rebeam(&mut chords)
+            strategy.rebeam(&mut chords)
         }
     }
 
@@ -62,7 +54,6 @@ impl PartMeasure {
         let beam_thickness = 2.4;
         let beam_spacing = 1.1;
 
-        // Fix 1: Pass mutably to allow mutable extraction
         let chord_groups = collect(&mut self.chords);
 
         for chords in chord_groups {
@@ -75,12 +66,17 @@ impl PartMeasure {
                 };
 
                 let direction = infer_direction(&group);
-                let beams = arrange_beams(&group, &ray, &direction, &beam_thickness, &beam_spacing);
+                let beams = arrange_beams(
+                    &group,
+                    &ray,
+                    &direction,
+                    &beam_thickness,
+                    &beam_spacing,
+                    &self.stem_thickness,
+                );
 
-                // Rust allows split-borrowing here: mutating self.beams while self.chords is borrowed
                 self.beams.extend(beams);
 
-                // Fix 2: Pass a mutable slice to allow mutation of inner chords
                 adjust_stem_lengths(&mut group, &ray, &direction, &beam_thickness, &beam_spacing);
             }
         }
@@ -90,11 +86,18 @@ impl PartMeasure {
 impl ScoreElement for PartMeasure {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-        // Fix 4: Use values_mut().flatten() to bypass closure lifetime quirks
         for chord in self.chords.values_mut().flatten() {
             result.push(chord);
         }
         result
+    }
+
+    fn apply_layout(&mut self, _layout: &Layout, _user_layout: &UserLayout) {
+        self.stem_thickness = 1.0;
+
+        for child in self.children() {
+            child.apply_layout(_layout, _user_layout);
+        }
     }
 }
 
@@ -136,14 +139,13 @@ impl Content for PartMeasure {
     fn elements(&self) -> Vec<Element> {
         let mut result: Vec<Element> = Vec::new();
         for beam in &self.beams {
-            let line: Line = *beam;
-            result.push(line.into());
+            let line: Element = beam.clone().into();
+            result.push(line);
         }
         result
     }
 }
 
-// Fix 1: Accept &mut BTreeMap to safely yield out &mut Chords
 fn collect(chord_groups: &mut BTreeMap<u32, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
     let mut result: Vec<Vec<&mut Chord>> = Vec::new();
 
@@ -156,66 +158,6 @@ fn collect(chord_groups: &mut BTreeMap<u32, Vec<Chord>>) -> Vec<Vec<&mut Chord>>
     }
 
     result
-}
-
-fn requires_rebeam(chords: &[&mut Chord]) -> bool {
-    for chord in chords {
-        if let Some(stem) = &chord.stem {
-            let expected_beams = stem.duration.beam_count();
-            let beams = stem.beams.len() as i8;
-
-            if expected_beams != beams {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-fn rebeam(chords: &mut [&mut Chord]) {
-    // Step 1: Collect indices of chords that actually have stems.
-    // This safely separates our structural inspection from our mutations.
-    let stem_indices: Vec<usize> = chords
-        .iter()
-        .enumerate()
-        .filter(|(_, chord)| chord.stem.is_some())
-        .map(|(idx, _)| idx)
-        .collect();
-
-    let len = stem_indices.len();
-
-    // If there are fewer than 2 stems, a beam group cannot be formed.
-    // We clear any rogue beams and turn them back into standalone notes.
-    if len < 2 {
-        for &idx in &stem_indices {
-            if let Some(stem) = chords[idx].stem.as_mut() {
-                stem.beams.clear();
-            }
-        }
-        return;
-    }
-
-    // Step 2: Apply the beam types based on position in the group
-    for (pos, &idx) in stem_indices.iter().enumerate() {
-        // We can safely extract a mutable reference to the stem index-by-index
-        let stem = chords[idx].stem.as_mut().unwrap();
-        stem.beams.clear();
-
-        let expected_beams = stem.duration.beam_count() as u32;
-
-        // Assign the appropriate BeamType for every beam level required by this note
-        let beam_type = if pos == 0 {
-            BeamType::Start
-        } else if pos == len - 1 {
-            BeamType::End
-        } else {
-            BeamType::Continue
-        };
-
-        for beam_idx in 1..=expected_beams {
-            stem.beams.insert(beam_idx, beam_type);
-        }
-    }
 }
 
 // Local enum to break the "match-and-borrow" lifecycle completely
@@ -232,7 +174,6 @@ fn create_beam_groups(chords: Vec<&mut Chord>) -> Vec<Vec<&mut Chord>> {
     let mut group: Vec<&mut Chord> = vec![];
 
     for chord in chords {
-        // Fix 3: Read what we need into an independent state enum, letting the borrow on chord die instantly
         let action = match &chord.stem {
             Some(stem) => match stem.beams.get(&1) {
                 Some(BeamType::Start) => BeamGroupAction::Start,
@@ -246,7 +187,6 @@ fn create_beam_groups(chords: Vec<&mut Chord>) -> Vec<Vec<&mut Chord>> {
             None => BeamGroupAction::Standalone,
         };
 
-        // Now we can safely push and consume `chord` without the compiler worrying about active borrows
         match action {
             BeamGroupAction::Start => {
                 if !group.is_empty() {
@@ -294,7 +234,26 @@ fn create_ray(chords: &[&mut Chord]) -> Option<Ray> {
     let first_stem = chords.first().unwrap().stem.as_ref().unwrap();
     let last_stem = chords.last().unwrap().stem.as_ref().unwrap();
 
-    Some(Ray::from_pt(first_stem.tip(), last_stem.tip()))
+    let mut left = first_stem.tip();
+    let mut right = last_stem.tip();
+
+    let max_dy = 20.;
+    let dy = (right.y - left.y).abs();
+
+    if dy > max_dy {
+        let overshoot = dy - max_dy;
+        let adjust = overshoot / 2.;
+
+        if left.y > right.y {
+            left = left.mv(0., -adjust);
+            right = right.mv(0., adjust);
+        } else {
+            left = left.mv(0., adjust);
+            right = right.mv(0., -adjust);
+        }
+    }
+
+    Some(Ray::from_pts(left, right))
 }
 
 fn infer_direction(chords: &[&mut Chord]) -> UpDown {
@@ -330,8 +289,9 @@ fn arrange_beams(
     direction: &UpDown,
     beam_thickness: &f32,
     beam_spacing: &f32,
-) -> Vec<Line> {
-    let mut beams: Vec<Line> = vec![];
+    stem_thickness: &f32,
+) -> Vec<Polygon> {
+    let mut beams: Vec<Polygon> = vec![];
     let len = chords.len();
 
     if len <= 1 {
@@ -350,8 +310,13 @@ fn arrange_beams(
                 BeamType::Start => {
                     let offset = create_offset(direction, beam_idx, beam_thickness, beam_spacing);
                     let offset_ray = ray.mv(0., offset);
+                    let dx = if left_stem.direction == UpDown::Up {
+                        -stem_thickness
+                    } else {
+                        0.
+                    };
                     let left_point = Ray {
-                        origin: left_stem.xy,
+                        origin: left_stem.xy.mv(dx, 0.),
                         dir: XY { x: 0., y: 1. },
                     }
                     .intersect(offset_ray)
@@ -371,9 +336,14 @@ fn arrange_beams(
                         };
 
                         if let BeamType::End = right_beam {
+                            let dx = if right_stem.direction == UpDown::Up {
+                                0.
+                            } else {
+                                *stem_thickness
+                            };
                             right_point = Some(
                                 Ray {
-                                    origin: right_stem.xy,
+                                    origin: right_stem.xy.mv(dx, 0.),
                                     dir: XY { x: 0., y: 1. },
                                 }
                                 .intersect(offset_ray)
@@ -383,12 +353,20 @@ fn arrange_beams(
                         }
                     }
 
-                    beams.push(Line {
-                        start: left_point,
-                        end: right_point.unwrap(),
-                        stroke_color: Color::BLACK,
-                        stroke_width: *beam_thickness,
-                    })
+                    let dy: f32 = match direction {
+                        UpDown::Up => -beam_thickness,
+                        UpDown::Down => *beam_thickness,
+                    };
+                    beams.push(
+                        Line {
+                            start: left_point,
+                            end: right_point.unwrap(),
+                            stroke_color: Color::BLACK,
+                            stroke_width: *beam_thickness,
+                        }
+                        .extrude(&XY { x: 0., y: dy })
+                        .mv(0., dy / -2.),
+                    )
                 }
                 _ => continue,
             }

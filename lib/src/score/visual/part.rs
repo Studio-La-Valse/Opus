@@ -2,6 +2,7 @@ use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::score::layout_ctx::Visibility;
+use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
@@ -102,6 +103,12 @@ impl Part {
         }
 
         dist
+    }
+
+    pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
+        for measure in self.measures.values_mut() {
+            measure.rebeam(strategy);
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 use crate::drawable::elements::line::Line;
+use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
 use crate::drawable::elements::text::Text;
 use serde::Serialize;
@@ -9,6 +10,7 @@ pub enum Element {
     Line(Line),
     Rect(Rect),
     Text(Text),
+    Polygon(Polygon),
 }
 
 impl From<Line> for Element {
@@ -26,6 +28,12 @@ impl From<Rect> for Element {
 impl From<Text> for Element {
     fn from(t: Text) -> Self {
         Element::Text(t)
+    }
+}
+
+impl From<Polygon> for Element {
+    fn from(p: Polygon) -> Self {
+        Element::Polygon(p)
     }
 }
 
@@ -78,6 +86,21 @@ pub fn to_svg(elements: &[Element]) -> String {
                 va = t.vertical_alignment.to_svg(),
                 content = xml_escape(&t.text),
             )),
+            Element::Polygon(p) => {
+                let pts = p.pts
+                    .iter()
+                    .map(|xy| format!("{},{}", xy.x, xy.y))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+
+                out.push_str(&format!(
+                    r#"<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}" />"#,
+                    pts = pts,
+                    fill = p.color.to_hex(),
+                    stroke = p.stroke_color.as_ref().map_or("none".to_string(), |c| c.to_hex()),
+                    sw = p.stroke_width.unwrap_or(0.0),
+                ));
+            }
         }
     }
 
@@ -112,6 +135,14 @@ pub fn compute_bounds(elements: &[Element]) -> (f32, f32, f32, f32) {
                 min_y = min_y.min(t.xy.y);
                 max_x = max_x.max(t.xy.x);
                 max_y = max_y.max(t.xy.y);
+            }
+            Element::Polygon(p) => {
+                for xy in &p.pts {
+                    min_x = min_x.min(xy.x);
+                    min_y = min_y.min(xy.y);
+                    max_x = max_x.max(xy.x);
+                    max_y = max_y.max(xy.y);
+                }
             }
         }
     }

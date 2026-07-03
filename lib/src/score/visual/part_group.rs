@@ -2,6 +2,7 @@ use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::layout_ctx::Visibility;
+use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
@@ -37,6 +38,12 @@ impl PartGroup {
         }
 
         dist
+    }
+
+    pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
+        for part in self.parts.values_mut() {
+            part.rebeam(strategy);
+        }
     }
 }
 

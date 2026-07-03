@@ -1,6 +1,7 @@
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::section_measure::SectionMeasure;
@@ -32,6 +33,12 @@ impl Section {
         }
 
         dist
+    }
+
+    pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
+        for part_group in self.part_groups.values_mut() {
+            part_group.rebeam(strategy);
+        }
     }
 }
 

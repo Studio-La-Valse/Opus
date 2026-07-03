@@ -1,6 +1,7 @@
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::page::Page;
 use crate::visual::element::ScoreElement;
@@ -11,7 +12,13 @@ pub struct Score {
     pub pages: BTreeMap<u32, Page>,
 }
 
-impl Score {}
+impl Score {
+    pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
+        for page in self.pages.values_mut() {
+            page.rebeam(strategy);
+        }
+    }
+}
 
 impl ScoreElement for Score {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {

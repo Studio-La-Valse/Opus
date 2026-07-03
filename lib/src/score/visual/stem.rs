@@ -112,7 +112,7 @@ impl ScoreElement for Stem {
     }
 
     fn apply_layout(&mut self, _layout: &Layout, _user_layout: &UserLayout) {
-        self.thickness = 1.0; // pseudo code
+        self.thickness = 1.0; // pseudocode
         self.color = _user_layout.foreground_color.unwrap();
     }
 }

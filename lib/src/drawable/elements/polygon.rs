@@ -1,0 +1,20 @@
+use crate::color::Color;
+use crate::xy::XY;
+use serde::Serialize;
+
+#[derive(Default, Serialize, Clone)]
+pub struct Polygon {
+    pub pts: Vec<XY>,
+    pub color: Color,
+    pub stroke_color: Option<Color>,
+    pub stroke_width: Option<f32>,
+}
+
+impl Polygon {
+    pub fn mv(&self, x: f32, y: f32) -> Polygon {
+        Polygon {
+            pts: self.pts.iter().map(|pt| pt.mv(x, y)).collect(),
+            ..self.clone()
+        }
+    }
+}

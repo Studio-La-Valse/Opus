@@ -5,6 +5,7 @@ use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::layout::{Layout, UserLayout};
 use crate::layout_ctx::Visibility;
+use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
@@ -89,6 +90,12 @@ impl System {
                     }
                 }
             }
+        }
+    }
+
+    pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
+        for section in self.sections.values_mut() {
+            section.rebeam(strategy);
         }
     }
 }
