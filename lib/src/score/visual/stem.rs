@@ -1,10 +1,12 @@
+use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::duration::BaseDuration;
-use crate::layout::{Layout, UserLayout};
+use crate::layout::Layout;
 use crate::ray::Ray;
+use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::layoutable::Layoutable;
 use crate::xy::XY;
@@ -111,9 +113,19 @@ impl ScoreElement for Stem {
         vec![]
     }
 
-    fn apply_layout(&mut self, _layout: &Layout, _user_layout: &UserLayout) {
-        self.thickness = 1.0; // pseudocode
-        self.color = _user_layout.foreground_color.unwrap();
+    fn _apply_layout(
+        &mut self,
+        layout: &Layout,
+        user_layout: &UserLayout,
+        app_defaults: &AppDefaults,
+    ) {
+        self.thickness = user_layout
+            .stem_thickness
+            .or(layout.appearance.stem_thickness)
+            .unwrap_or(app_defaults.stem_thickness);
+        self.color = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
     }
 }
 

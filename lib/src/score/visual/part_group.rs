@@ -1,11 +1,14 @@
+use crate::app_defaults::AppDefaults;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::layout::Layout;
 use crate::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
+use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
@@ -60,6 +63,14 @@ impl ScoreElement for PartGroup {
         }
 
         result
+    }
+
+    fn _apply_layout(
+        &mut self,
+        _layout: &Layout,
+        _user_layout: &UserLayout,
+        _app_defaults: &AppDefaults,
+    ) {
     }
 }
 

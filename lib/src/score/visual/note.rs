@@ -1,3 +1,4 @@
+use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
 use crate::core::xy::XY;
@@ -5,11 +6,12 @@ use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
-use crate::layout::{Layout, UserLayout};
+use crate::layout::Layout;
 use crate::score::core::pitch::Pitch;
 use crate::score::visual::layoutable::Layoutable;
 use crate::smufl::glyphs::notehead_black::NoteheadBlack;
 use crate::smufl::smufl_glyph::SmuflGlyph;
+use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 
 pub struct Note {
@@ -82,18 +84,18 @@ impl ScoreElement for Note {
         children
     }
 
-    fn apply_layout(&mut self, _layout: &Layout, _user_layout: &UserLayout) {
-        self.color = _layout.foreground_color;
+    fn _apply_layout(
+        &mut self,
+        _layout: &Layout,
+        user_layout: &UserLayout,
+        app_defaults: &AppDefaults,
+    ) {
+        self.color = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
 
-        if let Some(user_color) = _user_layout.foreground_color {
-            self.color = user_color;
-        }
-
-        for child in self.children() {
-            child.apply_layout(_layout, _user_layout);
-        }
-
-        self.glyph = Some(_user_layout.font.notehead_black())
+        // TODO: fix
+        self.glyph = Some(user_layout.font.notehead_black())
     }
 }
 

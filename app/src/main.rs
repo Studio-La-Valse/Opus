@@ -1,11 +1,12 @@
 use clap::Parser;
-use lib::color::Color;
+use lib::app_defaults::AppDefaults;
 use lib::drawable::bfs_iter::bfs_elements;
 use lib::drawable::element::{Element, to_svg};
-use lib::layout::{Layout, UserLayout};
+use lib::layout::Layout;
 use lib::layout_ctx::LayoutCtx;
 use lib::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use lib::smufl::smufl_font::SmuflFont;
+use lib::user_layout::UserLayout;
 use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
@@ -78,23 +79,12 @@ fn main() {
     time = Instant::now();
 
     let user_layout = UserLayout {
-        page_color: Some(Color {
-            a: 1.,
-            r: 255,
-            g: 200,
-            b: 100,
-        }),
-
-        foreground_color: Some(Color {
-            a: 1.,
-            r: 200,
-            g: 100,
-            b: 150,
-        }),
-
         ..UserLayout::new(font)
     };
-    visual.apply_layout(&layout, &user_layout);
+
+    let app_defaults: AppDefaults = Default::default();
+
+    visual.apply_layout(&layout, &user_layout, &app_defaults);
 
     println!("Applying user layout: {}ms", time.elapsed().as_millis());
     time = Instant::now();

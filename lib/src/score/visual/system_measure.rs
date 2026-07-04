@@ -1,9 +1,11 @@
+use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
-use crate::layout::{Layout, UserLayout};
+use crate::layout::Layout;
 use crate::score::visual::layoutable::Layoutable;
+use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 
 #[derive(Default)]
@@ -30,13 +32,15 @@ impl ScoreElement for SystemMeasure {
         vec![]
     }
 
-    fn apply_layout(&mut self, layout: &Layout, user_layout: &UserLayout) {
-        self.color = layout.page_color;
-
-        let user_page_color = user_layout.page_color;
-        if let Some(user_page_color) = user_page_color {
-            self.color = user_page_color;
-        }
+    fn _apply_layout(
+        &mut self,
+        _layout: &Layout,
+        user_layout: &UserLayout,
+        app_defaults: &AppDefaults,
+    ) {
+        self.color = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
     }
 }
 

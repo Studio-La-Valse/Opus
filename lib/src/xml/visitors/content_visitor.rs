@@ -1,3 +1,4 @@
+use crate::color::Color;
 use crate::core::xy::XY;
 use crate::duration::BaseDuration;
 use crate::score::core::pitch::Pitch;
@@ -113,17 +114,17 @@ impl Visitor for ContentVisitor {
                 _ => None,
             };
             if let Some(dir) = dir {
-                let type_str = node.req_child("type");
-                let dur = type_to_duration(type_str.req_text());
-                let mut stem = Stem::new(dir, dur, staff, default_y);
+                let stem = chord.stem.get_or_insert_with(|| {
+                    let type_str = node.req_child("type");
+                    let dur = type_to_duration(type_str.req_text());
+                    Stem::new(dir, dur, staff, default_y)
+                });
 
                 for beam in node.children().filter(|n| n.tag_name().name() == "beam") {
                     let number = beam.req_attribute("number").req_u32();
                     let beam_type: BeamType = beam.req_text().into();
                     stem.beams.insert(number, beam_type);
                 }
-
-                chord.stem = Some(stem);
             }
         }
 
@@ -157,8 +158,8 @@ impl Visitor for ContentVisitor {
                 xy: XY::default(),
                 width: _ctx.layout.defaults.page_width,
                 height: _ctx.layout.defaults.page_height,
-                color: _ctx.layout.page_color,
-                foreground: _ctx.layout.foreground_color,
+                color: Color::WHITE,
+                foreground: Color::BLACK,
                 margins: _ctx.layout.get_margins(page_number),
                 systems: BTreeMap::new(),
             });

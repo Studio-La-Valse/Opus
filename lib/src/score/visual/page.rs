@@ -1,14 +1,16 @@
+use crate::app_defaults::AppDefaults;
 use crate::core::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
-use crate::layout::{Layout, UserLayout};
+use crate::layout::Layout;
 use crate::score::layout::PageMargins;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::system::System;
+use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
@@ -45,23 +47,16 @@ impl ScoreElement for Page {
         result
     }
 
-    fn apply_layout(&mut self, layout: &Layout, user_layout: &UserLayout) {
-        self.color = layout.page_color;
-        self.foreground = layout.foreground_color;
-
-        let user_page_color = user_layout.page_color;
-        if let Some(user_page_color) = user_page_color {
-            self.color = user_page_color;
-        }
-
-        let user_foreground_color = user_layout.foreground_color;
-        if let Some(user_foreground_color) = user_foreground_color {
-            self.foreground = user_foreground_color;
-        }
-
-        for child in self.children() {
-            child.apply_layout(layout, user_layout);
-        }
+    fn _apply_layout(
+        &mut self,
+        _layout: &Layout,
+        user_layout: &UserLayout,
+        app_defaults: &AppDefaults,
+    ) {
+        self.color = user_layout.page_color.unwrap_or(app_defaults.page_color);
+        self.foreground = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
     }
 }
 

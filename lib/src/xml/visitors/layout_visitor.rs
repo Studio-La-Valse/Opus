@@ -53,9 +53,11 @@ impl Visitor for LayoutVisitor {
                 let v = lw.req_f32();
 
                 match t {
-                    "staff" => ctx.layout.staff_line_thickness = v,
-                    "light barline" => ctx.layout.bar_line_light_thickness = v,
-                    "heavy barline" => ctx.layout.bar_line_heavy_thickness = v,
+                    "staff" => ctx.layout.appearance.staff = Some(v),
+                    "light barline" => ctx.layout.appearance.light_barline = Some(v),
+                    "heavy barline" => ctx.layout.appearance.heavy_barline = Some(v),
+                    "beam" => ctx.layout.appearance.beam_thickness = Some(v),
+                    "stem" => ctx.layout.appearance.stem_thickness = Some(v),
                     _ => {}
                 }
             }

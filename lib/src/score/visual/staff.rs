@@ -1,11 +1,13 @@
+use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
-use crate::layout::{Layout, UserLayout};
+use crate::layout::Layout;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
@@ -18,6 +20,7 @@ pub struct Staff {
     pub measures: BTreeMap<u32, StaffMeasure>,
 
     pub color: Color,
+    pub line_thickness: f32,
 
     pub hidden: bool,
     pub distance_specified: Option<f32>,
@@ -37,17 +40,20 @@ impl ScoreElement for Staff {
             .collect()
     }
 
-    fn apply_layout(&mut self, layout: &Layout, user_layout: &UserLayout) {
-        self.color = layout.foreground_color;
+    fn _apply_layout(
+        &mut self,
+        layout: &Layout,
+        user_layout: &UserLayout,
+        app_defaults: &AppDefaults,
+    ) {
+        self.color = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
 
-        let user_color = user_layout.foreground_color;
-        if let Some(user_color) = user_color {
-            self.color = user_color;
-        }
-
-        for child in self.children() {
-            child.apply_layout(layout, user_layout);
-        }
+        self.line_thickness = user_layout
+            .staff
+            .or(layout.appearance.staff)
+            .unwrap_or(app_defaults.staff_line_thickness);
     }
 }
 
@@ -104,7 +110,7 @@ impl Content for Staff {
         };
 
         let stroke_color = self.color;
-        let stroke_width = 1.;
+        let stroke_width = self.line_thickness;
 
         for _i in 0..5 {
             let line = Line {

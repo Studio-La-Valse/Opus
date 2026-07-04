@@ -1,13 +1,15 @@
+use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
-use crate::layout::{Layout, UserLayout};
+use crate::layout::Layout;
 use crate::ray::Ray;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
+use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
 use crate::visual::stem::{BeamType, Stem, UpDown};
@@ -27,9 +29,11 @@ pub struct PartMeasure {
 
     /// Chords for each voice
     pub chords: BTreeMap<u32, Vec<Chord>>,
+    pub beams: Vec<Polygon>,
 
     pub stem_thickness: f32,
-    pub beams: Vec<Polygon>,
+    pub beam_thickness: f32,
+    pub beam_spacing: f32,
 }
 
 impl PartMeasure {
@@ -51,33 +55,45 @@ impl PartMeasure {
     pub fn arrange_beams(&mut self) {
         self.beams.clear();
 
-        let beam_thickness = 2.4;
-        let beam_spacing = 1.1;
-
         let chord_groups = collect(&mut self.chords);
 
         for chords in chord_groups {
             let groups = create_beam_groups(chords);
 
             for mut group in groups {
-                let ray = match create_ray(&group) {
+                let direction = match infer_direction(&group) {
+                    Some(direction) => direction,
+                    None => continue,
+                };
+
+                let ray = match create_ray(
+                    &group,
+                    &direction,
+                    &self.beam_thickness,
+                    &self.beam_spacing,
+                ) {
                     Some(ray) => ray,
                     None => continue,
                 };
 
-                let direction = infer_direction(&group);
                 let beams = arrange_beams(
                     &group,
                     &ray,
                     &direction,
-                    &beam_thickness,
-                    &beam_spacing,
+                    &self.beam_thickness,
+                    &self.beam_spacing,
                     &self.stem_thickness,
                 );
 
                 self.beams.extend(beams);
 
-                adjust_stem_lengths(&mut group, &ray, &direction, &beam_thickness, &beam_spacing);
+                adjust_stem_lengths(
+                    &mut group,
+                    &ray,
+                    &direction,
+                    &self.beam_thickness,
+                    &self.beam_spacing,
+                );
             }
         }
     }
@@ -92,12 +108,25 @@ impl ScoreElement for PartMeasure {
         result
     }
 
-    fn apply_layout(&mut self, _layout: &Layout, _user_layout: &UserLayout) {
-        self.stem_thickness = 1.0;
+    fn _apply_layout(
+        &mut self,
+        layout: &Layout,
+        user_layout: &UserLayout,
+        app_defaults: &AppDefaults,
+    ) {
+        self.stem_thickness = user_layout
+            .stem_thickness
+            .or(layout.appearance.stem_thickness)
+            .unwrap_or(app_defaults.stem_thickness);
 
-        for child in self.children() {
-            child.apply_layout(_layout, _user_layout);
-        }
+        self.beam_thickness = user_layout
+            .beam_thickness
+            .or(layout.appearance.beam_thickness)
+            .unwrap_or(app_defaults.beam_thickness);
+
+        self.beam_spacing = user_layout
+            .beam_spacing
+            .unwrap_or(app_defaults.beam_spacing);
     }
 }
 
@@ -225,7 +254,39 @@ fn create_beam_groups(chords: Vec<&mut Chord>) -> Vec<Vec<&mut Chord>> {
     result
 }
 
-fn create_ray(chords: &[&mut Chord]) -> Option<Ray> {
+fn infer_direction(chords: &[&mut Chord]) -> Option<UpDown> {
+    let stems: Vec<&Stem> = chords.iter().filter_map(|s| s.stem.as_ref()).collect();
+
+    if stems.is_empty() {
+        return None;
+    }
+
+    let first_dir = stems[0].direction;
+    if stems.len() == 1 {
+        return Some(first_dir.invert());
+    }
+
+    let mut is_cross = false;
+    for stem in &stems {
+        if stem.direction != first_dir {
+            is_cross = true;
+            break;
+        }
+    }
+
+    if !is_cross {
+        Some(first_dir.invert())
+    } else {
+        Some(first_dir)
+    }
+}
+
+fn create_ray(
+    chords: &[&mut Chord],
+    _direction: &UpDown,
+    beam_thickness: &f32,
+    beam_spacing: &f32,
+) -> Option<Ray> {
     let len = chords.len();
     if len < 2 {
         return None;
@@ -234,8 +295,20 @@ fn create_ray(chords: &[&mut Chord]) -> Option<Ray> {
     let first_stem = chords.first().unwrap().stem.as_ref().unwrap();
     let last_stem = chords.last().unwrap().stem.as_ref().unwrap();
 
-    let mut left = first_stem.tip();
-    let mut right = last_stem.tip();
+    let sign = if first_stem.direction != UpDown::Up {
+        1.0
+    } else {
+        -1.0
+    };
+
+    let mut left = first_stem.tip().mv(
+        0.,
+        first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
+    );
+    let mut right = last_stem.tip().mv(
+        0.,
+        first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
+    );
 
     let max_dy = 20.;
     let dy = (right.y - left.y).abs();
@@ -254,33 +327,6 @@ fn create_ray(chords: &[&mut Chord]) -> Option<Ray> {
     }
 
     Some(Ray::from_pts(left, right))
-}
-
-fn infer_direction(chords: &[&mut Chord]) -> UpDown {
-    let stems: Vec<&Stem> = chords.iter().map(|s| s.stem.as_ref().unwrap()).collect();
-
-    if stems.is_empty() {
-        panic!("Chords contain no stems, cannot infer beam group direction.");
-    }
-
-    let first_dir = stems[0].direction;
-    if stems.len() == 1 {
-        return first_dir.invert();
-    }
-
-    let mut is_cross = false;
-    for stem in &stems {
-        if stem.direction != first_dir {
-            is_cross = true;
-            break;
-        }
-    }
-
-    if !is_cross {
-        first_dir.invert()
-    } else {
-        first_dir
-    }
 }
 
 fn arrange_beams(

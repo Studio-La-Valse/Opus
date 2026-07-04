@@ -1,5 +1,3 @@
-use crate::core::color::Color;
-use crate::smufl::smufl_font::SmuflFont;
 use std::collections::BTreeMap;
 
 #[derive(Copy, Clone)]
@@ -63,14 +61,21 @@ pub struct PartGroup {
     pub name: Option<String>,
 }
 
+#[derive(Default, Clone)]
+pub struct Appearance {
+    pub light_barline: Option<f32>,
+    pub heavy_barline: Option<f32>,
+    pub beam_thickness: Option<f32>,
+    pub staff: Option<f32>,
+    pub stem_thickness: Option<f32>,
+}
+
 #[derive(Clone)]
 pub struct Layout {
-    pub page_color: Color,
-    pub foreground_color: Color,
-
     pub work_title: String,
 
     pub defaults: Defaults,
+    pub appearance: Appearance,
 
     pub page_margins_both: Option<PageMargins>,
     pub page_margins_even: Option<PageMargins>,
@@ -83,10 +88,6 @@ pub struct Layout {
 
     pub staff_distance: f32,
 
-    pub staff_line_thickness: f32,
-    pub bar_line_light_thickness: f32,
-    pub bar_line_heavy_thickness: f32,
-
     pub parts: BTreeMap<String, Part>,
     pub sections: BTreeMap<u32, Section>,
 }
@@ -94,12 +95,9 @@ pub struct Layout {
 impl Default for Layout {
     fn default() -> Layout {
         Layout {
-            page_color: Color::WHITE,
-            foreground_color: Color::BLACK,
-
             work_title: Default::default(),
-
             defaults: Default::default(),
+            appearance: Default::default(),
 
             page_margins_odd: None,
             page_margins_even: None,
@@ -111,10 +109,6 @@ impl Default for Layout {
             top_system_distance: 70.,
 
             staff_distance: 80.,
-
-            staff_line_thickness: 1.25,
-            bar_line_heavy_thickness: 5.,
-            bar_line_light_thickness: 1.875,
 
             parts: BTreeMap::new(),
             sections: BTreeMap::new(),
@@ -134,31 +128,6 @@ impl Layout {
             self.page_margins_odd
                 .or(self.page_margins_both)
                 .unwrap_or_default()
-        }
-    }
-}
-
-pub struct UserLayout {
-    pub page_color: Option<Color>,
-    pub foreground_color: Option<Color>,
-
-    pub staff_line_thickness: Option<f32>,
-    pub bar_line_light_thickness: Option<f32>,
-    pub bar_line_heavy_thickness: Option<f32>,
-
-    pub font: SmuflFont,
-}
-
-impl UserLayout {
-    pub fn new(font: SmuflFont) -> UserLayout {
-        UserLayout {
-            font,
-
-            page_color: None,
-            foreground_color: None,
-            staff_line_thickness: None,
-            bar_line_light_thickness: None,
-            bar_line_heavy_thickness: None,
         }
     }
 }
