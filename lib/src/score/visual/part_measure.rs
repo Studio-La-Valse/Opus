@@ -287,14 +287,11 @@ fn create_ray(
     beam_thickness: &f32,
     beam_spacing: &f32,
 ) -> Option<Ray> {
-    let len = chords.len();
-    if len < 2 {
+    if chords.is_empty() {
         return None;
     }
 
     let first_stem = chords.first().unwrap().stem.as_ref().unwrap();
-    let last_stem = chords.last().unwrap().stem.as_ref().unwrap();
-
     let sign = if first_stem.direction != UpDown::Up {
         1.0
     } else {
@@ -305,6 +302,14 @@ fn create_ray(
         0.,
         first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
     );
+
+    let len = chords.len();
+    if len == 1 {
+        return Some(Ray::from_dir(left, XY { x: 1.0, y: 0.0 }));
+    }
+
+    let last_stem = chords.last().unwrap().stem.as_ref().unwrap();
+
     let mut right = last_stem.tip().mv(
         0.,
         first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
@@ -338,9 +343,13 @@ fn arrange_beams(
     stem_thickness: &f32,
 ) -> Vec<Polygon> {
     let mut beams: Vec<Polygon> = vec![];
+    if chords.is_empty() {
+        return beams;
+    }
+
     let len = chords.len();
 
-    if len <= 1 {
+    if len == 1 {
         return beams;
     }
 
@@ -356,11 +365,7 @@ fn arrange_beams(
                 BeamType::Start => {
                     let offset = create_offset(direction, beam_idx, beam_thickness, beam_spacing);
                     let offset_ray = ray.mv(0., offset);
-                    let dx = if left_stem.direction == UpDown::Up {
-                        -stem_thickness
-                    } else {
-                        0.
-                    };
+                    let dx = -stem_thickness / 2.;
                     let left_point = Ray {
                         origin: left_stem.xy.mv(dx, 0.),
                         dir: XY { x: 0., y: 1. },
@@ -382,11 +387,7 @@ fn arrange_beams(
                         };
 
                         if let BeamType::End = right_beam {
-                            let dx = if right_stem.direction == UpDown::Up {
-                                0.
-                            } else {
-                                *stem_thickness
-                            };
+                            let dx = stem_thickness / 2.;
                             right_point = Some(
                                 Ray {
                                     origin: right_stem.xy.mv(dx, 0.),
@@ -434,7 +435,6 @@ fn create_offset(
     }
 }
 
-// Fix 2: Changed signature to take a mutable slice `&mut [&mut Chord]`
 fn adjust_stem_lengths(
     chords: &mut [&mut Chord],
     ray: &Ray,
@@ -443,7 +443,6 @@ fn adjust_stem_lengths(
     beam_spacing: &f32,
 ) {
     for chord in chords {
-        // Now allowed, because iterating over `&mut [&mut Chord]` gives us `&mut &mut Chord`
         let stem = match chord.stem.as_mut() {
             Some(stem) => stem,
             None => continue,

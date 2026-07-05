@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::ops::{Add, Sub};
 
 #[derive(Default, Copy, Clone, Serialize)]
 pub struct XY {
@@ -30,5 +31,27 @@ impl XY {
 
     pub fn length(&self) -> f32 {
         self.x.hypot(self.y)
+    }
+}
+
+impl Add for XY {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl Sub for XY {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
     }
 }

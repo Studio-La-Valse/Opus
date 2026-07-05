@@ -1,7 +1,9 @@
 use crate::bounding_box::BoundingBox;
 use crate::smufl::glyph_name::{GlyphName, load_glyph_names};
+use crate::smufl::glyphs::flag::Flag;
 use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::smufl_metadata::{Cutouts, SmuflMetadata};
+use crate::visual::stem::UpDown;
 use std::collections::HashMap;
 use std::fs;
 
@@ -33,8 +35,8 @@ impl SmuflFont {
         let anchors = self.meta.glyph_anchors.get(name).unwrap();
         let cutouts: Cutouts = anchors.to_cutouts(&bbox);
 
-        let stem_anchor_left = anchors.anchor_left();
-        let stem_anchor_right = anchors.anchor_right();
+        let stem_anchor_left = anchors.stem_down_nw();
+        let stem_anchor_right = anchors.stem_up_se();
 
         Notehead {
             codepoint,
@@ -42,6 +44,29 @@ impl SmuflFont {
             cutouts,
             stem_anchor_left,
             stem_anchor_right,
+            font: self.font.to_string(),
+        }
+    }
+
+    pub fn flag(&self, name: &str, dir: &UpDown) -> Flag {
+        let codepoint = self.glyph_names.get(name).unwrap().codepoint_char();
+
+        let glyph_box = self.meta.glyph_boxes.get(name).unwrap();
+        let bbox: BoundingBox = glyph_box.into();
+
+        let anchors = self.meta.glyph_anchors.get(name).unwrap();
+        let cutouts: Cutouts = anchors.to_cutouts(&bbox);
+
+        let stem_anchor = match dir {
+            UpDown::Up => anchors.stem_up_nw().unwrap(),
+            UpDown::Down => anchors.stem_down_sw().unwrap(),
+        };
+
+        Flag {
+            codepoint,
+            bbox,
+            cutouts,
+            stem_anchor,
             font: self.font.to_string(),
         }
     }

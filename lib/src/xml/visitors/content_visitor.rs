@@ -94,7 +94,9 @@ impl Visitor for ContentVisitor {
         let clef = ctx.layout_ctx.clef.get(&staff).unwrap();
         let staff_line = clef.line_index_at_pitch(&pitch);
         let type_str = node.req_child("type");
-        let (notehead, dur) = type_to_duration(type_str.req_text());
+
+        let dur = type_to_duration(type_str.req_text());
+        let notehead = duration_to_notehead(&dur);
 
         let glyph = ctx.font.notehead(notehead);
 
@@ -113,16 +115,26 @@ impl Visitor for ContentVisitor {
 
             let text = stem.req_text();
             let dir = match text {
-                "up" => Some(UpDown::Up),
-                "down" => Some(UpDown::Down),
-                _ => None,
+                "up" => UpDown::Up,
+                "down" => UpDown::Down,
+                _ => panic!("Unknown direction {}", text),
             };
-            if let Some(dir) = dir {
-                let stem = chord
-                    .stem
-                    .get_or_insert_with(|| Stem::new(dir, dur, staff, default_y));
+            let stem = chord
+                .stem
+                .get_or_insert_with(|| Stem::new(dir, dur, staff, default_y));
 
-                for beam in node.children().filter(|n| n.tag_name().name() == "beam") {
+            let beams: Vec<Node> = node
+                .children()
+                .filter(|n| n.tag_name().name() == "beam")
+                .collect();
+            if beams.is_empty() {
+                if dur.beam_count() > 0 {
+                    let flag = duration_to_flag(&dur, &dir).unwrap();
+                    let glyph = ctx.font.flag(flag, &dir);
+                    stem.flag = Some(glyph);
+                }
+            } else {
+                for beam in beams {
                     let number = beam.req_attribute("number").req_u32();
                     let beam_type: BeamType = beam.req_text().into();
                     stem.beams.insert(number, beam_type);
@@ -218,18 +230,51 @@ impl Visitor for ContentVisitor {
     fn exit(&mut self, _ctx: &mut WalkerCtx) {}
 }
 
-fn type_to_duration(type_str: &str) -> (&str, BaseDuration) {
+fn type_to_duration(type_str: &str) -> BaseDuration {
     match type_str {
-        "maxima" => ("mensuralNoteheadMaximaBlack", BaseDuration::Maxima),
-        "longa" => ("mensuralNoteheadLongaWhite", BaseDuration::Longa),
-        "breve" => ("noteheadDoubleWhole", BaseDuration::Breve),
-        "whole" => ("noteheadWhole", BaseDuration::Whole),
-        "half" => ("noteheadHalf", BaseDuration::Half),
-        "quarter" => ("noteheadBlack", BaseDuration::Quarter),
-        "eighth" => ("noteheadBlack", BaseDuration::Eighth),
-        "16th" => ("noteheadBlack", BaseDuration::Sixteenth),
-        "32nd" => ("noteheadBlack", BaseDuration::ThirtySecond),
-        "64th" => ("noteheadBlack", BaseDuration::SixtyFourth),
+        "maxima" => BaseDuration::Maxima,
+        "longa" => BaseDuration::Longa,
+        "breve" => BaseDuration::Breve,
+        "whole" => BaseDuration::Whole,
+        "half" => BaseDuration::Half,
+        "quarter" => BaseDuration::Quarter,
+        "eighth" => BaseDuration::Eighth,
+        "16th" => BaseDuration::Sixteenth,
+        "32nd" => BaseDuration::ThirtySecond,
+        "64th" => BaseDuration::SixtyFourth,
         _ => panic!("Unknown type: {}", type_str),
+    }
+}
+
+fn duration_to_notehead(dur: &BaseDuration) -> &str {
+    match dur {
+        BaseDuration::Maxima => "mensuralNoteheadMaximaBlack",
+        BaseDuration::Longa => "mensuralNoteheadLongaWhite",
+        BaseDuration::Breve => "noteheadDoubleWhole",
+        BaseDuration::Whole => "noteheadWhole",
+        BaseDuration::Half => "noteheadHalf",
+        BaseDuration::Quarter => "noteheadBlack",
+        BaseDuration::Eighth => "noteheadBlack",
+        BaseDuration::Sixteenth => "noteheadBlack",
+        BaseDuration::ThirtySecond => "noteheadBlack",
+        BaseDuration::SixtyFourth => "noteheadBlack",
+    }
+}
+
+fn duration_to_flag(dur: &BaseDuration, dir: &UpDown) -> Option<&'static str> {
+    match (dur, dir) {
+        (BaseDuration::Eighth, UpDown::Up) => Some("flag8thUp"),
+        (BaseDuration::Eighth, UpDown::Down) => Some("flag8thDown"),
+
+        (BaseDuration::Sixteenth, UpDown::Up) => Some("flag16thUp"),
+        (BaseDuration::Sixteenth, UpDown::Down) => Some("flag16thDown"),
+
+        (BaseDuration::ThirtySecond, UpDown::Up) => Some("flag32ndUp"),
+        (BaseDuration::ThirtySecond, UpDown::Down) => Some("flag32ndDown"),
+
+        (BaseDuration::SixtyFourth, UpDown::Up) => Some("flag64thUp"),
+        (BaseDuration::SixtyFourth, UpDown::Down) => Some("flag64thDown"),
+
+        _ => None,
     }
 }

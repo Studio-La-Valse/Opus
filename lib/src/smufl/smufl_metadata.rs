@@ -12,12 +12,6 @@ pub struct SmuflMetadata {
     pub glyph_anchors: HashMap<String, GlyphAnchors>,
 }
 
-// #[derive(Debug, Deserialize)]
-// pub struct GlyphBoundingBoxes {
-//     #[serde(rename = "noteheadBlack")]
-//     pub notehead_black: GlyphBoundingBox,
-// }
-
 #[derive(Debug, Deserialize)]
 pub struct GlyphBoundingBox {
     #[serde(rename = "bBoxNE")]
@@ -37,12 +31,6 @@ impl From<&GlyphBoundingBox> for BoundingBox {
     }
 }
 
-// #[derive(Debug, Copy, Clone, Deserialize)]
-// pub struct GlyphsWithAnchors {
-//     #[serde(rename = "noteheadBlack")]
-//     pub notehead_black: GlyphAnchors,
-// }
-
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct GlyphAnchors {
     #[serde(rename = "cutOutNW")]
@@ -58,10 +46,16 @@ pub struct GlyphAnchors {
     pub sw: Option<[f32; 2]>,
 
     #[serde(rename = "stemDownNW")]
-    pub anchor_left: Option<[f32; 2]>,
+    pub stem_down_nw: Option<[f32; 2]>,
+
+    #[serde(rename = "stemDownSW")]
+    pub stem_down_sw: Option<[f32; 2]>,
 
     #[serde(rename = "stemUpSE")]
-    pub anchor_right: Option<[f32; 2]>,
+    pub stem_up_se: Option<[f32; 2]>,
+
+    #[serde(rename = "stemUpNW")]
+    pub stem_up_nw: Option<[f32; 2]>,
 }
 
 impl GlyphAnchors {
@@ -94,17 +88,25 @@ impl GlyphAnchors {
         }
     }
 
-    pub fn anchor_left(&self) -> Option<XY> {
-        let anchor_left = &self.anchor_left;
-
-        anchor_left.map(|v| XY { x: v[0], y: -v[1] })
+    pub fn stem_down_nw(&self) -> Option<XY> {
+        self.stem_down_nw.map(map_arr)
     }
 
-    pub fn anchor_right(&self) -> Option<XY> {
-        let anchor_right = &self.anchor_right;
-
-        anchor_right.map(|v| XY { x: v[0], y: -v[1] })
+    pub fn stem_down_sw(&self) -> Option<XY> {
+        self.stem_down_sw.map(map_arr)
     }
+
+    pub fn stem_up_se(&self) -> Option<XY> {
+        self.stem_up_se.map(map_arr)
+    }
+
+    pub fn stem_up_nw(&self) -> Option<XY> {
+        self.stem_up_nw.map(map_arr)
+    }
+}
+
+fn map_arr(v: [f32; 2]) -> XY {
+    XY { x: v[0], y: -v[1] }
 }
 
 #[derive(Debug, Clone)]

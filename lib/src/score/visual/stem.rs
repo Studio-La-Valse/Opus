@@ -3,9 +3,12 @@ use crate::color::Color;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
+use crate::drawable::elements::rect::Rect;
 use crate::duration::BaseDuration;
 use crate::layout::Layout;
 use crate::ray::Ray;
+use crate::smufl::glyphs::flag::Flag;
+use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::layoutable::Layoutable;
@@ -66,7 +69,10 @@ pub struct Stem {
     pub staff: u32,
 
     pub duration: BaseDuration,
+
+    // TODO: flags and beams are mutually exclusive, should fix somehow
     pub beams: BTreeMap<u32, BeamType>,
+    pub flag: Option<Flag>,
 }
 
 impl Stem {
@@ -86,11 +92,31 @@ impl Stem {
             xy: XY::ZERO,
             color: Color::TRANSPARENT,
             beams: BTreeMap::new(),
+            flag: None,
         }
     }
 
     pub fn tip(&self) -> XY {
         self.xy.mv(0., self.length)
+    }
+
+    pub fn nw(&self) -> XY {
+        match self.direction {
+            UpDown::Up => self.tip().mv(self.thickness / -2., 0.),
+            UpDown::Down => self.xy.mv(self.thickness / -2., 0.),
+        }
+    }
+
+    pub fn ne(&self) -> XY {
+        self.nw().mv(self.thickness, 0.)
+    }
+
+    pub fn se(&self) -> XY {
+        self.ne().mv(0., self.length)
+    }
+
+    pub fn sw(&self) -> XY {
+        self.nw().mv(0., self.length)
     }
 
     pub fn attach_ray(&mut self, ray: &Ray) {
@@ -129,7 +155,15 @@ impl Layoutable for Stem {
     fn measure(&mut self, _available: &XY) {}
 
     fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
+        let canvas_offset = match self.direction {
+            UpDown::Down => self.thickness / 2.,
+            UpDown::Up => -self.thickness / 2.,
+        };
+
+        self.xy = XY {
+            x: origin.x + canvas_offset,
+            y: origin.y,
+        }
     }
 }
 
@@ -141,14 +175,9 @@ impl Content for Stem {
     fn elements(&self) -> Vec<Element> {
         let mut elements: Vec<Element> = Vec::new();
 
-        let canvas_offset = match self.direction {
-            UpDown::Down => self.thickness / 2.,
-            UpDown::Up => -self.thickness / 2.,
-        };
-
         let stem: Element = Line {
-            start: self.xy.mv(canvas_offset, 0.),
-            end: self.xy.mv(canvas_offset, self.length),
+            start: self.xy,
+            end: self.tip(),
             stroke_color: self.color,
             stroke_width: self.thickness,
         }
@@ -156,6 +185,51 @@ impl Content for Stem {
 
         elements.push(stem);
 
+        if let Some(flag) = &self.flag {
+            let stem_anchor = match self.direction {
+                UpDown::Up => self.nw(),
+                UpDown::Down => self.sw(),
+            };
+            elements.push(display(&stem_anchor, &2., &Color::RED).into());
+
+            let flag_anchor = flag.stem_anchor;
+            let flag_anchor = scale_pt(&flag_anchor, &stem_anchor);
+            elements.push(display(&flag_anchor, &2.5, &Color::GREEN).into());
+
+            let delta = stem_anchor - flag_anchor;
+
+            let final_anchor = stem_anchor + delta;
+            elements.push(display(&final_anchor, &3., &Color::BLUE).into());
+
+            let flag: Element = flag.as_text(self.color, final_anchor).into();
+
+            elements.push(flag);
+        }
+
         elements
     }
+}
+
+fn display(xy: &XY, size: &f32, color: &Color) -> Rect {
+    Rect {
+        xy: XY {
+            x: xy.x - size / 2.,
+            y: xy.y - size / 2.,
+        },
+        width: *size,
+        height: *size,
+        color: Color::TRANSPARENT,
+        stroke_color: Some(*color),
+        stroke_width: Some(0.25),
+    }
+}
+
+/// Scales a normalized point to current position and scale.
+fn scale_pt(flag_anchor: &XY, stem_anchor: &XY) -> XY {
+    let scaled = XY {
+        x: flag_anchor.x * 10.,
+        y: flag_anchor.y * 10.,
+    };
+
+    scaled + *stem_anchor
 }
