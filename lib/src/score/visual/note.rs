@@ -7,9 +7,8 @@ use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::layout::Layout;
-use crate::score::core::pitch::Pitch;
 use crate::score::visual::layoutable::Layoutable;
-use crate::smufl::glyphs::notehead_black::NoteheadBlack;
+use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
@@ -19,35 +18,33 @@ pub struct Note {
     pub width: f32,
     pub height: f32,
 
-    pub pitch: Pitch,
     pub default_x: f32,
     pub staff_line: i32,
     pub staff: u32,
 
     pub color: Color,
 
-    pub glyph: Option<NoteheadBlack>,
+    pub glyph: Notehead,
 }
 
 impl Note {
-    pub fn new(pitch: Pitch, default_x: f32, staff: u32, staff_line: i32) -> Self {
+    pub fn new(glyph: Notehead, default_x: f32, staff: u32, staff_line: i32) -> Self {
         Note {
-            xy: XY::default(),
-            width: f32::default(),
-            height: f32::default(),
+            glyph,
 
-            pitch,
             default_x,
             staff,
             staff_line,
 
-            glyph: None,
+            xy: XY::default(),
+            width: f32::default(),
+            height: f32::default(),
 
             color: Color::default(),
         }
     }
 
-    /// Scales a normalized bounding box to current position and scale.
+    /// Scales a (smufl-like-) normalized bounding box to current position and scale.
     pub fn scale_box(&self, bbox: &BoundingBox) -> BoundingBox {
         let scaled = BoundingBox {
             x_min: bbox.x_min * 10.,
@@ -93,9 +90,6 @@ impl ScoreElement for Note {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
-
-        // TODO: fix
-        self.glyph = Some(user_layout.font.notehead_black())
     }
 }
 
@@ -103,7 +97,7 @@ impl Layoutable for Note {
     fn measure(&mut self, _available: &XY) {
         self.height = 10.;
 
-        let glyph = self.glyph.as_ref().unwrap();
+        let glyph = &self.glyph;
         let bbox = self.scale_box(&glyph.bbox);
 
         self.width = bbox.width();
@@ -125,11 +119,52 @@ impl Content for Note {
     fn elements(&self) -> Vec<Element> {
         let mut result: Vec<Element> = Vec::new();
 
-        let glyph = self.glyph.as_ref();
+        let glyph = &self.glyph;
+        let text = glyph.as_text(self.color, self.xy);
+        let bbox = self.scale_box(&glyph.bbox);
 
-        if let Some(glyph) = glyph {
-            let text = glyph.as_text(self.color, self.xy);
-            let bbox = self.scale_box(&glyph.bbox);
+        let rect = Rect {
+            xy: XY {
+                x: bbox.x_min,
+                y: bbox.y_min,
+            },
+            width: bbox.x_max - bbox.x_min,
+            height: bbox.y_max - bbox.y_min,
+            color: Color::TRANSPARENT,
+            stroke_width: Some(0.25),
+            stroke_color: Some(Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            }),
+        };
+
+        result.push(rect.into());
+
+        let origin = Line {
+            start: self.xy,
+            end: self.xy.mv(self.width, 0.),
+            stroke_color: Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            },
+            stroke_width: 0.2,
+        };
+        result.push(origin.into());
+
+        for cutout in [
+            glyph.cutouts.nw,
+            glyph.cutouts.ne,
+            glyph.cutouts.se,
+            glyph.cutouts.sw,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            let bbox = self.scale_box(&cutout);
 
             let rect = Rect {
                 xy: XY {
@@ -138,64 +173,20 @@ impl Content for Note {
                 },
                 width: bbox.x_max - bbox.x_min,
                 height: bbox.y_max - bbox.y_min,
-                color: Color::TRANSPARENT,
-                stroke_width: Some(0.25),
-                stroke_color: Some(Color {
-                    a: 1.,
-                    r: 255,
-                    g: 0,
-                    b: 0,
-                }),
-            };
-
-            result.push(rect.into());
-
-            let origin = Line {
-                start: self.xy,
-                end: self.xy.mv(self.width, 0.),
-                stroke_color: Color {
+                color: Color {
                     a: 1.,
                     r: 255,
                     g: 0,
                     b: 0,
                 },
-                stroke_width: 0.2,
+                stroke_width: None,
+                stroke_color: None,
             };
-            result.push(origin.into());
 
-            for cutout in [
-                glyph.cutouts.nw,
-                glyph.cutouts.ne,
-                glyph.cutouts.se,
-                glyph.cutouts.sw,
-            ]
-            .into_iter()
-            .flatten()
-            {
-                let bbox = self.scale_box(&cutout);
-
-                let rect = Rect {
-                    xy: XY {
-                        x: bbox.x_min,
-                        y: bbox.y_min,
-                    },
-                    width: bbox.x_max - bbox.x_min,
-                    height: bbox.y_max - bbox.y_min,
-                    color: Color {
-                        a: 1.,
-                        r: 255,
-                        g: 0,
-                        b: 0,
-                    },
-                    stroke_width: None,
-                    stroke_color: None,
-                };
-
-                result.push(rect.into());
-            }
-
-            result.push(text.into());
+            result.push(rect.into());
         }
+
+        result.push(text.into());
 
         result
     }

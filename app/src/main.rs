@@ -35,6 +35,9 @@ struct Args {
 
     #[arg(long)]
     meta: String,
+
+    #[arg(long)]
+    glyphs: String,
 }
 
 fn main() {
@@ -43,11 +46,12 @@ fn main() {
     let out = args.out;
     let font = args.font;
     let meta = args.meta;
+    let glyph_names = args.glyphs;
 
     let mut time = Instant::now();
 
     let data = read_to_string(file).expect("Something went wrong reading the file");
-    let font = SmuflFont::new(font, &meta);
+    let font = SmuflFont::load(font, &meta, &glyph_names);
 
     println!("Reading to string: {}ms", time.elapsed().as_millis());
     time = Instant::now();
@@ -71,16 +75,14 @@ fn main() {
         .add_callback(LayoutContextVisitor {})
         .add_callback(ContentVisitor { part_measure: None });
 
-    let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual);
+    let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual, &font);
 
     Walker::new(visitor).walk(&document, &mut ctx);
 
     println!("Walking doc tree: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
-    let user_layout = UserLayout {
-        ..UserLayout::new(font)
-    };
+    let user_layout = UserLayout::new();
 
     let app_defaults: AppDefaults = Default::default();
 

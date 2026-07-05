@@ -1,14 +1,11 @@
-use crate::app_defaults::AppDefaults;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
-use crate::layout::Layout;
 use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
-use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use std::collections::{BTreeMap, HashSet};
 
@@ -128,14 +125,6 @@ impl ScoreElement for Part {
         }
 
         result
-    }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        _user_layout: &UserLayout,
-        _app_defaults: &AppDefaults,
-    ) {
     }
 }
 

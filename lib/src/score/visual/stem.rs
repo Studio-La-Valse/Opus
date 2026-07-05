@@ -109,10 +109,6 @@ impl Stem {
 }
 
 impl ScoreElement for Stem {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        vec![]
-    }
-
     fn _apply_layout(
         &mut self,
         layout: &Layout,

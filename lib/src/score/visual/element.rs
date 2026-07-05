@@ -3,7 +3,9 @@ use crate::layout::Layout;
 use crate::user_layout::UserLayout;
 
 pub trait ScoreElement {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement>;
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        vec![]
+    }
 
     fn apply_layout(
         &mut self,
@@ -20,8 +22,9 @@ pub trait ScoreElement {
 
     fn _apply_layout(
         &mut self,
-        layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    );
+        _layout: &Layout,
+        _user_layout: &UserLayout,
+        _app_defaults: &AppDefaults,
+    ) {
+    }
 }

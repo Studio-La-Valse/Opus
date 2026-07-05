@@ -1,10 +1,7 @@
-use crate::app_defaults::AppDefaults;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
-use crate::layout::Layout;
 use crate::score::visual::layoutable::Layoutable;
-use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
 use crate::visual::stem::{Stem, UpDown};
@@ -36,14 +33,6 @@ impl ScoreElement for Chord {
 
         children
     }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        _user_layout: &UserLayout,
-        _app_defaults: &AppDefaults,
-    ) {
-    }
 }
 
 impl Layoutable for Chord {
@@ -70,18 +59,19 @@ impl Layoutable for Chord {
             let lowest_note = self.notes.iter().max_by_key(key);
             let highest_note = self.notes.iter().min_by_key(key);
 
-            let tale_note = match stem.direction {
+            let tail_note = match stem.direction {
                 UpDown::Up => lowest_note,
                 UpDown::Down => highest_note,
             }
             .unwrap();
 
-            let tale_anchor = match stem.direction {
-                UpDown::Up => tale_note.glyph.as_ref().unwrap().stem_anchor_right,
-                UpDown::Down => tale_note.glyph.as_ref().unwrap().stem_anchor_left,
-            };
-            let tale_anchor = tale_note.scale_pt(&tale_anchor);
-            stem.arrange(&tale_anchor);
+            let tail_anchor = (match stem.direction {
+                UpDown::Up => tail_note.glyph.stem_anchor_right,
+                UpDown::Down => tail_note.glyph.stem_anchor_left,
+            })
+            .unwrap();
+            let tail_anchor = tail_note.scale_pt(&tail_anchor);
+            stem.arrange(&tail_anchor);
 
             let default_y: f32 = if let Some(def_y) = &stem.default_y {
                 *def_y
@@ -97,10 +87,11 @@ impl Layoutable for Chord {
                 }
                 .unwrap();
 
-                let tip_anchor = match stem.direction {
-                    UpDown::Up => tip_note.glyph.as_ref().unwrap().stem_anchor_right,
-                    UpDown::Down => tip_note.glyph.as_ref().unwrap().stem_anchor_left,
-                };
+                let tip_anchor = (match stem.direction {
+                    UpDown::Up => tip_note.glyph.stem_anchor_right,
+                    UpDown::Down => tip_note.glyph.stem_anchor_left,
+                })
+                .unwrap();
                 let tip_anchor = tip_note.scale_pt(&tip_anchor);
 
                 let tip = &tip_anchor.mv(0., default_length);
@@ -111,7 +102,7 @@ impl Layoutable for Chord {
 
             let length = ((origin.y + self.staff_distances_from_top.get(&stem.staff).unwrap())
                 - default_y)
-                - tale_anchor.y;
+                - tail_anchor.y;
             stem.length = length;
         }
     }

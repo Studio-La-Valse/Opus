@@ -1,5 +1,4 @@
 use crate::color::Color;
-use crate::smufl::smufl_font::SmuflFont;
 
 pub struct UserLayout {
     pub page_color: Option<Color>,
@@ -12,15 +11,17 @@ pub struct UserLayout {
     pub beam_thickness: Option<f32>,
     pub beam_spacing: Option<f32>,
     pub stem_thickness: Option<f32>,
+}
 
-    pub font: SmuflFont,
+impl Default for UserLayout {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl UserLayout {
-    pub fn new(font: SmuflFont) -> UserLayout {
+    pub fn new() -> UserLayout {
         UserLayout {
-            font,
-
             page_color: None,
             foreground_color: None,
 

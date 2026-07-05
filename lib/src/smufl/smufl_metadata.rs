@@ -1,21 +1,22 @@
 use crate::bounding_box::BoundingBox;
 use crate::xy::XY;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 pub struct SmuflMetadata {
     #[serde(rename = "glyphBBoxes")]
-    pub glyph_boxes: GlyphBoundingBoxes,
+    pub glyph_boxes: HashMap<String, GlyphBoundingBox>,
 
     #[serde(rename = "glyphsWithAnchors")]
-    pub glyph_anchors: GlyphsWithAnchors,
+    pub glyph_anchors: HashMap<String, GlyphAnchors>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct GlyphBoundingBoxes {
-    #[serde(rename = "noteheadBlack")]
-    pub notehead_black: GlyphBoundingBox,
-}
+// #[derive(Debug, Deserialize)]
+// pub struct GlyphBoundingBoxes {
+//     #[serde(rename = "noteheadBlack")]
+//     pub notehead_black: GlyphBoundingBox,
+// }
 
 #[derive(Debug, Deserialize)]
 pub struct GlyphBoundingBox {
@@ -36,11 +37,11 @@ impl From<&GlyphBoundingBox> for BoundingBox {
     }
 }
 
-#[derive(Debug, Copy, Clone, Deserialize)]
-pub struct GlyphsWithAnchors {
-    #[serde(rename = "noteheadBlack")]
-    pub notehead_black: GlyphAnchors,
-}
+// #[derive(Debug, Copy, Clone, Deserialize)]
+// pub struct GlyphsWithAnchors {
+//     #[serde(rename = "noteheadBlack")]
+//     pub notehead_black: GlyphAnchors,
+// }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct GlyphAnchors {
@@ -64,7 +65,7 @@ pub struct GlyphAnchors {
 }
 
 impl GlyphAnchors {
-    pub fn to_boxes(&self, bbox: &BoundingBox) -> Cutouts {
+    pub fn to_cutouts(&self, bbox: &BoundingBox) -> Cutouts {
         Cutouts {
             nw: self.nw.map(|nw| BoundingBox {
                 x_min: bbox.x_min,
@@ -93,20 +94,16 @@ impl GlyphAnchors {
         }
     }
 
-    pub fn anchor_left(&self) -> XY {
-        let anchor_left = self.anchor_left.unwrap();
-        XY {
-            x: anchor_left[0],
-            y: -anchor_left[1],
-        }
+    pub fn anchor_left(&self) -> Option<XY> {
+        let anchor_left = &self.anchor_left;
+
+        anchor_left.map(|v| XY { x: v[0], y: -v[1] })
     }
 
-    pub fn anchor_right(&self) -> XY {
-        let anchor_right = self.anchor_right.unwrap();
-        XY {
-            x: anchor_right[0],
-            y: -anchor_right[1],
-        }
+    pub fn anchor_right(&self) -> Option<XY> {
+        let anchor_right = &self.anchor_right;
+
+        anchor_right.map(|v| XY { x: v[0], y: -v[1] })
     }
 }
 

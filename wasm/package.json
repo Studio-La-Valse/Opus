@@ -1,5 +1,0 @@
-﻿{
-  "scripts": {
-    "build-wasm": "wasm-pack build --target web --out-dir ../../opus.web/src/wasm"
-  }
-}

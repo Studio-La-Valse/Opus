@@ -28,10 +28,6 @@ impl SystemMeasure {
 }
 
 impl ScoreElement for SystemMeasure {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        vec![]
-    }
-
     fn _apply_layout(
         &mut self,
         _layout: &Layout,

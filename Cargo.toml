@@ -2,7 +2,6 @@
 members = [
     "lib",
     "app",
-    "wasm"
 ]
 resolver = "3"
 

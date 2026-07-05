@@ -1,10 +1,7 @@
-use crate::app_defaults::AppDefaults;
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
-use crate::layout::Layout;
 use crate::score::visual::layoutable::Layoutable;
-use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 
 #[derive(Default)]
@@ -16,19 +13,7 @@ pub struct StaffMeasure {
 
 impl StaffMeasure {}
 
-impl ScoreElement for StaffMeasure {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        vec![]
-    }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        _user_layout: &UserLayout,
-        _app_defaults: &AppDefaults,
-    ) {
-    }
-}
+impl ScoreElement for StaffMeasure {}
 
 impl Layoutable for StaffMeasure {
     fn measure(&mut self, available: &XY) {
