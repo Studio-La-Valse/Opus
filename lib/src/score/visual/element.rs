@@ -7,6 +7,7 @@ pub trait ScoreElement {
         vec![]
     }
 
+    /// do not override.
     fn apply_layout(
         &mut self,
         layout: &Layout,
@@ -20,6 +21,7 @@ pub trait ScoreElement {
         }
     }
 
+    /// do override.
     fn _apply_layout(
         &mut self,
         _layout: &Layout,

@@ -154,6 +154,7 @@ impl Layoutable for PartMeasure {
 
         for chord in self.chords.values_mut().flatten() {
             chord.staff_distances_from_top.clear();
+            chord.staff_distances_from_top.insert(1, 0.);
 
             for (idx, dy) in self.staff_distances_from_top.iter() {
                 chord.staff_distances_from_top.insert(*idx, *dy);
@@ -188,7 +189,11 @@ impl Content for PartMeasure {
         for chord in self.chords.values().flatten() {
             result.push(chord);
         }
-        for rest in self.rests.iter() {
+        for rest in self
+            .rests
+            .iter()
+            .filter(|r| self.staff_distances_from_top.contains_key(&r.staff))
+        {
             result.push(rest);
         }
         result
