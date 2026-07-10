@@ -75,7 +75,7 @@ fn _requires_rebeam(chords: &[&mut Chord]) -> bool {
             let expected_beams = stem.duration.beam_count();
             let beams = stem.beams.len() as i8;
 
-            if expected_beams != beams {
+            if stem.flag.is_none() && expected_beams != beams {
                 return true;
             }
         }

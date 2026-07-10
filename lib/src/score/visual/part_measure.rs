@@ -12,6 +12,7 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
+use crate::visual::rest::Rest;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use std::collections::BTreeMap;
 
@@ -30,6 +31,8 @@ pub struct PartMeasure {
     /// Chords for each voice
     pub chords: BTreeMap<u32, Vec<Chord>>,
     pub beams: Vec<Polygon>,
+
+    pub rests: Vec<Rest>,
 
     pub stem_thickness: f32,
     pub beam_thickness: f32,
@@ -105,6 +108,9 @@ impl ScoreElement for PartMeasure {
         for chord in self.chords.values_mut().flatten() {
             result.push(chord);
         }
+        for rest in self.rests.iter_mut() {
+            result.push(rest);
+        }
         result
     }
 
@@ -137,6 +143,10 @@ impl Layoutable for PartMeasure {
         for chord in self.chords.values_mut().flatten() {
             chord.measure(available);
         }
+
+        for rest in self.rests.iter_mut() {
+            rest.measure(available);
+        }
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -152,6 +162,22 @@ impl Layoutable for PartMeasure {
             chord.arrange(origin);
         }
 
+        for rest in self.rests.iter_mut() {
+            if let Some(dy) = self.staff_distances_from_top.get(&rest.staff) {
+                let dy = dy + rest.staff_line as f32 * 5.;
+
+                let dx: f32 = if rest.is_measure {
+                    self.width / 2.
+                } else {
+                    rest.default_x.unwrap()
+                };
+
+                let glyph_origin = self.origin.mv(dx, dy);
+
+                rest.arrange(&glyph_origin);
+            }
+        }
+
         self.arrange_beams();
     }
 }
@@ -161,6 +187,9 @@ impl Content for PartMeasure {
         let mut result: Vec<&dyn Content> = Vec::new();
         for chord in self.chords.values().flatten() {
             result.push(chord);
+        }
+        for rest in self.rests.iter() {
+            result.push(rest);
         }
         result
     }

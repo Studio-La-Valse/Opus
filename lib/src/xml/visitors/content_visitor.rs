@@ -10,6 +10,7 @@ use crate::visitor::Visitor;
 use crate::visual::chord::Chord;
 use crate::visual::part::Part;
 use crate::visual::part_measure::PartMeasure;
+use crate::visual::rest::Rest;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
@@ -55,8 +56,29 @@ impl Visitor for ContentVisitor {
         let voice = ctx.layout_ctx.voice;
         let part_measure: &mut PartMeasure = self.part_measure.as_mut().unwrap();
 
-        // Skip rests early
-        if node.children().any(|n| n.tag_name().name() == "rest") {
+        let is_rest = node.children().find(|n| n.tag_name().name() == "rest");
+
+        if let Some(rest) = is_rest {
+            let is_measure = rest
+                .attribute("measure")
+                .map(|attr| attr == "yes")
+                .unwrap_or(false);
+
+            let rest = if is_measure {
+                let notehead = duration_to_rest(&BaseDuration::Whole);
+                let glyph = ctx.font.rest(notehead);
+                Rest::new(glyph, is_measure, None, staff, 4)
+            } else {
+                let type_str = node.req_child("type");
+                let dur = type_to_duration(type_str.req_text());
+                let notehead = duration_to_rest(&dur);
+                let glyph = ctx.font.rest(notehead);
+
+                let default_x: f32 = node.req_attribute("default-x").req_f32();
+                Rest::new(glyph, is_measure, Some(default_x), staff, 4)
+            };
+
+            part_measure.rests.push(rest);
             return;
         }
 
@@ -127,7 +149,7 @@ impl Visitor for ContentVisitor {
                 .children()
                 .filter(|n| n.tag_name().name() == "beam")
                 .collect();
-            if beams.is_empty() {
+            if beams.is_empty() && stem.beams.is_empty() {
                 if dur.beam_count() > 0 {
                     let flag = duration_to_flag(&dur, &dir).unwrap();
                     let glyph = ctx.font.flag(flag, &dir);
@@ -258,6 +280,21 @@ fn duration_to_notehead(dur: &BaseDuration) -> &str {
         BaseDuration::Sixteenth => "noteheadBlack",
         BaseDuration::ThirtySecond => "noteheadBlack",
         BaseDuration::SixtyFourth => "noteheadBlack",
+    }
+}
+
+fn duration_to_rest(dur: &BaseDuration) -> &str {
+    match dur {
+        BaseDuration::Maxima => "restMaxima",
+        BaseDuration::Longa => "restLonga",
+        BaseDuration::Breve => "restDoubleWhole",
+        BaseDuration::Whole => "restWhole",
+        BaseDuration::Half => "restHalf",
+        BaseDuration::Quarter => "restQuarter",
+        BaseDuration::Eighth => "rest8th",
+        BaseDuration::Sixteenth => "rest16th",
+        BaseDuration::ThirtySecond => "rest32nd",
+        BaseDuration::SixtyFourth => "rest64th",
     }
 }
 

@@ -102,6 +102,8 @@ pub fn to_svg(elements: &[Element]) -> String {
                 ));
             }
         }
+
+        out.push_str("\r\n")
     }
 
     out.push_str("</svg>");

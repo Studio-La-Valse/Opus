@@ -107,7 +107,12 @@ impl Content for PartGroup {
 
         result.extend(self.measures.values().map(|m| m as &dyn Content));
 
-        result.extend(self.parts.values().map(|s| s as &dyn Content));
+        result.extend(
+            self.parts
+                .values()
+                .filter(|p| p.visibility != Visibility::Hidden)
+                .map(|s| s as &dyn Content),
+        );
 
         result
     }

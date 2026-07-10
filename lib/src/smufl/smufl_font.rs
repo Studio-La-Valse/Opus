@@ -2,6 +2,7 @@ use crate::bounding_box::BoundingBox;
 use crate::smufl::glyph_name::{GlyphName, load_glyph_names};
 use crate::smufl::glyphs::flag::Flag;
 use crate::smufl::glyphs::notehead::Notehead;
+use crate::smufl::glyphs::rest::Rest;
 use crate::smufl::smufl_metadata::{Cutouts, SmuflMetadata};
 use crate::visual::stem::UpDown;
 use std::collections::HashMap;
@@ -44,6 +45,19 @@ impl SmuflFont {
             cutouts,
             stem_anchor_left,
             stem_anchor_right,
+            font: self.font.to_string(),
+        }
+    }
+
+    pub fn rest(&self, name: &str) -> Rest {
+        let codepoint = self.glyph_names.get(name).unwrap().codepoint_char();
+
+        let glyph_box = self.meta.glyph_boxes.get(name).unwrap();
+        let bbox: BoundingBox = glyph_box.into();
+
+        Rest {
+            codepoint,
+            bbox,
             font: self.font.to_string(),
         }
     }
