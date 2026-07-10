@@ -132,12 +132,7 @@ impl Content for Note {
             height: bbox.y_max - bbox.y_min,
             color: Color::TRANSPARENT,
             stroke_width: Some(0.25),
-            stroke_color: Some(Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            }),
+            stroke_color: Some(Color::RED),
         };
 
         result.push(rect.into());
@@ -173,14 +168,9 @@ impl Content for Note {
                 },
                 width: bbox.x_max - bbox.x_min,
                 height: bbox.y_max - bbox.y_min,
-                color: Color {
-                    a: 1.,
-                    r: 255,
-                    g: 0,
-                    b: 0,
-                },
-                stroke_width: None,
-                stroke_color: None,
+                color: Color::TRANSPARENT,
+                stroke_width: Some(0.2),
+                stroke_color: Some(Color::RED),
             };
 
             result.push(rect.into());
