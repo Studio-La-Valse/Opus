@@ -53,6 +53,13 @@ impl Visitor for ContentVisitor {
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let staff = ctx.layout_ctx.staff.number;
+        let scale = ctx
+            .layout_ctx
+            .staff
+            .staff_scaling
+            .get(&staff)
+            .unwrap_or(&1.);
+
         let voice = ctx.layout_ctx.voice;
         let part_measure: &mut PartMeasure = self.part_measure.as_mut().unwrap();
 
@@ -67,7 +74,7 @@ impl Visitor for ContentVisitor {
             let rest = if is_measure {
                 let notehead = duration_to_rest(&BaseDuration::Whole);
                 let glyph = ctx.font.rest(notehead);
-                Rest::new(glyph, is_measure, None, staff, 4)
+                Rest::new(glyph, is_measure, None, staff, 4, *scale)
             } else {
                 let type_str = node.req_child("type");
                 let dur = type_to_duration(type_str.req_text());
@@ -75,7 +82,7 @@ impl Visitor for ContentVisitor {
                 let glyph = ctx.font.rest(notehead);
 
                 let default_x: f32 = node.req_attribute("default-x").req_f32();
-                Rest::new(glyph, is_measure, Some(default_x), staff, 4)
+                Rest::new(glyph, is_measure, Some(default_x), staff, 4, *scale)
             };
 
             part_measure.rests.push(rest);
@@ -122,7 +129,7 @@ impl Visitor for ContentVisitor {
 
         let glyph = ctx.font.notehead(notehead);
 
-        let note = Note::new(glyph, default_x, staff, staff_line);
+        let note = Note::new(glyph, default_x, staff, staff_line, *scale);
         let is_chord_node = node.children().any(|n| n.tag_name().name() == "chord");
 
         let chords = part_measure.chords.entry(voice).or_default();
@@ -143,7 +150,7 @@ impl Visitor for ContentVisitor {
             };
             let stem = chord
                 .stem
-                .get_or_insert_with(|| Stem::new(dir, dur, staff, default_y));
+                .get_or_insert_with(|| Stem::new(dir, dur, staff, *scale, default_y));
 
             let beams: Vec<Node> = node
                 .children()
@@ -239,6 +246,7 @@ impl Visitor for ContentVisitor {
             &_ctx.layout_ctx.staff.distances,
             &_ctx.layout.staff_distance,
         );
+        part.set_staff_scale(&_ctx.layout_ctx.staff.staff_scaling);
 
         part.measures.insert(measure_number, part_measure);
 

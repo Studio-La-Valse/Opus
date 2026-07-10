@@ -13,6 +13,7 @@ use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
 use crate::visual::rest::Rest;
+use crate::visual::staff::Staff;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use std::collections::BTreeMap;
 
@@ -27,6 +28,7 @@ pub struct PartMeasure {
     pub origin: XY,
 
     pub staff_distances_from_top: BTreeMap<u32, f32>,
+    pub staff_scaling: BTreeMap<u32, f32>,
 
     /// Chords for each voice
     pub chords: BTreeMap<u32, Vec<Chord>>,
@@ -160,12 +162,19 @@ impl Layoutable for PartMeasure {
                 chord.staff_distances_from_top.insert(*idx, *dy);
             }
 
+            chord.staff_scaling.clear();
+            chord.staff_scaling.insert(1, 0.);
+            for (idx, scale) in self.staff_scaling.iter() {
+                chord.staff_scaling.insert(*idx, *scale);
+            }
+
             chord.arrange(origin);
         }
 
         for rest in self.rests.iter_mut() {
             if let Some(dy) = self.staff_distances_from_top.get(&rest.staff) {
-                let dy = dy + rest.staff_line as f32 * 5.;
+                let staff_scale = self.staff_scaling.get(&rest.staff).unwrap_or(&1.);
+                let dy = dy + rest.staff_line as f32 * Staff::DEFAULT_SPACE_SIZE / 2. * staff_scale;
 
                 let dx: f32 = if rest.is_measure {
                     self.width / 2.

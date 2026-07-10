@@ -30,6 +30,8 @@ pub struct StaffInfo {
     pub visibility: Visibility,
     pub explicitly_hidden: HashSet<u32>,
     pub explicitly_shown: HashSet<u32>,
+    pub staff_scaling: BTreeMap<u32, f32>,
+    pub content_scaling: BTreeMap<u32, f32>,
 }
 
 #[derive(Clone)]
@@ -76,6 +78,8 @@ impl LayoutCtx {
         self.part_hidden_specified = Visibility::Unset;
         self.staff.explicitly_hidden.clear();
         self.staff.explicitly_shown.clear();
+        self.staff.staff_scaling.clear();
+        self.staff.content_scaling.clear();
 
         self.clef.clear();
 
@@ -107,6 +111,8 @@ impl Default for LayoutCtx {
                 visibility: Visibility::Unset,
                 explicitly_hidden: HashSet::new(),
                 explicitly_shown: HashSet::new(),
+                staff_scaling: BTreeMap::new(),
+                content_scaling: BTreeMap::new(),
             },
             measure: MeasureInfo {
                 number: 0,

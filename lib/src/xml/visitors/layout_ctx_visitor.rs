@@ -173,13 +173,11 @@ impl Visitor for LayoutContextVisitor {
     fn enter_staff_details(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         let print_object = element.attribute("print-object").unwrap_or("yes");
 
-        let is_hidden = print_object == "no";
+        let number: Option<u32> = element.attribute("number").map(|s| s.req_u32());
 
+        let is_hidden = print_object == "no";
         if is_hidden {
-            if let Some(num) = element
-                .attribute("number")
-                .and_then(|s| s.parse::<u32>().ok())
-            {
+            if let Some(num) = number {
                 // if a stuff number is specified, hide the staff.
                 ctx.layout_ctx.staff.explicitly_hidden.insert(num);
                 ctx.layout_ctx.staff.explicitly_shown.remove(&num);
@@ -194,12 +192,24 @@ impl Visitor for LayoutContextVisitor {
             // if any staff is printed, set part visibility to shown.
             ctx.layout_ctx.part_hidden_specified = Visibility::Shown;
 
-            if let Some(num) = element
-                .attribute("number")
-                .and_then(|s| s.parse::<u32>().ok())
-            {
+            if let Some(num) = number {
                 ctx.layout_ctx.staff.explicitly_hidden.remove(&num);
                 ctx.layout_ctx.staff.explicitly_shown.insert(num);
+            }
+        }
+
+        let number = number.unwrap_or(1);
+        if let Some(staff_size) = element.get_child("staff-size") {
+            let v: f32 = staff_size.req_u32() as f32 / 100.;
+            ctx.layout_ctx.staff.staff_scaling.insert(number, v);
+            ctx.layout_ctx.staff.content_scaling.insert(number, v);
+
+            if let Some(scaling) = staff_size
+                .attribute("scaling")
+                .map(|s| s.req_u32())
+                .map(|s| s as f32 / 100.)
+            {
+                ctx.layout_ctx.staff.content_scaling.insert(number, scaling);
             }
         }
     }

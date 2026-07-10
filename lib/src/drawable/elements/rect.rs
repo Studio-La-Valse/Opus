@@ -2,7 +2,7 @@ use crate::core::color::Color;
 use crate::core::xy::XY;
 use serde::Serialize;
 
-#[derive(Default, Serialize)]
+#[derive(Default, Copy, Clone, Serialize)]
 pub struct Rect {
     pub xy: XY,
     pub width: f32,

@@ -12,6 +12,7 @@ use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
+use crate::visual::staff::Staff;
 
 pub struct Note {
     pub xy: XY,
@@ -22,19 +23,23 @@ pub struct Note {
     pub staff_line: i32,
     pub staff: u32,
 
+    pub scale: f32,
+
     pub color: Color,
 
     pub glyph: Notehead,
 }
 
 impl Note {
-    pub fn new(glyph: Notehead, default_x: f32, staff: u32, staff_line: i32) -> Self {
+    pub fn new(glyph: Notehead, default_x: f32, staff: u32, staff_line: i32, scale: f32) -> Self {
         Note {
             glyph,
 
             default_x,
             staff,
             staff_line,
+
+            scale,
 
             xy: XY::default(),
             width: f32::default(),
@@ -47,10 +52,10 @@ impl Note {
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
     pub fn scale_box(&self, bbox: &BoundingBox) -> BoundingBox {
         let scaled = BoundingBox {
-            x_min: bbox.x_min * 10.,
-            y_min: bbox.y_min * 10.,
-            x_max: bbox.x_max * 10.,
-            y_max: bbox.y_max * 10.,
+            x_min: bbox.x_min * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            y_min: bbox.y_min * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            x_max: bbox.x_max * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            y_max: bbox.y_max * (Staff::DEFAULT_SPACE_SIZE * self.scale),
         };
 
         BoundingBox {
@@ -64,8 +69,8 @@ impl Note {
     /// Scales a normalized point to current position and scale.
     pub fn scale_pt(&self, xy: &XY) -> XY {
         let scaled = XY {
-            x: xy.x * 10.,
-            y: xy.y * 10.,
+            x: xy.x * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            y: xy.y * (Staff::DEFAULT_SPACE_SIZE * self.scale),
         };
 
         XY {
@@ -95,7 +100,7 @@ impl ScoreElement for Note {
 
 impl Layoutable for Note {
     fn measure(&mut self, _available: &XY) {
-        self.height = 10.;
+        self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;
         let bbox = self.scale_box(&glyph.bbox);
@@ -105,7 +110,7 @@ impl Layoutable for Note {
 
     /// here, origin is the origin of the staff measure.
     fn arrange(&mut self, origin: &XY) {
-        let d_y = self.staff_line as f32 * 5.;
+        let d_y = self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.scale);
         self.xy = origin.mv(self.default_x, d_y);
     }
 }
@@ -120,7 +125,9 @@ impl Content for Note {
         let mut result: Vec<Element> = Vec::new();
 
         let glyph = &self.glyph;
-        let text = glyph.as_text(self.color, self.xy);
+        let text = glyph.as_text(self.color, self.xy, self.scale);
+        result.push(text.into());
+
         let bbox = self.scale_box(&glyph.bbox);
 
         let rect = Rect {
@@ -175,8 +182,6 @@ impl Content for Note {
 
             result.push(rect.into());
         }
-
-        result.push(text.into());
 
         result
     }

@@ -16,12 +16,12 @@ pub struct Notehead {
 }
 
 impl SmuflGlyph for Notehead {
-    fn as_text(&self, color: Color, xy: XY) -> Text {
+    fn as_text(&self, color: Color, xy: XY, scale: f32) -> Text {
         let text = self.codepoint.to_string();
         Text {
             vertical_alignment: VerticalAlign::Bottom,
             horizontal_alignment: HorizontalAlign::Left,
-            font_size: 40.,
+            font_size: 40. * scale,
             font: self.font.to_string(),
             text,
             xy,

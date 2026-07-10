@@ -38,7 +38,7 @@ impl VerticalAlign {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Text {
     pub text: String,
     pub color: Color,

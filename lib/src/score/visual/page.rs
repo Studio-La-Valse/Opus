@@ -113,15 +113,15 @@ impl Content for Page {
             height: self.height,
             color: self.color,
             stroke_color: Some(self.foreground),
-            stroke_width: Some(0.01),
+            stroke_width: Some(1.),
         };
         elements.push(rect.into());
 
         let stroke_color = Color {
-            a: 0.5,
+            a: 1.,
             ..self.foreground
         };
-        let stroke_width = 0.5;
+        let stroke_width = 1.;
         let left = Line {
             start: self.xy.mv(self.margins.left, 0.),
             end: self.xy.mv(self.margins.left, self.height),

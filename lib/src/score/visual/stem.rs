@@ -12,6 +12,7 @@ use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::layoutable::Layoutable;
+use crate::visual::staff::Staff;
 use crate::xy::XY;
 use std::collections::BTreeMap;
 
@@ -63,6 +64,8 @@ pub struct Stem {
     pub length: f32,
     pub thickness: f32,
 
+    pub scale: f32,
+
     pub direction: UpDown,
 
     pub color: Color,
@@ -80,6 +83,7 @@ impl Stem {
         direction: UpDown,
         duration: BaseDuration,
         staff: u32,
+        scale: f32,
         default_y: Option<f32>,
     ) -> Self {
         Self {
@@ -87,6 +91,7 @@ impl Stem {
             direction,
             duration,
             staff,
+            scale,
             length: 0.,
             thickness: 0.,
             xy: XY::ZERO,
@@ -193,7 +198,7 @@ impl Content for Stem {
             elements.push(display(&stem_anchor, &2., &Color::RED).into());
 
             let flag_anchor = flag.stem_anchor;
-            let flag_anchor = scale_pt(&flag_anchor, &stem_anchor);
+            let flag_anchor = scale_pt(&flag_anchor, &stem_anchor, self.scale);
             elements.push(display(&flag_anchor, &2.5, &Color::GREEN).into());
 
             let delta = stem_anchor - flag_anchor;
@@ -201,7 +206,7 @@ impl Content for Stem {
             let final_anchor = stem_anchor + delta;
             elements.push(display(&final_anchor, &3., &Color::BLUE).into());
 
-            let flag: Element = flag.as_text(self.color, final_anchor).into();
+            let flag: Element = flag.as_text(self.color, final_anchor, self.scale).into();
 
             elements.push(flag);
         }
@@ -225,10 +230,10 @@ fn display(xy: &XY, size: &f32, color: &Color) -> Rect {
 }
 
 /// Scales a normalized point to current position and scale.
-fn scale_pt(flag_anchor: &XY, stem_anchor: &XY) -> XY {
+fn scale_pt(flag_anchor: &XY, stem_anchor: &XY, scale: f32) -> XY {
     let scaled = XY {
-        x: flag_anchor.x * 10.,
-        y: flag_anchor.y * 10.,
+        x: flag_anchor.x * (Staff::DEFAULT_SPACE_SIZE * scale),
+        y: flag_anchor.y * (Staff::DEFAULT_SPACE_SIZE * scale),
     };
 
     scaled + *stem_anchor

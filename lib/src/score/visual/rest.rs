@@ -12,6 +12,7 @@ use crate::smufl::glyphs::rest::Rest as SmuflRest;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
+use crate::visual::staff::Staff;
 
 pub struct Rest {
     pub xy: XY,
@@ -23,6 +24,8 @@ pub struct Rest {
     pub default_x: Option<f32>,
     pub staff_line: i32,
     pub staff: u32,
+
+    pub scale: f32,
 
     pub color: Color,
 
@@ -36,6 +39,7 @@ impl Rest {
         default_x: Option<f32>,
         staff: u32,
         staff_line: i32,
+        scale: f32,
     ) -> Self {
         Rest {
             glyph,
@@ -45,6 +49,7 @@ impl Rest {
             default_x,
             staff,
             staff_line,
+            scale,
 
             xy: XY::default(),
             width: f32::default(),
@@ -57,10 +62,10 @@ impl Rest {
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
     pub fn scale_box(&self, bbox: &BoundingBox) -> BoundingBox {
         let scaled = BoundingBox {
-            x_min: bbox.x_min * 10.,
-            y_min: bbox.y_min * 10.,
-            x_max: bbox.x_max * 10.,
-            y_max: bbox.y_max * 10.,
+            x_min: bbox.x_min * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            y_min: bbox.y_min * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            x_max: bbox.x_max * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            y_max: bbox.y_max * (Staff::DEFAULT_SPACE_SIZE * self.scale),
         };
 
         BoundingBox {
@@ -74,8 +79,8 @@ impl Rest {
     /// Scales a normalized point to current position and scale.
     pub fn scale_pt(&self, xy: &XY) -> XY {
         let scaled = XY {
-            x: xy.x * 10.,
-            y: xy.y * 10.,
+            x: xy.x * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+            y: xy.y * (Staff::DEFAULT_SPACE_SIZE * self.scale),
         };
 
         XY {
@@ -105,7 +110,7 @@ impl ScoreElement for Rest {
 
 impl Layoutable for Rest {
     fn measure(&mut self, _available: &XY) {
-        self.height = 10.;
+        self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;
         let bbox = self.scale_box(&glyph.bbox);
@@ -129,7 +134,9 @@ impl Content for Rest {
         let mut result: Vec<Element> = Vec::new();
 
         let glyph = &self.glyph;
-        let text = glyph.as_text(self.color, self.xy);
+        let text = glyph.as_text(self.color, self.xy, self.scale);
+        result.push(text.into());
+
         let bbox = self.scale_box(&glyph.bbox);
 
         let rect = Rect {
@@ -163,8 +170,6 @@ impl Content for Rest {
             stroke_width: 0.2,
         };
         result.push(origin.into());
-
-        result.push(text.into());
 
         result
     }

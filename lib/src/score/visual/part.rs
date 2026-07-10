@@ -85,6 +85,13 @@ impl Part {
         }
     }
 
+    pub fn set_staff_scale(&mut self, staff_scales: &BTreeMap<u32, f32>) {
+        for (&idx, staff_scale) in staff_scales.iter() {
+            let staff = self.staves.entry(idx).or_default();
+            staff.scale = *staff_scale;
+        }
+    }
+
     pub fn first_visible_staff_distance(&self) -> f32 {
         let mut dist = 0.;
         let mut found = false;
@@ -177,12 +184,15 @@ impl Layoutable for Part {
 
         for (_, measure) in self.measures.iter_mut() {
             measure.staff_distances_from_top.clear();
+            measure.staff_scaling.clear();
 
             let mut distance_travelled = 0.;
             for (_idx, staff) in self.staves.iter_mut() {
                 if staff.hidden {
                     continue;
                 }
+
+                measure.staff_scaling.insert(*_idx, staff.scale);
 
                 distance_travelled += staff.distance_final;
                 measure

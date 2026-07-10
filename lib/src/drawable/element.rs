@@ -37,7 +37,41 @@ impl From<Polygon> for Element {
     }
 }
 
-pub fn to_svg(elements: &[Element]) -> String {
+pub fn scale_elem(element: &Element, scale: f32) -> Element {
+    match element {
+        Element::Line(l) => Line {
+            start: l.start.scale(scale),
+            end: l.end.scale(scale),
+            stroke_width: l.stroke_width * scale,
+            ..*l
+        }
+        .into(),
+
+        Element::Rect(r) => Rect {
+            xy: r.xy.scale(scale),
+            width: r.width * scale,
+            height: r.height * scale,
+            stroke_width: r.stroke_width.map(|v| v * scale),
+            ..*r
+        }
+        .into(),
+        Element::Text(t) => Text {
+            xy: t.xy.scale(scale),
+            font_size: t.font_size * scale,
+            ..t.clone()
+        }
+        .into(),
+
+        Element::Polygon(p) => Polygon {
+            pts: p.pts.iter().map(|p| p.scale(scale)).collect(),
+            stroke_width: p.stroke_width.map(|v| v * scale),
+            ..p.clone()
+        }
+        .into(),
+    }
+}
+
+pub fn to_svg(elements: &Vec<Element>) -> String {
     let (min_x, min_y, max_x, max_y) = compute_bounds(elements);
 
     let width = max_x - min_x;
@@ -110,7 +144,7 @@ pub fn to_svg(elements: &[Element]) -> String {
     out
 }
 
-pub fn compute_bounds(elements: &[Element]) -> (f32, f32, f32, f32) {
+pub fn compute_bounds(elements: &Vec<Element>) -> (f32, f32, f32, f32) {
     let mut min_x = f32::MAX;
     let mut min_y = f32::MAX;
     let mut max_x = f32::MIN;

@@ -29,6 +29,13 @@ impl XY {
         }
     }
 
+    pub fn scale(&self, scale: f32) -> XY {
+        XY {
+            x: self.x * scale,
+            y: self.y * scale,
+        }
+    }
+
     pub fn length(&self) -> f32 {
         self.x.hypot(self.y)
     }

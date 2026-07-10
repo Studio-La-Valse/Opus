@@ -23,13 +23,26 @@ pub struct Staff {
     pub line_thickness: f32,
 
     pub hidden: bool,
+
+    pub scale: f32,
+
     pub distance_specified: Option<f32>,
     pub distance_final: f32,
 }
 
 impl Staff {
+    pub const LINES: usize = 5;
+    pub const SPACES: usize = Staff::LINES - 1;
+    pub const DEFAULT_SPACE_SIZE: f32 = 10.;
+
     // 5 lines, 4 spaces, 10 tenths for each space according to MusicXML spec.
-    pub const SIZE: i8 = 40;
+    pub fn size(&self) -> f32 {
+        Staff::SPACES as f32 * self.line_space()
+    }
+
+    pub fn line_space(&self) -> f32 {
+        Staff::DEFAULT_SPACE_SIZE * self.scale
+    }
 }
 
 impl ScoreElement for Staff {
@@ -59,7 +72,7 @@ impl ScoreElement for Staff {
 
 impl Layoutable for Staff {
     fn measure(&mut self, _available: &XY) {
-        self.height = f32::from(Self::SIZE);
+        self.height = self.size();
         self.width = 0.;
 
         if self.hidden {
@@ -124,11 +137,11 @@ impl Content for Staff {
 
             start = XY {
                 x: start.x,
-                y: start.y + 10.,
+                y: start.y + self.line_space(),
             };
             end = XY {
                 x: end.x,
-                y: end.y + 10.,
+                y: end.y + self.line_space(),
             };
         }
 

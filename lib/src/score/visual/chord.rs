@@ -9,6 +9,7 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
+use crate::visual::staff::Staff;
 use crate::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
@@ -20,6 +21,7 @@ pub struct Chord {
     pub stem: Option<Stem>,
 
     pub staff_distances_from_top: BTreeMap<u32, f32>,
+    pub staff_scaling: BTreeMap<u32, f32>,
 
     pub color: Color,
     pub leger_thickness: f32,
@@ -31,6 +33,9 @@ impl Chord {
         let mut lines = Vec::new();
 
         for (idx, _dx) in self.staff_distances_from_top.iter() {
+            let staff_scale = self.staff_scaling.get(idx).unwrap_or(&1.);
+            let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scale;
+
             let key = |n: &&Note| OrderedFloat(n.xy.y);
 
             let highest_note = self
@@ -52,7 +57,7 @@ impl Chord {
 
                 for line in highest_note.staff_line..-1 {
                     if line % 2 != 0 {
-                        dy += 5.;
+                        dy += each_line;
                         continue;
                     }
 
@@ -65,7 +70,7 @@ impl Chord {
 
                     lines.push(_line);
 
-                    dy += 5.;
+                    dy += each_line;
                 }
             }
 
@@ -88,7 +93,7 @@ impl Chord {
 
                 while line >= 10 {
                     if line % 2 != 0 {
-                        dy -= 5.;
+                        dy -= each_line;
                         line -= 1;
                         continue;
                     }
@@ -102,7 +107,7 @@ impl Chord {
 
                     lines.push(_line);
 
-                    dy -= 5.;
+                    dy -= each_line;
                     line -= 1;
                 }
             }
@@ -140,7 +145,7 @@ impl ScoreElement for Chord {
         self.leger_thickness = _user_layout
             .staff
             .unwrap_or(_app_defaults.staff_line_thickness);
-        self.leger_width = 1.875 * 10.;
+        self.leger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
     }
 }
 
