@@ -2,6 +2,7 @@ use crate::color::Color;
 use crate::core::xy::XY;
 use crate::duration::BaseDuration;
 use crate::score::core::pitch::Pitch;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
@@ -52,7 +53,7 @@ impl Visitor for ContentVisitor {
     fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
-        let staff = ctx.layout_ctx.staff.number;
+        let staff: StaffIdx = ctx.layout_ctx.staff.number.into();
         let scale = ctx
             .layout_ctx
             .staff
@@ -234,9 +235,9 @@ impl Visitor for ContentVisitor {
             .parts
             .entry(part_id.clone())
             .or_insert_with(|| Part::new(part_id));
-        part.ensure_staves(vec![1].into_iter().collect());
+        part.ensure_staves(vec![1.into()].into_iter().collect());
         for chord in part_measure.chords.iter().flat_map(|c| c.1) {
-            let notes: HashSet<u32> = chord.notes.iter().map(|n| n.staff).collect();
+            let notes: HashSet<StaffIdx> = chord.notes.iter().map(|n| n.staff).collect();
             part.ensure_staves(notes);
         }
         part.set_visibility(_ctx.layout_ctx.part_hidden_specified);

@@ -1,19 +1,20 @@
 use crate::core::xy::XY;
 use crate::drawable::content::Content;
 use crate::drawable::element::Element;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::visual::element::ScoreElement;
-use crate::visual::staff_meta::StaffMeta;
+use crate::visual::staff_meta::StaffCtx;
 use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default)]
 pub struct Part {
     pub measures: BTreeMap<u32, PartMeasure>,
-    pub staves: BTreeMap<u32, Staff>,
+    pub staves: BTreeMap<StaffIdx, Staff>,
 
     pub xy: XY,
     pub width: f32,
@@ -54,27 +55,27 @@ impl Part {
         }
     }
 
-    pub fn ensure_staves(&mut self, staves: HashSet<u32>) {
+    pub fn ensure_staves(&mut self, staves: HashSet<StaffIdx>) {
         for staff in staves {
             self.staves.entry(staff).or_default();
         }
     }
 
-    pub fn hide_staves(&mut self, staves: &HashSet<u32>) {
+    pub fn hide_staves(&mut self, staves: &HashSet<StaffIdx>) {
         for &staff in staves {
             let staff = self.staves.entry(staff).or_default();
             staff.hidden = true;
         }
     }
 
-    pub fn show_staves(&mut self, staves: &HashSet<u32>) {
+    pub fn show_staves(&mut self, staves: &HashSet<StaffIdx>) {
         for &staff in staves {
             let staff = self.staves.entry(staff).or_default();
             staff.hidden = false;
         }
     }
 
-    pub fn set_distances(&mut self, distances: &BTreeMap<u32, f32>, default: &f32) {
+    pub fn set_distances(&mut self, distances: &BTreeMap<StaffIdx, f32>, default: &f32) {
         for (&idx, &dist) in distances.iter() {
             let staff = self.staves.entry(idx).or_default();
             staff.distance_specified = Some(dist);
@@ -86,7 +87,7 @@ impl Part {
         }
     }
 
-    pub fn set_staff_scale(&mut self, staff_scales: &BTreeMap<u32, f32>) {
+    pub fn set_staff_scale(&mut self, staff_scales: &BTreeMap<StaffIdx, f32>) {
         for (&idx, staff_scale) in staff_scales.iter() {
             let staff = self.staves.entry(idx).or_default();
             staff.scale = *staff_scale;
@@ -113,14 +114,14 @@ impl Part {
         dist
     }
 
-    pub fn create_staff_meta(&self) -> BTreeMap<u32, StaffMeta> {
+    pub fn create_staff_meta(&self) -> BTreeMap<StaffIdx, StaffCtx> {
         let mut res = BTreeMap::new();
 
         let mut distance_travelled = 0.;
         for (_idx, staff) in self.staves.iter() {
             distance_travelled += staff.distance_final;
 
-            let meta = StaffMeta {
+            let meta = StaffCtx {
                 hidden: staff.hidden,
                 scaling: staff.scale,
                 distance_from_top: distance_travelled,

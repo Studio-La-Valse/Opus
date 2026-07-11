@@ -1,4 +1,6 @@
 use crate::score::core::clef::Clef;
+use crate::score::core::staff_idx::StaffIdx;
+use crate::score::core::voice::Voice;
 use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
@@ -26,12 +28,12 @@ pub struct SystemInfo {
 #[derive(Clone)]
 pub struct StaffInfo {
     pub number: u32,
-    pub distances: BTreeMap<u32, f32>,
+    pub distances: BTreeMap<StaffIdx, f32>,
     pub visibility: Visibility,
-    pub explicitly_hidden: HashSet<u32>,
-    pub explicitly_shown: HashSet<u32>,
-    pub staff_scaling: BTreeMap<u32, f32>,
-    pub content_scaling: BTreeMap<u32, f32>,
+    pub explicitly_hidden: HashSet<StaffIdx>,
+    pub explicitly_shown: HashSet<StaffIdx>,
+    pub staff_scaling: BTreeMap<StaffIdx, f32>,
+    pub content_scaling: BTreeMap<StaffIdx, f32>,
 }
 
 #[derive(Clone)]
@@ -49,14 +51,14 @@ pub struct LayoutCtx {
     pub staff: StaffInfo,
     pub measure: MeasureInfo,
 
-    pub clef: BTreeMap<u32, Clef>,
+    pub clef: BTreeMap<StaffIdx, Clef>,
 
     pub divisions: u32,
     pub duration: u32,
     pub beats: u32,
     pub beat_type: u32,
     pub position: u32,
-    pub voice: u32,
+    pub voice: Voice,
 
     pub chord: bool,
 }
@@ -86,7 +88,7 @@ impl LayoutCtx {
         self.divisions = 8; // specifies the amounts of divisions in one beat (so in one 1/beat_type)
         self.beats = 4;
         self.beat_type = 4;
-        self.voice = 1;
+        self.voice = 1.into();
 
         self.chord = false;
     }
@@ -125,7 +127,7 @@ impl Default for LayoutCtx {
             beats: 4,
             beat_type: 4,
             position: 0,
-            voice: 1,
+            voice: 1.into(),
 
             chord: false,
         }

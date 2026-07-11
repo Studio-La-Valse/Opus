@@ -7,13 +7,14 @@ use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::layout::Layout;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::layoutable::Layoutable;
 use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff::Staff;
-use crate::visual::staff_meta::StaffMeta;
+use crate::visual::staff_meta::StaffCtx;
 
 pub struct Note {
     pub xy: XY,
@@ -22,9 +23,9 @@ pub struct Note {
 
     pub default_x: f32,
     pub staff_line: i32,
-    pub staff: u32,
+    pub staff: StaffIdx,
 
-    pub staff_ctx: StaffMeta,
+    pub staff_ctx: StaffCtx,
 
     pub scale: f32,
 
@@ -34,7 +35,13 @@ pub struct Note {
 }
 
 impl Note {
-    pub fn new(glyph: Notehead, default_x: f32, staff: u32, staff_line: i32, scale: f32) -> Self {
+    pub fn new(
+        glyph: Notehead,
+        default_x: f32,
+        staff: StaffIdx,
+        staff_line: i32,
+        scale: f32,
+    ) -> Self {
         Note {
             glyph,
 
@@ -54,7 +61,7 @@ impl Note {
         }
     }
 
-    pub fn set_staff_ctx(&mut self, ctx: StaffMeta) {
+    pub fn set_staff_ctx(&mut self, ctx: StaffCtx) {
         self.staff_ctx = ctx;
     }
 

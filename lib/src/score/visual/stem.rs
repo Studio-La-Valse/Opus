@@ -7,6 +7,7 @@ use crate::drawable::elements::rect::Rect;
 use crate::duration::BaseDuration;
 use crate::layout::Layout;
 use crate::ray::Ray;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::smufl::glyphs::flag::Flag;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
@@ -69,7 +70,7 @@ pub struct Stem {
     pub direction: UpDown,
 
     pub color: Color,
-    pub staff: u32,
+    pub staff: StaffIdx,
 
     pub duration: BaseDuration,
 
@@ -82,7 +83,7 @@ impl Stem {
     pub fn new(
         direction: UpDown,
         duration: BaseDuration,
-        staff: u32,
+        staff: StaffIdx,
         scale: f32,
         default_y: Option<f32>,
     ) -> Self {

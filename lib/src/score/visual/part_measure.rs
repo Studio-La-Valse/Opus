@@ -7,13 +7,15 @@ use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::layout::Layout;
 use crate::ray::Ray;
+use crate::score::core::staff_idx::StaffIdx;
+use crate::score::core::voice::Voice;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
 use crate::visual::rest::Rest;
-use crate::visual::staff_meta::StaffMeta;
+use crate::visual::staff_meta::StaffCtx;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use std::collections::BTreeMap;
 
@@ -27,12 +29,10 @@ pub struct PartMeasure {
     pub height: f32,
     pub origin: XY,
 
-    pub staff_ctx: BTreeMap<u32, StaffMeta>,
+    pub staff_ctx: BTreeMap<StaffIdx, StaffCtx>,
 
-    /// Chords for each voice
-    pub chords: BTreeMap<u32, Vec<Chord>>,
+    pub chords: BTreeMap<Voice, Vec<Chord>>,
     pub beams: Vec<Polygon>,
-
     pub rests: Vec<Rest>,
 
     pub stem_thickness: f32,
@@ -48,7 +48,7 @@ impl PartMeasure {
         }
     }
 
-    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<u32, StaffMeta>) {
+    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.staff_ctx.clear();
 
         for (id, ctx) in ctx.iter() {
@@ -216,7 +216,7 @@ impl Content for PartMeasure {
     }
 }
 
-fn collect(chord_groups: &mut BTreeMap<u32, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
+fn collect(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
     let mut result: Vec<Vec<&mut Chord>> = Vec::new();
 
     for (_idx, chords) in chord_groups.iter_mut() {

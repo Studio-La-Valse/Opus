@@ -1,4 +1,5 @@
 use crate::score::core::clef::Clef;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
 use crate::utils::xml::{N, ToNumber};
 use crate::visitor::Visitor;
@@ -120,7 +121,7 @@ impl Visitor for LayoutContextVisitor {
         {
             let staff_distance = staff_layout.req_child("staff-distance").req_f32();
 
-            let staff_number = staff_layout.req_attribute("number").req_u32();
+            let staff_number: StaffIdx = staff_layout.req_attribute("number").req_u32().into();
 
             ctx.layout_ctx
                 .staff
@@ -158,10 +159,11 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn enter_clef(&mut self, element: &Node, ctx: &mut WalkerCtx) {
-        let staff = element
+        let staff: StaffIdx = element
             .get_attribute("number")
             .map(|s| s.parse::<u32>().unwrap())
-            .unwrap_or(1);
+            .unwrap_or(1)
+            .into();
         let sign_node = element.req_child("sign");
         let sign = sign_node.req_text();
         let line = element.get_child("line").map(|l| l.req_i32());
@@ -173,7 +175,7 @@ impl Visitor for LayoutContextVisitor {
     fn enter_staff_details(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         let print_object = element.attribute("print-object").unwrap_or("yes");
 
-        let number: Option<u32> = element.attribute("number").map(|s| s.req_u32());
+        let number: Option<StaffIdx> = element.attribute("number").map(|s| s.req_u32().into());
 
         let is_hidden = print_object == "no";
         if is_hidden {
@@ -198,7 +200,7 @@ impl Visitor for LayoutContextVisitor {
             }
         }
 
-        let number = number.unwrap_or(1);
+        let number = number.unwrap_or(1.into());
         if let Some(staff_size) = element.get_child("staff-size") {
             let v: f32 = staff_size.req_u32() as f32 / 100.;
             ctx.layout_ctx.staff.staff_scaling.insert(number, v);
@@ -254,7 +256,7 @@ impl Visitor for LayoutContextVisitor {
 
         for node in element.children() {
             if node.has_tag_name("voice") {
-                ctx.layout_ctx.voice = node.req_u32()
+                ctx.layout_ctx.voice = node.req_u32().into()
             }
 
             if node.has_tag_name("staff") {

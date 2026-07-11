@@ -5,12 +5,13 @@ use crate::drawable::content::Content;
 use crate::drawable::element::Element;
 use crate::drawable::elements::line::Line;
 use crate::layout::Layout;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
 use crate::visual::staff::Staff;
-use crate::visual::staff_meta::StaffMeta;
+use crate::visual::staff_meta::StaffCtx;
 use crate::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
@@ -21,7 +22,7 @@ pub struct Chord {
 
     pub stem: Option<Stem>,
 
-    pub staff_ctx: BTreeMap<u32, StaffMeta>,
+    pub staff_ctx: BTreeMap<StaffIdx, StaffCtx>,
 
     pub color: Color,
     pub leger_thickness: f32,
@@ -29,7 +30,7 @@ pub struct Chord {
 }
 
 impl Chord {
-    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<u32, StaffMeta>) {
+    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.staff_ctx.clear();
 
         for (id, ctx) in ctx.iter() {
