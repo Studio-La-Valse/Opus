@@ -4,9 +4,6 @@ use std::fs;
 
 pub fn load_glyph_names(json: &str) -> HashMap<String, GlyphName> {
     let raw = fs::read_to_string(json).expect("Failed to read file");
-
-    println!("RAW START: {:?}", &raw[..raw.len().min(50)]);
-
     let res = serde_json::from_str(&raw);
     res.expect("Invalid glyphnames.json file")
 }

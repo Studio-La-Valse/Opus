@@ -219,7 +219,7 @@ impl Content for PartMeasure {
 fn collect(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
     let mut result: Vec<Vec<&mut Chord>> = Vec::new();
 
-    for (_idx, chords) in chord_groups.iter_mut() {
+    for (_, chords) in chord_groups.iter_mut() {
         let mut group: Vec<&mut Chord> = Vec::new();
         for chord in chords {
             group.push(chord);

@@ -8,7 +8,7 @@ use crate::visual::element::ScoreElement;
 pub struct StaffMeasure {
     pub xy: XY,
     pub width: f32,
-    pub height: f32,
+    pub height: f32, 
 }
 
 impl StaffMeasure {}

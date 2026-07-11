@@ -143,6 +143,10 @@ impl Content for Note {
     fn elements(&self) -> Vec<Element> {
         let mut result: Vec<Element> = Vec::new();
 
+        if self.staff_ctx.hidden {
+            return result
+        }
+
         let glyph = &self.glyph;
         let text = glyph.as_text(self.color, self.xy, self.scale);
         result.push(text.into());
