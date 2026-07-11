@@ -1,5 +1,4 @@
 pub mod layoutable;
-
 pub mod chord;
 pub mod element;
 pub mod note;
@@ -14,7 +13,7 @@ pub mod section;
 pub mod section_measure;
 pub mod staff;
 pub mod staff_measure;
-pub mod staff_meta;
+pub mod staff_ctx;
 pub mod stem;
 pub mod system;
 pub mod system_measure;

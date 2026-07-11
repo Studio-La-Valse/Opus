@@ -8,7 +8,7 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::visual::element::ScoreElement;
-use crate::visual::staff_meta::StaffCtx;
+use crate::visual::staff_ctx::StaffCtx;
 use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default)]

@@ -9,7 +9,7 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
-use crate::visual::staff_meta::StaffCtx;
+use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;

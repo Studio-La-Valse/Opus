@@ -14,7 +14,7 @@ use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff::Staff;
-use crate::visual::staff_meta::StaffCtx;
+use crate::visual::staff_ctx::StaffCtx;
 
 pub struct Note {
     pub xy: XY,
