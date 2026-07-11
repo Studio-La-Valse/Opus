@@ -114,7 +114,7 @@ impl Part {
         dist
     }
 
-    pub fn create_staff_meta(&self) -> BTreeMap<StaffIdx, StaffCtx> {
+    pub fn create_staff_ctx(&self) -> BTreeMap<StaffIdx, StaffCtx> {
         let mut res = BTreeMap::new();
 
         let mut distance_travelled = 0.;
@@ -204,14 +204,11 @@ impl Layoutable for Part {
             _origin = _origin.mv(0., staff.height);
         }
 
-        let staff_ctx = self.create_staff_meta();
-        for (_, measure) in self.measures.iter_mut() {
-            measure.set_staff_ctx(&staff_ctx)
-        }
+        let staff_ctx = self.create_staff_ctx();
 
         let mut _origin = self.xy;
         for (_idx, measure) in self.measures.iter_mut() {
-            measure.arrange(&_origin);
+            measure.arrange_ctx(&_origin, &staff_ctx);
             _origin = _origin.mv(measure.width, 0.);
         }
     }

@@ -57,12 +57,19 @@ impl Staff {
     pub const DEFAULT_SPACE_SIZE: f32 = 10.;
 
     // 5 lines, 4 spaces, 10 tenths for each space according to MusicXML spec.
-    pub fn size(&self) -> f32 {
+    pub fn height(&self) -> f32 {
         Staff::SPACES as f32 * self.line_space()
     }
 
     pub fn line_space(&self) -> f32 {
         Staff::DEFAULT_SPACE_SIZE * self.scale
+    }
+
+    pub fn set_scale(&mut self, scale: f32) {
+        self.scale = scale;
+        for measure in self.measures.values_mut() {
+            measure.scale = scale;
+        }
     }
 }
 
@@ -93,7 +100,7 @@ impl ScoreElement for Staff {
 
 impl Layoutable for Staff {
     fn measure(&mut self, _available: &XY) {
-        self.height = self.size();
+        self.height = self.height();
         self.width = 0.;
 
         if self.hidden {

@@ -18,11 +18,11 @@ use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub struct Chord {
+    pub xy: XY,
     pub notes: Vec<Note>,
 
     pub stem: Option<Stem>,
-
-    pub staff_ctx: BTreeMap<StaffIdx, StaffCtx>,
+    pub legers: Vec<Line>,
 
     pub color: Color,
     pub leger_thickness: f32,
@@ -30,23 +30,78 @@ pub struct Chord {
 }
 
 impl Chord {
-    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<StaffIdx, StaffCtx>) {
-        self.staff_ctx.clear();
 
-        for (id, ctx) in ctx.iter() {
-            self.staff_ctx.insert(*id, *ctx);
-        }
+    /// here, origin is the origin of the part measure.
+    pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        self.xy = *origin;
 
         for note in self.notes.iter_mut() {
-            let ctx = ctx.get(&note.staff).unwrap();
-            note.set_staff_ctx(*ctx);
+            let ctx = staff_ctx.get(&note.staff).unwrap();
+            note.arrange_ctx(origin, ctx);
+        }
+
+        self.arrange_stem(staff_ctx);
+        self.arrange_legers(staff_ctx);
+    }
+
+    pub fn arrange_stem(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        if let Some(stem) = self.stem.as_mut() {
+            let staff_top = staff_ctx.get(&stem.staff).unwrap().distance_from_top;
+
+            let key = |n: &&Note| OrderedFloat(n.xy.y);
+
+            let lowest_note = self.notes.iter().max_by_key(key);
+            let highest_note = self.notes.iter().min_by_key(key);
+
+            let tail_note = match stem.direction {
+                UpDown::Up => lowest_note,
+                UpDown::Down => highest_note,
+            }
+                .unwrap();
+
+            let tail_anchor = (match stem.direction {
+                UpDown::Up => tail_note.glyph.stem_anchor_right,
+                UpDown::Down => tail_note.glyph.stem_anchor_left,
+            })
+                .unwrap();
+            let tail_anchor = tail_note.scale_pt(&tail_anchor);
+            stem.arrange(&tail_anchor);
+
+            let default_y: f32 = if let Some(def_y) = &stem.default_y {
+                *def_y
+            } else {
+                let default_length = match stem.direction {
+                    UpDown::Up => -30.,
+                    UpDown::Down => 30.,
+                };
+
+                let tip_note = match stem.direction {
+                    UpDown::Up => highest_note,
+                    UpDown::Down => lowest_note,
+                }
+                    .unwrap();
+
+                let tip_anchor = (match stem.direction {
+                    UpDown::Up => tip_note.glyph.stem_anchor_right,
+                    UpDown::Down => tip_note.glyph.stem_anchor_left,
+                })
+                    .unwrap();
+                let tip_anchor = tip_note.scale_pt(&tip_anchor);
+
+                let tip = &tip_anchor.mv(0., default_length);
+                let staff_m_origin = &self.xy.mv(0., staff_top);
+                staff_m_origin.y - tip.y
+            };
+
+            let length = ((self.xy.y + staff_top) - default_y) - tail_anchor.y;
+            stem.length = length;
         }
     }
 
-    fn legers(&self) -> Vec<Line> {
-        let mut lines = Vec::new();
+    fn arrange_legers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        self.legers.clear();
 
-        for (idx, staff_ctx) in self.staff_ctx.iter() {
+        for (idx, staff_ctx) in staff_ctx.iter() {
             let staff_scale = staff_ctx.scaling;
             let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scale;
 
@@ -82,7 +137,7 @@ impl Chord {
                         stroke_color: self.color,
                     };
 
-                    lines.push(_line);
+                    self.legers.push(_line);
 
                     dy += each_line;
                 }
@@ -119,15 +174,13 @@ impl Chord {
                         stroke_color: self.color,
                     };
 
-                    lines.push(_line);
+                    self.legers.push(_line);
 
                     dy -= each_line;
                     line -= 1;
                 }
             }
         }
-
-        lines
     }
 }
 
@@ -159,6 +212,7 @@ impl ScoreElement for Chord {
         self.leger_thickness = _user_layout
             .staff
             .unwrap_or(_app_defaults.staff_line_thickness);
+
         self.leger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
     }
 }
@@ -175,62 +229,8 @@ impl Layoutable for Chord {
     }
 
     /// here, origin is the origin of the part measure.
-    fn arrange(&mut self, origin: &XY) {
-        for note in self.notes.iter_mut() {
-            note.arrange(origin);
-        }
-
-        if let Some(stem) = self.stem.as_mut() {
-            let staff_top = self.staff_ctx.get(&stem.staff).unwrap().distance_from_top;
-
-            let key = |n: &&Note| OrderedFloat(n.xy.y);
-
-            let lowest_note = self.notes.iter().max_by_key(key);
-            let highest_note = self.notes.iter().min_by_key(key);
-
-            let tail_note = match stem.direction {
-                UpDown::Up => lowest_note,
-                UpDown::Down => highest_note,
-            }
-            .unwrap();
-
-            let tail_anchor = (match stem.direction {
-                UpDown::Up => tail_note.glyph.stem_anchor_right,
-                UpDown::Down => tail_note.glyph.stem_anchor_left,
-            })
-            .unwrap();
-            let tail_anchor = tail_note.scale_pt(&tail_anchor);
-            stem.arrange(&tail_anchor);
-
-            let default_y: f32 = if let Some(def_y) = &stem.default_y {
-                *def_y
-            } else {
-                let default_length = match stem.direction {
-                    UpDown::Up => -30.,
-                    UpDown::Down => 30.,
-                };
-
-                let tip_note = match stem.direction {
-                    UpDown::Up => highest_note,
-                    UpDown::Down => lowest_note,
-                }
-                .unwrap();
-
-                let tip_anchor = (match stem.direction {
-                    UpDown::Up => tip_note.glyph.stem_anchor_right,
-                    UpDown::Down => tip_note.glyph.stem_anchor_left,
-                })
-                .unwrap();
-                let tip_anchor = tip_note.scale_pt(&tip_anchor);
-
-                let tip = &tip_anchor.mv(0., default_length);
-                let staff_m_origin = &origin.mv(0., staff_top);
-                staff_m_origin.y - tip.y
-            };
-
-            let length = ((origin.y + staff_top) - default_y) - tail_anchor.y;
-            stem.length = length;
-        }
+    fn arrange(&mut self, _origin: &XY) {
+        todo!("Use arrange_ctx instead")
     }
 }
 
@@ -239,9 +239,7 @@ impl Content for Chord {
         let mut result: Vec<&dyn Content> = Vec::new();
 
         for note in self.notes.iter() {
-            if self.staff_ctx.contains_key(&note.staff) {
-                result.push(note);
-            }
+            result.push(note);
         }
 
         if let Some(stem) = self.stem.as_ref() {
@@ -254,8 +252,8 @@ impl Content for Chord {
     fn elements(&self) -> Vec<Element> {
         let mut result: Vec<Element> = Vec::new();
 
-        for line in self.legers() {
-            result.push(line.into());
+        for line in self.legers.iter() {
+            result.push((*line).into());
         }
 
         result

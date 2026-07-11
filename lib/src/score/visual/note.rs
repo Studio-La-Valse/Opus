@@ -25,8 +25,6 @@ pub struct Note {
     pub staff_line: i32,
     pub staff: StaffIdx,
 
-    pub staff_ctx: StaffCtx,
-
     pub scale: f32,
 
     pub color: Color,
@@ -55,14 +53,16 @@ impl Note {
             width: f32::default(),
             height: f32::default(),
 
-            staff_ctx: Default::default(),
-
             color: Color::default(),
         }
     }
 
-    pub fn set_staff_ctx(&mut self, ctx: StaffCtx) {
-        self.staff_ctx = ctx;
+    pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
+        let staff_top = origin.mv(0., staff_ctx.distance_from_top);
+        let note_dy =
+            self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling);
+        let note_top = staff_top.mv(0., note_dy);
+        self.xy = note_top.mv(self.default_x, 0.);
     }
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
@@ -125,12 +125,8 @@ impl Layoutable for Note {
     }
 
     /// here, origin is the origin of the part measure. Get the dy from the staff ctx.
-    fn arrange(&mut self, origin: &XY) {
-        let staff_top = origin.mv(0., self.staff_ctx.distance_from_top);
-        let note_dy =
-            self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.staff_ctx.scaling);
-        let note_top = staff_top.mv(0., note_dy);
-        self.xy = note_top.mv(self.default_x, 0.);
+    fn arrange(&mut self, _origin: &XY) {
+        todo!("Use arrange_ctx instead")
     }
 }
 
@@ -142,10 +138,6 @@ impl Content for Note {
 
     fn elements(&self) -> Vec<Element> {
         let mut result: Vec<Element> = Vec::new();
-
-        if self.staff_ctx.hidden {
-            return result
-        }
 
         let glyph = &self.glyph;
         let text = glyph.as_text(self.color, self.xy, self.scale);

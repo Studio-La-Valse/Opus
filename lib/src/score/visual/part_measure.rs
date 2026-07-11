@@ -29,8 +29,6 @@ pub struct PartMeasure {
     pub height: f32,
     pub origin: XY,
 
-    pub staff_ctx: BTreeMap<StaffIdx, StaffCtx>,
-
     pub chords: BTreeMap<Voice, Vec<Chord>>,
     pub beams: Vec<Polygon>,
     pub rests: Vec<Rest>,
@@ -48,31 +46,35 @@ impl PartMeasure {
         }
     }
 
-    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<StaffIdx, StaffCtx>) {
-        self.staff_ctx.clear();
-
-        for (id, ctx) in ctx.iter() {
-            self.staff_ctx.insert(*id, *ctx);
-        }
-
-        for chords in self.chords.values_mut() {
-            for chord in chords.iter_mut() {
-                chord.set_staff_ctx(ctx);
-            }
-        }
-
-        for rest in self.rests.iter_mut() {
-            let ctx = ctx.get(&rest.staff).unwrap();
-            rest.set_staff_ctx(*ctx);
-        }
-    }
-
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
         let chord_groups = collect(&mut self.chords);
 
         for mut chords in chord_groups {
             strategy.rebeam(&mut chords)
         }
+    }
+
+    pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        self.origin = *origin;
+
+        for chord in self.chords.values_mut().flatten() {
+            chord.arrange_ctx(origin, staff_ctx);
+        }
+
+        for rest in self.rests.iter_mut() {
+            rest.set_staff_ctx(*staff_ctx.get(&rest.staff).unwrap());
+
+            let dx: f32 = if rest.is_measure {
+                self.width / 2.
+            } else {
+                rest.default_x.unwrap()
+            };
+
+            let glyph_origin = self.origin.mv(dx, 0.);
+            rest.arrange(&glyph_origin);
+        }
+
+        self.arrange_beams();
     }
 
     pub fn arrange_beams(&mut self) {
@@ -99,7 +101,7 @@ impl PartMeasure {
                     None => continue,
                 };
 
-                let beams = arrange_beams(
+                let beams = create_beams(
                     &group,
                     &ray,
                     &direction,
@@ -169,28 +171,8 @@ impl Layoutable for PartMeasure {
         }
     }
 
-    fn arrange(&mut self, origin: &XY) {
-        self.origin = *origin;
-
-        for chord in self.chords.values_mut().flatten() {
-            chord.set_staff_ctx(&self.staff_ctx);
-            chord.arrange(origin);
-        }
-
-        for rest in self.rests.iter_mut() {
-            rest.set_staff_ctx(*self.staff_ctx.get(&rest.staff).unwrap());
-
-            let dx: f32 = if rest.is_measure {
-                self.width / 2.
-            } else {
-                rest.default_x.unwrap()
-            };
-
-            let glyph_origin = self.origin.mv(dx, 0.);
-            rest.arrange(&glyph_origin);
-        }
-
-        self.arrange_beams();
+    fn arrange(&mut self, _origin: &XY) {
+        todo!("Use arrange_ctx instead")
     }
 }
 
@@ -375,7 +357,7 @@ fn create_ray(
     Some(Ray::from_pts(left, right))
 }
 
-fn arrange_beams(
+fn create_beams(
     chords: &[&mut Chord],
     ray: &Ray,
     direction: &UpDown,
