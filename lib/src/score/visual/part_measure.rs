@@ -13,9 +13,9 @@ use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
 use crate::visual::rest::Rest;
+use crate::visual::staff_meta::StaffMeta;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use std::collections::BTreeMap;
-use crate::visual::staff_meta::StaffMeta;
 
 #[derive(Default)]
 pub struct PartMeasure {
@@ -63,7 +63,7 @@ impl PartMeasure {
 
         for rest in self.rests.iter_mut() {
             let ctx = ctx.get(&rest.staff).unwrap();
-            rest.set_staff_ctx(ctx.clone());
+            rest.set_staff_ctx(*ctx);
         }
     }
 
@@ -200,11 +200,7 @@ impl Content for PartMeasure {
         for chord in self.chords.values().flatten() {
             result.push(chord);
         }
-        for rest in self
-            .rests
-            .iter()
-            .filter(|r| !r.staff_ctx.hidden)
-        {
+        for rest in self.rests.iter().filter(|r| !r.staff_ctx.hidden) {
             result.push(rest);
         }
         result

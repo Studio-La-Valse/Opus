@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
@@ -121,7 +120,8 @@ impl Layoutable for Note {
     /// here, origin is the origin of the part measure. Get the dy from the staff ctx.
     fn arrange(&mut self, origin: &XY) {
         let staff_top = origin.mv(0., self.staff_ctx.distance_from_top);
-        let note_dy = self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.staff_ctx.scaling);
+        let note_dy =
+            self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.staff_ctx.scaling);
         let note_top = staff_top.mv(0., note_dy);
         self.xy = note_top.mv(self.default_x, 0.);
     }

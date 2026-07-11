@@ -7,8 +7,8 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::visual::element::ScoreElement;
-use std::collections::{BTreeMap, HashSet};
 use crate::visual::staff_meta::StaffMeta;
+use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default)]
 pub struct Part {
@@ -118,13 +118,12 @@ impl Part {
 
         let mut distance_travelled = 0.;
         for (_idx, staff) in self.staves.iter() {
-
             distance_travelled += staff.distance_final;
 
             let meta = StaffMeta {
                 hidden: staff.hidden,
                 scaling: staff.scale,
-                distance_from_top: distance_travelled
+                distance_from_top: distance_travelled,
             };
             res.insert(*_idx, meta);
 

@@ -14,7 +14,7 @@ pub mod section;
 pub mod section_measure;
 pub mod staff;
 pub mod staff_measure;
+pub mod staff_meta;
 pub mod stem;
 pub mod system;
 pub mod system_measure;
-pub mod staff_meta;

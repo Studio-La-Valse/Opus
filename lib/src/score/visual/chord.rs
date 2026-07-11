@@ -10,10 +10,10 @@ use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
 use crate::visual::staff::Staff;
+use crate::visual::staff_meta::StaffMeta;
 use crate::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
-use crate::visual::staff_meta::StaffMeta;
 
 #[derive(Default)]
 pub struct Chord {
@@ -38,7 +38,7 @@ impl Chord {
 
         for note in self.notes.iter_mut() {
             let ctx = ctx.get(&note.staff).unwrap();
-            note.set_staff_ctx(ctx.clone());
+            note.set_staff_ctx(*ctx);
         }
     }
 
@@ -176,7 +176,7 @@ impl Layoutable for Chord {
     /// here, origin is the origin of the part measure.
     fn arrange(&mut self, origin: &XY) {
         for note in self.notes.iter_mut() {
-            note.arrange(&origin);
+            note.arrange(origin);
         }
 
         if let Some(stem) = self.stem.as_mut() {
@@ -223,8 +223,7 @@ impl Layoutable for Chord {
                 let tip_anchor = tip_note.scale_pt(&tip_anchor);
 
                 let tip = &tip_anchor.mv(0., default_length);
-                let staff_m_origin =
-                    &origin.mv(0., staff_top);
+                let staff_m_origin = &origin.mv(0., staff_top);
                 staff_m_origin.y - tip.y
             };
 

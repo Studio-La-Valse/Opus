@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
@@ -132,7 +131,10 @@ impl Layoutable for Rest {
     fn arrange(&mut self, origin: &XY) {
         let mut dy = self.staff_ctx.distance_from_top;
         dy += self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.staff_ctx.scaling);
-        self.xy = XY { x: origin.x, y: origin.y + dy };
+        self.xy = XY {
+            x: origin.x,
+            y: origin.y + dy,
+        };
     }
 }
 
