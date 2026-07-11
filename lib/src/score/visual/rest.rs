@@ -27,8 +27,6 @@ pub struct Rest {
     pub staff_line: i32,
     pub staff: StaffIdx,
 
-    pub staff_ctx: StaffCtx,
-
     pub scale: f32,
 
     pub color: Color,
@@ -59,14 +57,18 @@ impl Rest {
             width: f32::default(),
             height: f32::default(),
 
-            staff_ctx: Default::default(),
-
             color: Color::default(),
         }
     }
 
-    pub fn set_staff_ctx(&mut self, ctx: StaffCtx) {
-        self.staff_ctx = ctx;
+    /// here, origin is the origin of glyph, as opposed to how a note is arranged.
+    pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
+        let mut dy = staff_ctx.distance_from_top;
+        dy += self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling);
+        self.xy = XY {
+            x: origin.x,
+            y: origin.y + dy,
+        };
     }
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
@@ -128,14 +130,8 @@ impl Layoutable for Rest {
         self.width = bbox.width();
     }
 
-    /// here, origin is the origin of glyph, as opposed to how a note is arranged.
-    fn arrange(&mut self, origin: &XY) {
-        let mut dy = self.staff_ctx.distance_from_top;
-        dy += self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.staff_ctx.scaling);
-        self.xy = XY {
-            x: origin.x,
-            y: origin.y + dy,
-        };
+    fn arrange(&mut self, _origin: &XY) {
+        todo!("use arrange_ctx instead")
     }
 }
 

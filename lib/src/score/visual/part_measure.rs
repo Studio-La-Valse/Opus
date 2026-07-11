@@ -14,9 +14,12 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
+use crate::visual::note::Note;
 use crate::visual::rest::Rest;
+use crate::visual::staff::Staff;
 use crate::visual::staff_meta::StaffCtx;
 use crate::visual::stem::{BeamType, Stem, UpDown};
+use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -31,11 +34,17 @@ pub struct PartMeasure {
 
     pub chords: BTreeMap<Voice, Vec<Chord>>,
     pub beams: Vec<Polygon>,
+    pub legers: Vec<Line>,
     pub rests: Vec<Rest>,
+
+    pub color: Color,
 
     pub stem_thickness: f32,
     pub beam_thickness: f32,
     pub beam_spacing: f32,
+
+    pub leger_thickness: f32,
+    pub leger_width: f32,
 }
 
 impl PartMeasure {
@@ -47,7 +56,7 @@ impl PartMeasure {
     }
 
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
-        let chord_groups = collect(&mut self.chords);
+        let chord_groups = collect_voices(&mut self.chords);
 
         for mut chords in chord_groups {
             strategy.rebeam(&mut chords)
@@ -57,30 +66,107 @@ impl PartMeasure {
     pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.origin = *origin;
 
-        for chord in self.chords.values_mut().flatten() {
-            chord.arrange_ctx(origin, staff_ctx);
-        }
-
-        for rest in self.rests.iter_mut() {
-            rest.set_staff_ctx(*staff_ctx.get(&rest.staff).unwrap());
-
-            let dx: f32 = if rest.is_measure {
-                self.width / 2.
-            } else {
-                rest.default_x.unwrap()
-            };
-
-            let glyph_origin = self.origin.mv(dx, 0.);
-            rest.arrange(&glyph_origin);
-        }
-
+        self.arrange_chords(staff_ctx);
+        self.arrange_legers(staff_ctx);
         self.arrange_beams();
+        self.arrange_rests(staff_ctx);
     }
 
-    pub fn arrange_beams(&mut self) {
+    fn arrange_chords(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        for chord in self.chords.values_mut().flatten() {
+            chord.arrange_ctx(&self.origin, staff_ctx);
+        }
+    }
+    fn arrange_legers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        self.legers.clear();
+
+        for chord in collect_flat(&mut self.chords) {
+            for (idx, staff_ctx) in staff_ctx.iter() {
+                let staff_scale = staff_ctx.scaling;
+                let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scale;
+
+                let key = |n: &&Note| OrderedFloat(n.xy.y);
+
+                let highest_note = chord
+                    .notes
+                    .iter()
+                    .filter(|n| n.staff == *idx)
+                    .min_by_key(key);
+
+                if let Some(highest_note) = highest_note
+                    && highest_note.staff_line < 0
+                {
+                    let middle = highest_note.xy.mv(highest_note.width / 2., 0.);
+                    let bottom = middle.mv(0., 0.);
+
+                    let left = bottom.mv(self.leger_width / -2., 0.);
+                    let right = bottom.mv(self.leger_width / 2., 0.);
+
+                    let mut dy = 0.;
+
+                    for line in highest_note.staff_line..-1 {
+                        if line % 2 != 0 {
+                            dy += each_line;
+                            continue;
+                        }
+
+                        let _line: Line = Line {
+                            start: left.mv(0., dy),
+                            end: right.mv(0., dy),
+                            stroke_width: self.leger_thickness,
+                            stroke_color: self.color,
+                        };
+
+                        self.legers.push(_line);
+
+                        dy += each_line;
+                    }
+                }
+
+                let lowest_note = chord
+                    .notes
+                    .iter()
+                    .filter(|n| n.staff == *idx)
+                    .max_by_key(key);
+                if let Some(lowest_note) = lowest_note
+                    && lowest_note.staff_line > 9
+                {
+                    let middle = lowest_note.xy.mv(lowest_note.width / 2., 0.);
+                    let top = middle.mv(0., 0.);
+
+                    let left = top.mv(self.leger_width / -2., 0.);
+                    let right = top.mv(self.leger_width / 2., 0.);
+
+                    let mut dy = 0.;
+                    let mut line = lowest_note.staff_line;
+
+                    while line >= 10 {
+                        if line % 2 != 0 {
+                            dy -= each_line;
+                            line -= 1;
+                            continue;
+                        }
+
+                        let _line: Line = Line {
+                            start: left.mv(0., dy),
+                            end: right.mv(0., dy),
+                            stroke_width: self.leger_thickness,
+                            stroke_color: self.color,
+                        };
+
+                        self.legers.push(_line);
+
+                        dy -= each_line;
+                        line -= 1;
+                    }
+                }
+            }
+        }
+    }
+    fn arrange_beams(&mut self) {
         self.beams.clear();
 
-        let chord_groups = collect(&mut self.chords);
+        let chord_groups = collect_voices(&mut self.chords);
 
         for chords in chord_groups {
             let groups = create_beam_groups(chords);
@@ -122,6 +208,20 @@ impl PartMeasure {
             }
         }
     }
+    fn arrange_rests(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        for rest in self.rests.iter_mut() {
+            let staff_ctx = staff_ctx.get(&rest.staff).unwrap();
+
+            let dx: f32 = if rest.is_measure {
+                self.width / 2.
+            } else {
+                rest.default_x.unwrap()
+            };
+
+            let glyph_origin = self.origin.mv(dx, 0.);
+            rest.arrange_ctx(&glyph_origin, staff_ctx);
+        }
+    }
 }
 
 impl ScoreElement for PartMeasure {
@@ -155,6 +255,16 @@ impl ScoreElement for PartMeasure {
         self.beam_spacing = user_layout
             .beam_spacing
             .unwrap_or(app_defaults.beam_spacing);
+
+        self.color = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
+
+        self.leger_thickness = user_layout
+            .staff
+            .unwrap_or(app_defaults.staff_line_thickness);
+
+        self.leger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
     }
 }
 
@@ -182,7 +292,7 @@ impl Content for PartMeasure {
         for chord in self.chords.values().flatten() {
             result.push(chord);
         }
-        for rest in self.rests.iter().filter(|r| !r.staff_ctx.hidden) {
+        for rest in self.rests.iter() {
             result.push(rest);
         }
         result
@@ -194,11 +304,27 @@ impl Content for PartMeasure {
             let line: Element = beam.clone().into();
             result.push(line);
         }
+        for line in &self.legers {
+            let line: Element = (*line).into();
+            result.push(line);
+        }
         result
     }
 }
 
-fn collect(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
+fn collect_flat(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&mut Chord> {
+    let mut result: Vec<&mut Chord> = Vec::new();
+
+    for (_, chords) in chord_groups.iter_mut() {
+        for chord in chords {
+            result.push(chord);
+        }
+    }
+
+    result
+}
+
+fn collect_voices(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
     let mut result: Vec<Vec<&mut Chord>> = Vec::new();
 
     for (_, chords) in chord_groups.iter_mut() {
