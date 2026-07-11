@@ -1,6 +1,6 @@
-pub mod layoutable;
 pub mod chord;
 pub mod element;
+pub mod layoutable;
 pub mod note;
 pub mod page;
 pub mod part;
@@ -12,8 +12,8 @@ pub mod score;
 pub mod section;
 pub mod section_measure;
 pub mod staff;
-pub mod staff_measure;
 pub mod staff_ctx;
+pub mod staff_measure;
 pub mod stem;
 pub mod system;
 pub mod system_measure;
