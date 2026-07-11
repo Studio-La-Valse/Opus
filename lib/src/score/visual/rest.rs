@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
@@ -13,6 +14,7 @@ use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff::Staff;
+use crate::visual::staff_meta::StaffMeta;
 
 pub struct Rest {
     pub xy: XY,
@@ -24,6 +26,8 @@ pub struct Rest {
     pub default_x: Option<f32>,
     pub staff_line: i32,
     pub staff: u32,
+
+    pub staff_ctx: StaffMeta,
 
     pub scale: f32,
 
@@ -55,8 +59,14 @@ impl Rest {
             width: f32::default(),
             height: f32::default(),
 
+            staff_ctx: Default::default(),
+
             color: Color::default(),
         }
+    }
+
+    pub fn set_staff_ctx(&mut self, ctx: StaffMeta) {
+        self.staff_ctx = ctx;
     }
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
@@ -120,7 +130,9 @@ impl Layoutable for Rest {
 
     /// here, origin is the origin of glyph, as opposed to how a note is arranged.
     fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
+        let mut dy = self.staff_ctx.distance_from_top;
+        dy += self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.staff_ctx.scaling);
+        self.xy = XY { x: origin.x, y: origin.y + dy };
     }
 }
 

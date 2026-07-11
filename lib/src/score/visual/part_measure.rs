@@ -13,9 +13,9 @@ use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
 use crate::visual::rest::Rest;
-use crate::visual::staff::Staff;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use std::collections::BTreeMap;
+use crate::visual::staff_meta::StaffMeta;
 
 #[derive(Default)]
 pub struct PartMeasure {
@@ -27,8 +27,7 @@ pub struct PartMeasure {
     pub height: f32,
     pub origin: XY,
 
-    pub staff_distances_from_top: BTreeMap<u32, f32>,
-    pub staff_scaling: BTreeMap<u32, f32>,
+    pub staff_ctx: BTreeMap<u32, StaffMeta>,
 
     /// Chords for each voice
     pub chords: BTreeMap<u32, Vec<Chord>>,
@@ -46,6 +45,25 @@ impl PartMeasure {
         Self {
             number,
             ..Default::default()
+        }
+    }
+
+    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<u32, StaffMeta>) {
+        self.staff_ctx.clear();
+
+        for (id, ctx) in ctx.iter() {
+            self.staff_ctx.insert(*id, *ctx);
+        }
+
+        for chords in self.chords.values_mut() {
+            for chord in chords.iter_mut() {
+                chord.set_staff_ctx(ctx);
+            }
+        }
+
+        for rest in self.rests.iter_mut() {
+            let ctx = ctx.get(&rest.staff).unwrap();
+            rest.set_staff_ctx(ctx.clone());
         }
     }
 
@@ -155,37 +173,21 @@ impl Layoutable for PartMeasure {
         self.origin = *origin;
 
         for chord in self.chords.values_mut().flatten() {
-            chord.staff_distances_from_top.clear();
-            chord.staff_distances_from_top.insert(1, 0.);
-
-            for (idx, dy) in self.staff_distances_from_top.iter() {
-                chord.staff_distances_from_top.insert(*idx, *dy);
-            }
-
-            chord.staff_scaling.clear();
-            chord.staff_scaling.insert(1, 0.);
-            for (idx, scale) in self.staff_scaling.iter() {
-                chord.staff_scaling.insert(*idx, *scale);
-            }
-
+            chord.set_staff_ctx(&self.staff_ctx);
             chord.arrange(origin);
         }
 
         for rest in self.rests.iter_mut() {
-            if let Some(dy) = self.staff_distances_from_top.get(&rest.staff) {
-                let staff_scale = self.staff_scaling.get(&rest.staff).unwrap_or(&1.);
-                let dy = dy + rest.staff_line as f32 * Staff::DEFAULT_SPACE_SIZE / 2. * staff_scale;
+            rest.set_staff_ctx(*self.staff_ctx.get(&rest.staff).unwrap());
 
-                let dx: f32 = if rest.is_measure {
-                    self.width / 2.
-                } else {
-                    rest.default_x.unwrap()
-                };
+            let dx: f32 = if rest.is_measure {
+                self.width / 2.
+            } else {
+                rest.default_x.unwrap()
+            };
 
-                let glyph_origin = self.origin.mv(dx, dy);
-
-                rest.arrange(&glyph_origin);
-            }
+            let glyph_origin = self.origin.mv(dx, 0.);
+            rest.arrange(&glyph_origin);
         }
 
         self.arrange_beams();
@@ -201,7 +203,7 @@ impl Content for PartMeasure {
         for rest in self
             .rests
             .iter()
-            .filter(|r| self.staff_distances_from_top.contains_key(&r.staff))
+            .filter(|r| !r.staff_ctx.hidden)
         {
             result.push(rest);
         }

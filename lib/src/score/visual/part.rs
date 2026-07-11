@@ -8,6 +8,7 @@ use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::visual::element::ScoreElement;
 use std::collections::{BTreeMap, HashSet};
+use crate::visual::staff_meta::StaffMeta;
 
 #[derive(Default)]
 pub struct Part {
@@ -112,6 +113,27 @@ impl Part {
         dist
     }
 
+    pub fn create_staff_meta(&self) -> BTreeMap<u32, StaffMeta> {
+        let mut res = BTreeMap::new();
+
+        let mut distance_travelled = 0.;
+        for (_idx, staff) in self.staves.iter() {
+
+            distance_travelled += staff.distance_final;
+
+            let meta = StaffMeta {
+                hidden: staff.hidden,
+                scaling: staff.scale,
+                distance_from_top: distance_travelled
+            };
+            res.insert(*_idx, meta);
+
+            distance_travelled += staff.height;
+        }
+
+        res
+    }
+
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
         for measure in self.measures.values_mut() {
             measure.rebeam(strategy);
@@ -182,24 +204,9 @@ impl Layoutable for Part {
             _origin = _origin.mv(0., staff.height);
         }
 
+        let staff_ctx = self.create_staff_meta();
         for (_, measure) in self.measures.iter_mut() {
-            measure.staff_distances_from_top.clear();
-            measure.staff_scaling.clear();
-
-            let mut distance_travelled = 0.;
-            for (_idx, staff) in self.staves.iter_mut() {
-                if staff.hidden {
-                    continue;
-                }
-
-                measure.staff_scaling.insert(*_idx, staff.scale);
-
-                distance_travelled += staff.distance_final;
-                measure
-                    .staff_distances_from_top
-                    .insert(*_idx, distance_travelled);
-                distance_travelled += staff.height;
-            }
+            measure.set_staff_ctx(&staff_ctx)
         }
 
         let mut _origin = self.xy;

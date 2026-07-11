@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
@@ -13,6 +14,7 @@ use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff::Staff;
+use crate::visual::staff_meta::StaffMeta;
 
 pub struct Note {
     pub xy: XY,
@@ -22,6 +24,8 @@ pub struct Note {
     pub default_x: f32,
     pub staff_line: i32,
     pub staff: u32,
+
+    pub staff_ctx: StaffMeta,
 
     pub scale: f32,
 
@@ -45,8 +49,14 @@ impl Note {
             width: f32::default(),
             height: f32::default(),
 
+            staff_ctx: Default::default(),
+
             color: Color::default(),
         }
+    }
+
+    pub fn set_staff_ctx(&mut self, ctx: StaffMeta) {
+        self.staff_ctx = ctx;
     }
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
@@ -108,10 +118,12 @@ impl Layoutable for Note {
         self.width = bbox.width();
     }
 
-    /// here, origin is the origin of the staff measure.
+    /// here, origin is the origin of the part measure. Get the dy from the staff ctx.
     fn arrange(&mut self, origin: &XY) {
-        let d_y = self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.scale);
-        self.xy = origin.mv(self.default_x, d_y);
+        let staff_top = origin.mv(0., self.staff_ctx.distance_from_top);
+        let note_dy = self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * self.staff_ctx.scaling);
+        let note_top = staff_top.mv(0., note_dy);
+        self.xy = note_top.mv(self.default_x, 0.);
     }
 }
 

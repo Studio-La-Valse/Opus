@@ -11,7 +11,6 @@ use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
-#[derive(Default)]
 pub struct Staff {
     pub xy: XY,
     pub width: f32,
@@ -28,6 +27,28 @@ pub struct Staff {
 
     pub distance_specified: Option<f32>,
     pub distance_final: f32,
+}
+
+impl Default for Staff {
+    fn default() -> Staff {
+        Staff {
+            xy: Default::default(),
+            width: Default::default(),
+            height: Default::default(),
+
+            measures: Default::default(),
+
+            color: Default::default(),
+            line_thickness: Default::default(),
+
+            hidden: Default::default(),
+
+            scale: 1.,
+
+            distance_specified: Default::default(),
+            distance_final: Default::default(),
+        }
+    }
 }
 
 impl Staff {

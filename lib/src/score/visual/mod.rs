@@ -17,3 +17,4 @@ pub mod staff_measure;
 pub mod stem;
 pub mod system;
 pub mod system_measure;
+pub mod staff_meta;

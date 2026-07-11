@@ -13,6 +13,7 @@ use crate::visual::staff::Staff;
 use crate::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
+use crate::visual::staff_meta::StaffMeta;
 
 #[derive(Default)]
 pub struct Chord {
@@ -20,8 +21,7 @@ pub struct Chord {
 
     pub stem: Option<Stem>,
 
-    pub staff_distances_from_top: BTreeMap<u32, f32>,
-    pub staff_scaling: BTreeMap<u32, f32>,
+    pub staff_ctx: BTreeMap<u32, StaffMeta>,
 
     pub color: Color,
     pub leger_thickness: f32,
@@ -29,11 +29,24 @@ pub struct Chord {
 }
 
 impl Chord {
+    pub fn set_staff_ctx(&mut self, ctx: &BTreeMap<u32, StaffMeta>) {
+        self.staff_ctx.clear();
+
+        for (id, ctx) in ctx.iter() {
+            self.staff_ctx.insert(*id, *ctx);
+        }
+
+        for note in self.notes.iter_mut() {
+            let ctx = ctx.get(&note.staff).unwrap();
+            note.set_staff_ctx(ctx.clone());
+        }
+    }
+
     fn legers(&self) -> Vec<Line> {
         let mut lines = Vec::new();
 
-        for (idx, _dx) in self.staff_distances_from_top.iter() {
-            let staff_scale = self.staff_scaling.get(idx).unwrap_or(&1.);
+        for (idx, staff_ctx) in self.staff_ctx.iter() {
+            let staff_scale = staff_ctx.scaling;
             let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scale;
 
             let key = |n: &&Note| OrderedFloat(n.xy.y);
@@ -163,12 +176,12 @@ impl Layoutable for Chord {
     /// here, origin is the origin of the part measure.
     fn arrange(&mut self, origin: &XY) {
         for note in self.notes.iter_mut() {
-            if let Some(dy) = self.staff_distances_from_top.get(&note.staff) {
-                note.arrange(&origin.mv(0., *dy));
-            }
+            note.arrange(&origin);
         }
 
         if let Some(stem) = self.stem.as_mut() {
+            let staff_top = self.staff_ctx.get(&stem.staff).unwrap().distance_from_top;
+
             let key = |n: &&Note| OrderedFloat(n.xy.y);
 
             let lowest_note = self.notes.iter().max_by_key(key);
@@ -211,13 +224,11 @@ impl Layoutable for Chord {
 
                 let tip = &tip_anchor.mv(0., default_length);
                 let staff_m_origin =
-                    &origin.mv(0., *self.staff_distances_from_top.get(&stem.staff).unwrap());
+                    &origin.mv(0., staff_top);
                 staff_m_origin.y - tip.y
             };
 
-            let length = ((origin.y + self.staff_distances_from_top.get(&stem.staff).unwrap())
-                - default_y)
-                - tail_anchor.y;
+            let length = ((origin.y + staff_top) - default_y) - tail_anchor.y;
             stem.length = length;
         }
     }
@@ -228,7 +239,7 @@ impl Content for Chord {
         let mut result: Vec<&dyn Content> = Vec::new();
 
         for note in self.notes.iter() {
-            if self.staff_distances_from_top.contains_key(&note.staff) {
+            if self.staff_ctx.contains_key(&note.staff) {
                 result.push(note);
             }
         }
