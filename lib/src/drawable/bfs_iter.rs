@@ -1,13 +1,13 @@
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use std::collections::VecDeque;
 
 pub struct BfsIter<'a> {
-    queue: VecDeque<&'a dyn Content>,
+    queue: VecDeque<&'a dyn DrawableContent>,
 }
 
 impl<'a> Iterator for BfsIter<'a> {
-    type Item = &'a dyn Content;
+    type Item = &'a dyn DrawableContent;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.queue.pop_front()?;
@@ -18,12 +18,14 @@ impl<'a> Iterator for BfsIter<'a> {
     }
 }
 
-pub fn bfs<'a>(root: &'a dyn Content) -> BfsIter<'a> {
+pub fn bfs<'a>(root: &'a dyn DrawableContent) -> BfsIter<'a> {
     let mut queue = VecDeque::new();
     queue.push_back(root);
     BfsIter { queue }
 }
 
-pub fn bfs_elements<'a>(root: &'a dyn Content) -> impl Iterator<Item = Element> + 'a {
+pub fn bfs_elements<'a>(
+    root: &'a dyn DrawableContent,
+) -> impl Iterator<Item = DrawableElement> + 'a {
     bfs(root).flat_map(|node| node.elements())
 }

@@ -1,13 +1,14 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::layout::Layout;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::user_layout::UserLayout;
+use crate::visual::clef::Clef;
 use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
@@ -20,6 +21,8 @@ pub struct Staff {
 
     pub color: Color,
     pub line_thickness: f32,
+    pub barline_thickness_light: f32,
+    pub barline_thickness_heavy: f32,
 
     pub hidden: bool,
 
@@ -27,6 +30,8 @@ pub struct Staff {
 
     pub distance_specified: Option<f32>,
     pub distance_final: f32,
+
+    pub clef: Option<Clef>,
 }
 
 impl Default for Staff {
@@ -40,6 +45,8 @@ impl Default for Staff {
 
             color: Default::default(),
             line_thickness: Default::default(),
+            barline_thickness_heavy: Default::default(),
+            barline_thickness_light: Default::default(),
 
             hidden: Default::default(),
 
@@ -47,6 +54,8 @@ impl Default for Staff {
 
             distance_specified: Default::default(),
             distance_final: Default::default(),
+
+            clef: None,
         }
     }
 }
@@ -70,15 +79,25 @@ impl Staff {
         for measure in self.measures.values_mut() {
             measure.scale = scale;
         }
+
+        if let Some(ref mut clef) = self.clef {
+            clef.scale = scale;
+        }
     }
 }
 
 impl ScoreElement for Staff {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        self.measures
-            .values_mut()
-            .map(|m| m as &mut dyn ScoreElement)
-            .collect()
+        let mut result: Vec<&mut dyn ScoreElement> = vec![];
+        for measure in self.measures.values_mut() {
+            result.push(measure);
+        }
+
+        if let Some(ref mut clef) = self.clef {
+            result.push(clef);
+        }
+
+        result
     }
 
     fn _apply_layout(
@@ -95,6 +114,16 @@ impl ScoreElement for Staff {
             .staff
             .or(layout.appearance.staff)
             .unwrap_or(app_defaults.staff_line_thickness);
+
+        self.barline_thickness_light = user_layout
+            .light_barline
+            .or(layout.appearance.light_barline)
+            .unwrap_or(app_defaults.barline_light);
+
+        self.barline_thickness_heavy = user_layout
+            .heavy_barline
+            .or(layout.appearance.heavy_barline)
+            .unwrap_or(app_defaults.barline_heavy);
     }
 }
 
@@ -126,32 +155,53 @@ impl Layoutable for Staff {
 
             _origin = _origin.mv(measure.width, 0.)
         }
+
+        let line_space = self.line_space() / 2.;
+        if let Some(ref mut clef) = self.clef {
+            let dy: f32 = clef.clef.line as f32 * line_space;
+            let dx = clef.pad_left * self.scale;
+            clef.arrange(&self.xy.mv(dx, dy));
+        }
     }
 }
 
-impl Content for Staff {
-    fn content(&self) -> Vec<&dyn Content> {
-        self.measures.values().map(|m| m as &dyn Content).collect()
+impl DrawableContent for Staff {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
+        let mut content = vec![];
+
+        if self.hidden {
+            return content;
+        }
+
+        for (_idx, measure) in self.measures.iter() {
+            content.push(measure as &dyn DrawableContent);
+        }
+
+        if let Some(ref clef) = self.clef {
+            content.push(clef as &dyn DrawableContent);
+        }
+
+        content
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let mut elements: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let mut elements: Vec<DrawableElement> = Vec::new();
 
         if self.hidden {
             return elements;
         }
 
         let mut start = XY {
-            x: self.xy.x,
+            x: self.xy.x - (self.barline_thickness_light / 2.),
             y: self.xy.y,
         };
         let mut end = XY {
-            x: self.xy.x + self.width,
+            x: self.xy.x + self.width + (self.barline_thickness_light / 2.),
             y: self.xy.y,
         };
 
         let stroke_color = self.color;
-        let stroke_width = self.line_thickness;
+        let stroke_width = self.line_thickness * self.scale;
 
         for _i in 0..5 {
             let line = Line {

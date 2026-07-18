@@ -6,13 +6,14 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
-use crate::utils::xml::{N, ToNumber};
+use crate::smufl::glyphs::clef::Clef;
 use crate::visitor::Visitor;
 use crate::visual::chord::Chord;
 use crate::visual::part::Part;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::rest::Rest;
 use crate::visual::stem::{BeamType, Stem, UpDown};
+use crate::xml::utils::{NodeUtils, ToNumber};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 use std::collections::{BTreeMap, HashSet};
@@ -121,7 +122,7 @@ impl Visitor for ContentVisitor {
         // Build note
         let pitch = Pitch { step, octave };
 
-        let clef = ctx.layout_ctx.clef.get(&staff).unwrap();
+        let clef = ctx.layout_ctx.staff.clef.get(&staff).unwrap();
         let staff_line = clef.line_index_at_pitch(&pitch);
         let type_str = node.req_child("type");
 
@@ -177,50 +178,46 @@ impl Visitor for ContentVisitor {
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
 
-    fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {
-        let page_number = _ctx.layout_ctx.page.page_number;
-        let system_index = _ctx.layout_ctx.system.index;
-        let measure_number = _ctx.layout_ctx.measure.number;
+    fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
+        let page_number = ctx.layout_ctx.page.page_number;
+        let system_index = ctx.layout_ctx.system.index;
+        let measure_number = ctx.layout_ctx.measure.number;
 
-        let part_id = _ctx.layout_ctx.part_id.clone();
-        let part = _ctx.layout.parts.get(&part_id).unwrap();
+        let part_id = ctx.layout_ctx.part_id.clone();
+        let part = ctx.layout.parts.get(&part_id).unwrap();
         let section_number = part.section;
         let part_group_number = part.part_group;
-        let section = _ctx.layout.sections.entry(section_number).or_default();
+        let section = ctx.layout.sections.entry(section_number).or_default();
         let _part_group = section.groups.entry(part_group_number).or_default();
 
         // take the part measure from the option
         let part_measure = self.part_measure.take().unwrap();
 
         // get or create the page
-        let page = _ctx
+        let page = ctx
             .visual_score
             .pages
             .entry(page_number)
             .or_insert_with(|| Page {
                 number: page_number,
                 xy: XY::default(),
-                width: _ctx.layout.defaults.page_width,
-                height: _ctx.layout.defaults.page_height,
+                width: ctx.layout.defaults.page_width,
+                height: ctx.layout.defaults.page_height,
                 color: Color::WHITE,
                 foreground: Color::BLACK,
-                margins: _ctx.layout.get_margins(page_number),
+                margins: ctx.layout.get_margins(page_number),
                 systems: BTreeMap::new(),
             });
 
         // get or create the system on the page
         let system = page.systems.entry(system_index).or_default();
-        system.m_left = _ctx.layout_ctx.system.margin_left.unwrap_or(system.m_left);
-        system.m_right = _ctx
-            .layout_ctx
-            .system
-            .margin_right
-            .unwrap_or(system.m_right);
-        system.distance = _ctx.layout_ctx.system.distance.unwrap_or(system.distance);
-        system.top = _ctx.layout_ctx.system.distance_top.unwrap_or(system.top);
+        system.m_left = ctx.layout_ctx.system.margin_left.unwrap_or(system.m_left);
+        system.m_right = ctx.layout_ctx.system.margin_right.unwrap_or(system.m_right);
+        system.distance = ctx.layout_ctx.system.distance.unwrap_or(system.distance);
+        system.top = ctx.layout_ctx.system.distance_top.unwrap_or(system.top);
 
         let system_measure = system.measures.entry(measure_number).or_default();
-        system_measure.init_width(_ctx.layout_ctx.measure.width);
+        system_measure.init_width(ctx.layout_ctx.measure.width);
 
         // get or create the section in this system.
         let section = system.sections.entry(section_number).or_default();
@@ -240,14 +237,18 @@ impl Visitor for ContentVisitor {
             let notes: HashSet<StaffIdx> = chord.notes.iter().map(|n| n.staff).collect();
             part.ensure_staves(notes);
         }
-        part.set_visibility(_ctx.layout_ctx.part_hidden_specified);
-        part.hide_staves(&_ctx.layout_ctx.staff.explicitly_hidden);
-        part.show_staves(&_ctx.layout_ctx.staff.explicitly_shown);
-        part.set_distances(
-            &_ctx.layout_ctx.staff.distances,
-            &_ctx.layout.staff_distance,
-        );
-        part.set_staff_scale(&_ctx.layout_ctx.staff.staff_scaling);
+        part.set_visibility(ctx.layout_ctx.part_hidden_specified);
+        part.hide_staves(&ctx.layout_ctx.staff.explicitly_hidden);
+        part.show_staves(&ctx.layout_ctx.staff.explicitly_shown);
+        part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
+
+        let mut clefs: BTreeMap<StaffIdx, Clef> = BTreeMap::new();
+        for (k, v) in ctx.layout_ctx.staff.clef.iter() {
+            clefs.insert(*k, ctx.font.clef(v));
+        }
+        part.set_opening_clef(&clefs);
+
+        part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
 
         part.measures.insert(measure_number, part_measure);
 

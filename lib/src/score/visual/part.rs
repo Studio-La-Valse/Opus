@@ -1,12 +1,13 @@
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
+use crate::smufl::glyphs::clef::Clef;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff_ctx::StaffCtx;
 use std::collections::{BTreeMap, HashSet};
@@ -87,10 +88,17 @@ impl Part {
         }
     }
 
+    pub fn set_opening_clef(&mut self, clefs: &BTreeMap<StaffIdx, Clef>) {
+        for (idx, clef) in clefs.iter() {
+            let staff = self.staves.entry(*idx).or_default();
+            staff.clef = Some(crate::score::visual::clef::Clef::new(clef.clone()));
+        }
+    }
+
     pub fn set_staff_scale(&mut self, staff_scales: &BTreeMap<StaffIdx, f32>) {
         for (&idx, staff_scale) in staff_scales.iter() {
             let staff = self.staves.entry(idx).or_default();
-            staff.scale = *staff_scale;
+            staff.set_scale(*staff_scale)
         }
     }
 
@@ -214,23 +222,23 @@ impl Layoutable for Part {
     }
 }
 
-impl Content for Part {
-    fn content(&self) -> Vec<&dyn Content> {
+impl DrawableContent for Part {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
         let mut result = Vec::new();
 
-        result.extend(self.measures.values().map(|m| m as &dyn Content));
+        result.extend(self.measures.values().map(|m| m as &dyn DrawableContent));
 
         result.extend(
             self.staves
                 .values()
                 .filter(|s| !s.hidden)
-                .map(|s| s as &dyn Content),
+                .map(|s| s as &dyn DrawableContent),
         );
 
         result
     }
 
-    fn elements(&self) -> Vec<Element> {
+    fn elements(&self) -> Vec<DrawableElement> {
         vec![]
     }
 }

@@ -1,8 +1,8 @@
 use crate::app_defaults::AppDefaults;
 use crate::core::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::layout::Layout;
@@ -99,13 +99,16 @@ impl Layoutable for Page {
     }
 }
 
-impl Content for Page {
-    fn content(&self) -> Vec<&dyn Content> {
-        self.systems.values().map(|s| s as &dyn Content).collect()
+impl DrawableContent for Page {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
+        self.systems
+            .values()
+            .map(|s| s as &dyn DrawableContent)
+            .collect()
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let mut elements: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let mut elements: Vec<DrawableElement> = Vec::new();
 
         let rect = Rect {
             xy: self.xy,

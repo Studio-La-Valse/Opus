@@ -1,6 +1,6 @@
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::score::visual::layoutable::Layoutable;
 use crate::visual::element::ScoreElement;
 
@@ -27,14 +27,14 @@ impl Layoutable for StaffMeasure {
     }
 }
 
-impl Content for StaffMeasure {
-    fn content(&self) -> Vec<&dyn Content> {
-        let result: Vec<&dyn Content> = Vec::new();
+impl DrawableContent for StaffMeasure {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
+        let result: Vec<&dyn DrawableContent> = Vec::new();
 
         result
     }
 
-    fn elements(&self) -> Vec<Element> {
+    fn elements(&self) -> Vec<DrawableElement> {
         vec![]
     }
 }

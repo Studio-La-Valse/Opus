@@ -1,7 +1,7 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::duration::BaseDuration;
@@ -173,15 +173,15 @@ impl Layoutable for Stem {
     }
 }
 
-impl Content for Stem {
-    fn content(&self) -> Vec<&dyn Content> {
+impl DrawableContent for Stem {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
         vec![]
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let mut elements: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let mut elements: Vec<DrawableElement> = Vec::new();
 
-        let stem: Element = Line {
+        let stem: DrawableElement = Line {
             start: self.xy,
             end: self.tip(),
             stroke_color: self.color,
@@ -207,7 +207,7 @@ impl Content for Stem {
             let final_anchor = stem_anchor + delta;
             elements.push(display(&final_anchor, &3., &Color::BLUE).into());
 
-            let flag: Element = flag.as_text(self.color, final_anchor, self.scale).into();
+            let flag: DrawableElement = flag.as_text(self.color, final_anchor, self.scale).into();
 
             elements.push(flag);
         }

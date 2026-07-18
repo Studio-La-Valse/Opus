@@ -1,6 +1,6 @@
 use crate::score::layout::{PageMargins, Part};
 use crate::visitor::Visitor;
-use crate::xml::utils::xml::N;
+use crate::xml::utils::NodeUtils;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 

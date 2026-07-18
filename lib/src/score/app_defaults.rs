@@ -7,6 +7,8 @@ pub struct AppDefaults {
     pub stem_thickness: f32,
     pub beam_thickness: f32,
     pub beam_spacing: f32,
+    pub barline_light: f32,
+    pub barline_heavy: f32,
 }
 
 impl Default for AppDefaults {
@@ -18,6 +20,8 @@ impl Default for AppDefaults {
             stem_thickness: 1.,
             beam_thickness: 5.,
             beam_spacing: 1.5,
+            barline_light: 1.875,
+            barline_heavy: 5.,
         }
     }
 }

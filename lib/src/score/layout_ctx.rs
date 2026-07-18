@@ -34,6 +34,7 @@ pub struct StaffInfo {
     pub explicitly_shown: HashSet<StaffIdx>,
     pub staff_scaling: BTreeMap<StaffIdx, f32>,
     pub content_scaling: BTreeMap<StaffIdx, f32>,
+    pub clef: BTreeMap<StaffIdx, Clef>,
 }
 
 #[derive(Clone)]
@@ -51,8 +52,6 @@ pub struct LayoutCtx {
     pub staff: StaffInfo,
     pub measure: MeasureInfo,
 
-    pub clef: BTreeMap<StaffIdx, Clef>,
-
     pub divisions: u32,
     pub duration: u32,
     pub beats: u32,
@@ -68,22 +67,21 @@ impl LayoutCtx {
         self.system.index = 0;
 
         self.page.page_number = 1;
-        self.staff.number = 1;
 
         self.system.margin_left = None;
         self.system.margin_right = None;
         self.system.distance = None;
         self.system.distance_top = None;
 
-        self.staff.distances.clear();
-
         self.part_hidden_specified = Visibility::Unset;
+
+        self.staff.number = 1;
+        self.staff.distances.clear();
         self.staff.explicitly_hidden.clear();
         self.staff.explicitly_shown.clear();
         self.staff.staff_scaling.clear();
         self.staff.content_scaling.clear();
-
-        self.clef.clear();
+        self.staff.clef.clear();
 
         self.divisions = 8; // specifies the amounts of divisions in one beat (so in one 1/beat_type)
         self.beats = 4;
@@ -115,12 +113,12 @@ impl Default for LayoutCtx {
                 explicitly_shown: HashSet::new(),
                 staff_scaling: BTreeMap::new(),
                 content_scaling: BTreeMap::new(),
+                clef: BTreeMap::new(),
             },
             measure: MeasureInfo {
                 number: 0,
                 width: None,
             },
-            clef: BTreeMap::new(),
 
             duration: 0,
             divisions: 8,

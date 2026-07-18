@@ -1,8 +1,8 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::layout::Layout;
 use crate::layout_ctx::Visibility;
@@ -12,6 +12,7 @@ use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
+use crate::visual::staff::Staff;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -24,6 +25,8 @@ pub struct System {
     pub height: f32,
 
     pub color: Color,
+    pub line_width: f32,
+    pub staff_line_width: f32,
 
     pub m_left: f32,
     pub m_right: f32,
@@ -58,24 +61,57 @@ impl System {
         }
     }
 
-    fn handle_first_visible_staff(&mut self) {
-        let mut found: bool = false;
-
-        for (_idx, section) in self.sections.iter_mut() {
-            if found {
-                break;
-            }
-
-            for (_idx, part_group) in section.part_groups.iter_mut() {
-                if found {
-                    break;
-                }
-
-                for (_idx, part) in part_group.parts.iter_mut() {
-                    if found {
-                        break;
+    pub fn find_first_visible_staff(&self) -> &Staff {
+        for (_idx, section) in self.sections.iter() {
+            for (_idx, part_group) in section.part_groups.iter() {
+                for (_idx, part) in part_group.parts.iter() {
+                    if part.visibility == Visibility::Hidden {
+                        continue;
                     }
 
+                    for (_idx, staff) in part.staves.iter() {
+                        if staff.hidden {
+                            continue;
+                        }
+
+                        return staff;
+                    }
+                }
+            }
+        }
+
+        panic!()
+    }
+
+    pub fn find_last_visible_staff(&self) -> &Staff {
+        let mut last: Option<&Staff> = None;
+
+        for (_idx, section) in self.sections.iter() {
+            for (_idx, part_group) in section.part_groups.iter() {
+                for (_idx, part) in part_group.parts.iter() {
+                    if part.visibility == Visibility::Hidden {
+                        continue;
+                    }
+
+                    for (_idx, staff) in part.staves.iter() {
+                        if staff.hidden {
+                            continue;
+                        }
+
+                        last = Some(staff);
+                    }
+                }
+            }
+        }
+
+        last.unwrap()
+    }
+
+    /// Every first visible staff in a system must have a 0-distance to the top of the system.
+    fn handle_first_visible_staff(&mut self) {
+        'outer: for (_idx, section) in self.sections.iter_mut() {
+            for (_idx, part_group) in section.part_groups.iter_mut() {
+                for (_idx, part) in part_group.parts.iter_mut() {
                     if part.visibility == Visibility::Hidden {
                         continue;
                     }
@@ -87,8 +123,7 @@ impl System {
 
                         // first visible staff found.
                         staff.distance_final = 0.;
-                        found = true;
-                        break;
+                        break 'outer;
                     }
                 }
             }
@@ -119,13 +154,23 @@ impl ScoreElement for System {
 
     fn _apply_layout(
         &mut self,
-        _layout: &Layout,
+        layout: &Layout,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+
+        self.line_width = user_layout
+            .light_barline
+            .or(layout.appearance.light_barline)
+            .unwrap_or(app_defaults.staff_line_thickness);
+
+        self.staff_line_width = user_layout
+            .staff
+            .or(layout.appearance.staff)
+            .unwrap_or(app_defaults.staff_line_thickness);
     }
 }
 
@@ -170,22 +215,22 @@ impl Layoutable for System {
     }
 }
 
-impl Content for System {
-    fn content(&self) -> Vec<&dyn Content> {
+impl DrawableContent for System {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
         let mut result = Vec::new();
 
-        result.extend(self.measures.values().map(|m| m as &dyn Content));
+        result.extend(self.measures.values().map(|m| m as &dyn DrawableContent));
 
-        result.extend(self.sections.values().map(|s| s as &dyn Content));
+        result.extend(self.sections.values().map(|s| s as &dyn DrawableContent));
 
         result
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let mut elements: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let mut elements: Vec<DrawableElement> = Vec::new();
 
         let stroke_color = self.color;
-        let stroke_width = 1.;
+        let stroke_width = self.line_width;
 
         let left_line = Line {
             start: self.xy,

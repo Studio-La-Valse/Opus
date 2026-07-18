@@ -1,5 +1,6 @@
 use crate::bounding_box::BoundingBox;
 use crate::smufl::glyph_name::{GlyphName, load_glyph_names};
+use crate::smufl::glyphs::clef::Clef;
 use crate::smufl::glyphs::flag::Flag;
 use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::glyphs::rest::Rest;
@@ -81,6 +82,27 @@ impl SmuflFont {
             bbox,
             cutouts,
             stem_anchor,
+            font: self.font.to_string(),
+        }
+    }
+
+    pub fn clef(&self, clef: &crate::score::core::clef::Clef) -> Clef {
+        let ref_name = match clef.name.as_str() {
+            "Treble" => "gClef",
+            "Soprano" => "cClef",
+            "Mezzo Soprano" => "cClef",
+            "Alto" => "cClef",
+            "Tenor" => "cClef",
+            "Baritone" => "cClef",
+            "Bass" => "fClef",
+            "Percussion" => "unpitchedPercussionClef1",
+            _ => panic!("{} not recognized as a clef", clef.name),
+        };
+        let codepoint = self.glyph_names.get(ref_name).unwrap().codepoint_char();
+
+        Clef {
+            codepoint,
+            line: clef.anchor_line,
             font: self.font.to_string(),
         }
     }

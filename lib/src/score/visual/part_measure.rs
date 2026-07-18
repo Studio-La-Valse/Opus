@@ -1,8 +1,8 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::layout::Layout;
@@ -286,9 +286,9 @@ impl Layoutable for PartMeasure {
     }
 }
 
-impl Content for PartMeasure {
-    fn content(&self) -> Vec<&dyn Content> {
-        let mut result: Vec<&dyn Content> = Vec::new();
+impl DrawableContent for PartMeasure {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
+        let mut result: Vec<&dyn DrawableContent> = Vec::new();
         for chord in self.chords.values().flatten() {
             result.push(chord);
         }
@@ -298,14 +298,14 @@ impl Content for PartMeasure {
         result
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let mut result: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let mut result: Vec<DrawableElement> = Vec::new();
         for beam in &self.beams {
-            let line: Element = beam.clone().into();
+            let line: DrawableElement = beam.clone().into();
             result.push(line);
         }
         for line in &self.legers {
-            let line: Element = (*line).into();
+            let line: DrawableElement = (*line).into();
             result.push(line);
         }
         result

@@ -1,6 +1,6 @@
 use roxmltree::Node;
 
-pub trait N<'a> {
+pub trait NodeUtils<'a> {
     fn req_attribute(&self, name: &str) -> &str;
     fn req_element(&self, name: &str) -> Node<'a, 'a>;
     fn req_text(&self) -> &str;
@@ -15,7 +15,7 @@ pub trait N<'a> {
     fn has_tag(&self, name: &str) -> bool;
 }
 
-impl<'a> N<'a> for Node<'a, 'a> {
+impl<'a> NodeUtils<'a> for Node<'a, 'a> {
     fn req_attribute(&self, name: &str) -> &str {
         self.attribute(name).unwrap_or_else(|| {
             panic!(

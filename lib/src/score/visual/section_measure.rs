@@ -1,8 +1,8 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::layout::Layout;
 use crate::score::visual::layoutable::Layoutable;
@@ -16,6 +16,7 @@ pub struct SectionMeasure {
     pub height: f32,
 
     pub color: Color,
+    pub line_width: f32,
 }
 
 impl SectionMeasure {}
@@ -23,13 +24,18 @@ impl SectionMeasure {}
 impl ScoreElement for SectionMeasure {
     fn _apply_layout(
         &mut self,
-        _layout: &Layout,
+        layout: &Layout,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+
+        self.line_width = user_layout
+            .light_barline
+            .or(layout.appearance.light_barline)
+            .unwrap_or(app_defaults.barline_light)
     }
 }
 
@@ -43,16 +49,16 @@ impl Layoutable for SectionMeasure {
     }
 }
 
-impl Content for SectionMeasure {
-    fn content(&self) -> Vec<&dyn Content> {
+impl DrawableContent for SectionMeasure {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
         vec![]
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let mut elements: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let mut elements: Vec<DrawableElement> = Vec::new();
 
         let stroke_color = self.color;
-        let stroke_width = 1.;
+        let stroke_width = self.line_width;
 
         let right_line = Line {
             start: self.xy.mv(self.width, 0.),

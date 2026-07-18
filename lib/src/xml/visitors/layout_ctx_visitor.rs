@@ -1,8 +1,8 @@
 use crate::score::core::clef::Clef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
-use crate::utils::xml::{N, ToNumber};
 use crate::visitor::Visitor;
+use crate::xml::utils::{NodeUtils, ToNumber};
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 
@@ -169,7 +169,7 @@ impl Visitor for LayoutContextVisitor {
         let line = element.get_child("line").map(|l| l.req_i32());
 
         let clef = Clef::parse(sign, line);
-        ctx.layout_ctx.clef.insert(staff, clef);
+        ctx.layout_ctx.staff.clef.insert(staff, clef);
     }
 
     fn enter_staff_details(&mut self, element: &Node, ctx: &mut WalkerCtx) {

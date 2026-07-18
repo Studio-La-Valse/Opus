@@ -1,6 +1,6 @@
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_group::PartGroup;
@@ -100,18 +100,18 @@ impl Layoutable for Section {
     }
 }
 
-impl Content for Section {
-    fn content(&self) -> Vec<&dyn Content> {
+impl DrawableContent for Section {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
         let mut result = Vec::new();
 
-        result.extend(self.measures.values().map(|m| m as &dyn Content));
+        result.extend(self.measures.values().map(|m| m as &dyn DrawableContent));
 
-        result.extend(self.part_groups.values().map(|s| s as &dyn Content));
+        result.extend(self.part_groups.values().map(|s| s as &dyn DrawableContent));
 
         result
     }
 
-    fn elements(&self) -> Vec<Element> {
+    fn elements(&self) -> Vec<DrawableElement> {
         vec![]
     }
 }

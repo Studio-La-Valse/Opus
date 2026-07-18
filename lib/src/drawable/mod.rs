@@ -1,4 +1,4 @@
 pub mod bfs_iter;
-pub mod content;
-pub mod element;
+pub mod drawable_content;
+pub mod drawable_element;
 pub mod elements;

@@ -2,8 +2,8 @@ use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::layout::Layout;
@@ -135,14 +135,14 @@ impl Layoutable for Rest {
     }
 }
 
-impl Content for Rest {
-    fn content(&self) -> Vec<&dyn Content> {
-        let content: Vec<&dyn Content> = Vec::new();
+impl DrawableContent for Rest {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
+        let content: Vec<&dyn DrawableContent> = Vec::new();
         content
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let mut result: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let mut result: Vec<DrawableElement> = Vec::new();
 
         let glyph = &self.glyph;
         let text = glyph.as_text(self.color, self.xy, self.scale);

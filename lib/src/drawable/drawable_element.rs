@@ -6,40 +6,40 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
-pub enum Element {
+pub enum DrawableElement {
     Line(Line),
     Rect(Rect),
     Text(Text),
     Polygon(Polygon),
 }
 
-impl From<Line> for Element {
+impl From<Line> for DrawableElement {
     fn from(value: Line) -> Self {
-        Element::Line(value)
+        DrawableElement::Line(value)
     }
 }
 
-impl From<Rect> for Element {
+impl From<Rect> for DrawableElement {
     fn from(r: Rect) -> Self {
-        Element::Rect(r)
+        DrawableElement::Rect(r)
     }
 }
 
-impl From<Text> for Element {
+impl From<Text> for DrawableElement {
     fn from(t: Text) -> Self {
-        Element::Text(t)
+        DrawableElement::Text(t)
     }
 }
 
-impl From<Polygon> for Element {
+impl From<Polygon> for DrawableElement {
     fn from(p: Polygon) -> Self {
-        Element::Polygon(p)
+        DrawableElement::Polygon(p)
     }
 }
 
-pub fn scale_elem(element: &Element, scale: f32) -> Element {
+pub fn scale_elem(element: &DrawableElement, scale: f32) -> DrawableElement {
     match element {
-        Element::Line(l) => Line {
+        DrawableElement::Line(l) => Line {
             start: l.start.scale(scale),
             end: l.end.scale(scale),
             stroke_width: l.stroke_width * scale,
@@ -47,7 +47,7 @@ pub fn scale_elem(element: &Element, scale: f32) -> Element {
         }
         .into(),
 
-        Element::Rect(r) => Rect {
+        DrawableElement::Rect(r) => Rect {
             xy: r.xy.scale(scale),
             width: r.width * scale,
             height: r.height * scale,
@@ -55,14 +55,14 @@ pub fn scale_elem(element: &Element, scale: f32) -> Element {
             ..*r
         }
         .into(),
-        Element::Text(t) => Text {
+        DrawableElement::Text(t) => Text {
             xy: t.xy.scale(scale),
             font_size: t.font_size * scale,
             ..t.clone()
         }
         .into(),
 
-        Element::Polygon(p) => Polygon {
+        DrawableElement::Polygon(p) => Polygon {
             pts: p.pts.iter().map(|p| p.scale(scale)).collect(),
             stroke_width: p.stroke_width.map(|v| v * scale),
             ..p.clone()
@@ -71,7 +71,7 @@ pub fn scale_elem(element: &Element, scale: f32) -> Element {
     }
 }
 
-pub fn to_svg(elements: &Vec<Element>) -> String {
+pub fn to_svg(elements: &Vec<DrawableElement>) -> String {
     let (min_x, min_y, max_x, max_y) = compute_bounds(elements);
 
     let width = max_x - min_x;
@@ -89,7 +89,7 @@ pub fn to_svg(elements: &Vec<Element>) -> String {
 
     for el in elements {
         match el {
-            Element::Line(l) => out.push_str(&format!(
+            DrawableElement::Line(l) => out.push_str(&format!(
                 r#"<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{}" stroke-width="{}" />"#,
                 l.stroke_color.to_hex(),
                 l.stroke_width,
@@ -99,7 +99,7 @@ pub fn to_svg(elements: &Vec<Element>) -> String {
                 y2 = l.end.y,
             )),
 
-            Element::Rect(r) => out.push_str(&format!(
+            DrawableElement::Rect(r) => out.push_str(&format!(
                 r#"<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{}" stroke="{}" stroke-width="{}" />"#,
                 r.color.to_hex(),
                 r.stroke_color.map_or("none".to_string(), |s| s.to_hex()),
@@ -109,7 +109,7 @@ pub fn to_svg(elements: &Vec<Element>) -> String {
                 w = r.width,
                 h = r.height,
             )),
-            Element::Text(t) => out.push_str(&format!(
+            DrawableElement::Text(t) => out.push_str(&format!(
                 r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" text-anchor="{ha}" dominant-baseline="{va}">{content}</text>"#,
                 x = t.xy.x,
                 y = t.xy.y,
@@ -120,7 +120,7 @@ pub fn to_svg(elements: &Vec<Element>) -> String {
                 va = t.vertical_alignment.to_svg(),
                 content = xml_escape(&t.text),
             )),
-            Element::Polygon(p) => {
+            DrawableElement::Polygon(p) => {
                 let pts = p.pts
                     .iter()
                     .map(|xy| format!("{},{}", xy.x, xy.y))
@@ -144,7 +144,7 @@ pub fn to_svg(elements: &Vec<Element>) -> String {
     out
 }
 
-pub fn compute_bounds(elements: &Vec<Element>) -> (f32, f32, f32, f32) {
+pub fn compute_bounds(elements: &Vec<DrawableElement>) -> (f32, f32, f32, f32) {
     let mut min_x = f32::MAX;
     let mut min_y = f32::MAX;
     let mut max_x = f32::MIN;
@@ -152,7 +152,7 @@ pub fn compute_bounds(elements: &Vec<Element>) -> (f32, f32, f32, f32) {
 
     for el in elements {
         match el {
-            Element::Line(l) => {
+            DrawableElement::Line(l) => {
                 for p in [l.start, l.end] {
                     min_x = min_x.min(p.x);
                     min_y = min_y.min(p.y);
@@ -160,19 +160,19 @@ pub fn compute_bounds(elements: &Vec<Element>) -> (f32, f32, f32, f32) {
                     max_y = max_y.max(p.y);
                 }
             }
-            Element::Rect(r) => {
+            DrawableElement::Rect(r) => {
                 min_x = min_x.min(r.xy.x);
                 min_y = min_y.min(r.xy.y);
                 max_x = max_x.max(r.xy.x + r.width);
                 max_y = max_y.max(r.xy.y + r.height);
             }
-            Element::Text(t) => {
+            DrawableElement::Text(t) => {
                 min_x = min_x.min(t.xy.x);
                 min_y = min_y.min(t.xy.y);
                 max_x = max_x.max(t.xy.x);
                 max_y = max_y.max(t.xy.y);
             }
-            Element::Polygon(p) => {
+            DrawableElement::Polygon(p) => {
                 for xy in &p.pts {
                     min_x = min_x.min(xy.x);
                     min_y = min_y.min(xy.y);

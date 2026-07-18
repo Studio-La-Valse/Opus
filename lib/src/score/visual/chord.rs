@@ -1,8 +1,8 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::content::Content;
-use crate::drawable::element::Element;
+use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::layoutable::Layoutable;
@@ -139,9 +139,9 @@ impl Layoutable for Chord {
     }
 }
 
-impl Content for Chord {
-    fn content(&self) -> Vec<&dyn Content> {
-        let mut result: Vec<&dyn Content> = Vec::new();
+impl DrawableContent for Chord {
+    fn content(&self) -> Vec<&dyn DrawableContent> {
+        let mut result: Vec<&dyn DrawableContent> = Vec::new();
 
         for note in self.notes.iter() {
             result.push(note);
@@ -154,8 +154,8 @@ impl Content for Chord {
         result
     }
 
-    fn elements(&self) -> Vec<Element> {
-        let result: Vec<Element> = Vec::new();
+    fn elements(&self) -> Vec<DrawableElement> {
+        let result: Vec<DrawableElement> = Vec::new();
 
         result
     }
