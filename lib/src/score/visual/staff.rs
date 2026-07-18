@@ -31,6 +31,7 @@ pub struct Staff {
     pub distance_specified: Option<f32>,
     pub distance_final: f32,
 
+    pub clef_pad_left: f32,
     pub clef: Option<Clef>,
 }
 
@@ -55,6 +56,7 @@ impl Default for Staff {
             distance_specified: Default::default(),
             distance_final: Default::default(),
 
+            clef_pad_left: 10.,
             clef: None,
         }
     }
@@ -159,7 +161,7 @@ impl Layoutable for Staff {
         let line_space = self.line_space() / 2.;
         if let Some(ref mut clef) = self.clef {
             let dy: f32 = clef.clef.line as f32 * line_space;
-            let dx = clef.pad_left * self.scale;
+            let dx = self.clef_pad_left * self.scale;
             clef.arrange(&self.xy.mv(dx, dy));
         }
     }

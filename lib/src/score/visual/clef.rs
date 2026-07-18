@@ -14,8 +14,6 @@ pub struct Clef {
     pub color: Color,
     pub scale: f32,
 
-    pub pad_left: f32,
-
     pub clef: crate::smufl::glyphs::clef::Clef,
 }
 
@@ -25,8 +23,6 @@ impl Clef {
             xy: Default::default(),
             color: Color::BLACK,
             scale: 1.,
-
-            pad_left: 10.,
 
             clef,
         }

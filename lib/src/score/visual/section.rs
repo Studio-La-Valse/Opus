@@ -5,10 +5,10 @@ use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::section_measure::SectionMeasure;
+use crate::visual::bracket::Bracket;
 use crate::visual::element::ScoreElement;
 use std::collections::BTreeMap;
 
-#[derive(Default)]
 pub struct Section {
     pub part_groups: BTreeMap<u32, PartGroup>,
     pub measures: BTreeMap<u32, SectionMeasure>,
@@ -16,23 +16,32 @@ pub struct Section {
     pub xy: XY,
     pub width: f32,
     pub height: f32,
+
+    pub bracket: Bracket,
 }
 
 impl Section {
-    pub fn first_visible_staff_distance(&self) -> f32 {
-        let mut dist = 0.;
-        let mut found = false;
+    pub fn new(bracket: Bracket) -> Section {
+        Section {
+            xy: Default::default(),
+            width: Default::default(),
+            height: Default::default(),
 
-        for (_idx, part_group) in self.part_groups.iter() {
-            if found {
-                break;
-            }
+            part_groups: Default::default(),
+            measures: Default::default(),
 
-            dist = part_group.first_visible_staff_distance();
-            found = true;
+            bracket,
         }
+    }
+}
 
-        dist
+impl Section {
+    fn first_visible_staff_distance(&self) -> f32 {
+        self.part_groups
+            .values()
+            .next()
+            .map(|group| group.first_visible_staff_distance())
+            .unwrap_or(0.0)
     }
 
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
@@ -54,6 +63,9 @@ impl ScoreElement for Section {
             result.push(measure);
         }
 
+        let bracket: &mut Bracket = &mut self.bracket;
+        result.push(bracket);
+
         result
     }
 }
@@ -70,15 +82,22 @@ impl Layoutable for Section {
         }
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
+        let staves_height = self.height - first_visible_staff_distance;
 
         for (_idx, measure) in self.measures.iter_mut() {
             let available = XY {
                 x: f32::INFINITY,
-                y: self.height - first_visible_staff_distance,
+                y: staves_height,
             };
             measure.measure(&available);
             self.width += measure.width;
         }
+
+        let avail = XY {
+            x: self.width,
+            y: staves_height,
+        };
+        self.bracket.measure(&avail);
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -97,6 +116,9 @@ impl Layoutable for Section {
             part_group.arrange(&_origin);
             _origin = _origin.mv(0., part_group.height);
         }
+
+        let _origin = self.xy.mv(-10., first_visible_staff_distance);
+        self.bracket.arrange(&_origin);
     }
 }
 
@@ -107,6 +129,10 @@ impl DrawableContent for Section {
         result.extend(self.measures.values().map(|m| m as &dyn DrawableContent));
 
         result.extend(self.part_groups.values().map(|s| s as &dyn DrawableContent));
+
+        if self.part_groups.len() > 1 {
+            result.push(&self.bracket);
+        }
 
         result
     }

@@ -1,5 +1,6 @@
 use crate::bounding_box::BoundingBox;
 use crate::smufl::glyph_name::{GlyphName, load_glyph_names};
+use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
 use crate::smufl::glyphs::clef::Clef;
 use crate::smufl::glyphs::flag::Flag;
 use crate::smufl::glyphs::notehead::Notehead;
@@ -103,6 +104,30 @@ impl SmuflFont {
         Clef {
             codepoint,
             line: clef.anchor_line,
+            font: self.font.to_string(),
+        }
+    }
+
+    pub fn bracket_top(&self) -> BracketTop {
+        let codepoint = self.glyph_names.get("bracketTop").unwrap().codepoint_char();
+
+        BracketTop {
+            codepoint,
+            thickness: 0.5,
+            font: self.font.to_string(),
+        }
+    }
+
+    pub fn bracket_bottom(&self) -> BracketBottom {
+        let codepoint = self
+            .glyph_names
+            .get("bracketBottom")
+            .unwrap()
+            .codepoint_char();
+
+        BracketBottom {
+            codepoint,
+            thickness: 0.5,
             font: self.font.to_string(),
         }
     }

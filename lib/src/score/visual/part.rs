@@ -103,23 +103,11 @@ impl Part {
     }
 
     pub fn first_visible_staff_distance(&self) -> f32 {
-        let mut dist = 0.;
-        let mut found = false;
-
-        for (_idx, staff) in self.staves.iter() {
-            if found {
-                break;
-            }
-
-            if staff.hidden {
-                continue;
-            }
-
-            dist = staff.distance_final;
-            found = true;
-        }
-
-        dist
+        self.staves
+            .values()
+            .find(|staff| !staff.hidden)
+            .map(|staff| staff.distance_final)
+            .unwrap_or(0.0)
     }
 
     pub fn create_staff_ctx(&self) -> BTreeMap<StaffIdx, StaffCtx> {

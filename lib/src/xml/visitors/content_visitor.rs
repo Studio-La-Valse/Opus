@@ -8,10 +8,12 @@ use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
 use crate::smufl::glyphs::clef::Clef;
 use crate::visitor::Visitor;
+use crate::visual::bracket::Bracket;
 use crate::visual::chord::Chord;
 use crate::visual::part::Part;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::rest::Rest;
+use crate::visual::section::Section;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::utils::{NodeUtils, ToNumber};
 use crate::xml::walker_ctx::WalkerCtx;
@@ -220,7 +222,13 @@ impl Visitor for ContentVisitor {
         system_measure.init_width(ctx.layout_ctx.measure.width);
 
         // get or create the section in this system.
-        let section = system.sections.entry(section_number).or_default();
+        let section = system.sections.entry(section_number).or_insert_with(|| {
+            let bracket_top = ctx.font.bracket_top();
+            let bracket_bottom = ctx.font.bracket_bottom();
+
+            let bracket = Bracket::new(bracket_top, bracket_bottom);
+            Section::new(bracket)
+        });
         let _ = section.measures.entry(measure_number).or_default();
 
         // get or create the part group in this section.

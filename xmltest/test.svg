@@ -12,6 +12,9 @@
 <line x1="21.81" y1="3.1799998" x2="21.81" y2="11.624" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="24.74" y1="3.1799998" x2="24.74" y2="11.624" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="27.18" y1="3.1799998" x2="27.18" y2="11.624" stroke="#000000FF" stroke-width="0.018749999" />
+<text x="3.1699998" y="3.1799998" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="3.1699998" y="11.624" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.1699998" y="3.1699998" width="0.049999997" height="8.464" fill="#000000FF" stroke="none" stroke-width="0" />
 <line x1="6.5099998" y1="12.744" x2="6.5099998" y2="19.746" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="10.05" y1="12.744" x2="10.05" y2="19.746" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="13.37" y1="12.744" x2="13.37" y2="19.746" stroke="#000000FF" stroke-width="0.018749999" />
@@ -20,6 +23,9 @@
 <line x1="21.81" y1="12.744" x2="21.81" y2="19.746" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="24.74" y1="12.744" x2="24.74" y2="19.746" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="27.18" y1="12.744" x2="27.18" y2="19.746" stroke="#000000FF" stroke-width="0.018749999" />
+<text x="3.1699998" y="12.744" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="3.1699998" y="19.746" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.1699998" y="12.734" width="0.049999997" height="7.022" fill="#000000FF" stroke="none" stroke-width="0" />
 <line x1="6.5099998" y1="20.876001" x2="6.5099998" y2="23.492" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="10.05" y1="20.876001" x2="10.05" y2="23.492" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="13.37" y1="20.876001" x2="13.37" y2="23.492" stroke="#000000FF" stroke-width="0.018749999" />
@@ -28,6 +34,9 @@
 <line x1="21.81" y1="20.876001" x2="21.81" y2="23.492" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="24.74" y1="20.876001" x2="24.74" y2="23.492" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="27.18" y1="20.876001" x2="27.18" y2="23.492" stroke="#000000FF" stroke-width="0.018749999" />
+<text x="3.1699998" y="20.876001" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="3.1699998" y="23.492" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.1699998" y="20.866001" width="0.049999997" height="2.6359997" fill="#000000FF" stroke="none" stroke-width="0" />
 <line x1="6.5099998" y1="24.342001" x2="6.5099998" y2="25.976" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="10.05" y1="24.342001" x2="10.05" y2="25.976" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="13.37" y1="24.342001" x2="13.37" y2="25.976" stroke="#000000FF" stroke-width="0.018749999" />
@@ -44,6 +53,9 @@
 <line x1="21.81" y1="27.186" x2="21.81" y2="33.066" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="24.74" y1="27.186" x2="24.74" y2="33.066" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="27.18" y1="27.186" x2="27.18" y2="33.066" stroke="#000000FF" stroke-width="0.018749999" />
+<text x="3.1699998" y="27.186" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="3.1699998" y="33.066" fill="#000000FF" font-size="0.39999998" font-family="bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.1699998" y="27.176" width="0.049999997" height="5.9" fill="#000000FF" stroke="none" stroke-width="0" />
 <line x1="22.36997" y1="3.0719998" x2="22.55747" y2="3.0719998" stroke="#000000FF" stroke-width="0.011" />
 <line x1="25.18997" y1="3.0719998" x2="25.37747" y2="3.0719998" stroke="#000000FF" stroke-width="0.011" />
 <line x1="3.260625" y1="3.1799998" x2="27.189375" y2="3.1799998" stroke="#000000FF" stroke-width="0.0103356" />
