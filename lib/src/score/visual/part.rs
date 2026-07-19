@@ -8,11 +8,11 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::clef::Clef;
+use crate::visual::brace::Brace;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff_ctx::StaffCtx;
 use std::collections::{BTreeMap, HashSet};
 
-#[derive(Default)]
 pub struct Part {
     pub measures: BTreeMap<u32, PartMeasure>,
     pub staves: BTreeMap<StaffIdx, Staff>,
@@ -21,16 +21,24 @@ pub struct Part {
     pub width: f32,
     pub height: f32,
 
-    pub id: String,
-
     pub visibility: Visibility,
+
+    pub brace: Brace,
 }
 
 impl Part {
-    pub fn new(id: String) -> Self {
+    pub fn new(brace: Brace) -> Self {
         Self {
-            id,
-            ..Default::default()
+            measures: BTreeMap::new(),
+            staves: BTreeMap::new(),
+
+            xy: XY::ZERO,
+            width: 0.0,
+            height: 0.0,
+
+            visibility: Visibility::Hidden,
+
+            brace,
         }
     }
 
@@ -135,10 +143,16 @@ impl Part {
             measure.rebeam(strategy);
         }
     }
+
+    pub fn shows_brace(&self) -> bool {
+        self.staves.len() > 1
+    }
 }
 
 impl ScoreElement for Part {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let shows_brace = self.shows_brace();
+
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
         for (_idx, staff) in self.staves.iter_mut() {
@@ -147,6 +161,10 @@ impl ScoreElement for Part {
 
         for (_idx, measure) in self.measures.iter_mut() {
             result.push(measure);
+        }
+
+        if shows_brace {
+            result.push(&mut self.brace);
         }
 
         result
@@ -183,6 +201,18 @@ impl Layoutable for Part {
             measure.measure(available);
             self.width += measure.width;
         }
+
+        let first_visible_staff_distance = self.first_visible_staff_distance();
+        let staves_height = self.height - first_visible_staff_distance;
+
+        let shows_brace = self.shows_brace();
+        if shows_brace {
+            let available = XY {
+                x: self.width,
+                y: staves_height,
+            };
+            self.brace.measure(&available);
+        }
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -207,11 +237,20 @@ impl Layoutable for Part {
             measure.arrange_ctx(&_origin, &staff_ctx);
             _origin = _origin.mv(measure.width, 0.);
         }
+
+        let first_visible_staff_distance = self.first_visible_staff_distance();
+        let shows_brace = self.shows_brace();
+        if shows_brace {
+            let origin = origin.mv(0., first_visible_staff_distance);
+            self.brace.arrange(&origin);
+        }
     }
 }
 
 impl DrawableContent for Part {
     fn content(&self) -> Vec<&dyn DrawableContent> {
+        let shows_brace = self.shows_brace();
+
         let mut result = Vec::new();
 
         result.extend(self.measures.values().map(|m| m as &dyn DrawableContent));
@@ -222,6 +261,10 @@ impl DrawableContent for Part {
                 .filter(|s| !s.hidden)
                 .map(|s| s as &dyn DrawableContent),
         );
+
+        if shows_brace {
+            result.push(&self.brace)
+        }
 
         result
     }

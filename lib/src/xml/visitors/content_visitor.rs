@@ -8,6 +8,7 @@ use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
 use crate::smufl::glyphs::clef::Clef;
 use crate::visitor::Visitor;
+use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
 use crate::visual::chord::Chord;
 use crate::visual::part::Part;
@@ -239,7 +240,7 @@ impl Visitor for ContentVisitor {
         let part = part_group
             .parts
             .entry(part_id.clone())
-            .or_insert_with(|| Part::new(part_id));
+            .or_insert_with(|| Part::new(Brace::new(ctx.font.brace(None))));
         part.ensure_staves(vec![1.into()].into_iter().collect());
         for chord in part_measure.chords.iter().flat_map(|c| c.1) {
             let notes: HashSet<StaffIdx> = chord.notes.iter().map(|n| n.staff).collect();

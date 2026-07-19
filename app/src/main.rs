@@ -105,7 +105,7 @@ fn main() {
     println!("Layout pass: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
-    let elements: Vec<DrawableElement> = bfs_elements(visual.pages.get(&1).unwrap()).collect();
+    let elements: Vec<DrawableElement> = bfs_elements(&visual).collect();
 
     let svg = to_svg(&elements.iter().map(|e| scale_elem(e, 0.01)).collect());
     fs::write(out, svg).unwrap();

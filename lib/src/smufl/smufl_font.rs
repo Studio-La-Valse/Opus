@@ -1,5 +1,7 @@
 use crate::bounding_box::BoundingBox;
-use crate::smufl::glyph_name::{GlyphName, load_glyph_names};
+use crate::score::core::clef::Clef as ClefCore;
+use crate::smufl::glyph_name::{GlyphName, ToChar, load_glyph_names};
+use crate::smufl::glyphs::brace::Brace;
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
 use crate::smufl::glyphs::clef::Clef;
 use crate::smufl::glyphs::flag::Flag;
@@ -87,23 +89,22 @@ impl SmuflFont {
         }
     }
 
-    pub fn clef(&self, clef: &crate::score::core::clef::Clef) -> Clef {
-        let ref_name = match clef.name.as_str() {
-            "Treble" => "gClef",
-            "Soprano" => "cClef",
-            "Mezzo Soprano" => "cClef",
-            "Alto" => "cClef",
-            "Tenor" => "cClef",
-            "Baritone" => "cClef",
-            "Bass" => "fClef",
-            "Percussion" => "unpitchedPercussionClef1",
-            _ => panic!("{} not recognized as a clef", clef.name),
+    pub fn clef(&self, clef: &ClefCore) -> Clef {
+        let ref_name = match clef {
+            ClefCore::Treble => "gClef",
+            ClefCore::Soprano
+            | ClefCore::MezzoSoprano
+            | ClefCore::Alto
+            | ClefCore::Tenor
+            | ClefCore::Baritone => "cClef",
+            ClefCore::Bass => "fClef",
+            ClefCore::Percussion => "unpitchedPercussionClef1",
         };
         let codepoint = self.glyph_names.get(ref_name).unwrap().codepoint_char();
 
         Clef {
             codepoint,
-            line: clef.anchor_line,
+            line: clef.anchor_line(),
             font: self.font.to_string(),
         }
     }
@@ -128,6 +129,29 @@ impl SmuflFont {
         BracketBottom {
             codepoint,
             thickness: 0.5,
+            font: self.font.to_string(),
+        }
+    }
+
+    pub fn brace(&self, alternative: Option<&str>) -> Brace {
+        let mut codepoint = self.glyph_names.get("brace").unwrap().codepoint_char();
+
+        if let Some(alternative) = alternative {
+            let alternate = self.meta.glyph_alternatives.get("brace");
+
+            if let Some(alternate) = alternate {
+                codepoint = alternate
+                    .alternates
+                    .iter()
+                    .find(|v| v.name == alternative)
+                    .unwrap()
+                    .codepoint
+                    .codepoint_char();
+            }
+        }
+
+        Brace {
+            codepoint,
             font: self.font.to_string(),
         }
     }

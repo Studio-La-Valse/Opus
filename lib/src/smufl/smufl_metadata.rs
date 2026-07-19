@@ -10,6 +10,9 @@ pub struct SmuflMetadata {
 
     #[serde(rename = "glyphsWithAnchors")]
     pub glyph_anchors: HashMap<String, GlyphAnchors>,
+
+    #[serde(rename = "glyphsWithAlternates")]
+    pub glyph_alternatives: HashMap<String, Alternates>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -115,4 +118,15 @@ pub struct Cutouts {
     pub ne: Option<BoundingBox>,
     pub sw: Option<BoundingBox>,
     pub se: Option<BoundingBox>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Alternates {
+    pub alternates: Vec<Alternate>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Alternate {
+    pub codepoint: String,
+    pub name: String,
 }

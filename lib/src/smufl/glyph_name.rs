@@ -14,10 +14,20 @@ pub struct GlyphName {
     pub description: String,
 }
 
-impl GlyphName {
-    pub fn codepoint_char(&self) -> char {
-        let hex = self.codepoint.trim_start_matches("U+");
+pub trait ToChar {
+    fn codepoint_char(&self) -> char;
+}
+
+impl ToChar for String {
+    fn codepoint_char(&self) -> char {
+        let hex = self.trim_start_matches("U+");
         let value = u32::from_str_radix(hex, 16).unwrap();
         char::from_u32(value).unwrap()
+    }
+}
+
+impl ToChar for GlyphName {
+    fn codepoint_char(&self) -> char {
+        self.codepoint.codepoint_char()
     }
 }

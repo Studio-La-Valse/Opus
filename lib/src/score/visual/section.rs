@@ -49,10 +49,16 @@ impl Section {
             part_group.rebeam(strategy);
         }
     }
+
+    pub fn shows_bracket(&self) -> bool {
+        self.part_groups.len() > 1
+    }
 }
 
 impl ScoreElement for Section {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let shows_bracket = self.shows_bracket();
+
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
         for (_idx, staff) in self.part_groups.iter_mut() {
@@ -63,8 +69,10 @@ impl ScoreElement for Section {
             result.push(measure);
         }
 
-        let bracket: &mut Bracket = &mut self.bracket;
-        result.push(bracket);
+        if shows_bracket {
+            let bracket: &mut Bracket = &mut self.bracket;
+            result.push(bracket);
+        }
 
         result
     }
@@ -93,11 +101,13 @@ impl Layoutable for Section {
             self.width += measure.width;
         }
 
-        let avail = XY {
-            x: self.width,
-            y: staves_height,
-        };
-        self.bracket.measure(&avail);
+        if self.shows_bracket() {
+            let avail = XY {
+                x: self.width,
+                y: staves_height,
+            };
+            self.bracket.measure(&avail);
+        }
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -130,7 +140,7 @@ impl DrawableContent for Section {
 
         result.extend(self.part_groups.values().map(|s| s as &dyn DrawableContent));
 
-        if self.part_groups.len() > 1 {
+        if self.shows_bracket() {
             result.push(&self.bracket);
         }
 

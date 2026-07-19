@@ -1,3 +1,4 @@
+pub mod brace;
 pub mod bracket;
 pub mod chord;
 pub mod clef;

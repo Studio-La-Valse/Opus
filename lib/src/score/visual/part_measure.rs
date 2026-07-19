@@ -80,7 +80,7 @@ impl PartMeasure {
     fn arrange_legers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.legers.clear();
 
-        for chord in collect_flat(&mut self.chords) {
+        for chord in iter_chords(&mut self.chords) {
             for (idx, staff_ctx) in staff_ctx.iter() {
                 let staff_scale = staff_ctx.scaling;
                 let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scale;
@@ -312,10 +312,10 @@ impl DrawableContent for PartMeasure {
     }
 }
 
-fn collect_flat(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&mut Chord> {
-    let mut result: Vec<&mut Chord> = Vec::new();
+fn iter_chords(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&Chord> {
+    let mut result: Vec<&Chord> = Vec::new();
 
-    for (_, chords) in chord_groups.iter_mut() {
+    for (_, chords) in chord_groups.iter() {
         for chord in chords {
             result.push(chord);
         }

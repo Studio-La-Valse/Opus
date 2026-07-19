@@ -168,7 +168,7 @@ impl Visitor for LayoutContextVisitor {
         let sign = sign_node.req_text();
         let line = element.get_child("line").map(|l| l.req_i32());
 
-        let clef = Clef::parse(sign, line);
+        let clef = Clef::from_mxml(sign, line).unwrap();
         ctx.layout_ctx.staff.clef.insert(staff, clef);
     }
 
