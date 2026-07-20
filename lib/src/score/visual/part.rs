@@ -36,7 +36,7 @@ impl Part {
             width: 0.0,
             height: 0.0,
 
-            visibility: Visibility::Hidden,
+            visibility: Visibility::Unset,
 
             brace,
         }
@@ -241,7 +241,7 @@ impl Layoutable for Part {
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let shows_brace = self.shows_brace();
         if shows_brace {
-            let origin = origin.mv(0., first_visible_staff_distance);
+            let origin = origin.mv(-5., first_visible_staff_distance);
             self.brace.arrange(&origin);
         }
     }

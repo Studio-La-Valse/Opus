@@ -1,3 +1,4 @@
+use crate::layout_ctx::LayoutCtx;
 use crate::score::core::clef::Clef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
@@ -225,16 +226,7 @@ impl Visitor for LayoutContextVisitor {
         let duration = node.req_child("duration").req_u32();
         ctx.layout_ctx.position += duration;
 
-        if ctx.layout_ctx.position > ctx.layout_ctx.divisions * ctx.layout_ctx.beats {
-            panic!(
-                "Invalid document: entered position {} in measure with {} beats and {} divisions. Part {}, measure {}",
-                ctx.layout_ctx.position,
-                ctx.layout_ctx.beats,
-                ctx.layout_ctx.divisions,
-                ctx.layout_ctx.part_id,
-                ctx.layout_ctx.measure.number
-            );
-        }
+        validate_position(ctx.layout_ctx)
     }
 
     fn enter_note(&mut self, element: &Node, ctx: &mut WalkerCtx) {
@@ -271,16 +263,7 @@ impl Visitor for LayoutContextVisitor {
         // the position is correct upstream (a subsequent callback).
         ctx.layout_ctx.position += ctx.layout_ctx.duration;
 
-        if ctx.layout_ctx.position > ctx.layout_ctx.divisions * ctx.layout_ctx.beats {
-            panic!(
-                "Invalid document: entered position {} in measure with {} beats and {} divisions. Part {}, measure {}",
-                ctx.layout_ctx.position,
-                ctx.layout_ctx.beats,
-                ctx.layout_ctx.divisions,
-                ctx.layout_ctx.part_id,
-                ctx.layout_ctx.measure.number
-            );
-        }
+        validate_position(ctx.layout_ctx)
     }
 
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}
@@ -288,4 +271,20 @@ impl Visitor for LayoutContextVisitor {
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn exit(&mut self, _ctx: &mut WalkerCtx) {}
+}
+
+fn validate_position(layout_ctx: &LayoutCtx) {
+    let quarter_beats: f32 = layout_ctx.beats as f32 * (4. / layout_ctx.beat_type as f32);
+
+    if layout_ctx.position as f32 > layout_ctx.divisions as f32 * quarter_beats {
+        panic!(
+            "Invalid document: entered position {} in measure with {} beats of type {}, and {} divisions. Part {}, measure {}",
+            layout_ctx.position,
+            layout_ctx.beats,
+            layout_ctx.beat_type,
+            layout_ctx.divisions,
+            layout_ctx.part_id,
+            layout_ctx.measure.number
+        );
+    }
 }

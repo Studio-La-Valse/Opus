@@ -50,8 +50,17 @@ impl Section {
         }
     }
 
+    pub fn visible_staves(&self) -> usize {
+        let mut count = 0;
+        for (_idx, part_group) in self.part_groups.iter() {
+            count += part_group.visible_staves();
+        }
+
+        count
+    }
+
     pub fn shows_bracket(&self) -> bool {
-        self.part_groups.len() > 1
+        self.part_groups.len() > 1 && self.visible_staves() > 0
     }
 }
 

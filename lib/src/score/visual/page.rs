@@ -73,6 +73,7 @@ impl Layoutable for Page {
         let m_left = self.margins.left;
         let m_top = self.margins.top;
 
+        // top left of available space after margins
         let mut origin = origin.mv(m_left, m_top);
 
         let mut first = true;
@@ -80,6 +81,8 @@ impl Layoutable for Page {
             let s_m_left = system.m_left;
             let s_left = origin.x + s_m_left;
 
+            // space on top of system is either its margin to previous if any,
+            // else the distance to top of margins
             let mut s_m_top = system.distance;
             if first {
                 s_m_top = system.top;
@@ -94,7 +97,7 @@ impl Layoutable for Page {
             };
             system.arrange(&s_origin);
 
-            origin = origin.mv(0., system.height);
+            origin = origin.mv(0., system.height + s_m_top);
         }
     }
 }

@@ -12,6 +12,7 @@ use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
 use crate::visual::chord::Chord;
 use crate::visual::part::Part;
+use crate::visual::part_group::PartGroup;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::rest::Rest;
 use crate::visual::section::Section;
@@ -233,14 +234,20 @@ impl Visitor for ContentVisitor {
         let _ = section.measures.entry(measure_number).or_default();
 
         // get or create the part group in this section.
-        let part_group = section.part_groups.entry(part_group_number).or_default();
+        let part_group = section
+            .part_groups
+            .entry(part_group_number)
+            .or_insert_with(|| {
+                let brace = Brace::new(ctx.font.brace(None));
+                PartGroup::new(brace)
+            });
         let _ = part_group.measures.entry(measure_number).or_default();
 
         // get or create the part in this part group.
-        let part = part_group
-            .parts
-            .entry(part_id.clone())
-            .or_insert_with(|| Part::new(Brace::new(ctx.font.brace(None))));
+        let part = part_group.parts.entry(part_id.clone()).or_insert_with(|| {
+            let brace = Brace::new(ctx.font.brace(None));
+            Part::new(brace)
+        });
         part.ensure_staves(vec![1.into()].into_iter().collect());
         for chord in part_measure.chords.iter().flat_map(|c| c.1) {
             let notes: HashSet<StaffIdx> = chord.notes.iter().map(|n| n.staff).collect();
@@ -252,8 +259,8 @@ impl Visitor for ContentVisitor {
         part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
 
         let mut clefs: BTreeMap<StaffIdx, Clef> = BTreeMap::new();
-        for (k, v) in ctx.layout_ctx.staff.clef.iter() {
-            clefs.insert(*k, ctx.font.clef(v));
+        for (idx, clef) in ctx.layout_ctx.staff.clef.iter() {
+            clefs.insert(*idx, ctx.font.clef(clef));
         }
         part.set_opening_clef(&clefs);
 
