@@ -6,13 +6,16 @@ use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::layout::Layout;
 use crate::layout_ctx::Visibility;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
+use crate::visual::part_measure::PartMeasure;
 use crate::visual::staff::Staff;
+use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -35,6 +38,37 @@ pub struct System {
 }
 
 impl System {
+    pub fn locate_part_measure_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Option<&mut PartMeasure> {
+        // First check if the system even contains this measure
+        if !self.measures.contains_key(&measure_number) {
+            return None;
+        }
+
+        self.sections
+            .values_mut()
+            .find_map(|section| section.locate_part_measure_mut(part_id, measure_number))
+    }
+
+    pub fn locate_staff_measure_mut(
+        &mut self,
+        part_id: &str,
+        staff_number: StaffIdx,
+        measure_number: u32,
+    ) -> Option<&mut StaffMeasure> {
+        // First check if the system even contains this measure
+        if !self.measures.contains_key(&measure_number) {
+            return None;
+        }
+
+        self.sections.values_mut().find_map(|section| {
+            section.locate_staff_measure_mut(part_id, staff_number, measure_number)
+        })
+    }
+
     fn consolidate_measure_widths(&mut self) {
         for (idx, measure) in self.measures.iter_mut() {
             let width = measure.width;

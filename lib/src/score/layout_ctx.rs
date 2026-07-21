@@ -27,7 +27,7 @@ pub struct SystemInfo {
 
 #[derive(Clone)]
 pub struct StaffInfo {
-    pub number: u32,
+    pub number: StaffIdx,
     pub visibility: Visibility,
 
     pub explicitly_hidden: HashSet<StaffIdx>,
@@ -94,6 +94,9 @@ pub struct LayoutCtx {
     pub position: u32,
     pub voice: Voice,
 
+    pub new_page: bool,
+    pub new_system: bool,
+
     pub chord: bool,
 }
 
@@ -110,7 +113,7 @@ impl LayoutCtx {
 
         self.part_hidden_specified = Visibility::Unset;
 
-        self.staff.number = 1;
+        self.staff.number = 1.into();
         self.staff.distances.clear();
         self.staff.explicitly_hidden.clear();
         self.staff.explicitly_shown.clear();
@@ -125,6 +128,9 @@ impl LayoutCtx {
         self.voice = 1.into();
 
         self.chord = false;
+
+        self.new_page = true;
+        self.new_system = true;
     }
 }
 
@@ -142,7 +148,7 @@ impl Default for LayoutCtx {
                 distance_top: None,
             },
             staff: StaffInfo {
-                number: 1,
+                number: 1.into(),
                 distances: BTreeMap::new(),
                 visibility: Visibility::Unset,
                 explicitly_hidden: HashSet::new(),
@@ -166,6 +172,9 @@ impl Default for LayoutCtx {
             voice: 1.into(),
 
             chord: false,
+
+            new_page: true,
+            new_system: true,
         }
     }
 }

@@ -11,6 +11,7 @@ use crate::visual::brace::Brace;
 use crate::visual::clef::Clef;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff_ctx::StaffCtx;
+use crate::visual::staff_measure::StaffMeasure;
 use std::collections::{BTreeMap, HashSet};
 
 pub struct Part {
@@ -40,6 +41,20 @@ impl Part {
 
             brace,
         }
+    }
+
+    pub fn locate_part_measure_mut(&mut self, measure_number: u32) -> Option<&mut PartMeasure> {
+        self.measures.get_mut(&measure_number)
+    }
+
+    pub fn locate_staff_measure_mut(
+        &mut self,
+        staff_number: StaffIdx,
+        measure_number: u32,
+    ) -> Option<&mut StaffMeasure> {
+        self.staves
+            .get_mut(&staff_number)
+            .and_then(|staff| staff.measures.get_mut(&measure_number))
     }
 
     pub fn set_visibility(&mut self, visibility: Visibility) {

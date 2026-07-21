@@ -52,21 +52,28 @@ impl Visitor for ContentVisitor {
     fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        if ctx.layout_ctx.position == 0 {
-            // If first measur of system, we can safely ignore.
-
-            // otherwise, draw left of measure bar, so anchor to part measure.
-            return;
-        }
-
-        // Mid-measure: Anchor to a chord or rest. Store in self for now
-        let staff_idx: StaffIdx = ctx.layout_ctx.staff.number.into();
-
+        let staff_idx: StaffIdx = ctx.layout_ctx.staff.number;
         let clef = ctx.layout_ctx.staff.active_clef.get(&staff_idx).unwrap();
         let smufl_clef = ctx.font.clef(clef);
         let visual_clef = Clef::new(smufl_clef);
 
-        self.clef_change.insert(staff_idx, visual_clef);
+        if ctx.layout_ctx.position > 0 {
+            // Mid-measure: Anchor to a chord or rest. Store in self for now, take later.
+            self.clef_change.insert(staff_idx, visual_clef);
+        } else {
+            // Otherwise, draw left of previous measure bar, so anchor to part measure.
+            let measure_number = ctx.layout_ctx.measure.number;
+            let part_id = ctx.layout_ctx.part_id.as_str();
+            let previous_measure =
+                ctx.visual_score
+                    .locate_staff_measure_mut(part_id, &staff_idx, measure_number - 1);
+
+            if let Some(previous_measure) = previous_measure {
+                let smufl_clef = ctx.font.clef(clef);
+                let drawable_clef = Clef::new(smufl_clef);
+                previous_measure.prepare_clef_change = Some(drawable_clef);
+            }
+        }
     }
 
     fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
@@ -76,7 +83,7 @@ impl Visitor for ContentVisitor {
     fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
-        let staff_idx: StaffIdx = ctx.layout_ctx.staff.number.into();
+        let staff_idx: StaffIdx = ctx.layout_ctx.staff.number;
         let position = ctx.layout_ctx.position;
         let scale = ctx
             .layout_ctx
@@ -110,7 +117,7 @@ impl Visitor for ContentVisitor {
                 Rest::new(glyph, is_measure, Some(default_x), staff_idx, 4, *scale)
             };
 
-            for (staff_idx, clef_change) in self.clef_change.drain() {
+            for (_staff_idx, clef_change) in self.clef_change.drain() {
                 rest.clef_change = Some(clef_change);
             }
 

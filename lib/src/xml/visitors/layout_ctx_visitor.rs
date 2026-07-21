@@ -44,36 +44,40 @@ impl Visitor for LayoutContextVisitor {
 
         // Reset clef changes and assign the currently tracked clefs to position 0 (the beginning of the measure).
         ctx.layout_ctx.staff.clef_changes.clear();
-        for (staff_idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
-            ctx.layout_ctx
-                .staff
-                .clef_changes
-                .entry(*staff_idx)
-                .or_default()
-                .insert(0, *clef);
-        }
+        // for (staff_idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
+        //     ctx.layout_ctx
+        //         .staff
+        //         .clef_changes
+        //         .entry(*staff_idx)
+        //         .or_default()
+        //         .insert(0, *clef);
+        // }
 
         ctx.layout_ctx.position = 0;
+
+        // These 2 values are set in print. Not every measure has print, so default to false.
+        ctx.layout_ctx.new_page = false;
+        ctx.layout_ctx.new_system = false;
     }
 
     fn enter_print(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         // new-page / new-system
-        let new_page = element
+        ctx.layout_ctx.new_page = element
             .attribute("new-page")
             .map(|v| v == "yes")
             .unwrap_or(false);
 
-        let new_system = new_page
+        ctx.layout_ctx.new_system = ctx.layout_ctx.new_page
             || element
                 .attribute("new-system")
                 .map(|v| v == "yes")
                 .unwrap_or(false);
 
-        if new_page {
+        if ctx.layout_ctx.new_page {
             ctx.layout_ctx.page.page_number += 1;
         }
 
-        if new_system {
+        if ctx.layout_ctx.new_system {
             ctx.layout_ctx.system.index += 1;
 
             // clear the opening clefs for the staves, set the opening to the current clefs.
@@ -174,6 +178,8 @@ impl Visitor for LayoutContextVisitor {
             .map(|s| s.parse::<u32>().unwrap())
             .unwrap_or(1)
             .into();
+        ctx.layout_ctx.staff.number = staff;
+
         let sign_node = element.req_child("sign");
         let sign = sign_node.req_text();
         let line = element.get_child("line").map(|l| l.req_i32());
@@ -191,12 +197,12 @@ impl Visitor for LayoutContextVisitor {
             .or_default()
             .insert(position, clef);
 
-        // If no opening clef has been specified to the current staff, apply this clef.
-        ctx.layout_ctx
-            .staff
-            .opening_clef
-            .entry(staff)
-            .or_insert_with(|| clef);
+        // If this measure is the first in a system, set this clef to opening of the staff.
+        if (ctx.layout_ctx.measure.number == 1 || ctx.layout_ctx.new_system)
+            && ctx.layout_ctx.position == 0
+        {
+            ctx.layout_ctx.staff.opening_clef.insert(staff, clef);
+        }
     }
 
     fn enter_staff_details(&mut self, element: &Node, ctx: &mut WalkerCtx) {
@@ -278,7 +284,7 @@ impl Visitor for LayoutContextVisitor {
             }
 
             if node.has_tag_name("staff") {
-                ctx.layout_ctx.staff.number = node.req_u32();
+                ctx.layout_ctx.staff.number = node.req_u32().into();
             }
         }
     }

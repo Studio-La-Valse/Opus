@@ -1,12 +1,15 @@
 use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::section_measure::SectionMeasure;
 use crate::visual::bracket::Bracket;
 use crate::visual::element::ScoreElement;
+use crate::visual::part_measure::PartMeasure;
+use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
 pub struct Section {
@@ -36,6 +39,27 @@ impl Section {
 }
 
 impl Section {
+    pub fn locate_part_measure_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Option<&mut PartMeasure> {
+        self.part_groups
+            .values_mut()
+            .find_map(|group| group.locate_part_measure_mut(part_id, measure_number))
+    }
+
+    pub fn locate_staff_measure_mut(
+        &mut self,
+        part_id: &str,
+        staff_number: StaffIdx,
+        measure_number: u32,
+    ) -> Option<&mut StaffMeasure> {
+        self.part_groups
+            .values_mut()
+            .find_map(|group| group.locate_staff_measure_mut(part_id, staff_number, measure_number))
+    }
+
     fn first_visible_staff_distance(&self) -> f32 {
         self.part_groups
             .values()

@@ -1,10 +1,13 @@
 use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::page::Page;
 use crate::visual::element::ScoreElement;
+use crate::visual::part_measure::PartMeasure;
+use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -13,6 +16,27 @@ pub struct Score {
 }
 
 impl Score {
+    pub fn locate_part_measure_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Option<&mut PartMeasure> {
+        self.pages
+            .values_mut()
+            .find_map(|page| page.locate_part_measure_mut(part_id, measure_number))
+    }
+
+    pub fn locate_staff_measure_mut(
+        &mut self,
+        part_id: &str,
+        staff_idx: &StaffIdx,
+        measure_number: u32,
+    ) -> Option<&mut StaffMeasure> {
+        self.pages
+            .values_mut()
+            .find_map(|page| page.locate_staff_measure_mut(part_id, staff_idx, measure_number))
+    }
+
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
         for page in self.pages.values_mut() {
             page.rebeam(strategy);

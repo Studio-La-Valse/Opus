@@ -6,12 +6,15 @@ use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
 use crate::layout::Layout;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout::PageMargins;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::system::System;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
+use crate::visual::part_measure::PartMeasure;
+use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
 pub struct Page {
@@ -29,6 +32,27 @@ pub struct Page {
 }
 
 impl Page {
+    pub fn locate_part_measure_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Option<&mut PartMeasure> {
+        self.systems
+            .values_mut()
+            .find_map(|system| system.locate_part_measure_mut(part_id, measure_number))
+    }
+
+    pub fn locate_staff_measure_mut(
+        &mut self,
+        part_id: &str,
+        staff_idx: &StaffIdx,
+        measure_number: u32,
+    ) -> Option<&mut StaffMeasure> {
+        self.systems
+            .values_mut()
+            .find_map(|system| system.locate_staff_measure_mut(part_id, *staff_idx, measure_number))
+    }
+
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
         for system in self.systems.values_mut() {
             system.rebeam(strategy);

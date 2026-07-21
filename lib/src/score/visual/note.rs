@@ -15,7 +15,6 @@ use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
-use std::collections::BTreeMap;
 
 pub struct Note {
     pub xy: XY,

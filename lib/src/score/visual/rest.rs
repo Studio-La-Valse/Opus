@@ -16,7 +16,6 @@ use crate::visual::clef::Clef;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
-use std::collections::BTreeMap;
 
 pub struct Rest {
     pub xy: XY,

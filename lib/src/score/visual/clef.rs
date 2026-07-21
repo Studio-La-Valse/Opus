@@ -52,6 +52,7 @@ impl ScoreElement for Clef {
 impl Layoutable for Clef {
     fn measure(&mut self, _available: &XY) {}
 
+    /// Supplied origin x coordinate is left of clef, y coordinate is the line in the staff.
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
     }
