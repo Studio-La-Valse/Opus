@@ -29,7 +29,7 @@ pub struct Part {
 
 impl Part {
     pub fn new(brace: Brace) -> Self {
-        Self {
+        let mut _self = Self {
             measures: BTreeMap::new(),
             staves: BTreeMap::new(),
 
@@ -40,7 +40,15 @@ impl Part {
             visibility: Visibility::Unset,
 
             brace,
-        }
+        };
+
+        _self.ensure_staves(vec![1.into()].into_iter().collect());
+
+        _self
+    }
+
+    pub fn staff_or_insert(&mut self, idx: &StaffIdx) -> &mut Staff {
+        self.staves.entry(*idx).or_default()
     }
 
     pub fn locate_part_measure_mut(&mut self, measure_number: u32) -> Option<&mut PartMeasure> {

@@ -17,6 +17,7 @@ use crate::visual::part_measure::PartMeasure;
 use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
+#[derive(Default)]
 pub struct Page {
     pub systems: BTreeMap<u32, System>,
 
@@ -32,6 +33,10 @@ pub struct Page {
 }
 
 impl Page {
+    pub fn get_system_or_insert(&mut self, system_id: u32) -> &mut System {
+        self.systems.entry(system_id).or_default()
+    }
+
     pub fn locate_part_measure_mut(
         &mut self,
         part_id: &str,
@@ -73,10 +78,13 @@ impl ScoreElement for Page {
 
     fn _apply_layout(
         &mut self,
-        _layout: &Layout,
+        layout: &Layout,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {
+        self.margins = layout.get_margins(self.number);
+        self.width = layout.defaults.page_width;
+        self.height = layout.defaults.page_height;
         self.color = user_layout.page_color.unwrap_or(app_defaults.page_color);
         self.foreground = user_layout
             .foreground_color
@@ -149,7 +157,7 @@ impl DrawableContent for Page {
 
         let stroke_color = Color {
             a: 1.,
-            ..self.foreground
+            ..Color::RED
         };
         let stroke_width = 1.;
         let left = Line {

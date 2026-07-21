@@ -1,21 +1,15 @@
-use crate::color::Color;
-use crate::core::xy::XY;
 use crate::duration::BaseDuration;
 use crate::score::core::pitch::Pitch;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
-use crate::score::visual::page::Page;
 use crate::visitor::Visitor;
 use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
 use crate::visual::chord::Chord;
 use crate::visual::clef::Clef;
-use crate::visual::part::Part;
-use crate::visual::part_group::PartGroup;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::rest::Rest;
-use crate::visual::section::Section;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::utils::{NodeUtils, ToNumber};
 use crate::xml::walker_ctx::WalkerCtx;
@@ -73,50 +67,29 @@ impl ContentVisitor {
         }
 
         // get or create the page
-        let page = ctx
-            .visual_score
-            .pages
-            .entry(page_number)
-            .or_insert_with(|| Page {
-                number: page_number,
-                xy: XY::default(),
-                width: ctx.layout.defaults.page_width,
-                height: ctx.layout.defaults.page_height,
-                color: Color::WHITE,
-                foreground: Color::BLACK,
-                margins: ctx.layout.get_margins(page_number),
-                systems: BTreeMap::new(),
-            });
+        let page = ctx.visual_score.get_page_or_insert(page_number);
 
         // get or create the system on the page
-        let system = page.systems.entry(system_index).or_default();
+        let system = page.get_system_or_insert(system_index);
 
         // get or create the section in this system.
-        let section = system.sections.entry(section_number).or_insert_with(|| {
+        let section = system.get_section_or_insert(section_number, || {
             let bracket_top = ctx.font.bracket_top();
             let bracket_bottom = ctx.font.bracket_bottom();
-
-            let bracket = Bracket::new(bracket_top, bracket_bottom);
-            Section::new(bracket)
+            Bracket::new(bracket_top, bracket_bottom)
         });
 
         // get or create the part group in this section.
-        let part_group = section
-            .part_groups
-            .entry(part_group_number)
-            .or_insert_with(|| {
-                let brace = Brace::new(ctx.font.brace(None));
-                PartGroup::new(brace)
-            });
+        let part_group = section.part_group_or_insert(part_group_number, || {
+            let smufl_brace = ctx.font.brace(None);
+            Brace::new(smufl_brace)
+        });
 
         // get or create the part in this part group.
-        let part = part_group.parts.entry(part_id.clone()).or_insert_with(|| {
-            let brace = Brace::new(ctx.font.brace(None));
-            Part::new(brace)
-        });
-        part.ensure_staves(vec![1.into(), staff_idx].into_iter().collect());
+        let part = part_group.part_or_insert(part_id, || Brace::new(ctx.font.brace(None)));
 
-        let staff = part.staves.get_mut(&staff_idx).unwrap();
+        // get or create the staff.
+        let staff = part.staff_or_insert(&staff_idx);
 
         let staff_measure = staff.measures.entry(measure_number).or_default();
         staff_measure.rests.push(rest);
@@ -176,6 +149,13 @@ impl Visitor for ContentVisitor {
     fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        let is_rest = node.children().find(|n| n.tag_name().name() == "rest");
+
+        if let Some(rest) = is_rest {
+            self.handle_rest(node, &rest, ctx);
+            return;
+        }
+
         let staff_idx: StaffIdx = ctx.layout_ctx.staff.number;
         let position = ctx.layout_ctx.position;
         let scale = ctx
@@ -187,13 +167,6 @@ impl Visitor for ContentVisitor {
 
         let voice = ctx.layout_ctx.voice;
         let part_measure: &mut PartMeasure = self.part_measure.as_mut().unwrap();
-
-        let is_rest = node.children().find(|n| n.tag_name().name() == "rest");
-
-        if let Some(rest) = is_rest {
-            self.handle_rest(node, &rest, ctx);
-            return;
-        }
 
         // Parse default-x
         let default_x: f32 = match node.get_attribute("default-x") {
@@ -289,6 +262,7 @@ impl Visitor for ContentVisitor {
     fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
         let page_number = ctx.layout_ctx.page.page_number;
         let system_index = ctx.layout_ctx.system.index;
+        let _staff_idx = ctx.layout_ctx.staff.number;
         let measure_number = ctx.layout_ctx.measure.number;
 
         let part_id = ctx.layout_ctx.part_id.clone();
@@ -302,23 +276,10 @@ impl Visitor for ContentVisitor {
         let part_measure = self.part_measure.take().unwrap();
 
         // get or create the page
-        let page = ctx
-            .visual_score
-            .pages
-            .entry(page_number)
-            .or_insert_with(|| Page {
-                number: page_number,
-                xy: XY::default(),
-                width: ctx.layout.defaults.page_width,
-                height: ctx.layout.defaults.page_height,
-                color: Color::WHITE,
-                foreground: Color::BLACK,
-                margins: ctx.layout.get_margins(page_number),
-                systems: BTreeMap::new(),
-            });
+        let page = ctx.visual_score.get_page_or_insert(page_number);
 
         // get or create the system on the page
-        let system = page.systems.entry(system_index).or_default();
+        let system = page.get_system_or_insert(system_index);
         system.m_left = ctx.layout_ctx.system.margin_left.unwrap_or(system.m_left);
         system.m_right = ctx.layout_ctx.system.margin_right.unwrap_or(system.m_right);
         system.distance = ctx.layout_ctx.system.distance.unwrap_or(system.distance);
@@ -328,31 +289,21 @@ impl Visitor for ContentVisitor {
         system_measure.init_width(ctx.layout_ctx.measure.width);
 
         // get or create the section in this system.
-        let section = system.sections.entry(section_number).or_insert_with(|| {
+        let section = system.get_section_or_insert(section_number, || {
             let bracket_top = ctx.font.bracket_top();
             let bracket_bottom = ctx.font.bracket_bottom();
-
-            let bracket = Bracket::new(bracket_top, bracket_bottom);
-            Section::new(bracket)
+            Bracket::new(bracket_top, bracket_bottom)
         });
-        let _ = section.measures.entry(measure_number).or_default();
 
         // get or create the part group in this section.
-        let part_group = section
-            .part_groups
-            .entry(part_group_number)
-            .or_insert_with(|| {
-                let brace = Brace::new(ctx.font.brace(None));
-                PartGroup::new(brace)
-            });
-        let _ = part_group.measures.entry(measure_number).or_default();
+        let part_group = section.part_group_or_insert(part_group_number, || {
+            let smufl_brace = ctx.font.brace(None);
+            Brace::new(smufl_brace)
+        });
 
         // get or create the part in this part group.
-        let part = part_group.parts.entry(part_id.clone()).or_insert_with(|| {
-            let brace = Brace::new(ctx.font.brace(None));
-            Part::new(brace)
-        });
-        part.ensure_staves(vec![1.into()].into_iter().collect());
+        let part = part_group.part_or_insert(part_id, || Brace::new(ctx.font.brace(None)));
+
         for chord in part_measure.chords.iter().flat_map(|c| c.1) {
             let notes: HashSet<StaffIdx> = chord.notes.iter().map(|n| n.staff).collect();
             part.ensure_staves(notes);
@@ -374,9 +325,7 @@ impl Visitor for ContentVisitor {
 
         part.measures.insert(measure_number, part_measure);
 
-        for (_, staff) in part.staves.iter_mut() {
-            staff.measures.entry(measure_number).or_default();
-        }
+        system.consolidate_measure_widths();
     }
 
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}

@@ -12,6 +12,7 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::user_layout::UserLayout;
+use crate::visual::bracket::Bracket;
 use crate::visual::element::ScoreElement;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::staff::Staff;
@@ -38,6 +39,17 @@ pub struct System {
 }
 
 impl System {
+    pub fn get_section_or_insert<F: FnOnce() -> Bracket>(
+        &mut self,
+        section_id: u32,
+        bracket_factory: F,
+    ) -> &mut Section {
+        self.sections.entry(section_id).or_insert_with(|| {
+            let brace = bracket_factory();
+            Section::new(brace)
+        })
+    }
+
     pub fn locate_part_measure_mut(
         &mut self,
         part_id: &str,
@@ -69,24 +81,24 @@ impl System {
         })
     }
 
-    fn consolidate_measure_widths(&mut self) {
+    pub fn consolidate_measure_widths(&mut self) {
         for (idx, measure) in self.measures.iter_mut() {
             let width = measure.width;
 
             for (_, section) in self.sections.iter_mut() {
-                let measure = section.measures.get_mut(idx).unwrap();
+                let measure = section.measures.entry(*idx).or_default();
                 measure.width = width;
 
                 for (_, part_group) in section.part_groups.iter_mut() {
-                    let measure = part_group.measures.get_mut(idx).unwrap();
+                    let measure = part_group.measures.entry(*idx).or_default();
                     measure.width = width;
 
                     for (_, part) in part_group.parts.iter_mut() {
-                        let measure = part.measures.get_mut(idx).unwrap();
+                        let measure = part.measures.entry(*idx).or_default();
                         measure.width = width;
 
                         for (_, staff) in part.staves.iter_mut() {
-                            let measure = staff.measures.get_mut(idx).unwrap();
+                            let measure = staff.measures.entry(*idx).or_default();
                             measure.width = width;
                         }
                     }

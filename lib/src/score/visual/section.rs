@@ -6,6 +6,7 @@ use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::section_measure::SectionMeasure;
+use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
 use crate::visual::element::ScoreElement;
 use crate::visual::part_measure::PartMeasure;
@@ -26,15 +27,26 @@ pub struct Section {
 impl Section {
     pub fn new(bracket: Bracket) -> Section {
         Section {
+            bracket,
+
             xy: Default::default(),
             width: Default::default(),
             height: Default::default(),
 
             part_groups: Default::default(),
             measures: Default::default(),
-
-            bracket,
         }
+    }
+
+    pub fn part_group_or_insert<F: FnOnce() -> Brace>(
+        &mut self,
+        part_group_id: u32,
+        factory: F,
+    ) -> &mut PartGroup {
+        self.part_groups.entry(part_group_id).or_insert_with(|| {
+            let brace = factory();
+            PartGroup::new(brace)
+        })
     }
 }
 

@@ -26,7 +26,7 @@ impl SmuflGlyph for BracketTop {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct BracketBottom {
     pub codepoint: char,
     pub thickness: f32,

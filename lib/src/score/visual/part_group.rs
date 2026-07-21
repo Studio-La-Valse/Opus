@@ -37,9 +37,18 @@ impl PartGroup {
             brace,
         }
     }
-}
 
-impl PartGroup {
+    pub fn part_or_insert<F: FnOnce() -> Brace>(
+        &mut self,
+        part_id: String,
+        factory: F,
+    ) -> &mut Part {
+        self.parts.entry(part_id.clone()).or_insert_with(|| {
+            let brace = factory();
+            Part::new(brace)
+        })
+    }
+
     pub fn locate_part_measure_mut(
         &mut self,
         part_id: &str,

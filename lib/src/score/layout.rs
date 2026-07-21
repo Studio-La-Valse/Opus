@@ -92,6 +92,22 @@ pub struct Layout {
     pub sections: BTreeMap<u32, Section>,
 }
 
+impl Layout {
+    pub fn get_margins(&self, page_number: u32) -> PageMargins {
+        let is_even = page_number.is_multiple_of(2);
+
+        if is_even {
+            self.page_margins_even
+                .or(self.page_margins_both)
+                .unwrap_or_default()
+        } else {
+            self.page_margins_odd
+                .or(self.page_margins_both)
+                .unwrap_or_default()
+        }
+    }
+}
+
 impl Default for Layout {
     fn default() -> Layout {
         Layout {
@@ -112,22 +128,6 @@ impl Default for Layout {
 
             parts: BTreeMap::new(),
             sections: BTreeMap::new(),
-        }
-    }
-}
-
-impl Layout {
-    pub fn get_margins(&self, page_number: u32) -> PageMargins {
-        let is_even = page_number.is_multiple_of(2);
-
-        if is_even {
-            self.page_margins_even
-                .or(self.page_margins_both)
-                .unwrap_or_default()
-        } else {
-            self.page_margins_odd
-                .or(self.page_margins_both)
-                .unwrap_or_default()
         }
     }
 }

@@ -16,6 +16,10 @@ pub struct Score {
 }
 
 impl Score {
+    pub fn get_page_or_insert(&mut self, page_number: u32) -> &mut Page {
+        self.pages.entry(page_number).or_default()
+    }
+
     pub fn locate_part_measure_mut(
         &mut self,
         part_id: &str,
@@ -48,8 +52,8 @@ impl ScoreElement for Score {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
-        for (_idx, staff) in self.pages.iter_mut() {
-            result.push(staff);
+        for (_idx, page) in self.pages.iter_mut() {
+            result.push(page);
         }
 
         result
