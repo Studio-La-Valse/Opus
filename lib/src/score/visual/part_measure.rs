@@ -15,7 +15,6 @@ use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
 use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
-use crate::visual::rest::Rest;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::stem::{BeamType, Stem, UpDown};
@@ -36,7 +35,6 @@ pub struct PartMeasure {
     pub chords: BTreeMap<Voice, Vec<Chord>>,
     pub beams: Vec<Polygon>,
     pub legers: Vec<Line>,
-    pub rests: Vec<Rest>,
 
     pub color: Color,
 
@@ -70,7 +68,6 @@ impl PartMeasure {
         self.arrange_chords(staff_ctx);
         self.arrange_legers(staff_ctx);
         self.arrange_beams();
-        self.arrange_rests(staff_ctx);
     }
 
     fn arrange_chords(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
@@ -209,20 +206,6 @@ impl PartMeasure {
             }
         }
     }
-    fn arrange_rests(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
-        for rest in self.rests.iter_mut() {
-            let staff_ctx = staff_ctx.get(&rest.staff).unwrap();
-
-            let dx: f32 = if rest.is_measure {
-                self.width / 2.
-            } else {
-                rest.default_x.unwrap()
-            };
-
-            let glyph_origin = self.origin.mv(dx, 0.);
-            rest.arrange_ctx(&glyph_origin, staff_ctx);
-        }
-    }
 }
 
 impl ScoreElement for PartMeasure {
@@ -230,9 +213,6 @@ impl ScoreElement for PartMeasure {
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
         for chord in self.chords.values_mut().flatten() {
             result.push(chord);
-        }
-        for rest in self.rests.iter_mut() {
-            result.push(rest);
         }
         result
     }
@@ -276,10 +256,6 @@ impl Layoutable for PartMeasure {
         for chord in self.chords.values_mut().flatten() {
             chord.measure(available);
         }
-
-        for rest in self.rests.iter_mut() {
-            rest.measure(available);
-        }
     }
 
     fn arrange(&mut self, _origin: &XY) {
@@ -292,9 +268,6 @@ impl DrawableContent for PartMeasure {
         let mut result: Vec<&dyn DrawableContent> = Vec::new();
         for chord in self.chords.values().flatten() {
             result.push(chord);
-        }
-        for rest in self.rests.iter() {
-            result.push(rest);
         }
         result
     }

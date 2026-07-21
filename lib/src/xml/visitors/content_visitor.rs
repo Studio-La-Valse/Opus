@@ -28,7 +28,100 @@ pub struct ContentVisitor {
     pub clef_change: HashMap<StaffIdx, Clef>,
 }
 
-impl ContentVisitor {}
+impl ContentVisitor {
+    fn handle_rest(&mut self, note_node: &Node, rest_node: &Node, ctx: &mut WalkerCtx) {
+        let page_number = ctx.layout_ctx.page.page_number;
+        let system_index = ctx.layout_ctx.system.index;
+        let staff_idx = ctx.layout_ctx.staff.number;
+        let measure_number = ctx.layout_ctx.measure.number;
+
+        let part_id = ctx.layout_ctx.part_id.clone();
+        let part = ctx.layout.parts.get(&part_id).unwrap();
+        let section_number = part.section;
+        let part_group_number = part.part_group;
+        let section = ctx.layout.sections.entry(section_number).or_default();
+        let _part_group = section.groups.entry(part_group_number).or_default();
+
+        let scale = ctx
+            .layout_ctx
+            .staff
+            .staff_scaling
+            .get(&staff_idx)
+            .unwrap_or(&1.);
+
+        let is_measure = rest_node
+            .attribute("measure")
+            .map(|attr| attr == "yes")
+            .unwrap_or(false);
+
+        let mut rest = if is_measure {
+            let notehead = duration_to_rest(&BaseDuration::Whole);
+            let glyph = ctx.font.rest(notehead);
+            Rest::new(glyph, is_measure, None, staff_idx, 4, *scale)
+        } else {
+            let type_str = note_node.req_child("type");
+            let dur = type_to_duration(type_str.req_text());
+            let notehead = duration_to_rest(&dur);
+            let glyph = ctx.font.rest(notehead);
+
+            let default_x: f32 = note_node.req_attribute("default-x").req_f32();
+            Rest::new(glyph, is_measure, Some(default_x), staff_idx, 4, *scale)
+        };
+
+        for (_staff_idx, clef_change) in self.clef_change.drain() {
+            rest.clef_change = Some(clef_change);
+        }
+
+        // get or create the page
+        let page = ctx
+            .visual_score
+            .pages
+            .entry(page_number)
+            .or_insert_with(|| Page {
+                number: page_number,
+                xy: XY::default(),
+                width: ctx.layout.defaults.page_width,
+                height: ctx.layout.defaults.page_height,
+                color: Color::WHITE,
+                foreground: Color::BLACK,
+                margins: ctx.layout.get_margins(page_number),
+                systems: BTreeMap::new(),
+            });
+
+        // get or create the system on the page
+        let system = page.systems.entry(system_index).or_default();
+
+        // get or create the section in this system.
+        let section = system.sections.entry(section_number).or_insert_with(|| {
+            let bracket_top = ctx.font.bracket_top();
+            let bracket_bottom = ctx.font.bracket_bottom();
+
+            let bracket = Bracket::new(bracket_top, bracket_bottom);
+            Section::new(bracket)
+        });
+
+        // get or create the part group in this section.
+        let part_group = section
+            .part_groups
+            .entry(part_group_number)
+            .or_insert_with(|| {
+                let brace = Brace::new(ctx.font.brace(None));
+                PartGroup::new(brace)
+            });
+
+        // get or create the part in this part group.
+        let part = part_group.parts.entry(part_id.clone()).or_insert_with(|| {
+            let brace = Brace::new(ctx.font.brace(None));
+            Part::new(brace)
+        });
+        part.ensure_staves(vec![1.into(), staff_idx].into_iter().collect());
+
+        let staff = part.staves.get_mut(&staff_idx).unwrap();
+
+        let staff_measure = staff.measures.entry(measure_number).or_default();
+        staff_measure.rests.push(rest);
+    }
+}
 
 impl Visitor for ContentVisitor {
     fn enter(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
@@ -98,30 +191,7 @@ impl Visitor for ContentVisitor {
         let is_rest = node.children().find(|n| n.tag_name().name() == "rest");
 
         if let Some(rest) = is_rest {
-            let is_measure = rest
-                .attribute("measure")
-                .map(|attr| attr == "yes")
-                .unwrap_or(false);
-
-            let mut rest = if is_measure {
-                let notehead = duration_to_rest(&BaseDuration::Whole);
-                let glyph = ctx.font.rest(notehead);
-                Rest::new(glyph, is_measure, None, staff_idx, 4, *scale)
-            } else {
-                let type_str = node.req_child("type");
-                let dur = type_to_duration(type_str.req_text());
-                let notehead = duration_to_rest(&dur);
-                let glyph = ctx.font.rest(notehead);
-
-                let default_x: f32 = node.req_attribute("default-x").req_f32();
-                Rest::new(glyph, is_measure, Some(default_x), staff_idx, 4, *scale)
-            };
-
-            for (_staff_idx, clef_change) in self.clef_change.drain() {
-                rest.clef_change = Some(clef_change);
-            }
-
-            part_measure.rests.push(rest);
+            self.handle_rest(node, &rest, ctx);
             return;
         }
 

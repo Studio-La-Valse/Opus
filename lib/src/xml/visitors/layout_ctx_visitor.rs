@@ -44,14 +44,16 @@ impl Visitor for LayoutContextVisitor {
 
         // Reset clef changes and assign the currently tracked clefs to position 0 (the beginning of the measure).
         ctx.layout_ctx.staff.clef_changes.clear();
-        // for (staff_idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
-        //     ctx.layout_ctx
-        //         .staff
-        //         .clef_changes
-        //         .entry(*staff_idx)
-        //         .or_default()
-        //         .insert(0, *clef);
-        // }
+        // setting the currently tracked clefs to the implicit clef changes at the start of the measure
+        // required t correctly track clef across position.
+        for (staff_idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
+            ctx.layout_ctx
+                .staff
+                .clef_changes
+                .entry(*staff_idx)
+                .or_default()
+                .insert(0, *clef);
+        }
 
         ctx.layout_ctx.position = 0;
 

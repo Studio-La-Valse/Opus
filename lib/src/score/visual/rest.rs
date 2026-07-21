@@ -66,7 +66,7 @@ impl Rest {
         }
     }
 
-    /// here, origin is the origin of the part measure, so adjust y coordinate for staff distance.
+    /// here, origin is the origin of the staff measure, so adjust y coordinate for staff distance.
     pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
         self.arrange_glyph(origin, staff_ctx);
         self.arrange_clef_changes(origin, staff_ctx);

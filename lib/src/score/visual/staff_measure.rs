@@ -4,7 +4,9 @@ use crate::drawable::drawable_element::DrawableElement;
 use crate::score::visual::layoutable::Layoutable;
 use crate::visual::clef::Clef;
 use crate::visual::element::ScoreElement;
+use crate::visual::rest::Rest;
 use crate::visual::staff::Staff;
+use crate::visual::staff_ctx::StaffCtx;
 
 #[derive(Default)]
 pub struct StaffMeasure {
@@ -14,6 +16,7 @@ pub struct StaffMeasure {
 
     pub scale: f32,
 
+    pub rests: Vec<Rest>,
     pub prepare_clef_change: Option<Clef>,
 }
 
@@ -33,6 +36,23 @@ impl StaffMeasure {
             clef.scale = self.scale * 0.8;
         }
     }
+    fn arrange_rests(&mut self) {
+        let staff_ctx = StaffCtx {
+            hidden: false,
+            distance_from_top: 0.,
+            scaling: self.scale,
+        };
+        for rest in self.rests.iter_mut() {
+            let dx: f32 = if rest.is_measure {
+                self.width / 2.
+            } else {
+                rest.default_x.unwrap()
+            };
+
+            let glyph_origin = self.xy.mv(dx, 0.);
+            rest.arrange_ctx(&glyph_origin, &staff_ctx);
+        }
+    }
 }
 
 impl ScoreElement for StaffMeasure {
@@ -43,6 +63,10 @@ impl ScoreElement for StaffMeasure {
             res.push(clef);
         }
 
+        for rest in self.rests.iter_mut() {
+            res.push(rest);
+        }
+
         res
     }
 }
@@ -50,12 +74,17 @@ impl ScoreElement for StaffMeasure {
 impl Layoutable for StaffMeasure {
     fn measure(&mut self, available: &XY) {
         self.height = available.y;
+
+        for rest in self.rests.iter_mut() {
+            rest.measure(available);
+        }
     }
 
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
         self.arrange_clef();
+        self.arrange_rests();
     }
 }
 
@@ -65,6 +94,10 @@ impl DrawableContent for StaffMeasure {
 
         if let Some(ref clef) = self.prepare_clef_change {
             result.push(clef);
+        }
+
+        for rest in self.rests.iter() {
+            result.push(rest);
         }
 
         result
