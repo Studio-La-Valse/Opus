@@ -28,13 +28,48 @@ pub struct SystemInfo {
 #[derive(Clone)]
 pub struct StaffInfo {
     pub number: u32,
-    pub distances: BTreeMap<StaffIdx, f32>,
     pub visibility: Visibility,
+
     pub explicitly_hidden: HashSet<StaffIdx>,
     pub explicitly_shown: HashSet<StaffIdx>,
+
+    pub distances: BTreeMap<StaffIdx, f32>,
     pub staff_scaling: BTreeMap<StaffIdx, f32>,
     pub content_scaling: BTreeMap<StaffIdx, f32>,
-    pub clef: BTreeMap<StaffIdx, Clef>,
+
+    /// Currently active clef, tracked across one part across staves.
+    pub active_clef: BTreeMap<StaffIdx, Clef>,
+
+    /// The opening clefs for each staff in this part in a system, reset on each new system.
+    pub opening_clef: BTreeMap<StaffIdx, Clef>,
+
+    /// The clef changes for each staff in this part in a single part measure.
+    pub clef_changes: BTreeMap<StaffIdx, BTreeMap<u32, Clef>>,
+}
+
+impl StaffInfo {
+    pub fn active_clef(&self, staff_idx: &StaffIdx, position: &u32) -> Clef {
+        if let Some(clef_changes) = self.clef_changes.get(staff_idx) {
+            let mut clef: Option<Clef> = None;
+            for (clef_pos, clef_change) in clef_changes.iter() {
+                if clef_pos > position {
+                    break;
+                }
+
+                clef = Some(*clef_change);
+            }
+
+            if let Some(clef) = clef {
+                return clef;
+            }
+        };
+
+        if let Some(opening_clef) = self.opening_clef.get(staff_idx) {
+            return *opening_clef;
+        }
+
+        Clef::Treble
+    }
 }
 
 #[derive(Clone)]
@@ -81,7 +116,8 @@ impl LayoutCtx {
         self.staff.explicitly_shown.clear();
         self.staff.staff_scaling.clear();
         self.staff.content_scaling.clear();
-        self.staff.clef.clear();
+        self.staff.active_clef.clear();
+        self.staff.opening_clef.clear();
 
         self.divisions = 8; // specifies the amounts of divisions in one beat (so in one 1/beat_type)
         self.beats = 4;
@@ -113,7 +149,9 @@ impl Default for LayoutCtx {
                 explicitly_shown: HashSet::new(),
                 staff_scaling: BTreeMap::new(),
                 content_scaling: BTreeMap::new(),
-                clef: BTreeMap::new(),
+                active_clef: BTreeMap::new(),
+                opening_clef: BTreeMap::new(),
+                clef_changes: BTreeMap::new(),
             },
             measure: MeasureInfo {
                 number: 0,

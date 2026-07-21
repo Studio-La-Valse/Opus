@@ -37,7 +37,18 @@ impl<V: Visitor> Walker<V> {
                             for child in child.children().filter(|n| n.is_element()) {
                                 match child.tag_name().name() {
                                     "print" => self.visitor.enter_print(&child, ctx),
-                                    "attributes" => self.visitor.enter_attributes(&child, ctx),
+                                    "attributes" => {
+                                        self.visitor.enter_attributes(&child, ctx);
+                                        for child in child.children().filter(|n| n.is_element()) {
+                                            match child.tag_name().name() {
+                                                "clef" => self.visitor.enter_clef(&child, ctx),
+                                                "staff-details" => {
+                                                    self.visitor.enter_staff_details(&child, ctx)
+                                                }
+                                                _ => {}
+                                            }
+                                        }
+                                    }
                                     "note" => {
                                         self.visitor.enter_note(&child, ctx);
                                         self.visitor.exit_note(ctx);

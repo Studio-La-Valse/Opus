@@ -6,11 +6,11 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
 use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
-use crate::smufl::glyphs::clef::Clef;
 use crate::visitor::Visitor;
 use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
 use crate::visual::chord::Chord;
+use crate::visual::clef::Clef;
 use crate::visual::part::Part;
 use crate::visual::part_group::PartGroup;
 use crate::visual::part_measure::PartMeasure;
@@ -19,11 +19,13 @@ use crate::visual::section::Section;
 use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::utils::{NodeUtils, ToNumber};
 use crate::xml::walker_ctx::WalkerCtx;
+
 use roxmltree::Node;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 pub struct ContentVisitor {
     pub part_measure: Option<PartMeasure>,
+    pub clef_change: HashMap<StaffIdx, Clef>,
 }
 
 impl ContentVisitor {}
@@ -49,7 +51,23 @@ impl Visitor for ContentVisitor {
 
     fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+    fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
+        if ctx.layout_ctx.position == 0 {
+            // If first measur of system, we can safely ignore.
+
+            // otherwise, draw left of measure bar, so anchor to part measure.
+            return;
+        }
+
+        // Mid-measure: Anchor to a chord or rest. Store in self for now
+        let staff_idx: StaffIdx = ctx.layout_ctx.staff.number.into();
+
+        let clef = ctx.layout_ctx.staff.active_clef.get(&staff_idx).unwrap();
+        let smufl_clef = ctx.font.clef(clef);
+        let visual_clef = Clef::new(smufl_clef);
+
+        self.clef_change.insert(staff_idx, visual_clef);
+    }
 
     fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
@@ -58,12 +76,13 @@ impl Visitor for ContentVisitor {
     fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
-        let staff: StaffIdx = ctx.layout_ctx.staff.number.into();
+        let staff_idx: StaffIdx = ctx.layout_ctx.staff.number.into();
+        let position = ctx.layout_ctx.position;
         let scale = ctx
             .layout_ctx
             .staff
             .staff_scaling
-            .get(&staff)
+            .get(&staff_idx)
             .unwrap_or(&1.);
 
         let voice = ctx.layout_ctx.voice;
@@ -77,10 +96,10 @@ impl Visitor for ContentVisitor {
                 .map(|attr| attr == "yes")
                 .unwrap_or(false);
 
-            let rest = if is_measure {
+            let mut rest = if is_measure {
                 let notehead = duration_to_rest(&BaseDuration::Whole);
                 let glyph = ctx.font.rest(notehead);
-                Rest::new(glyph, is_measure, None, staff, 4, *scale)
+                Rest::new(glyph, is_measure, None, staff_idx, 4, *scale)
             } else {
                 let type_str = node.req_child("type");
                 let dur = type_to_duration(type_str.req_text());
@@ -88,8 +107,12 @@ impl Visitor for ContentVisitor {
                 let glyph = ctx.font.rest(notehead);
 
                 let default_x: f32 = node.req_attribute("default-x").req_f32();
-                Rest::new(glyph, is_measure, Some(default_x), staff, 4, *scale)
+                Rest::new(glyph, is_measure, Some(default_x), staff_idx, 4, *scale)
             };
+
+            for (staff_idx, clef_change) in self.clef_change.drain() {
+                rest.clef_change = Some(clef_change);
+            }
 
             part_measure.rests.push(rest);
             return;
@@ -126,7 +149,7 @@ impl Visitor for ContentVisitor {
         // Build note
         let pitch = Pitch { step, octave };
 
-        let clef = ctx.layout_ctx.staff.clef.get(&staff).unwrap();
+        let clef = ctx.layout_ctx.staff.active_clef(&staff_idx, &position);
         let staff_line = clef.line_index_at_pitch(&pitch);
         let type_str = node.req_child("type");
 
@@ -135,7 +158,7 @@ impl Visitor for ContentVisitor {
 
         let glyph = ctx.font.notehead(notehead);
 
-        let note = Note::new(glyph, default_x, staff, staff_line, *scale);
+        let note = Note::new(glyph, default_x, staff_idx, staff_line, *scale);
         let is_chord_node = node.children().any(|n| n.tag_name().name() == "chord");
 
         let chords = part_measure.chords.entry(voice).or_default();
@@ -156,7 +179,7 @@ impl Visitor for ContentVisitor {
             };
             let stem = chord
                 .stem
-                .get_or_insert_with(|| Stem::new(dir, dur, staff, *scale, default_y));
+                .get_or_insert_with(|| Stem::new(dir, dur, staff_idx, *scale, default_y));
 
             let beams: Vec<Node> = node
                 .children()
@@ -177,7 +200,11 @@ impl Visitor for ContentVisitor {
             }
         }
 
-        chord.notes.push(note)
+        chord.notes.push(note);
+
+        for (staff_idx, clef_change) in self.clef_change.drain() {
+            chord.clef_change.insert(staff_idx, clef_change);
+        }
     }
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
@@ -259,10 +286,12 @@ impl Visitor for ContentVisitor {
         part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
 
         let mut clefs: BTreeMap<StaffIdx, Clef> = BTreeMap::new();
-        for (idx, clef) in ctx.layout_ctx.staff.clef.iter() {
-            clefs.insert(*idx, ctx.font.clef(clef));
+        for (idx, clef) in ctx.layout_ctx.staff.opening_clef.iter() {
+            let smufl_clef = ctx.font.clef(clef);
+            let drawable_clef = Clef::new(smufl_clef);
+            clefs.insert(*idx, drawable_clef);
         }
-        part.set_opening_clef(&clefs);
+        part.set_opening_clef(clefs);
 
         part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
 

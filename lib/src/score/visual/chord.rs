@@ -7,8 +7,10 @@ use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
+use crate::visual::clef::Clef;
 use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
+use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
@@ -22,6 +24,8 @@ pub struct Chord {
     pub stem: Option<Stem>,
 
     pub color: Color,
+
+    pub clef_change: BTreeMap<StaffIdx, Clef>,
 }
 
 impl Chord {
@@ -31,6 +35,7 @@ impl Chord {
 
         self.arrange_notes(staff_ctx);
         self.arrange_stem(staff_ctx);
+        self.arrange_clef_changes(staff_ctx);
     }
 
     fn arrange_notes(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
@@ -93,6 +98,22 @@ impl Chord {
             stem.length = length;
         }
     }
+
+    pub fn arrange_clef_changes(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        for (staff_idx, clef) in self.clef_change.iter_mut() {
+            let ctx = staff_ctx.get(staff_idx).unwrap();
+
+            let dx = -5. + self.notes.first().unwrap().default_x - clef.width;
+            let dy = ctx.distance_from_top
+                + Staff::DEFAULT_SPACE_SIZE / 2. * clef.clef.line as f32 * ctx.scaling;
+
+            let origin = self.xy.mv(dx, dy);
+
+            clef.arrange(&origin);
+
+            clef.scale = ctx.scaling * 0.8;
+        }
+    }
 }
 
 impl ScoreElement for Chord {
@@ -105,6 +126,10 @@ impl ScoreElement for Chord {
 
         if let Some(stem) = self.stem.as_mut() {
             children.push(stem);
+        }
+
+        for clef in self.clef_change.values_mut() {
+            children.push(clef);
         }
 
         children
@@ -131,6 +156,10 @@ impl Layoutable for Chord {
         if let Some(stem) = self.stem.as_mut() {
             stem.measure(available);
         }
+
+        for clef in self.clef_change.values_mut() {
+            clef.measure(available);
+        }
     }
 
     /// here, origin is the origin of the part measure.
@@ -149,6 +178,10 @@ impl DrawableContent for Chord {
 
         if let Some(stem) = self.stem.as_ref() {
             result.push(stem);
+        }
+
+        for clef in self.clef_change.values() {
+            result.push(clef);
         }
 
         result

@@ -73,7 +73,10 @@ fn main() {
     let visitor = DefaultVisitor {}
         .add_callback(LayoutVisitor {})
         .add_callback(LayoutContextVisitor {})
-        .add_callback(ContentVisitor { part_measure: None });
+        .add_callback(ContentVisitor {
+            part_measure: None,
+            clef_change: Default::default(),
+        });
 
     let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual, &font);
 

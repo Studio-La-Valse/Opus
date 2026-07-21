@@ -7,8 +7,8 @@ use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
-use crate::smufl::glyphs::clef::Clef;
 use crate::visual::brace::Brace;
+use crate::visual::clef::Clef;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff_ctx::StaffCtx;
 use std::collections::{BTreeMap, HashSet};
@@ -96,10 +96,10 @@ impl Part {
         }
     }
 
-    pub fn set_opening_clef(&mut self, clefs: &BTreeMap<StaffIdx, Clef>) {
-        for (idx, clef) in clefs.iter() {
-            let staff = self.staves.entry(*idx).or_default();
-            staff.clef = Some(crate::score::visual::clef::Clef::new(clef.clone()));
+    pub fn set_opening_clef(&mut self, clefs: BTreeMap<StaffIdx, Clef>) {
+        for (idx, clef) in clefs {
+            let staff = self.staves.entry(idx).or_default();
+            staff.clef = Some(clef);
         }
     }
 

@@ -12,9 +12,11 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
+use crate::visual::clef::Clef;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
+use std::collections::BTreeMap;
 
 pub struct Rest {
     pub xy: XY,
@@ -32,6 +34,8 @@ pub struct Rest {
     pub color: Color,
 
     pub glyph: SmuflRest,
+
+    pub clef_change: Option<Clef>,
 }
 
 impl Rest {
@@ -58,17 +62,38 @@ impl Rest {
             height: f32::default(),
 
             color: Color::default(),
+
+            clef_change: None,
         }
     }
 
-    /// here, origin is the origin of glyph, as opposed to how a note is arranged.
+    /// here, origin is the origin of the part measure, so adjust y coordinate for staff distance.
     pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
+        self.arrange_glyph(origin, staff_ctx);
+        self.arrange_clef_changes(origin, staff_ctx);
+    }
+
+    pub fn arrange_glyph(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
         let mut dy = staff_ctx.distance_from_top;
         dy += self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling);
         self.xy = XY {
             x: origin.x,
             y: origin.y + dy,
         };
+    }
+
+    pub fn arrange_clef_changes(&mut self, origin: &XY, ctx: &StaffCtx) {
+        if let Some(ref mut clef) = self.clef_change {
+            let dx = -5. - clef.width;
+            let dy = ctx.distance_from_top
+                + clef.clef.line as f32 * Staff::DEFAULT_SPACE_SIZE / 2. * ctx.scaling;
+
+            let origin = origin.mv(dx, dy);
+
+            clef.arrange(&origin);
+
+            clef.scale = ctx.scaling * 0.8;
+        }
     }
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
@@ -104,7 +129,12 @@ impl Rest {
 
 impl ScoreElement for Rest {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let children: Vec<&mut dyn ScoreElement> = Vec::new();
+        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        if let Some(clef) = self.clef_change.as_mut() {
+            children.push(clef)
+        }
+
         children
     }
 
@@ -127,6 +157,10 @@ impl Layoutable for Rest {
         let glyph = &self.glyph;
         let bbox = self.scale_box(&glyph.bbox);
 
+        if let Some(clef) = self.clef_change.as_mut() {
+            clef.measure(_available);
+        }
+
         self.width = bbox.width();
     }
 
@@ -137,7 +171,12 @@ impl Layoutable for Rest {
 
 impl DrawableContent for Rest {
     fn content(&self) -> Vec<&dyn DrawableContent> {
-        let content: Vec<&dyn DrawableContent> = Vec::new();
+        let mut content: Vec<&dyn DrawableContent> = Vec::new();
+
+        if let Some(ref clef) = self.clef_change {
+            content.push(clef)
+        }
+
         content
     }
 

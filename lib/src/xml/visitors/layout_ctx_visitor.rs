@@ -42,6 +42,17 @@ impl Visitor for LayoutContextVisitor {
         ctx.layout_ctx.system.distance = None;
         ctx.layout_ctx.system.distance_top = None;
 
+        // Reset clef changes and assign the currently tracked clefs to position 0 (the beginning of the measure).
+        ctx.layout_ctx.staff.clef_changes.clear();
+        for (staff_idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
+            ctx.layout_ctx
+                .staff
+                .clef_changes
+                .entry(*staff_idx)
+                .or_default()
+                .insert(0, *clef);
+        }
+
         ctx.layout_ctx.position = 0;
     }
 
@@ -64,6 +75,12 @@ impl Visitor for LayoutContextVisitor {
 
         if new_system {
             ctx.layout_ctx.system.index += 1;
+
+            // clear the opening clefs for the staves, set the opening to the current clefs.
+            ctx.layout_ctx.staff.opening_clef.clear();
+            for (idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
+                ctx.layout_ctx.staff.opening_clef.insert(*idx, *clef);
+            }
         }
 
         // system-layout
@@ -114,8 +131,8 @@ impl Visitor for LayoutContextVisitor {
             }
         }
 
+        // staff layout
         ctx.layout_ctx.staff.distances.clear();
-
         for staff_layout in element
             .children()
             .filter(|n| n.has_tag_name("staff-layout"))
@@ -148,14 +165,6 @@ impl Visitor for LayoutContextVisitor {
                     }
                 }
             }
-
-            if node.has_tag_name("staff-details") {
-                self.enter_staff_details(&node, ctx);
-            }
-
-            if node.has_tag_name("clef") {
-                self.enter_clef(&node, ctx);
-            }
         }
     }
 
@@ -170,7 +179,24 @@ impl Visitor for LayoutContextVisitor {
         let line = element.get_child("line").map(|l| l.req_i32());
 
         let clef = Clef::from_mxml(sign, line).unwrap();
-        ctx.layout_ctx.staff.clef.insert(staff, clef);
+        // always track the active clef.
+        ctx.layout_ctx.staff.active_clef.insert(staff, clef);
+
+        // every clef encounter is registered as a clef change.
+        let position = ctx.layout_ctx.position;
+        ctx.layout_ctx
+            .staff
+            .clef_changes
+            .entry(staff)
+            .or_default()
+            .insert(position, clef);
+
+        // If no opening clef has been specified to the current staff, apply this clef.
+        ctx.layout_ctx
+            .staff
+            .opening_clef
+            .entry(staff)
+            .or_insert_with(|| clef);
     }
 
     fn enter_staff_details(&mut self, element: &Node, ctx: &mut WalkerCtx) {

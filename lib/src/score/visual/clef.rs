@@ -3,6 +3,7 @@ use crate::color::Color;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::layout::Layout;
+use crate::smufl::glyphs::clef::Clef as SmuflClef;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::element::ScoreElement;
@@ -11,10 +12,13 @@ use crate::xy::XY;
 
 pub struct Clef {
     pub xy: XY,
+    pub width: f32,
+    pub height: f32,
+
     pub color: Color,
     pub scale: f32,
 
-    pub clef: crate::smufl::glyphs::clef::Clef,
+    pub clef: SmuflClef,
 }
 
 impl Clef {
@@ -23,6 +27,9 @@ impl Clef {
             xy: Default::default(),
             color: Color::BLACK,
             scale: 1.,
+
+            width: 26.5, // TODO: MEASURE FROM META BBOXES
+            height: 15., // TODO: MEASURE FROM META BBOXES
 
             clef,
         }
