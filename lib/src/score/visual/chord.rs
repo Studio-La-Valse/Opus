@@ -138,12 +138,12 @@ impl ScoreElement for Chord {
     fn _apply_layout(
         &mut self,
         _layout: &Layout,
-        _user_layout: &UserLayout,
-        _app_defaults: &AppDefaults,
+        user_layout: &UserLayout,
+        app_defaults: &AppDefaults,
     ) {
-        self.color = _user_layout
+        self.color = user_layout
             .foreground_color
-            .unwrap_or(_app_defaults.foreground_color);
+            .unwrap_or(app_defaults.foreground_color);
     }
 }
 
