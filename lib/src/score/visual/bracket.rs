@@ -3,12 +3,12 @@ use crate::color::Color;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::rect::Rect;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
-use crate::visual::element::ScoreElement;
-use crate::visual::layoutable::Layoutable;
+use crate::visual::score_element::ScoreElement;
 use crate::xy::XY;
 
 #[derive(Clone)]

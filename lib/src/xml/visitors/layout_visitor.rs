@@ -94,15 +94,14 @@ impl Visitor for LayoutVisitor {
 
         // get or create the part in this part group.
         let part = part_group.part_or_insert(part_id, || Brace::new(ctx.font.brace(None)));
-        part.ensure_staves(&self.encountered);
         part.set_visibility(ctx.layout_ctx.part_hidden_specified);
+        part.ensure_staves(&self.encountered);
         part.hide_staves(&ctx.layout_ctx.staff.explicitly_hidden);
         part.show_staves(&ctx.layout_ctx.staff.explicitly_shown);
         part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
         part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
         part.set_opening_clef(&ctx.layout_ctx.staff.opening_clef, |c| {
             let smufl_clef = ctx.font.clef(&c);
-
             Clef::new(smufl_clef)
         });
 

@@ -1,10 +1,10 @@
 use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
-use crate::score::visual::layoutable::Layoutable;
+use crate::drawable::layoutable::Layoutable;
 use crate::visual::clef::Clef;
-use crate::visual::element::ScoreElement;
 use crate::visual::rest::Rest;
+use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 

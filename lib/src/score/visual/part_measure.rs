@@ -5,16 +5,16 @@ use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::ray::Ray;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::chord::Chord;
-use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
+use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::stem::{BeamType, Stem, UpDown};
@@ -34,7 +34,7 @@ pub struct PartMeasure {
 
     pub chords: BTreeMap<Voice, Vec<Chord>>,
     pub beams: Vec<Polygon>,
-    pub legers: Vec<Line>,
+    pub ledgers: Vec<Line>,
 
     pub color: Color,
 
@@ -42,8 +42,8 @@ pub struct PartMeasure {
     pub beam_thickness: f32,
     pub beam_spacing: f32,
 
-    pub leger_thickness: f32,
-    pub leger_width: f32,
+    pub ledger_thickness: f32,
+    pub ledger_width: f32,
 }
 
 impl PartMeasure {
@@ -66,7 +66,7 @@ impl PartMeasure {
         self.origin = *origin;
 
         self.arrange_chords(staff_ctx);
-        self.arrange_legers(staff_ctx);
+        self.arrange_ledgers(staff_ctx);
         self.arrange_beams();
     }
 
@@ -75,8 +75,8 @@ impl PartMeasure {
             chord.arrange_ctx(&self.origin, staff_ctx);
         }
     }
-    fn arrange_legers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
-        self.legers.clear();
+    fn arrange_ledgers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        self.ledgers.clear();
 
         for chord in iter_chords(&mut self.chords) {
             for (idx, staff_ctx) in staff_ctx.iter() {
@@ -97,8 +97,8 @@ impl PartMeasure {
                     let middle = highest_note.xy.mv(highest_note.width / 2., 0.);
                     let bottom = middle.mv(0., 0.);
 
-                    let left = bottom.mv(self.leger_width / -2., 0.);
-                    let right = bottom.mv(self.leger_width / 2., 0.);
+                    let left = bottom.mv(self.ledger_width / -2., 0.);
+                    let right = bottom.mv(self.ledger_width / 2., 0.);
 
                     let mut dy = 0.;
 
@@ -111,11 +111,11 @@ impl PartMeasure {
                         let _line: Line = Line {
                             start: left.mv(0., dy),
                             end: right.mv(0., dy),
-                            stroke_width: self.leger_thickness,
+                            stroke_width: self.ledger_thickness,
                             stroke_color: self.color,
                         };
 
-                        self.legers.push(_line);
+                        self.ledgers.push(_line);
 
                         dy += each_line;
                     }
@@ -132,8 +132,8 @@ impl PartMeasure {
                     let middle = lowest_note.xy.mv(lowest_note.width / 2., 0.);
                     let top = middle.mv(0., 0.);
 
-                    let left = top.mv(self.leger_width / -2., 0.);
-                    let right = top.mv(self.leger_width / 2., 0.);
+                    let left = top.mv(self.ledger_width / -2., 0.);
+                    let right = top.mv(self.ledger_width / 2., 0.);
 
                     let mut dy = 0.;
                     let mut line = lowest_note.staff_line;
@@ -148,11 +148,11 @@ impl PartMeasure {
                         let _line: Line = Line {
                             start: left.mv(0., dy),
                             end: right.mv(0., dy),
-                            stroke_width: self.leger_thickness,
+                            stroke_width: self.ledger_thickness,
                             stroke_color: self.color,
                         };
 
-                        self.legers.push(_line);
+                        self.ledgers.push(_line);
 
                         dy -= each_line;
                         line -= 1;
@@ -241,11 +241,11 @@ impl ScoreElement for PartMeasure {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
-        self.leger_thickness = user_layout
+        self.ledger_thickness = user_layout
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
 
-        self.leger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
+        self.ledger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
     }
 }
 
@@ -278,7 +278,7 @@ impl DrawableContent for PartMeasure {
             let line: DrawableElement = beam.clone().into();
             result.push(line);
         }
-        for line in &self.legers {
+        for line in &self.ledgers {
             let line: DrawableElement = (*line).into();
             result.push(line);
         }

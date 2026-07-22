@@ -6,13 +6,13 @@ use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::visual::layoutable::Layoutable;
 use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
-use crate::visual::element::ScoreElement;
+use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 

@@ -39,7 +39,7 @@ pub trait Visitor: Sized {
 
     fn exit(&mut self, ctx: &mut WalkerCtx);
 
-    fn add_callback<C: Visitor>(self, callback: C) -> Chain<Self, C> {
+    fn uses<C: Visitor>(self, callback: C) -> Chain<Self, C> {
         Chain::new(self, callback)
     }
 }

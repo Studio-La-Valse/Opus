@@ -1,15 +1,15 @@
 use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout_ctx::Visibility;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
 use crate::visual::brace::Brace;
-use crate::visual::element::ScoreElement;
 use crate::visual::part_measure::PartMeasure;
+use crate::visual::score_element::ScoreElement;
 use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 

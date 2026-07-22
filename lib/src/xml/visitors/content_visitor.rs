@@ -23,7 +23,7 @@ impl ContentVisitor {
         let measure_number = ctx.layout_ctx.measure.number;
         let page_number = ctx.layout_ctx.page.page_number;
         let system_index = ctx.layout_ctx.system.index;
-        let part_id = ctx.layout_ctx.part_id.clone();
+        let part_id = ctx.layout_ctx.part_id.as_str();
         let scale = *ctx
             .layout_ctx
             .staff
@@ -37,7 +37,7 @@ impl ContentVisitor {
             .expect("System missing in layout context");
 
         let staff_measure = system
-            .locate_staff_measure_mut(part_id.as_str(), staff_idx, measure_number)
+            .locate_staff_measure_mut(part_id, staff_idx, measure_number)
             .expect("Staff measure missing in system");
 
         let is_measure = rest_node.attribute("measure") == Some("yes");
@@ -75,7 +75,7 @@ impl ContentVisitor {
         let measure_number = ctx.layout_ctx.measure.number;
         let position = ctx.layout_ctx.position;
         let voice = ctx.layout_ctx.voice;
-        let part_id = ctx.layout_ctx.part_id.clone();
+        let part_id = ctx.layout_ctx.part_id.as_str();
         let scale = *ctx
             .layout_ctx
             .staff
@@ -109,7 +109,7 @@ impl ContentVisitor {
             .expect("System missing in layout context");
 
         let part_measure = system
-            .locate_part_measure_mut(part_id.as_str(), measure_number)
+            .locate_part_measure_mut(part_id, measure_number)
             .expect("Part measure missing");
 
         let is_chord = node.children().any(|n| n.tag_name().name() == "chord");

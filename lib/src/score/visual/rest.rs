@@ -6,14 +6,14 @@ use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::visual::layoutable::Layoutable;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::clef::Clef;
-use crate::visual::element::ScoreElement;
+use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 
@@ -72,7 +72,7 @@ impl Rest {
         self.arrange_clef_changes(origin, staff_ctx);
     }
 
-    pub fn arrange_glyph(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
+    fn arrange_glyph(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
         let mut dy = staff_ctx.distance_from_top;
         dy += self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling);
         self.xy = XY {
@@ -81,7 +81,7 @@ impl Rest {
         };
     }
 
-    pub fn arrange_clef_changes(&mut self, origin: &XY, ctx: &StaffCtx) {
+    fn arrange_clef_changes(&mut self, origin: &XY, ctx: &StaffCtx) {
         if let Some(ref mut clef) = self.clef_change {
             let dx = -5. - clef.width;
             let dy = ctx.distance_from_top

@@ -3,13 +3,13 @@ use crate::color::Color;
 use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
 use crate::visual::clef::Clef;
-use crate::visual::element::ScoreElement;
 use crate::visual::note::Note;
+use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::stem::{Stem, UpDown};
@@ -45,7 +45,7 @@ impl Chord {
         }
     }
 
-    pub fn arrange_stem(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+    fn arrange_stem(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         if let Some(stem) = self.stem.as_mut() {
             let staff_top = staff_ctx.get(&stem.staff).unwrap().distance_from_top;
 
@@ -99,7 +99,7 @@ impl Chord {
         }
     }
 
-    pub fn arrange_clef_changes(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+    fn arrange_clef_changes(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         for (staff_idx, clef) in self.clef_change.iter_mut() {
             let ctx = staff_ctx.get(staff_idx).unwrap();
 

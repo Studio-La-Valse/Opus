@@ -4,17 +4,17 @@ use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::layout_ctx::Visibility;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::user_layout::UserLayout;
 use crate::visual::bracket::Bracket;
-use crate::visual::element::ScoreElement;
 use crate::visual::part_measure::PartMeasure;
+use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
@@ -153,8 +153,8 @@ impl System {
     }
 
     /// Every first visible staff in a system must have a 0-distance to the top of the system.
-    fn handle_first_visible_staff(&mut self) {
-        'outer: for (_idx, section) in self.sections.iter_mut() {
+    fn first_visible_staff(&mut self) -> Option<&mut Staff> {
+        for (_idx, section) in self.sections.iter_mut() {
             for (_idx, part_group) in section.part_groups.iter_mut() {
                 for (_idx, part) in part_group.parts.iter_mut() {
                     if part.visibility == Visibility::Hidden {
@@ -167,12 +167,13 @@ impl System {
                         }
 
                         // first visible staff found.
-                        staff.distance_final = 0.;
-                        break 'outer;
+                        return Some(staff);
                     }
                 }
             }
         }
+
+        None
     }
 
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
@@ -224,7 +225,9 @@ impl Layoutable for System {
         self.width = 0.;
         self.height = 0.;
 
-        self.handle_first_visible_staff();
+        if let Some(staff) = self.first_visible_staff() {
+            staff.distance_final = 0.;
+        }
 
         for (_idx, section) in self.sections.iter_mut() {
             let available = XY::INFINITE;

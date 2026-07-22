@@ -4,10 +4,10 @@ use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
+use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
-use crate::score::visual::layoutable::Layoutable;
 use crate::user_layout::UserLayout;
-use crate::visual::element::ScoreElement;
+use crate::visual::score_element::ScoreElement;
 
 #[derive(Default)]
 pub struct SectionMeasure {

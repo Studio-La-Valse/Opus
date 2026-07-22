@@ -2,6 +2,7 @@ use clap::Parser;
 use lib::app_defaults::AppDefaults;
 use lib::drawable::bfs_iter::bfs_elements;
 use lib::drawable::drawable_element::{DrawableElement, scale_elem, to_svg};
+use lib::drawable::layoutable::Layoutable;
 use lib::layout::Layout;
 use lib::layout_ctx::LayoutCtx;
 use lib::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
@@ -12,9 +13,8 @@ use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
 use lib::visitors::layout_visitor::LayoutVisitor;
 use lib::visitors::setup_visitor::SetupVisitor;
-use lib::visual::element::ScoreElement;
-use lib::visual::layoutable::Layoutable;
 use lib::visual::score::Score;
+use lib::visual::score_element::ScoreElement;
 use lib::walker::Walker;
 use lib::walker_ctx::WalkerCtx;
 use lib::xy::XY;
@@ -73,9 +73,9 @@ fn main() {
     let mut visual = Score::default();
 
     let visitor = DefaultVisitor {}
-        .add_callback(LayoutContextVisitor {})
-        .add_callback(SetupVisitor {})
-        .add_callback(LayoutVisitor {
+        .uses(LayoutContextVisitor {})
+        .uses(SetupVisitor {})
+        .uses(LayoutVisitor {
             encountered: HashSet::new(),
         });
 
@@ -84,14 +84,14 @@ fn main() {
     Walker::new(visitor).walk(&document, &mut ctx);
 
     println!(
-        "Walking doc tree for layout: {}ms",
+        "First read pass: walking doc tree for layout: {}ms",
         time.elapsed().as_millis()
     );
     time = Instant::now();
 
     let visitor = DefaultVisitor {}
-        .add_callback(LayoutContextVisitor {})
-        .add_callback(ContentVisitor {
+        .uses(LayoutContextVisitor {})
+        .uses(ContentVisitor {
             clef_change: HashMap::new(),
         });
 
@@ -100,7 +100,7 @@ fn main() {
     Walker::new(visitor).walk(&document, &mut ctx);
 
     println!(
-        "Walking doc tree for content: {}ms",
+        "Second read pass: walking doc tree for content: {}ms",
         time.elapsed().as_millis()
     );
     time = Instant::now();
