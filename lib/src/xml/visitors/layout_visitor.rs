@@ -6,7 +6,7 @@ use crate::visual::clef::Clef;
 use crate::xml::walker_ctx::WalkerCtx;
 
 use roxmltree::Node;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 
 pub struct LayoutVisitor {
     pub encountered: HashSet<StaffIdx>,
@@ -99,16 +99,15 @@ impl Visitor for LayoutVisitor {
         part.hide_staves(&ctx.layout_ctx.staff.explicitly_hidden);
         part.show_staves(&ctx.layout_ctx.staff.explicitly_shown);
         part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
-
-        let mut clefs: BTreeMap<StaffIdx, Clef> = BTreeMap::new();
-        for (idx, clef) in ctx.layout_ctx.staff.opening_clef.iter() {
-            let smufl_clef = ctx.font.clef(clef);
-            let drawable_clef = Clef::new(smufl_clef);
-            clefs.insert(*idx, drawable_clef);
-        }
-        part.set_opening_clef(clefs);
         part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
+        part.set_opening_clef(&ctx.layout_ctx.staff.opening_clef, |c| {
+            let smufl_clef = ctx.font.clef(&c);
 
+            Clef::new(smufl_clef)
+        });
+
+        // Now that all staves are ensure, consolidate the measure width,
+        // so every measure from system to staff has the same calculated width.
         system.consolidate_measure_width(ctx.layout_ctx.measure.number);
     }
 

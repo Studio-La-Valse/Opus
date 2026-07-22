@@ -33,6 +33,18 @@ impl UpDown {
     }
 }
 
+impl TryFrom<&str> for UpDown {
+    type Error = String;
+
+    fn try_from(text: &str) -> Result<Self, Self::Error> {
+        match text {
+            "up" => Ok(UpDown::Up),
+            "down" => Ok(UpDown::Down),
+            _ => Err(format!("Unknown direction: {text}")),
+        }
+    }
+}
+
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum BeamType {
     Start,

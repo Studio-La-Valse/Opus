@@ -1,6 +1,7 @@
 use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
+use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
@@ -8,7 +9,7 @@ use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::visual::brace::Brace;
-use crate::visual::clef::Clef;
+use crate::visual::clef::Clef as DrawableClef;
 use crate::visual::element::ScoreElement;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::staff_measure::StaffMeasure;
@@ -115,10 +116,15 @@ impl Part {
         }
     }
 
-    pub fn set_opening_clef(&mut self, clefs: BTreeMap<StaffIdx, Clef>) {
+    pub fn set_opening_clef<F: Fn(CoreClef) -> DrawableClef>(
+        &mut self,
+        clefs: &BTreeMap<StaffIdx, CoreClef>,
+        f: F,
+    ) {
         for (idx, clef) in clefs {
-            let staff = self.staves.entry(idx).or_default();
-            staff.clef = Some(clef);
+            let staff = self.staves.entry(*idx).or_default();
+            let drawable = f(*clef);
+            staff.clef = Some(drawable);
         }
     }
 
