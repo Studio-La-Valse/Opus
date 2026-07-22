@@ -11,6 +11,7 @@ use lib::visitor::{DefaultVisitor, Visitor};
 use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
 use lib::visitors::layout_visitor::LayoutVisitor;
+use lib::visitors::setup_visitor::SetupVisitor;
 use lib::visual::element::ScoreElement;
 use lib::visual::layoutable::Layoutable;
 use lib::visual::score::Score;
@@ -18,6 +19,7 @@ use lib::walker::Walker;
 use lib::walker_ctx::WalkerCtx;
 use lib::xy::XY;
 use roxmltree::{Document, ParsingOptions};
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::fs::read_to_string;
 use std::time::Instant;
@@ -71,18 +73,36 @@ fn main() {
     let mut visual = Score::default();
 
     let visitor = DefaultVisitor {}
-        .add_callback(LayoutVisitor {})
         .add_callback(LayoutContextVisitor {})
-        .add_callback(ContentVisitor {
-            part_measure: None,
-            clef_change: Default::default(),
+        .add_callback(SetupVisitor {})
+        .add_callback(LayoutVisitor {
+            encountered: HashSet::new(),
         });
 
     let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual, &font);
 
     Walker::new(visitor).walk(&document, &mut ctx);
 
-    println!("Walking doc tree: {}ms", time.elapsed().as_millis());
+    println!(
+        "Walking doc tree for layout: {}ms",
+        time.elapsed().as_millis()
+    );
+    time = Instant::now();
+
+    let visitor = DefaultVisitor {}
+        .add_callback(LayoutContextVisitor {})
+        .add_callback(ContentVisitor {
+            clef_change: HashMap::new(),
+        });
+
+    let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual, &font);
+
+    Walker::new(visitor).walk(&document, &mut ctx);
+
+    println!(
+        "Walking doc tree for content: {}ms",
+        time.elapsed().as_millis()
+    );
     time = Instant::now();
 
     let user_layout = UserLayout::new();

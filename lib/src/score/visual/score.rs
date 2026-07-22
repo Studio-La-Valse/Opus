@@ -8,6 +8,7 @@ use crate::score::visual::page::Page;
 use crate::visual::element::ScoreElement;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::staff_measure::StaffMeasure;
+use crate::visual::system::System;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -18,6 +19,12 @@ pub struct Score {
 impl Score {
     pub fn get_page_or_insert(&mut self, page_number: u32) -> &mut Page {
         self.pages.entry(page_number).or_default()
+    }
+
+    pub fn locate_system_mut(&mut self, page_idx: &u32, system_idx: &u32) -> Option<&mut System> {
+        self.pages
+            .get_mut(page_idx)
+            .and_then(|page| page.systems.get_mut(system_idx))
     }
 
     pub fn locate_part_measure_mut(

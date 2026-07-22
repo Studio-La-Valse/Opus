@@ -29,7 +29,7 @@ pub struct Part {
 
 impl Part {
     pub fn new(brace: Brace) -> Self {
-        let mut _self = Self {
+        Self {
             measures: BTreeMap::new(),
             staves: BTreeMap::new(),
 
@@ -40,11 +40,7 @@ impl Part {
             visibility: Visibility::Unset,
 
             brace,
-        };
-
-        _self.ensure_staves(vec![1.into()].into_iter().collect());
-
-        _self
+        }
     }
 
     pub fn staff_or_insert(&mut self, idx: &StaffIdx) -> &mut Staff {
@@ -87,9 +83,9 @@ impl Part {
         }
     }
 
-    pub fn ensure_staves(&mut self, staves: HashSet<StaffIdx>) {
+    pub fn ensure_staves(&mut self, staves: &HashSet<StaffIdx>) {
         for staff in staves {
-            self.staves.entry(staff).or_default();
+            self.staves.entry(*staff).or_default();
         }
     }
 

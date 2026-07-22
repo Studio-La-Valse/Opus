@@ -81,26 +81,25 @@ impl System {
         })
     }
 
-    pub fn consolidate_measure_widths(&mut self) {
-        for (idx, measure) in self.measures.iter_mut() {
-            let width = measure.width;
+    pub fn consolidate_measure_width(&mut self, measure_number: u32) {
+        let measure = self.measures.get_mut(&measure_number).unwrap();
+        let width = measure.width;
 
-            for (_, section) in self.sections.iter_mut() {
-                let measure = section.measures.entry(*idx).or_default();
+        for (_, section) in self.sections.iter_mut() {
+            let measure = section.measures.entry(measure_number).or_default();
+            measure.width = width;
+
+            for (_, part_group) in section.part_groups.iter_mut() {
+                let measure = part_group.measures.entry(measure_number).or_default();
                 measure.width = width;
 
-                for (_, part_group) in section.part_groups.iter_mut() {
-                    let measure = part_group.measures.entry(*idx).or_default();
+                for (_, part) in part_group.parts.iter_mut() {
+                    let measure = part.measures.entry(measure_number).or_default();
                     measure.width = width;
 
-                    for (_, part) in part_group.parts.iter_mut() {
-                        let measure = part.measures.entry(*idx).or_default();
+                    for (_, staff) in part.staves.iter_mut() {
+                        let measure = staff.measures.entry(measure_number).or_default();
                         measure.width = width;
-
-                        for (_, staff) in part.staves.iter_mut() {
-                            let measure = staff.measures.entry(*idx).or_default();
-                            measure.width = width;
-                        }
                     }
                 }
             }
@@ -225,7 +224,6 @@ impl Layoutable for System {
         self.width = 0.;
         self.height = 0.;
 
-        self.consolidate_measure_widths();
         self.handle_first_visible_staff();
 
         for (_idx, section) in self.sections.iter_mut() {
