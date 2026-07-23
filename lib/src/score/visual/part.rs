@@ -62,6 +62,13 @@ impl Part {
             .and_then(|staff| staff.measures.get_mut(&measure_number))
     }
 
+    pub fn locate_staff_measures_mut(&mut self, measure_number: u32) -> Vec<&mut StaffMeasure> {
+        self.staves
+            .values_mut()
+            .filter_map(|staff| staff.locate_measure_mut(&measure_number))
+            .collect()
+    }
+
     pub fn set_visibility(&mut self, visibility: Visibility) {
         match visibility {
             Visibility::Unset => {
@@ -141,6 +148,18 @@ impl Part {
             .find(|staff| !staff.hidden)
             .map(|staff| staff.distance_final)
             .unwrap_or(0.0)
+    }
+
+    pub fn staff_measures_mut(&mut self, measure_number: &u32) -> Vec<&mut StaffMeasure> {
+        // First check if this part even contains this measure
+        if !self.measures.contains_key(measure_number) {
+            return vec![];
+        }
+
+        self.staves
+            .values_mut()
+            .map(|staff| staff.measures.get_mut(measure_number).unwrap())
+            .collect()
     }
 
     pub fn create_staff_ctx(&self) -> BTreeMap<StaffIdx, StaffCtx> {

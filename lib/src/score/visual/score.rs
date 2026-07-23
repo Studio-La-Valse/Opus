@@ -9,6 +9,7 @@ use crate::visual::part_measure::PartMeasure;
 use crate::visual::score_element::ScoreElement;
 use crate::visual::staff_measure::StaffMeasure;
 use crate::visual::system::System;
+use crate::visual::system_measure::SystemMeasure;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -21,10 +22,16 @@ impl Score {
         self.pages.entry(page_number).or_default()
     }
 
-    pub fn locate_system_mut(&mut self, page_idx: &u32, system_idx: &u32) -> Option<&mut System> {
+    pub fn locate_system_mut(&mut self, system_idx: &u32) -> Option<&mut System> {
         self.pages
-            .get_mut(page_idx)
-            .and_then(|page| page.systems.get_mut(system_idx))
+            .values_mut()
+            .find_map(|page| page.systems.get_mut(system_idx))
+    }
+
+    pub fn locate_system_measure_mut(&mut self, measure_number: u32) -> Option<&mut SystemMeasure> {
+        self.pages
+            .values_mut()
+            .find_map(|page| page.locate_system_measure_mut(measure_number))
     }
 
     pub fn locate_part_measure_mut(
@@ -46,6 +53,23 @@ impl Score {
         self.pages
             .values_mut()
             .find_map(|page| page.locate_staff_measure_mut(part_id, staff_idx, measure_number))
+    }
+
+    pub fn locate_staff_measures_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Vec<&mut StaffMeasure> {
+        self.pages
+            .values_mut()
+            .find_map(|page| {
+                if page.locate_system_measure_mut(measure_number).is_some() {
+                    Some(page.locate_staff_measures_mut(part_id, measure_number))
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_default()
     }
 
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {

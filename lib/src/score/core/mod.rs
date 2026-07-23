@@ -1,5 +1,8 @@
 pub mod clef;
+pub mod duration;
+pub mod duration_base;
 pub mod pitch;
 pub mod staff_idx;
 pub mod step;
+pub mod time_signature;
 pub mod voice;

@@ -5,6 +5,7 @@ use crate::visual::bracket::Bracket;
 use crate::visual::clef::Clef;
 use crate::xml::walker_ctx::WalkerCtx;
 
+use crate::visual::system_measure::SystemMeasure;
 use roxmltree::Node;
 use std::collections::HashSet;
 
@@ -76,7 +77,10 @@ impl Visitor for LayoutVisitor {
         system.distance = ctx.layout_ctx.system.distance.unwrap_or(system.distance);
         system.top = ctx.layout_ctx.system.distance_top.unwrap_or(system.top);
 
-        let system_measure = system.measures.entry(measure_number).or_default();
+        let system_measure = system
+            .measures
+            .entry(measure_number)
+            .or_insert_with(|| SystemMeasure::new(measure_number));
         system_measure.init_width(ctx.layout_ctx.measure.width);
 
         // get or create the section in this system.

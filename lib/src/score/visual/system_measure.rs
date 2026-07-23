@@ -8,7 +8,6 @@ use crate::layout::Layout;
 use crate::user_layout::UserLayout;
 use crate::visual::score_element::ScoreElement;
 
-#[derive(Default)]
 pub struct SystemMeasure {
     pub xy: XY,
     pub width: f32,
@@ -20,6 +19,16 @@ pub struct SystemMeasure {
 }
 
 impl SystemMeasure {
+    pub fn new(number: u32) -> Self {
+        Self {
+            xy: XY::ZERO,
+            width: 0.,
+            height: 0.,
+            color: Color::BLACK,
+            number,
+        }
+    }
+
     pub fn init_width(&mut self, width_specified: Option<f32>) {
         if let Some(width) = width_specified {
             self.width = self.width.max(width);

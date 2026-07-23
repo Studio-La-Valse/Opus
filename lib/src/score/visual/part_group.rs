@@ -49,6 +49,21 @@ impl PartGroup {
         })
     }
 
+    pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {
+        self.parts.get_mut(part_id)
+    }
+
+    pub fn locate_staff_measures_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Vec<&mut StaffMeasure> {
+        self.parts
+            .get_mut(part_id)
+            .map(|p| p.locate_staff_measures_mut(measure_number))
+            .unwrap_or_default()
+    }
+
     pub fn locate_part_measure_mut(
         &mut self,
         part_id: &str,

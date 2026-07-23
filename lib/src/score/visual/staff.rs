@@ -67,6 +67,10 @@ impl Staff {
     pub const SPACES: usize = Staff::LINES - 1;
     pub const DEFAULT_SPACE_SIZE: f32 = 10.;
 
+    pub fn locate_measure_mut(&mut self, measure_number: &u32) -> Option<&mut StaffMeasure> {
+        self.measures.get_mut(measure_number)
+    }
+
     // 5 lines, 4 spaces, 10 tenths for each space according to MusicXML spec.
     pub fn height(&self) -> f32 {
         Staff::SPACES as f32 * self.line_space()

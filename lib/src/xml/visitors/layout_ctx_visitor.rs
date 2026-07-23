@@ -2,8 +2,9 @@ use crate::layout_ctx::LayoutCtx;
 use crate::score::core::clef::Clef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
+use crate::utils::ReqParse;
 use crate::visitor::Visitor;
-use crate::xml::utils::{NodeUtils, ToNumber};
+use crate::xml::utils::NodeUtils;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 
@@ -29,12 +30,7 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn enter_measure(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        ctx.layout_ctx.measure.number = _node
-            .attribute("number")
-            .expect("measure missing @number")
-            .parse::<u32>()
-            .expect("measure number was not an integer");
-
+        ctx.layout_ctx.measure.number = _node.req_attribute("number").req_parse();
         ctx.layout_ctx.measure.width = _node.attribute("width").and_then(|s| s.parse::<f32>().ok());
 
         ctx.layout_ctx.system.margin_left = None;
@@ -143,31 +139,32 @@ impl Visitor for LayoutContextVisitor {
             .children()
             .filter(|n| n.has_tag_name("staff-layout"))
         {
-            let staff_distance = staff_layout.req_child("staff-distance").req_f32();
+            let staff_distance = staff_layout.req_child("staff-distance").req_parse();
 
-            let staff_number: StaffIdx = staff_layout.req_attribute("number").req_u32().into();
+            let staff_number: u32 = staff_layout.req_attribute("number").req_parse();
 
             ctx.layout_ctx
                 .staff
                 .distances
-                .insert(staff_number, staff_distance);
+                .insert(staff_number.into(), staff_distance);
         }
     }
 
     fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         for node in element.children() {
             if node.has_tag_name("divisions") {
-                ctx.layout_ctx.divisions = node.req_u32();
+                ctx.layout_ctx.divisions = node.req_parse();
             }
 
             if node.has_tag_name("time") {
                 for node in node.children() {
                     if node.has_tag_name("beats") {
-                        ctx.layout_ctx.beats = node.req_u32();
+                        ctx.layout_ctx.beats = node.req_parse();
                     }
 
                     if node.has_tag_name("beat-type") {
-                        ctx.layout_ctx.beat_type = node.req_u32();
+                        let beat_type: u32 = node.req_parse();
+                        ctx.layout_ctx.beat_type = beat_type.into();
                     }
                 }
             }
@@ -184,7 +181,7 @@ impl Visitor for LayoutContextVisitor {
 
         let sign_node = element.req_child("sign");
         let sign = sign_node.req_text();
-        let line = element.get_child("line").map(|l| l.req_i32());
+        let line = element.get_child("line").map(|l| l.req_parse());
 
         let clef = Clef::from_mxml(sign, line).unwrap();
         // always track the active clef.
@@ -210,7 +207,10 @@ impl Visitor for LayoutContextVisitor {
     fn enter_staff_details(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         let print_object = element.attribute("print-object").unwrap_or("yes");
 
-        let number: Option<StaffIdx> = element.attribute("number").map(|s| s.req_u32().into());
+        let number: Option<StaffIdx> = element.attribute("number").map(|s| {
+            let s: u32 = s.req_parse();
+            s.into()
+        });
 
         let is_hidden = print_object == "no";
         if is_hidden {
@@ -237,14 +237,18 @@ impl Visitor for LayoutContextVisitor {
 
         let number = number.unwrap_or(1.into());
         if let Some(staff_size) = element.get_child("staff-size") {
-            let v: f32 = staff_size.req_u32() as f32 / 100.;
+            let mut v: f32 = staff_size.req_parse();
+            v /= 100.;
             ctx.layout_ctx.staff.staff_scaling.insert(number, v);
             ctx.layout_ctx.staff.content_scaling.insert(number, v);
 
             if let Some(scaling) = staff_size
                 .attribute("scaling")
-                .map(|s| s.req_u32())
-                .map(|s| s as f32 / 100.)
+                .map(|s| {
+                    let v: f32 = s.req_parse();
+                    v
+                })
+                .map(|s| s / 100.)
             {
                 ctx.layout_ctx.staff.content_scaling.insert(number, scaling);
             }
@@ -252,12 +256,12 @@ impl Visitor for LayoutContextVisitor {
     }
 
     fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {
-        let duration = node.req_child("duration").req_u32();
+        let duration: u32 = node.req_child("duration").req_parse();
         ctx.layout_ctx.position -= duration;
     }
 
     fn enter_forward(&mut self, node: &Node, ctx: &mut WalkerCtx) {
-        let duration = node.req_child("duration").req_u32();
+        let duration: u32 = node.req_child("duration").req_parse();
         ctx.layout_ctx.position += duration;
 
         validate_position(ctx.layout_ctx)
@@ -277,16 +281,18 @@ impl Visitor for LayoutContextVisitor {
             ctx.layout_ctx.position -= ctx.layout_ctx.duration;
         }
 
-        let duration = element.req_child("duration").req_u32();
+        let duration: u32 = element.req_child("duration").req_parse();
         ctx.layout_ctx.duration = duration;
 
         for node in element.children() {
             if node.has_tag_name("voice") {
-                ctx.layout_ctx.voice = node.req_u32().into()
+                let voice: u32 = node.req_parse();
+                ctx.layout_ctx.voice = voice.into()
             }
 
             if node.has_tag_name("staff") {
-                ctx.layout_ctx.staff.number = node.req_u32().into();
+                let staff: u32 = node.req_parse();
+                ctx.layout_ctx.staff.number = staff.into();
             }
         }
     }
@@ -307,10 +313,14 @@ impl Visitor for LayoutContextVisitor {
     fn exit(&mut self, _ctx: &mut WalkerCtx) {}
 }
 
+/// Divisions are annotated per quarter note.
+/// For example, if duration = 1 and divisions = 2, this is an eighth note duration.
 fn validate_position(layout_ctx: &LayoutCtx) {
-    let quarter_beats: f32 = layout_ctx.beats as f32 * (4. / layout_ctx.beat_type as f32);
+    let whole_beats = layout_ctx.beat_type.as_int() as f32; // eg 4. for a 3/4 measure, 8. for a 7/8 measure.
+    let quarter_beats = layout_ctx.beats as f32 * (4. / whole_beats); // eg 1.5 for 3/8, 4. for 2/2.
+    let divisions_in_measure = layout_ctx.divisions as f32 * quarter_beats;
 
-    if layout_ctx.position as f32 > layout_ctx.divisions as f32 * quarter_beats {
+    if layout_ctx.position as f32 > divisions_in_measure {
         panic!(
             "Invalid document: entered position {} in measure with {} beats of type {}, and {} divisions. Part {}, measure {}",
             layout_ctx.position,

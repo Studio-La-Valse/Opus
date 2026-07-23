@@ -13,6 +13,7 @@ use crate::score::visual::section::Section;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::user_layout::UserLayout;
 use crate::visual::bracket::Bracket;
+use crate::visual::part::Part;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
@@ -50,6 +51,16 @@ impl System {
         })
     }
 
+    pub fn locate_system_measure_mut(&mut self, measure_number: u32) -> Option<&mut SystemMeasure> {
+        self.measures.get_mut(&measure_number)
+    }
+
+    pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {
+        self.sections
+            .values_mut()
+            .find_map(|pg| pg.locate_part_mut(part_id))
+    }
+
     pub fn locate_part_measure_mut(
         &mut self,
         part_id: &str,
@@ -63,6 +74,20 @@ impl System {
         self.sections
             .values_mut()
             .find_map(|section| section.locate_part_measure_mut(part_id, measure_number))
+    }
+
+    pub fn locate_staff_measures_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Vec<&mut StaffMeasure> {
+        if !self.measures.contains_key(&measure_number) {
+            return Vec::new();
+        }
+
+        self.locate_part_mut(part_id)
+            .map(|p| p.locate_staff_measures_mut(measure_number))
+            .unwrap_or_default()
     }
 
     pub fn locate_staff_measure_mut(

@@ -18,7 +18,6 @@ use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::stem::{BeamType, Stem, UpDown};
-
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
 

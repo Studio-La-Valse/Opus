@@ -2,6 +2,7 @@ use crate::core::xy::XY;
 use crate::drawable::drawable_content::DrawableContent;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
+use crate::score::visual::time_signature::TimeSignature;
 use crate::visual::clef::Clef;
 use crate::visual::rest::Rest;
 use crate::visual::score_element::ScoreElement;
@@ -17,10 +18,25 @@ pub struct StaffMeasure {
     pub scale: f32,
 
     pub rests: Vec<Rest>,
+    pub time_signature: Option<TimeSignature>,
+    pub prepare_time_signature: Option<TimeSignature>,
     pub prepare_clef_change: Option<Clef>,
 }
 
 impl StaffMeasure {
+    fn arrange_time_signature(&mut self) {
+        if let Some(ref mut time_signature) = self.time_signature {
+            let pos = self.xy.mv(5., 0.);
+            time_signature.arrange(&pos);
+        }
+
+        if let Some(ref mut prepare_time_signature) = self.prepare_time_signature {
+            let pos = self
+                .xy
+                .mv(self.width - prepare_time_signature.width - 5., 0.);
+            prepare_time_signature.arrange(&pos);
+        }
+    }
     fn arrange_clef(&mut self) {
         if let Some(ref mut clef) = self.prepare_clef_change {
             let clef_origin = self.xy;
@@ -59,6 +75,14 @@ impl ScoreElement for StaffMeasure {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
         let mut res: Vec<&mut dyn ScoreElement> = Vec::new();
 
+        if let Some(ref mut time_signature) = self.time_signature {
+            res.push(time_signature);
+        }
+
+        if let Some(ref mut prepare_time_signature) = self.prepare_time_signature {
+            res.push(prepare_time_signature);
+        }
+
         if let Some(ref mut clef) = self.prepare_clef_change {
             res.push(clef);
         }
@@ -75,6 +99,18 @@ impl Layoutable for StaffMeasure {
     fn measure(&mut self, available: &XY) {
         self.height = available.y;
 
+        if let Some(ref mut time_signature) = self.time_signature {
+            time_signature.measure(available);
+        }
+
+        if let Some(ref mut prepare_time_signature) = self.prepare_time_signature {
+            prepare_time_signature.measure(available);
+        }
+
+        if let Some(ref mut clef) = self.prepare_clef_change {
+            clef.measure(available);
+        }
+
         for rest in self.rests.iter_mut() {
             rest.measure(available);
         }
@@ -83,6 +119,7 @@ impl Layoutable for StaffMeasure {
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
+        self.arrange_time_signature();
         self.arrange_clef();
         self.arrange_rests();
     }
@@ -91,6 +128,14 @@ impl Layoutable for StaffMeasure {
 impl DrawableContent for StaffMeasure {
     fn content(&self) -> Vec<&dyn DrawableContent> {
         let mut result: Vec<&dyn DrawableContent> = Vec::new();
+
+        if let Some(ref time_signature) = self.time_signature {
+            result.push(time_signature);
+        }
+
+        if let Some(ref prepare_time_signature) = self.prepare_time_signature {
+            result.push(prepare_time_signature);
+        }
 
         if let Some(ref clef) = self.prepare_clef_change {
             result.push(clef);

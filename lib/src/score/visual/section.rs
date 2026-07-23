@@ -8,6 +8,7 @@ use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::section_measure::SectionMeasure;
 use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
+use crate::visual::part::Part;
 use crate::visual::part_measure::PartMeasure;
 use crate::visual::score_element::ScoreElement;
 use crate::visual::staff_measure::StaffMeasure;
@@ -48,9 +49,13 @@ impl Section {
             PartGroup::new(brace)
         })
     }
-}
 
-impl Section {
+    pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {
+        self.part_groups
+            .values_mut()
+            .find_map(|pg| pg.locate_part_mut(part_id))
+    }
+
     pub fn locate_part_measure_mut(
         &mut self,
         part_id: &str,
@@ -59,6 +64,16 @@ impl Section {
         self.part_groups
             .values_mut()
             .find_map(|group| group.locate_part_measure_mut(part_id, measure_number))
+    }
+
+    pub fn locate_staff_measures_mut(
+        &mut self,
+        part_id: &str,
+        measure_number: u32,
+    ) -> Vec<&mut StaffMeasure> {
+        self.locate_part_mut(part_id)
+            .map(|p| p.locate_staff_measures_mut(measure_number))
+            .unwrap_or_default()
     }
 
     pub fn locate_staff_measure_mut(

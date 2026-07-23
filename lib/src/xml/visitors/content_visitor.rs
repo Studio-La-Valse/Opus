@@ -1,4 +1,4 @@
-use crate::duration::BaseDuration;
+use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::pitch::Pitch;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
@@ -8,11 +8,15 @@ use crate::visual::chord::Chord;
 use crate::visual::clef::Clef;
 use crate::visual::rest::Rest;
 use crate::visual::stem::{BeamType, Stem, UpDown};
-use crate::xml::utils::{NodeUtils, ToNumber};
+use crate::xml::utils::NodeUtils;
 use crate::xml::walker_ctx::WalkerCtx;
 
+use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
+use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
+use crate::utils::ReqParse;
 use roxmltree::Node;
 use std::collections::HashMap;
+
 pub struct ContentVisitor {
     pub clef_change: HashMap<StaffIdx, Clef>,
 }
@@ -21,8 +25,7 @@ impl ContentVisitor {
     fn handle_rest(&mut self, node: &Node, rest_node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx = ctx.layout_ctx.staff.number;
         let measure_number = ctx.layout_ctx.measure.number;
-        let page_number = ctx.layout_ctx.page.page_number;
-        let system_index = ctx.layout_ctx.system.index;
+        let _system_index = ctx.layout_ctx.system.index;
         let part_id = ctx.layout_ctx.part_id.as_str();
         let scale = *ctx
             .layout_ctx
@@ -31,13 +34,9 @@ impl ContentVisitor {
             .get(&staff_idx)
             .unwrap_or(&1.0);
 
-        let system = ctx
+        let staff_measure = ctx
             .visual_score
-            .locate_system_mut(&page_number, &system_index)
-            .expect("System missing in layout context");
-
-        let staff_measure = system
-            .locate_staff_measure_mut(part_id, staff_idx, measure_number)
+            .locate_staff_measure_mut(part_id, &staff_idx, measure_number)
             .expect("Staff measure missing in system");
 
         let is_measure = rest_node.attribute("measure") == Some("yes");
@@ -48,7 +47,7 @@ impl ContentVisitor {
         } else {
             let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
             let glyph = ctx.font.rest(dur.rest_glyph());
-            let default_x: f32 = node.req_attribute("default-x").req_f32();
+            let default_x: f32 = node.req_attribute("default-x").req_parse();
             Rest::new(glyph, is_measure, Some(default_x), staff_idx, 4, scale)
         };
 
@@ -69,7 +68,7 @@ impl ContentVisitor {
             None => return,
         };
 
-        let page_number = ctx.layout_ctx.page.page_number;
+        let _page_number = ctx.layout_ctx.page.page_number;
         let system_index = ctx.layout_ctx.system.index;
         let staff_idx = ctx.layout_ctx.staff.number;
         let measure_number = ctx.layout_ctx.measure.number;
@@ -86,8 +85,8 @@ impl ContentVisitor {
         // Parse Pitch
         let step = pitch_node.req_child("step");
         let step_str = step.req_text();
-        let alter = pitch_node.get_child("alter").map_or(0, |n| n.req_i32());
-        let octave = pitch_node.req_child("octave").req_i32();
+        let alter = pitch_node.get_child("alter").map_or(0, |n| n.req_parse());
+        let octave = pitch_node.req_child("octave").req_parse();
         let pitch = Pitch {
             step: Step::parse(step_str, alter),
             octave,
@@ -105,7 +104,7 @@ impl ContentVisitor {
         // Locate Measure & Voice Chords
         let system = ctx
             .visual_score
-            .locate_system_mut(&page_number, &system_index)
+            .locate_system_mut(&system_index)
             .expect("System missing in layout context");
 
         let part_measure = system
@@ -122,7 +121,7 @@ impl ContentVisitor {
 
         // Parse Stem & Beams
         if let Some(stem_node) = node.children().find(|n| n.tag_name().name() == "stem") {
-            let default_y = stem_node.attribute("default-y").map(|a| a.req_f32());
+            let default_y = stem_node.attribute("default-y").map(|a| a.req_parse());
             let dir: UpDown = stem_node
                 .req_text()
                 .try_into()
@@ -142,7 +141,7 @@ impl ContentVisitor {
                 }
             } else {
                 for beam in beams {
-                    let number = beam.req_attribute("number").req_u32();
+                    let number = beam.req_attribute("number").req_parse();
                     let beam_type: BeamType = beam.req_text().into();
                     stem.beams.insert(number, beam_type);
                 }
@@ -175,7 +174,57 @@ impl Visitor for ContentVisitor {
 
     fn enter_print(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
-    fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+    fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        if node
+            .children()
+            .find(|n| n.tag_name().name() == "time")
+            .is_some()
+        {
+            let page_number = &ctx.layout_ctx.page.page_number;
+            let system_index = &ctx.layout_ctx.system.index;
+            let measure_number = &ctx.layout_ctx.measure.number;
+
+            let part_id = &ctx.layout_ctx.part_id.clone();
+            let part = &ctx.layout.parts.get(part_id).unwrap();
+            let section_number = &part.section;
+            let part_group_number = &part.part_group;
+
+            let page = ctx.visual_score.pages.get_mut(page_number).unwrap();
+            let system = page.systems.get_mut(system_index).unwrap();
+            let section = system.sections.get_mut(section_number).unwrap();
+            let part_group = section.part_groups.get_mut(part_group_number).unwrap();
+            let part = part_group.parts.get_mut(part_id).unwrap();
+
+            for staff_measure in part.staff_measures_mut(measure_number) {
+                let time_signature = TimeSignatureCore {
+                    time: ctx.layout_ctx.beats,
+                    base: ctx.layout_ctx.beat_type,
+                };
+                let (num, denom) = ctx.font.time_signature(time_signature);
+                let visual = VisualTimeSignature::new(num, denom);
+                staff_measure.time_signature = Some(visual);
+            }
+
+            // this measure is the first measure in a system, in the previous measure, prepare the change.
+            let first_measure_number_in_system =
+                system.measures.first_key_value().unwrap().1.number;
+            if *measure_number == first_measure_number_in_system {
+                let prev_measure_number = measure_number - 1;
+                for staff_measure in ctx
+                    .visual_score
+                    .locate_staff_measures_mut(part_id, prev_measure_number)
+                {
+                    let time_signature = TimeSignatureCore {
+                        time: ctx.layout_ctx.beats,
+                        base: ctx.layout_ctx.beat_type,
+                    };
+                    let (num, denom) = ctx.font.time_signature(time_signature);
+                    let visual = VisualTimeSignature::new(num, denom);
+                    staff_measure.prepare_time_signature = Some(visual);
+                }
+            }
+        }
+    }
 
     fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx: StaffIdx = ctx.layout_ctx.staff.number;
