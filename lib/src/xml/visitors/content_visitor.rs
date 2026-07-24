@@ -11,9 +11,11 @@ use crate::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::utils::NodeUtils;
 use crate::xml::walker_ctx::WalkerCtx;
 
+use crate::score::core::accidental::Accidental as AccidentalCore;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
 use crate::utils::ReqParse;
+use crate::visual::accidental::Accidental as DrawableAccidental;
 use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
 use itertools::Itertools;
@@ -102,7 +104,7 @@ impl ContentVisitor {
         let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
         let notehead = dur.notehead_glyph();
         let glyph = ctx.font.notehead(notehead);
-        let note = Note::new(glyph, default_x, staff_idx, staff_line, scale);
+        let mut note = Note::new(glyph, default_x, staff_idx, staff_line, scale);
 
         // Locate Measure & Voice Chords
         let system = ctx
@@ -114,7 +116,7 @@ impl ContentVisitor {
             .locate_part_measure_mut(part_id, measure_number)
             .expect("Part measure missing");
 
-        let is_chord = node.children().any(|n| n.tag_name().name() == "chord");
+        let is_chord = node.get_child("chord").is_some();
         let chords = part_measure.chords.entry(voice).or_default();
         if !is_chord {
             chords.push(Chord::default());
@@ -149,6 +151,14 @@ impl ContentVisitor {
                     stem.beams.insert(number, beam_type);
                 }
             }
+        }
+
+        if let Some(accidental) = node.get_child("accidental") {
+            let accidental = accidental.req_text();
+            let accidental: AccidentalCore = accidental.try_into().unwrap();
+            let accidental = ctx.font.accidental(accidental);
+            let accidental = DrawableAccidental::new(accidental);
+            note.accidental = Some(accidental)
         }
 
         // Attach pending clef changes

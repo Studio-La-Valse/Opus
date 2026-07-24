@@ -12,6 +12,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
+use crate::visual::accidental::Accidental;
 use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
@@ -30,6 +31,7 @@ pub struct Note {
     pub color: Color,
 
     pub glyph: Notehead,
+    pub accidental: Option<Accidental>,
 }
 
 impl Note {
@@ -42,6 +44,7 @@ impl Note {
     ) -> Self {
         Note {
             glyph,
+            accidental: None,
 
             default_x,
             staff,
@@ -63,6 +66,14 @@ impl Note {
             self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling);
         let note_top = staff_top.mv(0., note_dy);
         self.xy = note_top.mv(self.default_x, 0.);
+
+        self.arrange_accidental();
+    }
+
+    fn arrange_accidental(&mut self) {
+        if let Some(accidental) = &mut self.accidental {
+            accidental.arrange(&self.xy.mv(-2., 0.));
+        }
     }
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
@@ -98,7 +109,12 @@ impl Note {
 
 impl ScoreElement for Note {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let children: Vec<&mut dyn ScoreElement> = Vec::new();
+        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        if let Some(accidental) = &mut self.accidental {
+            children.push(accidental);
+        }
+
         children
     }
 
@@ -122,6 +138,10 @@ impl Layoutable for Note {
         let bbox = self.scale_box(&glyph.bbox);
 
         self.width = bbox.width();
+
+        if let Some(accidental) = &mut self.accidental {
+            accidental.measure(_available);
+        }
     }
 
     /// here, origin is the origin of the part measure. Get the dy from the staff ctx.
@@ -132,7 +152,12 @@ impl Layoutable for Note {
 
 impl DrawableContent for Note {
     fn content(&self) -> Vec<&dyn DrawableContent> {
-        let content: Vec<&dyn DrawableContent> = Vec::new();
+        let mut content: Vec<&dyn DrawableContent> = Vec::new();
+
+        if let Some(accidental) = &self.accidental {
+            content.push(accidental);
+        }
+
         content
     }
 

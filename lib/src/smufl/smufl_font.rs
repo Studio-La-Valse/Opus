@@ -1,7 +1,9 @@
 use crate::bounding_box::BoundingBox;
+use crate::score::core::accidental::Accidental as AccidentalCore;
 use crate::score::core::clef::Clef as ClefCore;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::smufl::glyph_name::{GlyphName, ToChar, load_glyph_names};
+use crate::smufl::glyphs::accidental::Accidental;
 use crate::smufl::glyphs::brace::Brace;
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
 use crate::smufl::glyphs::clef::Clef;
@@ -182,5 +184,22 @@ impl SmuflFont {
         };
 
         (num, denom)
+    }
+
+    pub fn accidental(&self, accidental: AccidentalCore) -> Accidental {
+        let name = match accidental {
+            AccidentalCore::Natural => "accidentalNatural",
+            AccidentalCore::Sharp => "accidentalSharp",
+            AccidentalCore::DoubleSharp => "accidentalDoubleSharp",
+            AccidentalCore::Flat => "accidentalFlat",
+            AccidentalCore::DoubleFlat => "accidentalDoubleFlat",
+        };
+
+        let codepoint = self.glyph_names.get(name).unwrap().codepoint_char();
+
+        Accidental {
+            codepoint,
+            font: self.font.to_string(),
+        }
     }
 }

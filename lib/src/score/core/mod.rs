@@ -1,3 +1,4 @@
+pub mod accidental;
 pub mod clef;
 pub mod duration;
 pub mod duration_base;
