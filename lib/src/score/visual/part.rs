@@ -13,6 +13,7 @@ use crate::visual::clef::Clef as DrawableClef;
 use crate::visual::score_element::ScoreElement;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::staff_measure::StaffMeasure;
+use itertools::Itertools;
 use std::collections::{BTreeMap, HashSet};
 
 pub struct Part {
@@ -131,7 +132,8 @@ impl Part {
         for (idx, clef) in clefs {
             let staff = self.staves.entry(*idx).or_default();
             let drawable = f(*clef);
-            staff.clef = Some(drawable);
+            let measure = staff.measures.values_mut().find_or_first(|_| true).unwrap();
+            measure.clef = Some(drawable);
         }
     }
 

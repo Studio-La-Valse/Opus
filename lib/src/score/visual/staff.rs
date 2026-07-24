@@ -8,7 +8,6 @@ use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::user_layout::UserLayout;
-use crate::visual::clef::Clef;
 use crate::visual::score_element::ScoreElement;
 use std::collections::BTreeMap;
 
@@ -30,9 +29,6 @@ pub struct Staff {
 
     pub distance_specified: Option<f32>,
     pub distance_final: f32,
-
-    pub clef_pad_left: f32,
-    pub clef: Option<Clef>,
 }
 
 impl Default for Staff {
@@ -55,9 +51,6 @@ impl Default for Staff {
 
             distance_specified: Default::default(),
             distance_final: Default::default(),
-
-            clef_pad_left: 10.,
-            clef: None,
         }
     }
 }
@@ -85,10 +78,6 @@ impl Staff {
         for measure in self.measures.values_mut() {
             measure.scale = scale;
         }
-
-        if let Some(ref mut clef) = self.clef {
-            clef.scale = scale;
-        }
     }
 }
 
@@ -97,10 +86,6 @@ impl ScoreElement for Staff {
         let mut result: Vec<&mut dyn ScoreElement> = vec![];
         for measure in self.measures.values_mut() {
             result.push(measure);
-        }
-
-        if let Some(ref mut clef) = self.clef {
-            result.push(clef);
         }
 
         result
@@ -161,13 +146,6 @@ impl Layoutable for Staff {
 
             _origin = _origin.mv(measure.width, 0.)
         }
-
-        let line_space = self.line_space() / 2.;
-        if let Some(ref mut clef) = self.clef {
-            let dy: f32 = clef.clef.line as f32 * line_space;
-            let dx = self.clef_pad_left * self.scale;
-            clef.arrange(&self.xy.mv(dx, dy));
-        }
     }
 }
 
@@ -181,10 +159,6 @@ impl DrawableContent for Staff {
 
         for (_idx, measure) in self.measures.iter() {
             content.push(measure as &dyn DrawableContent);
-        }
-
-        if let Some(ref clef) = self.clef {
-            content.push(clef as &dyn DrawableContent);
         }
 
         content

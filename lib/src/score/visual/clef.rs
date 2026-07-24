@@ -28,7 +28,7 @@ impl Clef {
             color: Color::BLACK,
             scale: 1.,
 
-            width: 26.5, // TODO: MEASURE FROM META BBOXES
+            width: 30.,  // TODO: MEASURE FROM META BBOXES
             height: 15., // TODO: MEASURE FROM META BBOXES
 
             clef,

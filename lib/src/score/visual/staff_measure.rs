@@ -18,18 +18,42 @@ pub struct StaffMeasure {
     pub scale: f32,
 
     pub rests: Vec<Rest>,
+
+    // Clef left side of measure
+    pub clef: Option<Clef>,
+    // Time signature left side of measure
     pub time_signature: Option<TimeSignature>,
+    // Time signature right of measure
     pub prepare_time_signature: Option<TimeSignature>,
+    // Clef right of measure
     pub prepare_clef_change: Option<Clef>,
 }
 
 impl StaffMeasure {
-    fn arrange_time_signature(&mut self) {
+    pub fn line_space(&self) -> f32 {
+        Staff::DEFAULT_SPACE_SIZE * self.scale
+    }
+
+    fn arrange_clef_start(&mut self) {
+        let line_space = self.line_space() / 2.;
+        if let Some(ref mut clef) = self.clef {
+            let dy: f32 = clef.clef.line as f32 * line_space;
+            let dx = 10. * self.scale;
+            clef.arrange(&self.xy.mv(dx, dy));
+        }
+    }
+    fn arrange_time_signature_start(&mut self) {
         if let Some(ref mut time_signature) = self.time_signature {
-            let pos = self.xy.mv(5., 0.);
+            let mut pos = self.xy.mv(5., 0.);
+
+            if let Some(clef) = &self.clef {
+                pos = pos.mv(clef.width + 10., 0.);
+            }
+
             time_signature.arrange(&pos);
         }
-
+    }
+    fn arrange_time_signature_end(&mut self) {
         if let Some(ref mut prepare_time_signature) = self.prepare_time_signature {
             let pos = self
                 .xy
@@ -37,7 +61,7 @@ impl StaffMeasure {
             prepare_time_signature.arrange(&pos);
         }
     }
-    fn arrange_clef(&mut self) {
+    fn arrange_clef_end(&mut self) {
         if let Some(ref mut clef) = self.prepare_clef_change {
             let clef_origin = self.xy;
             let measure_right = clef_origin.mv(self.width, 0.);
@@ -74,6 +98,10 @@ impl StaffMeasure {
 impl ScoreElement for StaffMeasure {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
         let mut res: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        if let Some(ref mut clef) = self.clef {
+            res.push(clef);
+        }
 
         if let Some(ref mut time_signature) = self.time_signature {
             res.push(time_signature);
@@ -119,8 +147,10 @@ impl Layoutable for StaffMeasure {
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
-        self.arrange_time_signature();
-        self.arrange_clef();
+        self.arrange_clef_start();
+        self.arrange_time_signature_start();
+        self.arrange_time_signature_end();
+        self.arrange_clef_end();
         self.arrange_rests();
     }
 }
@@ -128,6 +158,10 @@ impl Layoutable for StaffMeasure {
 impl DrawableContent for StaffMeasure {
     fn content(&self) -> Vec<&dyn DrawableContent> {
         let mut result: Vec<&dyn DrawableContent> = Vec::new();
+
+        if let Some(ref clef) = self.clef {
+            result.push(clef as &dyn DrawableContent);
+        }
 
         if let Some(ref time_signature) = self.time_signature {
             result.push(time_signature);

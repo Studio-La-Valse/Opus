@@ -14,6 +14,9 @@ use crate::xml::walker_ctx::WalkerCtx;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
 use crate::utils::ReqParse;
+use crate::visual::brace::Brace;
+use crate::visual::bracket::Bracket;
+use itertools::Itertools;
 use roxmltree::Node;
 use std::collections::HashMap;
 
@@ -206,8 +209,12 @@ impl Visitor for ContentVisitor {
             }
 
             // this measure is the first measure in a system, in the previous measure, prepare the change.
-            let first_measure_number_in_system =
-                system.measures.first_key_value().unwrap().1.number;
+            let first_measure_number_in_system = system
+                .measures
+                .values()
+                .find_or_first(|_| true)
+                .unwrap()
+                .number;
             if *measure_number == first_measure_number_in_system {
                 let prev_measure_number = measure_number - 1;
                 for staff_measure in ctx
@@ -266,7 +273,42 @@ impl Visitor for ContentVisitor {
 
     fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
 
-    fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}
+    fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
+        let page_number = ctx.layout_ctx.page.page_number;
+        let system_index = ctx.layout_ctx.system.index;
+
+        let part_id = ctx.layout_ctx.part_id.clone();
+        let part = ctx.layout.parts.get(&part_id).unwrap();
+        let section_number = part.section;
+        let part_group_number = part.part_group;
+
+        // get or create the page
+        let page = ctx.visual_score.get_page_or_insert(page_number);
+
+        // get or create the system on the page
+        let system = page.get_system_or_insert(system_index);
+
+        // get or create the section in this system.
+        let section = system.get_section_or_insert(section_number, || {
+            let bracket_top = ctx.font.bracket_top();
+            let bracket_bottom = ctx.font.bracket_bottom();
+            Bracket::new(bracket_top, bracket_bottom)
+        });
+
+        // get or create the part group in this section.
+        let part_group = section.part_group_or_insert(part_group_number, || {
+            let smufl_brace = ctx.font.brace(None);
+            Brace::new(smufl_brace)
+        });
+
+        // This function must be called after consolidate_measure_width(),
+        // because all measures must exist in each staff
+        let part = part_group.part_or_insert(part_id.clone(), || Brace::new(ctx.font.brace(None)));
+        part.set_opening_clef(&ctx.layout_ctx.staff.opening_clef, |c| {
+            let smufl_clef = ctx.font.clef(&c);
+            Clef::new(smufl_clef)
+        });
+    }
 
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
 

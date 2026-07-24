@@ -2,7 +2,6 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::visitor::Visitor;
 use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
-use crate::visual::clef::Clef;
 use crate::xml::walker_ctx::WalkerCtx;
 
 use crate::visual::system_measure::SystemMeasure;
@@ -104,10 +103,6 @@ impl Visitor for LayoutVisitor {
         part.show_staves(&ctx.layout_ctx.staff.explicitly_shown);
         part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
         part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
-        part.set_opening_clef(&ctx.layout_ctx.staff.opening_clef, |c| {
-            let smufl_clef = ctx.font.clef(&c);
-            Clef::new(smufl_clef)
-        });
 
         // Now that all staves are ensure, consolidate the measure width,
         // so every measure from system to staff has the same calculated width.
