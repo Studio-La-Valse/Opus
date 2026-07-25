@@ -215,7 +215,7 @@ impl Visitor for ContentVisitor {
                 };
                 let (num, denom) = ctx.font.time_signature(time_signature);
                 let visual = VisualTimeSignature::new(num, denom);
-                staff_measure.time_signature = Some(visual);
+                staff_measure.time_signature_start = Some(visual);
             }
 
             // this measure is the first measure in a system, in the previous measure, prepare the change.
@@ -237,7 +237,7 @@ impl Visitor for ContentVisitor {
                     };
                     let (num, denom) = ctx.font.time_signature(time_signature);
                     let visual = VisualTimeSignature::new(num, denom);
-                    staff_measure.prepare_time_signature = Some(visual);
+                    staff_measure.time_signature_end = Some(visual);
                 }
             }
         }
@@ -260,7 +260,7 @@ impl Visitor for ContentVisitor {
                 ctx.visual_score
                     .locate_staff_measure_mut(part_id, &staff_idx, measure_number - 1)
             {
-                previous_measure.prepare_clef_change = Some(visual_clef);
+                previous_measure.clef_end = Some(visual_clef);
             }
         }
     }

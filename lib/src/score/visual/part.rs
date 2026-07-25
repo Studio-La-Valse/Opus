@@ -133,7 +133,7 @@ impl Part {
             let staff = self.staves.entry(*idx).or_default();
             let drawable = f(*clef);
             let measure = staff.measures.values_mut().find_or_first(|_| true).unwrap();
-            measure.clef = Some(drawable);
+            measure.clef_start = Some(drawable);
         }
     }
 
