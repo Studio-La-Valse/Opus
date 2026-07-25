@@ -1,6 +1,6 @@
 use crate::drawable::drawable_element::DrawableElement;
 
-pub trait DrawableContent {
-    fn content(&self) -> Vec<&dyn DrawableContent>;
+pub trait Drawable {
+    fn content(&self) -> Vec<&dyn Drawable>;
     fn elements(&self) -> Vec<DrawableElement>;
 }

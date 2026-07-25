@@ -14,6 +14,7 @@ pub enum Clef {
 }
 
 impl Clef {
+    /// The line on the staff that denotes the middle alignment of a smufl glyph.
     pub fn anchor_line(&self) -> i32 {
         match self {
             Self::Treble => 6,
@@ -27,6 +28,7 @@ impl Clef {
         }
     }
 
+    /// The line on the staff that denotes the location of the middle c.
     pub fn line_middle_c(&self) -> i32 {
         match self {
             Self::Treble => 10,
@@ -57,7 +59,45 @@ impl Clef {
         }
     }
 
+    pub fn sharp_lines(&self) -> Vec<i32> {
+        // Requires a match because there is no true mathematical pattern
+        // as the positions are irregular.
+        // We could use a vec of octaves and calculate the pitch for each step,
+        // but this will do.
+        match self {
+            Self::Treble => vec![0, 3, -1, 2, 5, 1, 4],
+            Self::Soprano => vec![5, 1, 4, 0, 3, -1, 2],
+            Self::MezzoSoprano => vec![3, 6, 2, 5, 8, 4, 7],
+            Self::Alto => vec![1, 4, 0, 3, 6, 2, 5],
+            Self::Tenor => vec![6, 2, 5, 1, 4, 0, 3],
+            Self::Baritone => vec![4, 7, 3, 6, 9, 5, 8],
+            Self::Bass => vec![2, 5, 1, 4, 7, 3, 6],
+            Self::Percussion => vec![],
+        }
+    }
+
+    pub fn flat_lines(&self) -> Vec<i32> {
+        // Strictly speaking the arrangement of flats seems to follow a pattern,
+        // but since we use a match in the sharp_lines() fn, we use it here as well.
+        match self {
+            Self::Treble => vec![4, 1, 5, 2, 6, 3, 7],
+            Self::Soprano => vec![2, -1, 3, 0, 4, 1, 5],
+            Self::MezzoSoprano => vec![0, 4, 1, 5, 2, 6, 3],
+            Self::Alto => vec![5, 2, 6, 3, 7, 4, 8],
+            Self::Tenor => vec![3, 0, 4, 1, 5, 2, 6],
+            Self::Baritone => vec![1, 5, 2, 6, 3, 7, 4],
+            Self::Bass => vec![6, 3, 7, 4, 8, 5, 9],
+            Self::Percussion => vec![],
+        }
+    }
+
+    /// Returns the line on a staff for the requested pitch.
     pub fn line_index_at_pitch(&self, pitch: &Pitch) -> i32 {
-        self.line_middle_c() + (3 - pitch.octave) * 7 + (7 - pitch.step.steps_from_c)
+        // Calculate total diatonic steps from Middle C (C4)
+        let octave_diff = pitch.octave - 4;
+        let diatonic_steps_from_c4 = (octave_diff * 7) + pitch.step.steps_from_c;
+
+        // Moving up in pitch moves up the staff (decreasing line index)
+        self.line_middle_c() - diatonic_steps_from_c4
     }
 }

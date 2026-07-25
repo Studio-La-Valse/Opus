@@ -1,6 +1,6 @@
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::smufl::glyphs::accidental::Accidental as SmuflAccidental;
@@ -55,8 +55,8 @@ impl Layoutable for Accidental {
     }
 }
 
-impl DrawableContent for Accidental {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for Accidental {
+    fn content(&self) -> Vec<&dyn Drawable> {
         vec![]
     }
 

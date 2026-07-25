@@ -40,6 +40,7 @@ pub trait NodeUtils<'a, 'input> {
     fn get_child(&self, name: &str) -> Option<Node<'a, 'input>>;
     fn req_text(&self) -> &'input str;
     fn has_tag(&self, name: &str) -> bool;
+    fn has_child(&self, name: &str) -> bool;
 }
 
 impl<'a, 'input> NodeUtils<'a, 'input> for Node<'a, 'input>
@@ -83,5 +84,8 @@ where
 
     fn has_tag(&self, name: &str) -> bool {
         self.has_tag_name(name)
+    }
+    fn has_child(&self, name: &str) -> bool {
+        self.get_child(name).is_some()
     }
 }

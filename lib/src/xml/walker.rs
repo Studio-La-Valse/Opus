@@ -39,6 +39,10 @@ impl<V: Visitor> Walker<V> {
                                     "print" => self.visitor.enter_print(&child, ctx),
                                     "attributes" => {
                                         self.visitor.enter_attributes(&child, ctx);
+
+                                        // we have to handle all children of attributes twice,
+                                        // because the key requires a clef to be visited first, even though it may be notated later.
+
                                         for child in child.children().filter(|n| n.is_element()) {
                                             match child.tag_name().name() {
                                                 "clef" => self.visitor.enter_clef(&child, ctx),
@@ -46,6 +50,12 @@ impl<V: Visitor> Walker<V> {
                                                     self.visitor.enter_staff_details(&child, ctx)
                                                 }
                                                 _ => {}
+                                            }
+                                        }
+
+                                        for child in child.children().filter(|n| n.is_element()) {
+                                            if child.tag_name().name() == "key" {
+                                                self.visitor.enter_key(&child, ctx)
                                             }
                                         }
                                     }

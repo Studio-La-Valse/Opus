@@ -1,5 +1,6 @@
 use crate::score::core::clef::Clef;
 use crate::score::core::duration_base::BaseDuration;
+use crate::score::core::key::{Key, Mode};
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
 use std::collections::{BTreeMap, HashSet};
@@ -93,12 +94,14 @@ pub struct LayoutCtx {
     pub beats: u8,
     pub beat_type: BaseDuration,
     pub position: u32,
+    pub key: Key,
     pub voice: Voice,
 
     pub new_page: bool,
     pub new_system: bool,
 
     pub chord: bool,
+    pub grace: bool,
 }
 
 impl LayoutCtx {
@@ -123,15 +126,19 @@ impl LayoutCtx {
         self.staff.active_clef.clear();
         self.staff.opening_clef.clear();
 
-        self.measure.number = 1;
+        self.measure.number = 0;
         self.measure.width = None;
 
-        self.divisions = 8; // specifies the amounts of divisions in one beat (so in one 1/beat_type)
+        self.divisions = 8;
         self.beats = 4;
         self.beat_type = 4.into();
         self.voice = 1.into();
-
+        self.key = Key {
+            fifths: 0,
+            mode: Mode::Major,
+        };
         self.chord = false;
+        self.grace = false;
 
         self.new_page = true;
         self.new_system = true;
@@ -174,8 +181,13 @@ impl Default for LayoutCtx {
             beat_type: 4.into(),
             position: 0,
             voice: 1.into(),
+            key: Key {
+                fifths: 0,
+                mode: Mode::Major,
+            },
 
             chord: false,
+            grace: false,
 
             new_page: true,
             new_system: true,

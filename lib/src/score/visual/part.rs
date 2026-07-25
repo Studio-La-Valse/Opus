@@ -1,5 +1,5 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::score::core::clef::Clef as CoreClef;
@@ -138,6 +138,10 @@ impl Part {
     }
 
     pub fn set_staff_scale(&mut self, staff_scales: &BTreeMap<StaffIdx, f32>) {
+        for staff in self.staves.values_mut() {
+            staff.set_scale(1.0);
+        }
+
         for (&idx, staff_scale) in staff_scales.iter() {
             let staff = self.staves.entry(idx).or_default();
             staff.set_scale(*staff_scale)
@@ -293,19 +297,19 @@ impl Layoutable for Part {
     }
 }
 
-impl DrawableContent for Part {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for Part {
+    fn content(&self) -> Vec<&dyn Drawable> {
         let shows_brace = self.shows_brace();
 
         let mut result = Vec::new();
 
-        result.extend(self.measures.values().map(|m| m as &dyn DrawableContent));
+        result.extend(self.measures.values().map(|m| m as &dyn Drawable));
 
         result.extend(
             self.staves
                 .values()
                 .filter(|s| !s.hidden)
-                .map(|s| s as &dyn DrawableContent),
+                .map(|s| s as &dyn Drawable),
         );
 
         if shows_brace {

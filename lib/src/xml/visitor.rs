@@ -3,52 +3,6 @@ use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 
 pub trait Visitor: Sized {
-    fn enter(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_work(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_defaults(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn exit_defaults(&mut self, ctx: &mut WalkerCtx);
-
-    fn enter_part_list(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_part(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_measure(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_print(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_clef(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_staff_details(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_forward(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx);
-
-    fn exit_note(&mut self, ctx: &mut WalkerCtx);
-
-    fn exit_measure(&mut self, ctx: &mut WalkerCtx);
-
-    fn exit_part(&mut self, ctx: &mut WalkerCtx);
-
-    fn exit(&mut self, ctx: &mut WalkerCtx);
-
-    fn uses<C: Visitor>(self, callback: C) -> Chain<Self, C> {
-        Chain::new(self, callback)
-    }
-}
-
-pub struct DefaultVisitor {}
-
-impl DefaultVisitor {}
-
-impl Visitor for DefaultVisitor {
     fn enter(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_work(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
@@ -71,6 +25,8 @@ impl Visitor for DefaultVisitor {
 
     fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
+    fn enter_key(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+
     fn enter_backup(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
@@ -84,7 +40,17 @@ impl Visitor for DefaultVisitor {
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn exit(&mut self, _ctx: &mut WalkerCtx) {}
+
+    fn uses<C: Visitor>(self, callback: C) -> Chain<Self, C> {
+        Chain::new(self, callback)
+    }
 }
+
+pub struct DefaultVisitor {}
+
+impl DefaultVisitor {}
+
+impl Visitor for DefaultVisitor {}
 
 impl<A: Visitor, B: Visitor> Visitor for Chain<A, B> {
     fn enter(&mut self, node: &Node, ctx: &mut WalkerCtx) {
@@ -140,6 +106,11 @@ impl<A: Visitor, B: Visitor> Visitor for Chain<A, B> {
     fn enter_staff_details(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         self.a.enter_staff_details(node, ctx);
         self.b.enter_staff_details(node, ctx);
+    }
+
+    fn enter_key(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        self.a.enter_key(node, ctx);
+        self.b.enter_key(node, ctx);
     }
 
     fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {

@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/lib/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/wasm/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/smufl" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/xmlsamples" />

@@ -1,7 +1,7 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
@@ -19,6 +19,8 @@ use std::collections::BTreeMap;
 #[derive(Default)]
 pub struct Chord {
     pub xy: XY,
+
+    pub grace: bool,
 
     pub notes: Vec<Note>,
     pub stem: Option<Stem>,
@@ -168,9 +170,9 @@ impl Layoutable for Chord {
     }
 }
 
-impl DrawableContent for Chord {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
-        let mut result: Vec<&dyn DrawableContent> = Vec::new();
+impl Drawable for Chord {
+    fn content(&self) -> Vec<&dyn Drawable> {
+        let mut result: Vec<&dyn Drawable> = Vec::new();
 
         for note in self.notes.iter() {
             result.push(note);

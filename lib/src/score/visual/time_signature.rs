@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::smufl::glyphs::number::Number;
@@ -44,8 +44,8 @@ impl Layoutable for TimeSignature {
     }
 }
 
-impl DrawableContent for TimeSignature {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for TimeSignature {
+    fn content(&self) -> Vec<&dyn Drawable> {
         vec![]
     }
 

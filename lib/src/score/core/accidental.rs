@@ -1,4 +1,5 @@
-﻿pub enum Accidental {
+﻿#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Accidental {
     Natural,
     Sharp,
     DoubleSharp,

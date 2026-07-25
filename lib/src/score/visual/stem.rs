@@ -1,6 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
@@ -61,7 +61,7 @@ impl From<&str> for BeamType {
             "continue" => BeamType::Continue,
             "end" => BeamType::End,
             "hookstart" => BeamType::HookStart,
-            "hookend" => BeamType::HookEnd,
+            "backward hook" => BeamType::HookEnd,
             _ => panic!("Unknown beam type: '{}'", value),
         }
     }
@@ -185,8 +185,8 @@ impl Layoutable for Stem {
     }
 }
 
-impl DrawableContent for Stem {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for Stem {
+    fn content(&self) -> Vec<&dyn Drawable> {
         vec![]
     }
 

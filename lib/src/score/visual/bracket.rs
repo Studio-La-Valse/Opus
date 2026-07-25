@@ -1,6 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::rect::Rect;
 use crate::drawable::layoutable::Layoutable;
@@ -61,8 +61,8 @@ impl Layoutable for Bracket {
     }
 }
 
-impl DrawableContent for Bracket {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for Bracket {
+    fn content(&self) -> Vec<&dyn Drawable> {
         vec![]
     }
 

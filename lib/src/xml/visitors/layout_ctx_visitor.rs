@@ -1,5 +1,6 @@
 use crate::layout_ctx::LayoutCtx;
 use crate::score::core::clef::Clef;
+use crate::score::core::key::Key;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout_ctx::Visibility;
 use crate::utils::ReqParse;
@@ -29,9 +30,10 @@ impl Visitor for LayoutContextVisitor {
         ctx.layout_ctx.part_id = _node.attribute("id").unwrap().to_string()
     }
 
-    fn enter_measure(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        ctx.layout_ctx.measure.number = _node.req_attribute("number").req_parse();
-        ctx.layout_ctx.measure.width = _node.attribute("width").and_then(|s| s.parse::<f32>().ok());
+    fn enter_measure(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        // we explicitly ignore the specified measure number because it may be either 0 or 1 based.
+        ctx.layout_ctx.measure.number += 1;
+        ctx.layout_ctx.measure.width = node.attribute("width").and_then(|s| s.parse::<f32>().ok());
 
         ctx.layout_ctx.system.margin_left = None;
         ctx.layout_ctx.system.margin_right = None;
@@ -69,7 +71,8 @@ impl Visitor for LayoutContextVisitor {
             || element
                 .attribute("new-system")
                 .map(|v| v == "yes")
-                .unwrap_or(false);
+                .unwrap_or(false)
+            || ctx.layout_ctx.measure.number == 1;
 
         if ctx.layout_ctx.new_page {
             ctx.layout_ctx.page.page_number += 1;
@@ -168,6 +171,8 @@ impl Visitor for LayoutContextVisitor {
                     }
                 }
             }
+
+            if node.has_tag_name("key") {}
         }
     }
 
@@ -197,9 +202,10 @@ impl Visitor for LayoutContextVisitor {
             .insert(position, clef);
 
         // If this measure is the first in a system, set this clef to opening of the staff.
-        if (ctx.layout_ctx.measure.number == 1 || ctx.layout_ctx.new_system)
-            && ctx.layout_ctx.position == 0
-        {
+        // note how we use the measure number because the first time a print appears,
+        // there is no new_system information available. We increment the measure number every time
+        // we enter a measure, which is initialized at 0, so the first measure will always be number 1.
+        if ctx.layout_ctx.measure.number == 1 && ctx.layout_ctx.position == 0 {
             ctx.layout_ctx.staff.opening_clef.insert(staff, clef);
         }
     }
@@ -255,6 +261,14 @@ impl Visitor for LayoutContextVisitor {
         }
     }
 
+    fn enter_key(&mut self, node: &Node, ctx: &mut WalkerCtx) {
+        let fifths: i8 = node.req_child("fifths").req_parse();
+        let mode = node.req_child("mode").req_text();
+
+        let key: Key = (fifths, mode).try_into().unwrap();
+        ctx.layout_ctx.key = key;
+    }
+
     fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let duration: u32 = node.req_child("duration").req_parse();
         ctx.layout_ctx.position -= duration;
@@ -281,7 +295,14 @@ impl Visitor for LayoutContextVisitor {
             ctx.layout_ctx.position -= ctx.layout_ctx.duration;
         }
 
-        let duration: u32 = element.req_child("duration").req_parse();
+        ctx.layout_ctx.grace = element.has_child("grace");
+
+        let duration: u32 = if ctx.layout_ctx.grace {
+            0
+        } else {
+            element.req_child("duration").req_parse()
+        };
+
         ctx.layout_ctx.duration = duration;
 
         for node in element.children() {

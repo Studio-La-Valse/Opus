@@ -1,7 +1,7 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::layoutable::Layoutable;
@@ -287,13 +287,13 @@ impl Layoutable for System {
     }
 }
 
-impl DrawableContent for System {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for System {
+    fn content(&self) -> Vec<&dyn Drawable> {
         let mut result = Vec::new();
 
-        result.extend(self.measures.values().map(|m| m as &dyn DrawableContent));
+        result.extend(self.measures.values().map(|m| m as &dyn Drawable));
 
-        result.extend(self.sections.values().map(|s| s as &dyn DrawableContent));
+        result.extend(self.sections.values().map(|s| s as &dyn Drawable));
 
         result
     }

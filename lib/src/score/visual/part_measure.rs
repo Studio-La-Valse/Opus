@@ -1,7 +1,7 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
@@ -23,9 +23,11 @@ use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub struct PartMeasure {
+    pub part_id: String,
+    pub number: u32,
+
     pub specified_width: Option<f32>,
     pub final_width: f32,
-    pub number: u32,
 
     pub width: f32,
     pub height: f32,
@@ -46,8 +48,9 @@ pub struct PartMeasure {
 }
 
 impl PartMeasure {
-    pub fn new(number: u32) -> Self {
+    pub fn new(part_id: String, number: u32) -> Self {
         Self {
+            part_id,
             number,
             ..Default::default()
         }
@@ -262,9 +265,9 @@ impl Layoutable for PartMeasure {
     }
 }
 
-impl DrawableContent for PartMeasure {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
-        let mut result: Vec<&dyn DrawableContent> = Vec::new();
+impl Drawable for PartMeasure {
+    fn content(&self) -> Vec<&dyn Drawable> {
+        let mut result: Vec<&dyn Drawable> = Vec::new();
         for chord in self.chords.values().flatten() {
             result.push(chord);
         }
@@ -325,6 +328,10 @@ fn create_beam_groups(chords: Vec<&mut Chord>) -> Vec<Vec<&mut Chord>> {
     let mut group: Vec<&mut Chord> = vec![];
 
     for chord in chords {
+        if chord.grace {
+            continue;
+        }
+
         let action = match &chord.stem {
             Some(stem) => match stem.beams.get(&1) {
                 Some(BeamType::Start) => BeamGroupAction::Start,
@@ -340,6 +347,9 @@ fn create_beam_groups(chords: Vec<&mut Chord>) -> Vec<Vec<&mut Chord>> {
 
         match action {
             BeamGroupAction::Start => {
+                // This can actually happen when a grace group is in between two
+                // notes of a 'regular' beam group.
+                // so....
                 if !group.is_empty() {
                     panic!("Cannot start a beam group when one is already open");
                 }

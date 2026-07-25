@@ -1,9 +1,10 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::score::visual::time_signature::TimeSignature;
 use crate::visual::clef::Clef;
+use crate::visual::key_signature::KeySignature;
 use crate::visual::rest::Rest;
 use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
@@ -21,6 +22,8 @@ pub struct StaffMeasure {
 
     // Clef left side of measure
     pub clef_start: Option<Clef>,
+    // Key signature at left side of measure
+    pub key_signature_start: KeySignature,
     // Time signature left side of measure
     pub time_signature_start: Option<TimeSignature>,
     // Time signature right of measure
@@ -42,6 +45,15 @@ impl StaffMeasure {
             clef.arrange(&self.xy.mv(dx, dy));
         }
     }
+    fn arrange_key_signature_start(&mut self) {
+        let mut pos = self.xy.mv(5., 0.);
+
+        if let Some(clef) = &self.clef_start {
+            pos = pos.mv(clef.width + 15., 0.);
+        }
+
+        self.key_signature_start.arrange(&pos);
+    }
     fn arrange_time_signature_start(&mut self) {
         if let Some(ref mut time_signature) = self.time_signature_start {
             let mut pos = self.xy.mv(5., 0.);
@@ -49,6 +61,8 @@ impl StaffMeasure {
             if let Some(clef) = &self.clef_start {
                 pos = pos.mv(clef.width + 10., 0.);
             }
+
+            pos = pos.mv(self.key_signature_start.width + 5., 0.);
 
             time_signature.arrange(&pos);
         }
@@ -103,9 +117,12 @@ impl ScoreElement for StaffMeasure {
             res.push(clef);
         }
 
-        if let Some(ref mut time_signature) = self.time_signature_start {
-            res.push(time_signature);
+        if let Some(ref mut key_signature) = self.time_signature_start {
+            res.push(key_signature);
         }
+
+        let key_sig: &mut dyn ScoreElement = &mut self.key_signature_start;
+        res.push(key_sig);
 
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
             res.push(prepare_time_signature);
@@ -131,6 +148,8 @@ impl Layoutable for StaffMeasure {
             time_signature.measure(available);
         }
 
+        self.key_signature_start.measure(available);
+
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
             prepare_time_signature.measure(available);
         }
@@ -148,6 +167,7 @@ impl Layoutable for StaffMeasure {
         self.xy = *origin;
 
         self.arrange_clef_start();
+        self.arrange_key_signature_start();
         self.arrange_time_signature_start();
         self.arrange_time_signature_end();
         self.arrange_clef_end();
@@ -155,13 +175,16 @@ impl Layoutable for StaffMeasure {
     }
 }
 
-impl DrawableContent for StaffMeasure {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
-        let mut result: Vec<&dyn DrawableContent> = Vec::new();
+impl Drawable for StaffMeasure {
+    fn content(&self) -> Vec<&dyn Drawable> {
+        let mut result: Vec<&dyn Drawable> = Vec::new();
 
         if let Some(ref clef) = self.clef_start {
-            result.push(clef as &dyn DrawableContent);
+            result.push(clef as &dyn Drawable);
         }
+
+        let ksig = &self.key_signature_start;
+        result.push(ksig);
 
         if let Some(ref time_signature) = self.time_signature_start {
             result.push(time_signature);

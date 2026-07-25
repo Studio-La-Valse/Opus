@@ -2,6 +2,7 @@
 members = [
     "lib",
     "app",
+    "tests",
 ]
 resolver = "3"
 

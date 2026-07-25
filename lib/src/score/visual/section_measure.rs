@@ -1,7 +1,7 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::layoutable::Layoutable;
@@ -49,8 +49,8 @@ impl Layoutable for SectionMeasure {
     }
 }
 
-impl DrawableContent for SectionMeasure {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for SectionMeasure {
+    fn content(&self) -> Vec<&dyn Drawable> {
         vec![]
     }
 

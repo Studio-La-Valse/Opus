@@ -1,5 +1,5 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::visual::score_element::ScoreElement;
@@ -25,8 +25,8 @@ impl Layoutable for PartGroupMeasure {
     }
 }
 
-impl DrawableContent for PartGroupMeasure {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for PartGroupMeasure {
+    fn content(&self) -> Vec<&dyn Drawable> {
         vec![]
     }
 

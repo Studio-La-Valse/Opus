@@ -1,6 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
@@ -28,7 +28,7 @@ impl Clef {
             color: Color::BLACK,
             scale: 1.,
 
-            width: 30.,  // TODO: MEASURE FROM META BBOXES
+            width: 35.,  // TODO: MEASURE FROM META BBOXES
             height: 15., // TODO: MEASURE FROM META BBOXES
 
             clef,
@@ -58,8 +58,8 @@ impl Layoutable for Clef {
     }
 }
 
-impl DrawableContent for Clef {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for Clef {
+    fn content(&self) -> Vec<&dyn Drawable> {
         Vec::new()
     }
 

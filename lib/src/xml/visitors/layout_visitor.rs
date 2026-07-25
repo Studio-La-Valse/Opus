@@ -4,6 +4,7 @@ use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
 use crate::xml::walker_ctx::WalkerCtx;
 
+use crate::visual::part_measure::PartMeasure;
 use crate::visual::system_measure::SystemMeasure;
 use roxmltree::Node;
 use std::collections::HashSet;
@@ -96,7 +97,10 @@ impl Visitor for LayoutVisitor {
         });
 
         // get or create the part in this part group.
-        let part = part_group.part_or_insert(part_id, || Brace::new(ctx.font.brace(None)));
+        let part = part_group.part_or_insert(part_id.clone(), || Brace::new(ctx.font.brace(None)));
+        part.measures
+            .entry(measure_number)
+            .or_insert_with(|| PartMeasure::new(part_id.clone(), measure_number));
         part.set_visibility(ctx.layout_ctx.part_hidden_specified);
         part.ensure_staves(&self.encountered);
         part.hide_staves(&ctx.layout_ctx.staff.explicitly_hidden);

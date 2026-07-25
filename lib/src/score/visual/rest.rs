@@ -2,7 +2,7 @@ use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::rect::Rect;
@@ -168,9 +168,9 @@ impl Layoutable for Rest {
     }
 }
 
-impl DrawableContent for Rest {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
-        let mut content: Vec<&dyn DrawableContent> = Vec::new();
+impl Drawable for Rest {
+    fn content(&self) -> Vec<&dyn Drawable> {
+        let mut content: Vec<&dyn Drawable> = Vec::new();
 
         if let Some(ref clef) = self.clef_change {
             content.push(clef)

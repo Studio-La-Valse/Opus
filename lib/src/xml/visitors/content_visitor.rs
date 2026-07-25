@@ -1,3 +1,4 @@
+use crate::score::core::clef::Clef as ClefCore;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::pitch::Pitch;
 use crate::score::core::staff_idx::StaffIdx;
@@ -12,15 +13,18 @@ use crate::xml::utils::NodeUtils;
 use crate::xml::walker_ctx::WalkerCtx;
 
 use crate::score::core::accidental::Accidental as AccidentalCore;
+use crate::score::core::key::Key;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
 use crate::utils::ReqParse;
 use crate::visual::accidental::Accidental as DrawableAccidental;
 use crate::visual::brace::Brace;
 use crate::visual::bracket::Bracket;
-use itertools::Itertools;
+
+use crate::smufl::smufl_font::SmuflFont;
+use crate::visual::part::Part;
 use roxmltree::Node;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 pub struct ContentVisitor {
     pub clef_change: HashMap<StaffIdx, Clef>,
@@ -123,6 +127,7 @@ impl ContentVisitor {
         }
 
         let chord = chords.last_mut().expect("Chord entry should exist");
+        chord.grace = ctx.layout_ctx.grace;
 
         // Parse Stem & Beams
         if let Some(stem_node) = node.children().find(|n| n.tag_name().name() == "stem") {
@@ -168,34 +173,60 @@ impl ContentVisitor {
 
         chord.notes.push(note);
     }
+
+    /// Populates key signature accidentals at the start of a measure for all staves in a part.
+    fn populate_key_signature(
+        &self,
+        part: &mut Part, // adjust type to match your codebase
+        measure_number: u32,
+        key: Key,
+        active_clef: &BTreeMap<StaffIdx, ClefCore>, // adjust container type if different
+        font: &SmuflFont,                           // adjust Font type if different
+    ) {
+        let n_accidentals = key.accidentals();
+
+        if n_accidentals == 0 {
+            return;
+        }
+
+        for (idx, staff) in part.staves.iter_mut() {
+            let Some(staff_measure) = staff.measures.get_mut(&measure_number) else {
+                continue;
+            };
+            let Some(clef) = active_clef.get(idx) else {
+                continue;
+            };
+
+            let lines = if n_accidentals > 0 {
+                clef.sharp_lines()
+            } else {
+                clef.flat_lines()
+            };
+
+            for line in lines.iter().take(n_accidentals.unsigned_abs() as usize) {
+                let accidental_type = if n_accidentals > 0 {
+                    AccidentalCore::Sharp
+                } else {
+                    AccidentalCore::Flat
+                };
+
+                let smufl = font.accidental(accidental_type);
+                let drawable = DrawableAccidental::new(smufl);
+                staff_measure
+                    .key_signature_start
+                    .accidentals
+                    .push((*line, drawable));
+            }
+        }
+    }
 }
 
 impl Visitor for ContentVisitor {
-    fn enter(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_work(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_defaults(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn exit_defaults(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn enter_part_list(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_part(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_measure(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_print(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
     fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx) {
-        if node
-            .children()
-            .find(|n| n.tag_name().name() == "time")
-            .is_some()
-        {
+        if node.has_child("time") {
             let page_number = &ctx.layout_ctx.page.page_number;
             let system_index = &ctx.layout_ctx.system.index;
-            let measure_number = &ctx.layout_ctx.measure.number;
+            let measure_number = ctx.layout_ctx.measure.number;
 
             let part_id = &ctx.layout_ctx.part_id.clone();
             let part = &ctx.layout.parts.get(part_id).unwrap();
@@ -208,7 +239,7 @@ impl Visitor for ContentVisitor {
             let part_group = section.part_groups.get_mut(part_group_number).unwrap();
             let part = part_group.parts.get_mut(part_id).unwrap();
 
-            for staff_measure in part.staff_measures_mut(measure_number) {
+            for staff_measure in part.staff_measures_mut(&measure_number) {
                 let time_signature = TimeSignatureCore {
                     time: ctx.layout_ctx.beats,
                     base: ctx.layout_ctx.beat_type,
@@ -219,13 +250,8 @@ impl Visitor for ContentVisitor {
             }
 
             // this measure is the first measure in a system, in the previous measure, prepare the change.
-            let first_measure_number_in_system = system
-                .measures
-                .values()
-                .find_or_first(|_| true)
-                .unwrap()
-                .number;
-            if *measure_number == first_measure_number_in_system {
+            let is_new_system = ctx.layout_ctx.new_system;
+            if measure_number > 1 && is_new_system {
                 let prev_measure_number = measure_number - 1;
                 for staff_measure in ctx
                     .visual_score
@@ -256,20 +282,44 @@ impl Visitor for ContentVisitor {
             let measure_number = ctx.layout_ctx.measure.number;
             let part_id = ctx.layout_ctx.part_id.as_str();
 
-            if let Some(previous_measure) =
-                ctx.visual_score
-                    .locate_staff_measure_mut(part_id, &staff_idx, measure_number - 1)
+            if measure_number > 1
+                && let Some(previous_measure) = ctx.visual_score.locate_staff_measure_mut(
+                    part_id,
+                    &staff_idx,
+                    measure_number - 1,
+                )
             {
                 previous_measure.clef_end = Some(visual_clef);
             }
         }
     }
 
-    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+    fn enter_key(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
+        if ctx.layout_ctx.new_system {
+            // handled in exit_measure() for new systems
+            return;
+        }
 
-    fn enter_backup(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+        let page_number = ctx.layout_ctx.page.page_number;
+        let system_index = ctx.layout_ctx.system.index;
+        let part_id = ctx.layout_ctx.part_id.as_str();
+        let measure_number = ctx.layout_ctx.measure.number;
 
-    fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
+        // Extract copyable/borrowable fields up front
+        let key = ctx.layout_ctx.key;
+
+        let page = ctx.visual_score.pages.get_mut(&page_number).unwrap();
+        let system = page.systems.get_mut(&system_index).unwrap();
+        let part = system.locate_part_mut(part_id).unwrap();
+
+        self.populate_key_signature(
+            part,
+            measure_number,
+            key,
+            &ctx.layout_ctx.staff.active_clef,
+            ctx.font,
+        );
+    }
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let is_rest = node.children().find(|n| n.tag_name().name() == "rest");
@@ -281,11 +331,10 @@ impl Visitor for ContentVisitor {
         }
     }
 
-    fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
-
     fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
         let page_number = ctx.layout_ctx.page.page_number;
         let system_index = ctx.layout_ctx.system.index;
+        let measure_number = ctx.layout_ctx.measure.number;
 
         let part_id = ctx.layout_ctx.part_id.clone();
         let part = ctx.layout.parts.get(&part_id).unwrap();
@@ -318,9 +367,17 @@ impl Visitor for ContentVisitor {
             let smufl_clef = ctx.font.clef(&c);
             Clef::new(smufl_clef)
         });
+
+        if ctx.layout_ctx.new_system {
+            let key = ctx.layout_ctx.key;
+
+            self.populate_key_signature(
+                part,
+                measure_number,
+                key,
+                &ctx.layout_ctx.staff.active_clef,
+                ctx.font,
+            );
+        }
     }
-
-    fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn exit(&mut self, _ctx: &mut WalkerCtx) {}
 }

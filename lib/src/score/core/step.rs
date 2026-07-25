@@ -39,3 +39,9 @@ impl Step {
         }
     }
 }
+
+impl From<&str> for Step {
+    fn from(string: &str) -> Self {
+        Step::parse(string, 0)
+    }
+}

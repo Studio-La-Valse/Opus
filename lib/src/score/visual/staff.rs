@@ -1,7 +1,7 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::DrawableContent;
+use crate::drawable::drawable_content::Drawable;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::line::Line;
 use crate::drawable::layoutable::Layoutable;
@@ -149,8 +149,8 @@ impl Layoutable for Staff {
     }
 }
 
-impl DrawableContent for Staff {
-    fn content(&self) -> Vec<&dyn DrawableContent> {
+impl Drawable for Staff {
+    fn content(&self) -> Vec<&dyn Drawable> {
         let mut content = vec![];
 
         if self.hidden {
@@ -158,7 +158,7 @@ impl DrawableContent for Staff {
         }
 
         for (_idx, measure) in self.measures.iter() {
-            content.push(measure as &dyn DrawableContent);
+            content.push(measure as &dyn Drawable);
         }
 
         content
