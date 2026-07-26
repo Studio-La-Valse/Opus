@@ -100,7 +100,7 @@ impl ScoreElement for Page {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
-        for (_idx, staff) in self.systems.iter_mut() {
+        for staff in self.systems.values_mut() {
             result.push(staff);
         }
 
@@ -125,7 +125,7 @@ impl ScoreElement for Page {
 
 impl Layoutable for Page {
     fn measure(&mut self, available: &XY) {
-        for (_idx, system) in self.systems.iter_mut() {
+        for system in self.systems.values_mut() {
             system.measure(available);
         }
     }
@@ -140,7 +140,7 @@ impl Layoutable for Page {
         let mut origin = origin.mv(m_left, m_top);
 
         let mut first = true;
-        for (_idx, system) in self.systems.iter_mut() {
+        for system in self.systems.values_mut() {
             let s_m_left = system.m_left;
             let s_left = origin.x + s_m_left;
 

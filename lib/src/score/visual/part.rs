@@ -205,11 +205,11 @@ impl ScoreElement for Part {
 
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
-        for (_idx, staff) in self.staves.iter_mut() {
+        for staff in self.staves.values_mut() {
             result.push(staff);
         }
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             result.push(measure);
         }
 
@@ -230,7 +230,7 @@ impl Layoutable for Part {
             return;
         }
 
-        for (_idx, staff) in self.staves.iter_mut() {
+        for staff in self.staves.values_mut() {
             let available = &XY::INFINITE;
             // a staff knows its own size (sum of measure widths, staff height)
             staff.measure(available);
@@ -243,7 +243,7 @@ impl Layoutable for Part {
             self.height += staff.distance_final;
         }
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             let available = &XY {
                 x: f32::INFINITY,
                 y: self.height,
@@ -269,7 +269,7 @@ impl Layoutable for Part {
         self.xy = *origin;
 
         let mut _origin = self.xy;
-        for (_idx, staff) in self.staves.iter_mut() {
+        for staff in self.staves.values_mut() {
             if staff.hidden {
                 continue;
             }
@@ -283,7 +283,7 @@ impl Layoutable for Part {
         let staff_ctx = self.create_staff_ctx();
 
         let mut _origin = self.xy;
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             measure.arrange_ctx(&_origin, &staff_ctx);
             _origin = _origin.mv(measure.width, 0.);
         }

@@ -291,7 +291,7 @@ impl Drawable for PartMeasure {
 fn iter_chords(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&Chord> {
     let mut result: Vec<&Chord> = Vec::new();
 
-    for (_, chords) in chord_groups.iter() {
+    for chords in chord_groups.values() {
         for chord in chords {
             result.push(chord);
         }
@@ -303,7 +303,7 @@ fn iter_chords(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&Chord> {
 fn collect_voices(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
     let mut result: Vec<Vec<&mut Chord>> = Vec::new();
 
-    for (_, chords) in chord_groups.iter_mut() {
+    for chords in chord_groups.values_mut() {
         let mut group: Vec<&mut Chord> = Vec::new();
         for chord in chords {
             group.push(chord);

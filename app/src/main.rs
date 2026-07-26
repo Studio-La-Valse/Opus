@@ -33,9 +33,6 @@ struct Args {
     out: String,
 
     #[arg(long)]
-    font: String,
-
-    #[arg(long)]
     meta: String,
 
     #[arg(long)]
@@ -46,14 +43,13 @@ fn main() {
     let args = Args::parse();
     let file = args.file;
     let out = args.out;
-    let font = args.font;
     let meta = args.meta;
     let glyph_names = args.glyphs;
 
     let mut time = Instant::now();
 
     let data = read_to_string(file).expect("Something went wrong reading the file");
-    let font = SmuflFont::load(font, &meta, &glyph_names);
+    let font = SmuflFont::load(&meta, &glyph_names);
 
     println!("Reading to string: {}ms", time.elapsed().as_millis());
     time = Instant::now();

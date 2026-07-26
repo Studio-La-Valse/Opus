@@ -110,19 +110,19 @@ impl System {
         let measure = self.measures.get_mut(&measure_number).unwrap();
         let width = measure.width;
 
-        for (_, section) in self.sections.iter_mut() {
+        for section in self.sections.values_mut() {
             let measure = section.measures.entry(measure_number).or_default();
             measure.width = width;
 
-            for (_, part_group) in section.part_groups.iter_mut() {
+            for part_group in section.part_groups.values_mut() {
                 let measure = part_group.measures.entry(measure_number).or_default();
                 measure.width = width;
 
-                for (_, part) in part_group.parts.iter_mut() {
+                for part in part_group.parts.values_mut() {
                     let measure = part.measures.entry(measure_number).or_default();
                     measure.width = width;
 
-                    for (_, staff) in part.staves.iter_mut() {
+                    for staff in part.staves.values_mut() {
                         let measure = staff.measures.entry(measure_number).or_default();
                         measure.width = width;
                     }
@@ -132,14 +132,14 @@ impl System {
     }
 
     pub fn find_first_visible_staff(&self) -> &Staff {
-        for (_idx, section) in self.sections.iter() {
-            for (_idx, part_group) in section.part_groups.iter() {
-                for (_idx, part) in part_group.parts.iter() {
+        for section in self.sections.values() {
+            for part_group in section.part_groups.values() {
+                for part in part_group.parts.values() {
                     if part.visibility == Visibility::Hidden {
                         continue;
                     }
 
-                    for (_idx, staff) in part.staves.iter() {
+                    for staff in part.staves.values() {
                         if staff.hidden {
                             continue;
                         }
@@ -156,14 +156,14 @@ impl System {
     pub fn find_last_visible_staff(&self) -> &Staff {
         let mut last: Option<&Staff> = None;
 
-        for (_idx, section) in self.sections.iter() {
-            for (_idx, part_group) in section.part_groups.iter() {
-                for (_idx, part) in part_group.parts.iter() {
+        for section in self.sections.values() {
+            for part_group in section.part_groups.values() {
+                for part in part_group.parts.values() {
                     if part.visibility == Visibility::Hidden {
                         continue;
                     }
 
-                    for (_idx, staff) in part.staves.iter() {
+                    for staff in part.staves.values() {
                         if staff.hidden {
                             continue;
                         }
@@ -179,14 +179,14 @@ impl System {
 
     /// Every first visible staff in a system must have a 0-distance to the top of the system.
     fn first_visible_staff(&mut self) -> Option<&mut Staff> {
-        for (_idx, section) in self.sections.iter_mut() {
-            for (_idx, part_group) in section.part_groups.iter_mut() {
-                for (_idx, part) in part_group.parts.iter_mut() {
+        for section in self.sections.values_mut() {
+            for part_group in section.part_groups.values_mut() {
+                for part in part_group.parts.values_mut() {
                     if part.visibility == Visibility::Hidden {
                         continue;
                     }
 
-                    for (_idx, staff) in part.staves.iter_mut() {
+                    for staff in part.staves.values_mut() {
                         if staff.hidden {
                             continue;
                         }
@@ -212,11 +212,11 @@ impl ScoreElement for System {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
-        for (_idx, staff) in self.sections.iter_mut() {
+        for staff in self.sections.values_mut() {
             result.push(staff);
         }
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             result.push(measure);
         }
 
@@ -254,13 +254,13 @@ impl Layoutable for System {
             staff.distance_final = 0.;
         }
 
-        for (_idx, section) in self.sections.iter_mut() {
+        for section in self.sections.values_mut() {
             let available = XY::INFINITE;
             section.measure(&available);
             self.height += section.height;
         }
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             let available = XY {
                 x: f32::INFINITY,
                 y: self.height,
@@ -274,13 +274,13 @@ impl Layoutable for System {
         self.xy = *origin;
 
         let mut _origin = self.xy;
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             measure.arrange(origin);
             _origin = _origin.mv(measure.width, 0.);
         }
 
         let mut _origin = self.xy;
-        for (_idx, section) in self.sections.iter_mut() {
+        for section in self.sections.values_mut() {
             section.arrange(&_origin);
             _origin = _origin.mv(0., section.height);
         }

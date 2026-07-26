@@ -89,7 +89,7 @@ impl PartGroup {
         let mut dist = 0.;
         let mut found = false;
 
-        for (_idx, part) in self.parts.iter() {
+        for part in self.parts.values() {
             if found {
                 break;
             }
@@ -107,12 +107,12 @@ impl PartGroup {
 
     pub fn visible_staves(&self) -> usize {
         let mut count = 0;
-        for (_idx, part) in self.parts.iter() {
+        for part in self.parts.values() {
             if part.visibility == Visibility::Hidden {
                 continue;
             }
 
-            for (_idx, staff) in part.staves.iter() {
+            for staff in part.staves.values() {
                 if staff.hidden {
                     continue;
                 }
@@ -141,11 +141,11 @@ impl ScoreElement for PartGroup {
 
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
-        for (_idx, staff) in self.parts.iter_mut() {
+        for staff in self.parts.values_mut() {
             result.push(staff);
         }
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             result.push(measure);
         }
 
@@ -165,7 +165,7 @@ impl Layoutable for PartGroup {
 
         let show_brace = self.shows_brace();
 
-        for (_idx, part) in self.parts.iter_mut() {
+        for part in self.parts.values_mut() {
             let available = XY::INFINITE;
             part.measure(&available);
             self.height += part.height;
@@ -174,7 +174,7 @@ impl Layoutable for PartGroup {
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let staves_height = self.height - first_visible_staff_distance;
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             let available = XY {
                 x: f32::INFINITY,
                 y: self.height,
@@ -199,13 +199,13 @@ impl Layoutable for PartGroup {
         let show_brace = self.shows_brace();
 
         let mut _origin = self.xy;
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             measure.arrange(origin);
             _origin = _origin.mv(measure.width, 0.);
         }
 
         let mut _origin = self.xy;
-        for (_idx, part) in self.parts.iter_mut() {
+        for part in self.parts.values_mut() {
             part.arrange(&_origin);
             _origin = _origin.mv(0., part.height);
         }

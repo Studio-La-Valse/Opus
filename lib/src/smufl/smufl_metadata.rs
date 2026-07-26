@@ -5,6 +5,9 @@ use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 pub struct SmuflMetadata {
+    #[serde(rename = "fontName")]
+    pub font: String,
+
     #[serde(rename = "glyphBBoxes")]
     pub glyph_boxes: HashMap<String, GlyphBoundingBox>,
 

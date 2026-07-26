@@ -127,7 +127,7 @@ impl Layoutable for Staff {
             self.height = 0.;
         }
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             let available = &XY {
                 x: f32::INFINITY,
                 y: self.height,
@@ -141,7 +141,7 @@ impl Layoutable for Staff {
         self.xy = *origin;
 
         let mut _origin = self.xy;
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             measure.arrange(&_origin);
 
             _origin = _origin.mv(measure.width, 0.)
@@ -157,7 +157,7 @@ impl Drawable for Staff {
             return content;
         }
 
-        for (_idx, measure) in self.measures.iter() {
+        for measure in self.measures.values() {
             content.push(measure as &dyn Drawable);
         }
 

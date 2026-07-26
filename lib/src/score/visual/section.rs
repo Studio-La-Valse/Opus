@@ -103,7 +103,7 @@ impl Section {
 
     pub fn visible_staves(&self) -> usize {
         let mut count = 0;
-        for (_idx, part_group) in self.part_groups.iter() {
+        for part_group in self.part_groups.values() {
             count += part_group.visible_staves();
         }
 
@@ -121,11 +121,11 @@ impl ScoreElement for Section {
 
         let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
 
-        for (_idx, staff) in self.part_groups.iter_mut() {
+        for staff in self.part_groups.values_mut() {
             result.push(staff);
         }
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             result.push(measure);
         }
 
@@ -143,7 +143,7 @@ impl Layoutable for Section {
         self.width = 0.;
         self.height = 0.;
 
-        for (_idx, pg) in self.part_groups.iter_mut() {
+        for pg in self.part_groups.values_mut() {
             let available = XY::INFINITE;
             pg.measure(&available);
             self.height += pg.height;
@@ -152,7 +152,7 @@ impl Layoutable for Section {
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let staves_height = self.height - first_visible_staff_distance;
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             let available = XY {
                 x: f32::INFINITY,
                 y: staves_height,
@@ -176,13 +176,13 @@ impl Layoutable for Section {
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let mut _origin = self.xy.mv(0., first_visible_staff_distance);
 
-        for (_idx, measure) in self.measures.iter_mut() {
+        for measure in self.measures.values_mut() {
             measure.arrange(&_origin);
             _origin = _origin.mv(measure.width, 0.);
         }
 
         let mut _origin = self.xy;
-        for (_idx, part_group) in self.part_groups.iter_mut() {
+        for part_group in self.part_groups.values_mut() {
             part_group.arrange(&_origin);
             _origin = _origin.mv(0., part_group.height);
         }
