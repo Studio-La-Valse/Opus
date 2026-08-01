@@ -106,11 +106,15 @@ impl Visitor for LayoutVisitor {
         part.hide_staves(&ctx.layout_ctx.staff.explicitly_hidden);
         part.show_staves(&ctx.layout_ctx.staff.explicitly_shown);
         part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
-        part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
 
         // Now that all staves are ensure, consolidate the measure width,
         // so every measure from system to staff has the same calculated width.
         system.consolidate_measure_width(ctx.layout_ctx.measure.number);
+
+        // Now that all measures are ensured, we can apply the scale,
+        // because scale is passed to staff measures.
+        let part = system.locate_part_mut(&part_id).unwrap();
+        part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
     }
 
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}

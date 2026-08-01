@@ -119,14 +119,16 @@ impl Stem {
     }
 
     pub fn nw(&self) -> XY {
+        let thickness = self.thickness * self.scale;
         match self.direction {
-            UpDown::Up => self.tip().mv(self.thickness / -2., 0.),
-            UpDown::Down => self.xy.mv(self.thickness / -2., 0.),
+            UpDown::Up => self.tip().mv(thickness / -2., 0.),
+            UpDown::Down => self.xy.mv(-thickness / -2., 0.),
         }
     }
 
     pub fn ne(&self) -> XY {
-        self.nw().mv(self.thickness, 0.)
+        let thickness = self.thickness * self.scale;
+        self.nw().mv(thickness, 0.)
     }
 
     pub fn se(&self) -> XY {
@@ -173,9 +175,10 @@ impl Layoutable for Stem {
     fn measure(&mut self, _available: &XY) {}
 
     fn arrange(&mut self, origin: &XY) {
+        let thickness = self.thickness * self.scale;
         let canvas_offset = match self.direction {
-            UpDown::Down => self.thickness / 2.,
-            UpDown::Up => -self.thickness / 2.,
+            UpDown::Down => thickness / 2.,
+            UpDown::Up => -thickness / 2.,
         };
 
         self.xy = XY {
@@ -191,13 +194,15 @@ impl Drawable for Stem {
     }
 
     fn elements(&self) -> Vec<DrawableElement> {
+        let thickness = self.thickness * self.scale;
+
         let mut elements: Vec<DrawableElement> = Vec::new();
 
         let stem: DrawableElement = Line {
             start: self.xy,
             end: self.tip(),
             stroke_color: self.color,
-            stroke_width: self.thickness,
+            stroke_width: thickness,
         }
         .into();
 

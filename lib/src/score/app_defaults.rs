@@ -9,6 +9,9 @@ pub struct AppDefaults {
     pub beam_spacing: f32,
     pub barline_light: f32,
     pub barline_heavy: f32,
+
+    pub note_size_grace: f32,
+    pub note_size_cue: f32,
 }
 
 impl Default for AppDefaults {
@@ -22,6 +25,8 @@ impl Default for AppDefaults {
             beam_spacing: 1.5,
             barline_light: 1.875,
             barline_heavy: 5.,
+            note_size_grace: 0.66,
+            note_size_cue: 0.66,
         }
     }
 }

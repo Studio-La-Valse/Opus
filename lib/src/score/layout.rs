@@ -68,6 +68,8 @@ pub struct Appearance {
     pub beam_thickness: Option<f32>,
     pub staff: Option<f32>,
     pub stem_thickness: Option<f32>,
+    pub note_size_grace: Option<f32>,
+    pub note_size_cue: Option<f32>,
 }
 
 #[derive(Clone)]

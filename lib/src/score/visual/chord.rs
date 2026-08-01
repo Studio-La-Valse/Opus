@@ -62,10 +62,10 @@ impl Chord {
             }
             .unwrap();
 
-            let tail_anchor = (match stem.direction {
+            let tail_anchor = match stem.direction {
                 UpDown::Up => tail_note.glyph.stem_anchor_right,
                 UpDown::Down => tail_note.glyph.stem_anchor_left,
-            })
+            }
             .unwrap();
             let tail_anchor = tail_note.scale_pt(&tail_anchor);
             stem.arrange(&tail_anchor);
@@ -139,13 +139,31 @@ impl ScoreElement for Chord {
 
     fn _apply_layout(
         &mut self,
-        _layout: &Layout,
+        layout: &Layout,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+
+        let scale = if self.grace {
+            layout
+                .appearance
+                .note_size_grace
+                .or(user_layout.note_size_grace)
+                .unwrap_or(app_defaults.note_size_grace)
+        } else {
+            1.
+        };
+
+        for note in self.notes.iter_mut() {
+            note.scale = scale;
+        }
+
+        if let Some(stem) = self.stem.as_mut() {
+            stem.scale = scale;
+        }
     }
 }
 

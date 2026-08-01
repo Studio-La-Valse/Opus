@@ -39,9 +39,9 @@ pub struct PartMeasure {
 
     pub color: Color,
 
-    pub stem_thickness: f32,
     pub beam_thickness: f32,
     pub beam_spacing: f32,
+    pub note_size_grace: f32,
 
     pub ledger_thickness: f32,
     pub ledger_width: f32,
@@ -57,10 +57,12 @@ impl PartMeasure {
     }
 
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
-        let chord_groups = collect_voices(&mut self.chords);
+        for grace in [false, true] {
+            let chord_groups = collect_voices(&mut self.chords, grace);
 
-        for mut chords in chord_groups {
-            strategy.rebeam(&mut chords)
+            for mut chords in chord_groups {
+                strategy.rebeam(&mut chords)
+            }
         }
     }
 
@@ -69,7 +71,10 @@ impl PartMeasure {
 
         self.arrange_chords(staff_ctx);
         self.arrange_ledgers(staff_ctx);
-        self.arrange_beams();
+
+        self.beams.clear();
+        self.arrange_beams(true);
+        self.arrange_beams(false);
     }
 
     fn arrange_chords(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
@@ -77,6 +82,7 @@ impl PartMeasure {
             chord.arrange_ctx(&self.origin, staff_ctx);
         }
     }
+
     fn arrange_ledgers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.ledgers.clear();
 
@@ -163,10 +169,17 @@ impl PartMeasure {
             }
         }
     }
-    fn arrange_beams(&mut self) {
-        self.beams.clear();
 
-        let chord_groups = collect_voices(&mut self.chords);
+    fn arrange_beams(&mut self, grace: bool) {
+        let chord_groups = collect_voices(&mut self.chords, grace);
+
+        let mut beam_thickness = self.beam_thickness;
+        let mut beam_spacing = self.beam_spacing;
+
+        if grace {
+            beam_thickness *= self.note_size_grace;
+            beam_spacing *= self.note_size_grace;
+        }
 
         for chords in chord_groups {
             let groups = create_beam_groups(chords);
@@ -177,34 +190,16 @@ impl PartMeasure {
                     None => continue,
                 };
 
-                let ray = match create_ray(
-                    &group,
-                    &direction,
-                    &self.beam_thickness,
-                    &self.beam_spacing,
-                ) {
+                let ray = match create_ray(&group, &direction, &beam_thickness, &beam_spacing) {
                     Some(ray) => ray,
                     None => continue,
                 };
 
-                let beams = create_beams(
-                    &group,
-                    &ray,
-                    &direction,
-                    &self.beam_thickness,
-                    &self.beam_spacing,
-                    &self.stem_thickness,
-                );
+                let beams = create_beams(&group, &ray, &direction, &beam_thickness, &beam_spacing);
 
                 self.beams.extend(beams);
 
-                adjust_stem_lengths(
-                    &mut group,
-                    &ray,
-                    &direction,
-                    &self.beam_thickness,
-                    &self.beam_spacing,
-                );
+                adjust_stem_lengths(&mut group, &ray, &direction, &beam_thickness, &beam_spacing);
             }
         }
     }
@@ -225,11 +220,6 @@ impl ScoreElement for PartMeasure {
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {
-        self.stem_thickness = user_layout
-            .stem_thickness
-            .or(layout.appearance.stem_thickness)
-            .unwrap_or(app_defaults.stem_thickness);
-
         self.beam_thickness = user_layout
             .beam_thickness
             .or(layout.appearance.beam_thickness)
@@ -248,6 +238,12 @@ impl ScoreElement for PartMeasure {
             .unwrap_or(app_defaults.staff_line_thickness);
 
         self.ledger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
+
+        self.note_size_grace = layout
+            .appearance
+            .note_size_grace
+            .or(user_layout.note_size_grace)
+            .unwrap_or(app_defaults.note_size_grace);
     }
 }
 
@@ -300,21 +296,29 @@ fn iter_chords(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&Chord> {
     result
 }
 
-fn collect_voices(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<Vec<&mut Chord>> {
+fn collect_voices(
+    chord_groups: &mut BTreeMap<Voice, Vec<Chord>>,
+    grace: bool,
+) -> Vec<Vec<&mut Chord>> {
     let mut result: Vec<Vec<&mut Chord>> = Vec::new();
 
     for chords in chord_groups.values_mut() {
         let mut group: Vec<&mut Chord> = Vec::new();
+
         for chord in chords {
+            if chord.grace != grace {
+                continue;
+            }
+
             group.push(chord);
         }
+
         result.push(group);
     }
 
     result
 }
 
-// Local enum to break the "match-and-borrow" lifecycle completely
 enum BeamGroupAction {
     Start,
     Continue,
@@ -328,10 +332,6 @@ fn create_beam_groups(chords: Vec<&mut Chord>) -> Vec<Vec<&mut Chord>> {
     let mut group: Vec<&mut Chord> = vec![];
 
     for chord in chords {
-        if chord.grace {
-            continue;
-        }
-
         let action = match &chord.stem {
             Some(stem) => match stem.beams.get(&1) {
                 Some(BeamType::Start) => BeamGroupAction::Start,
@@ -472,7 +472,6 @@ fn create_beams(
     direction: &UpDown,
     beam_thickness: &f32,
     beam_spacing: &f32,
-    stem_thickness: &f32,
 ) -> Vec<Polygon> {
     let mut beams: Vec<Polygon> = vec![];
     if chords.is_empty() {
@@ -497,7 +496,7 @@ fn create_beams(
                 BeamType::Start => {
                     let offset = create_offset(direction, beam_idx, beam_thickness, beam_spacing);
                     let offset_ray = ray.mv(0., offset);
-                    let dx = -stem_thickness / 2.;
+                    let dx = (-left_stem.thickness * left_stem.scale) / 2.;
                     let left_point = Ray {
                         origin: left_stem.xy.mv(dx, 0.),
                         dir: XY { x: 0., y: 1. },
@@ -519,7 +518,7 @@ fn create_beams(
                         };
 
                         if let BeamType::End = right_beam {
-                            let dx = stem_thickness / 2.;
+                            let dx = right_stem.thickness * right_stem.scale / 2.;
                             right_point = Some(
                                 Ray {
                                     origin: right_stem.xy.mv(dx, 0.),

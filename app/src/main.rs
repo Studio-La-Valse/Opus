@@ -101,8 +101,7 @@ fn main() {
     );
     time = Instant::now();
 
-    let user_layout = UserLayout::new();
-
+    let user_layout: UserLayout = Default::default();
     let app_defaults: AppDefaults = Default::default();
 
     visual.apply_layout(&layout, &user_layout, &app_defaults);
