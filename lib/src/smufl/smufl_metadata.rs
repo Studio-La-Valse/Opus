@@ -29,10 +29,14 @@ pub struct GlyphBoundingBox {
 impl From<&GlyphBoundingBox> for BoundingBox {
     fn from(value: &GlyphBoundingBox) -> Self {
         BoundingBox {
-            x_min: value.sw[0],
-            y_min: -value.ne[1],
-            x_max: value.ne[0],
-            y_max: -value.sw[1],
+            xy: XY {
+                x: value.sw[0],
+                y: -value.ne[1],
+            },
+            size: XY {
+                x: value.ne[0] - value.sw[0],
+                y: -value.sw[1] - -value.ne[1],
+            },
         }
     }
 }
@@ -68,28 +72,41 @@ impl GlyphAnchors {
     pub fn to_cutouts(&self, bbox: &BoundingBox) -> Cutouts {
         Cutouts {
             nw: self.nw.map(|nw| BoundingBox {
-                x_min: bbox.x_min,
-                y_min: bbox.y_min,
-                x_max: nw[0],
-                y_max: -nw[1],
+                xy: bbox.xy,
+                size: XY {
+                    x: nw[0] - bbox.xy.x,
+                    y: -nw[1] - bbox.xy.y,
+                },
             }),
             ne: self.ne.map(|ne| BoundingBox {
-                x_min: ne[0],
-                y_min: bbox.y_min,
-                x_max: bbox.x_max,
-                y_max: -ne[1],
+                xy: XY {
+                    x: ne[0],
+                    y: bbox.xy.y,
+                },
+                size: XY {
+                    x: bbox.x_max() - ne[0],
+                    y: -ne[1] - bbox.xy.y,
+                },
             }),
             se: self.se.map(|se| BoundingBox {
-                x_min: se[0],
-                y_min: -se[1],
-                x_max: bbox.x_max,
-                y_max: bbox.y_max,
+                xy: XY {
+                    x: se[0],
+                    y: -se[1],
+                },
+                size: XY {
+                    x: bbox.x_max() - se[0],
+                    y: bbox.y_max() - -se[1],
+                },
             }),
             sw: self.sw.map(|sw| BoundingBox {
-                x_min: bbox.x_min,
-                y_min: -sw[1],
-                x_max: sw[0],
-                y_max: bbox.y_max,
+                xy: XY {
+                    x: bbox.xy.x,
+                    y: -sw[1],
+                },
+                size: XY {
+                    x: sw[0] - bbox.xy.x,
+                    y: bbox.y_max() - -sw[1],
+                },
             }),
         }
     }

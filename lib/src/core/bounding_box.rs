@@ -1,30 +1,43 @@
 use serde::Serialize;
 
+use crate::xy::XY;
+
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct BoundingBox {
-    pub x_min: f32,
-    pub y_min: f32,
-    pub x_max: f32,
-    pub y_max: f32,
+    pub xy: XY,
+    pub size: XY,
 }
 
 impl BoundingBox {
     pub fn width(&self) -> f32 {
-        self.x_max - self.x_min
+        self.size.x
     }
 
     pub fn height(&self) -> f32 {
-        self.y_max - self.y_min
+        self.size.y
     }
 
-    pub fn zero(&self) -> bool {
+    pub fn x_max(&self) -> f32 {
+        self.xy.x + self.width()
+    }
+
+    pub fn y_max(&self) -> f32 {
+        self.xy.y + self.height()
+    }
+
+    pub fn is_zero(&self) -> bool {
         self.width().abs() <= f32::EPSILON && self.height().abs() <= f32::EPSILON
     }
 
+    pub fn mv(&self, x: f32, y: f32) -> BoundingBox {
+        BoundingBox {
+            xy: self.xy.mv(x, y),
+            ..*self
+        }
+    }
+
     pub const ZERO: BoundingBox = BoundingBox {
-        x_min: 0.,
-        x_max: 0.,
-        y_min: 0.,
-        y_max: 0.,
+        xy: XY::ZERO,
+        size: XY::ZERO,
     };
 }

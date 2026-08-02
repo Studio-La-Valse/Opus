@@ -97,18 +97,14 @@ impl Rest {
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
     pub fn scale_box(&self, bbox: &BoundingBox) -> BoundingBox {
-        let scaled = BoundingBox {
-            x_min: bbox.x_min * (Staff::DEFAULT_SPACE_SIZE * self.scale),
-            y_min: bbox.y_min * (Staff::DEFAULT_SPACE_SIZE * self.scale),
-            x_max: bbox.x_max * (Staff::DEFAULT_SPACE_SIZE * self.scale),
-            y_max: bbox.y_max * (Staff::DEFAULT_SPACE_SIZE * self.scale),
+        let scaled: BoundingBox = BoundingBox {
+            xy: bbox.xy.scale(Staff::DEFAULT_SPACE_SIZE * self.scale),
+            size: bbox.size.scale(Staff::DEFAULT_SPACE_SIZE * self.scale),
         };
 
         BoundingBox {
-            x_min: scaled.x_min + self.xy.x,
-            y_min: scaled.y_min + self.xy.y,
-            x_max: scaled.x_max + self.xy.x,
-            y_max: scaled.y_max + self.xy.y,
+            xy: scaled.xy.mv(self.xy.x, self.xy.y),
+            size: scaled.size,
         }
     }
 
@@ -189,12 +185,9 @@ impl Drawable for Rest {
         let bbox = self.scale_box(&glyph.bbox);
 
         let rect = Rect {
-            xy: XY {
-                x: bbox.x_min,
-                y: bbox.y_min,
-            },
-            width: bbox.x_max - bbox.x_min,
-            height: bbox.y_max - bbox.y_min,
+            xy: bbox.xy,
+            width: bbox.size.x,
+            height: bbox.size.y,
             color: Color::TRANSPARENT,
             stroke_width: Some(0.25),
             stroke_color: Some(Color {

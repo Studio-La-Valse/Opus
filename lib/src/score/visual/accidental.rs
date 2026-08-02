@@ -35,15 +35,31 @@ impl Accidental {
 
     pub fn bounding_box(&self) -> BoundingBox {
         BoundingBox {
-            x_min: self.xy.x,
-            y_min: self.xy.y,
-            x_max: self.xy.x + self.width,
-            y_max: self.xy.y + self.height,
+            xy: self.xy,
+            size: XY {
+                x: self.width,
+                y: self.height,
+            },
         }
     }
 }
 
-impl ScoreElement for Accidental {}
+impl ScoreElement for Accidental {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        vec![]
+    }
+
+    fn _apply_layout(
+        &mut self,
+        _layout: &crate::layout::Layout,
+        user_layout: &crate::user_layout::UserLayout,
+        app_defaults: &crate::app_defaults::AppDefaults,
+    ) {
+        self.color = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
+    }
+}
 
 impl Layoutable for Accidental {
     fn measure(&mut self, _available: &XY) {

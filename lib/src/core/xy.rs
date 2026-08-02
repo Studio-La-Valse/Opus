@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::ops::{Add, Sub};
 
-#[derive(Default, Copy, Clone, Serialize)]
+#[derive(Default, Debug, Copy, Clone, Serialize)]
 pub struct XY {
     pub x: f32,
     pub y: f32,

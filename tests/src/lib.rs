@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
     use lib::score::core::clef::Clef;
     use lib::score::core::pitch::Pitch;
 
