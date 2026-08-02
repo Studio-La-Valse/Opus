@@ -7,6 +7,7 @@ use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::user_layout::UserLayout;
+use crate::visual::accidental::Accidental;
 use crate::visual::clef::Clef;
 use crate::visual::note::Note;
 use crate::visual::score_element::ScoreElement;
@@ -38,6 +39,9 @@ impl Chord {
         self.arrange_notes(staff_ctx);
         self.arrange_stem(staff_ctx);
         self.arrange_clef_changes(staff_ctx);
+
+        // rearrange the accidentals so that they don't overlap.
+        self.rearrange_accidentals();
     }
 
     fn arrange_notes(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
@@ -115,6 +119,16 @@ impl Chord {
 
             clef.scale = ctx.scaling * 0.8;
         }
+    }
+
+    fn rearrange_accidentals(&mut self) {
+        let mut accidentals: Vec<&mut Accidental> = self
+            .notes
+            .iter_mut()
+            .filter_map(|v| v.accidental.as_mut())
+            .collect();
+
+        rearrange_accidentals(&mut accidentals)
     }
 }
 
@@ -211,5 +225,38 @@ impl Drawable for Chord {
         let result: Vec<DrawableElement> = Vec::new();
 
         result
+    }
+}
+
+/// Rearranges accidentals in-place from top to bottom, moving each accidental
+/// left by the exact minimal amount to nest into cutouts of accidentals above it.
+/// AI generated.
+pub fn rearrange_accidentals(accidentals: &mut Vec<&mut Accidental>) {
+    if accidentals.is_empty() {
+        return;
+    }
+
+    // 1. Sort top to bottom (descending Y coordinate)
+    accidentals.sort_by(|a, b| {
+        a.xy.y
+            .partial_cmp(&b.xy.y)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // 2. Process top to bottom
+    for i in 0..accidentals.len() {
+        let mut shift_for_i: f32 = 0.0;
+
+        // Find max shift required relative to all accidentals placed above it
+        for j in 0..i {
+            let shift = accidentals[i].required_left_shift(accidentals[j]);
+            if shift > shift_for_i {
+                shift_for_i = shift;
+            }
+        }
+
+        if shift_for_i > 0.0 {
+            accidentals[i].xy.x -= shift_for_i;
+        }
     }
 }

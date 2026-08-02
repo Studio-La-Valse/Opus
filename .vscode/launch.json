@@ -8,7 +8,7 @@
             "preLaunchTask": "rust: cargo build",
             "program": "${workspaceRoot}/target/debug/app",
             "args": [
-                "--file", "xmlsamples/BeetAnGeSample.musicxml", 
+                "--file", "xmlsamples/BrahWiMeSample.musicxml", 
                 "--out", "xmltest/test.svg",
                 "--meta", "smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "smufl/metadata/glyphnames.json"

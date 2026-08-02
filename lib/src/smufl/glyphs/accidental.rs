@@ -1,4 +1,4 @@
-﻿use crate::bounding_box::BoundingBox;
+use crate::bounding_box::BoundingBox;
 use crate::color::Color;
 use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
 use crate::smufl::smufl_glyph::SmuflGlyph;
@@ -10,7 +10,9 @@ pub struct Accidental {
     pub codepoint: char,
     pub font: String,
     pub bbox: BoundingBox,
-    pub cutouts: Cutouts,
+
+    // double sharps and flats don't have cutouts for some reason.
+    pub cutouts: Option<Cutouts>,
 }
 
 impl SmuflGlyph for Accidental {
