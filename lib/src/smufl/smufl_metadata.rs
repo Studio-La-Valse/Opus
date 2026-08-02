@@ -44,16 +44,16 @@ impl From<&GlyphBoundingBox> for BoundingBox {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct GlyphAnchors {
     #[serde(rename = "cutOutNW")]
-    pub nw: Option<[f32; 2]>,
+    pub cutout_nw: Option<[f32; 2]>,
 
     #[serde(rename = "cutOutNE")]
-    pub ne: Option<[f32; 2]>,
+    pub cutout_ne: Option<[f32; 2]>,
 
     #[serde(rename = "cutOutSE")]
-    pub se: Option<[f32; 2]>,
+    pub cutout_se: Option<[f32; 2]>,
 
     #[serde(rename = "cutOutSW")]
-    pub sw: Option<[f32; 2]>,
+    pub cutout_sw: Option<[f32; 2]>,
 
     #[serde(rename = "stemDownNW")]
     pub stem_down_nw: Option<[f32; 2]>,
@@ -71,14 +71,14 @@ pub struct GlyphAnchors {
 impl GlyphAnchors {
     pub fn to_cutouts(&self, bbox: &BoundingBox) -> Cutouts {
         Cutouts {
-            nw: self.nw.map(|nw| BoundingBox {
+            nw: self.cutout_nw.map(|nw| BoundingBox {
                 xy: bbox.xy,
                 size: XY {
                     x: nw[0] - bbox.xy.x,
                     y: -nw[1] - bbox.xy.y,
                 },
             }),
-            ne: self.ne.map(|ne| BoundingBox {
+            ne: self.cutout_ne.map(|ne| BoundingBox {
                 xy: XY {
                     x: ne[0],
                     y: bbox.xy.y,
@@ -88,7 +88,7 @@ impl GlyphAnchors {
                     y: -ne[1] - bbox.xy.y,
                 },
             }),
-            se: self.se.map(|se| BoundingBox {
+            se: self.cutout_se.map(|se| BoundingBox {
                 xy: XY {
                     x: se[0],
                     y: -se[1],
@@ -98,7 +98,7 @@ impl GlyphAnchors {
                     y: bbox.y_max() - -se[1],
                 },
             }),
-            sw: self.sw.map(|sw| BoundingBox {
+            sw: self.cutout_sw.map(|sw| BoundingBox {
                 xy: XY {
                     x: bbox.xy.x,
                     y: -sw[1],

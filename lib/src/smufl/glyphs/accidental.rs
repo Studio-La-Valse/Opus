@@ -1,12 +1,16 @@
-﻿use crate::color::Color;
+﻿use crate::bounding_box::BoundingBox;
+use crate::color::Color;
 use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
 use crate::smufl::smufl_glyph::SmuflGlyph;
+use crate::smufl::smufl_metadata::Cutouts;
 use crate::visual::staff::Staff;
 use crate::xy::XY;
 
 pub struct Accidental {
     pub codepoint: char,
     pub font: String,
+    pub bbox: BoundingBox,
+    pub cutouts: Cutouts,
 }
 
 impl SmuflGlyph for Accidental {
@@ -14,7 +18,7 @@ impl SmuflGlyph for Accidental {
         let text = self.codepoint.to_string();
         Text {
             vertical_alignment: VerticalAlign::Bottom,
-            horizontal_alignment: HorizontalAlign::Right,
+            horizontal_alignment: HorizontalAlign::Left,
             font_size: (Staff::DEFAULT_SPACE_SIZE * scale) * Staff::SPACES as f32,
             font: self.font.to_string(),
             text,

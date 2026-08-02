@@ -192,9 +192,18 @@ impl SmuflFont {
 
         let codepoint = self.glyph_names.get(name).unwrap().codepoint_char();
 
+        let glyph_box = self.meta.glyph_boxes.get(name).unwrap();
+        let bbox: BoundingBox = glyph_box.into();
+
+        let anchors = self.meta.glyph_anchors.get(name).unwrap();
+        let cutouts: Cutouts = anchors.to_cutouts(&bbox);
+
         Accidental {
             codepoint,
             font: self.meta.font.to_string(),
+
+            bbox,
+            cutouts,
         }
     }
 }

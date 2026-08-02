@@ -29,6 +29,13 @@ impl BoundingBox {
         self.width().abs() <= f32::EPSILON && self.height().abs() <= f32::EPSILON
     }
 
+    pub fn scale(&self, scale: f32) -> BoundingBox {
+        BoundingBox {
+            xy: self.xy,
+            size: self.size.scale(scale),
+        }
+    }
+
     pub fn mv(&self, x: f32, y: f32) -> BoundingBox {
         BoundingBox {
             xy: self.xy.mv(x, y),

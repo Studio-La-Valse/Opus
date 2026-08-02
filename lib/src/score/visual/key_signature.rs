@@ -29,7 +29,11 @@ impl ScoreElement for KeySignature {
 
 impl Layoutable for KeySignature {
     fn measure(&mut self, _available: &XY) {
-        self.width = self.accidentals.len() as f32 * 10.;
+        self.width = 0.;
+        for (_, accidental) in self.accidentals.iter_mut() {
+            accidental.measure(_available);
+            self.width += accidental.width;
+        }
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -42,7 +46,7 @@ impl Layoutable for KeySignature {
             let xy = XY { x, y };
             acc.arrange(&xy);
 
-            x += 12.
+            x += acc.width + 2.
         }
     }
 }
