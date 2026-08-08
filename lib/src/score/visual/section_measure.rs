@@ -1,9 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::line::Line;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::user_layout::UserLayout;
@@ -46,28 +43,5 @@ impl Layoutable for SectionMeasure {
 
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
-    }
-}
-
-impl Drawable for SectionMeasure {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        vec![]
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let mut elements: Vec<DrawableElement> = Vec::new();
-
-        let stroke_color = self.color;
-        let stroke_width = self.line_width;
-
-        let right_line = Line {
-            start: self.xy.mv(self.width, 0.),
-            end: self.xy.mv(self.width, self.height),
-            stroke_width,
-            stroke_color,
-        };
-        elements.push(right_line.into());
-
-        elements
     }
 }

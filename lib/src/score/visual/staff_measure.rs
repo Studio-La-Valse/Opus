@@ -1,6 +1,4 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::score::visual::time_signature::TimeSignature;
 use crate::visual::clef::Clef;
@@ -172,40 +170,5 @@ impl Layoutable for StaffMeasure {
         self.arrange_time_signature_end();
         self.arrange_clef_end();
         self.arrange_rests();
-    }
-}
-
-impl Drawable for StaffMeasure {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let mut result: Vec<&dyn Drawable> = Vec::new();
-
-        if let Some(ref clef) = self.clef_start {
-            result.push(clef as &dyn Drawable);
-        }
-
-        let ksig = &self.key_signature_start;
-        result.push(ksig);
-
-        if let Some(ref time_signature) = self.time_signature_start {
-            result.push(time_signature);
-        }
-
-        if let Some(ref prepare_time_signature) = self.time_signature_end {
-            result.push(prepare_time_signature);
-        }
-
-        if let Some(ref clef) = self.clef_end {
-            result.push(clef);
-        }
-
-        for rest in self.rests.iter() {
-            result.push(rest);
-        }
-
-        result
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

@@ -1,6 +1,4 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout_ctx::Visibility;
 use crate::score::core::staff_idx::StaffIdx;
@@ -214,32 +212,5 @@ impl Layoutable for PartGroup {
             let origin = self.xy.mv(-15., first_visible_staff_distance);
             self.brace.arrange(&origin);
         }
-    }
-}
-
-impl Drawable for PartGroup {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let show_brace = self.shows_brace();
-
-        let mut result = Vec::new();
-
-        result.extend(self.measures.values().map(|m| m as &dyn Drawable));
-
-        result.extend(
-            self.parts
-                .values()
-                .filter(|p| p.visibility != Visibility::Hidden)
-                .map(|s| s as &dyn Drawable),
-        );
-
-        if show_brace {
-            result.push(&self.brace);
-        }
-
-        result
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

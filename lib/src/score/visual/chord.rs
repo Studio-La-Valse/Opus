@@ -1,8 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
@@ -202,32 +200,6 @@ impl Layoutable for Chord {
     }
 }
 
-impl Drawable for Chord {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let mut result: Vec<&dyn Drawable> = Vec::new();
-
-        for note in self.notes.iter() {
-            result.push(note);
-        }
-
-        if let Some(stem) = self.stem.as_ref() {
-            result.push(stem);
-        }
-
-        for clef in self.clef_change.values() {
-            result.push(clef);
-        }
-
-        result
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let result: Vec<DrawableElement> = Vec::new();
-
-        result
-    }
-}
-
 /// Rearranges accidentals in-place from top to bottom, moving each accidental
 /// left by the exact minimal amount to nest into cutouts of accidentals above it.
 /// AI generated.
@@ -256,7 +228,7 @@ pub fn rearrange_accidentals(accidentals: &mut Vec<&mut Accidental>) {
         }
 
         if shift_for_i > 0.0 {
-            accidentals[i].xy.x -= shift_for_i;
+            accidentals[i].xy.x -= shift_for_i + 1.5;
         }
     }
 }

@@ -1,9 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::line::Line;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::layout_ctx::Visibility;
@@ -284,36 +281,5 @@ impl Layoutable for System {
             section.arrange(&_origin);
             _origin = _origin.mv(0., section.height);
         }
-    }
-}
-
-impl Drawable for System {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let mut result = Vec::new();
-
-        result.extend(self.measures.values().map(|m| m as &dyn Drawable));
-
-        result.extend(self.sections.values().map(|s| s as &dyn Drawable));
-
-        result
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let mut elements: Vec<DrawableElement> = Vec::new();
-
-        let stroke_color = self.color;
-        let stroke_width = self.line_width;
-
-        let left_line = Line {
-            start: self.xy,
-            end: self.xy.mv(0., self.height),
-            stroke_width,
-            stroke_color,
-        };
-        elements.push(left_line.into());
-
-        // no right line, that is drawn by section measures.
-
-        elements
     }
 }

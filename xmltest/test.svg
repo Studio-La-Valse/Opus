@@ -4,168 +4,43 @@
 <line x1="0" y1="0.79999995" x2="13.599999" y2="0.79999995" stroke="#FF0000FF" stroke-width="0.01" />
 <line x1="0" y1="16.8" x2="13.599999" y2="16.8" stroke="#FF0000FF" stroke-width="0.01" />
 <line x1="2" y1="3.1" x2="2" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="0.79999995" y1="7.5499997" x2="0.79999995" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="0.79999995" y1="11.9" x2="0.79999995" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="5.4" y1="3.1" x2="5.4" y2="3.5" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="7.6" y1="3.1" x2="7.6" y2="3.5" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="9.7699995" y1="3.1" x2="9.7699995" y2="3.5" stroke="#000000FF" stroke-width="0.018749999" />
 <line x1="12.799999" y1="3.1" x2="12.799999" y2="3.5" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="5.4" y1="4.5" x2="5.4" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="7.6" y1="4.5" x2="7.6" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="9.7699995" y1="4.5" x2="9.7699995" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="12.799999" y1="4.5" x2="12.799999" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="4.5099998" y1="7.5499997" x2="4.5099998" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="7.66" y1="7.5499997" x2="7.66" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="9.96" y1="7.5499997" x2="9.96" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="12.799999" y1="7.5499997" x2="12.799999" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="4.5099998" y1="8.75" x2="4.5099998" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="7.66" y1="8.75" x2="7.66" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="9.96" y1="8.75" x2="9.96" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="12.799999" y1="8.75" x2="12.799999" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="3.76" y1="11.9" x2="3.76" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="5.7799997" y1="11.9" x2="5.7799997" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="8.29" y1="11.9" x2="8.29" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="10.49" y1="11.9" x2="10.49" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="12.799999" y1="11.9" x2="12.799999" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="3.76" y1="13.099999" x2="3.76" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="5.7799997" y1="13.099999" x2="5.7799997" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="8.29" y1="13.099999" x2="8.29" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="10.49" y1="13.099999" x2="10.49" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="12.799999" y1="13.099999" x2="12.799999" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
-<line x1="3.85525" y1="3.6" x2="4.04275" y2="3.6" stroke="#000000FF" stroke-width="0.011" />
 <line x1="1.9906249" y1="3.1" x2="12.809375" y2="3.1" stroke="#000000FF" stroke-width="0.012499999" />
 <line x1="1.9906249" y1="3.1999998" x2="12.809375" y2="3.1999998" stroke="#000000FF" stroke-width="0.012499999" />
 <line x1="1.9906249" y1="3.3" x2="12.809375" y2="3.3" stroke="#000000FF" stroke-width="0.012499999" />
 <line x1="1.9906249" y1="3.3999999" x2="12.809375" y2="3.3999999" stroke="#000000FF" stroke-width="0.012499999" />
 <line x1="1.9906249" y1="3.5" x2="12.809375" y2="3.5" stroke="#000000FF" stroke-width="0.012499999" />
-<polygon points="3.6399999,5.0904164 4.148333,5.039583 4.148333,4.9895835 3.6399999,5.0404162" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="4.39,5.0892644 5.2479997,5.2407355 5.2479997,5.2907352 4.39,5.1392646" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="3.85525" y1="4.2999997" x2="4.04275" y2="4.2999997" stroke="#000000FF" stroke-width="0.011" />
-<line x1="3.85525" y1="4.4" x2="4.04275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
-<line x1="4.10525" y1="4.4" x2="4.29275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
-<line x1="3.35525" y1="6.2" x2="3.54275" y2="6.2" stroke="#000000FF" stroke-width="0.011" />
-<line x1="3.35525" y1="6.1" x2="3.54275" y2="6.1" stroke="#000000FF" stroke-width="0.011" />
-<line x1="3.35525" y1="6" x2="3.54275" y2="6" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="5.83,4.9404163 6.338332,4.889583 6.338332,4.8395834 5.83,4.8904166" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="6.58,5.089273 7.4479995,5.240727 7.4479995,5.2907267 6.58,5.139273" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="6.04525" y1="4.2" x2="6.23275" y2="4.2" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.04525" y1="4.2999997" x2="6.23275" y2="4.2999997" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.04525" y1="4.4" x2="6.23275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.29525" y1="4.2999997" x2="6.48275" y2="4.2999997" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.29525" y1="4.4" x2="6.48275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.54525" y1="4.4" x2="6.73275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
-<line x1="5.54525" y1="6.1" x2="5.73275" y2="6.1" stroke="#000000FF" stroke-width="0.011" />
-<line x1="5.54525" y1="6" x2="5.73275" y2="6" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="7.889667,5.170661 8.528333,5.069339 8.528333,5.019339 7.889667,5.120661" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="8.869667,5.1706505 9.5183325,5.0693493 9.5183325,5.019349 8.869667,5.1206503" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="7.74525" y1="6" x2="7.93275" y2="6" stroke="#000000FF" stroke-width="0.011" />
-<line x1="8.72525" y1="6" x2="8.91275" y2="6" stroke="#000000FF" stroke-width="0.011" />
-<line x1="9.47525" y1="4.4" x2="9.66275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="10.1396675,5.165438 11.098332,5.064562 11.098332,5.0145617 10.1396675,5.115438" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="11.629667,5.1705537 12.428332,5.0644464 12.428332,5.0144463 11.629667,5.1205535" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="9.99525" y1="6" x2="10.18275" y2="6" stroke="#000000FF" stroke-width="0.011" />
-<line x1="11.4852495" y1="6" x2="11.6727495" y2="6" stroke="#000000FF" stroke-width="0.011" />
-<line x1="12.38525" y1="4.4" x2="12.57275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
-<line x1="1.9906249" y1="4.5" x2="12.809375" y2="4.5" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="4.6" x2="12.809375" y2="4.6" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="4.7" x2="12.809375" y2="4.7" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="4.7999997" x2="12.809375" y2="4.7999997" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="4.9" x2="12.809375" y2="4.9" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="5.5" x2="12.809375" y2="5.5" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="5.6" x2="12.809375" y2="5.6" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="5.7" x2="12.809375" y2="5.7" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="5.7999997" x2="12.809375" y2="5.7999997" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="1.9906249" y1="5.9" x2="12.809375" y2="5.9" stroke="#000000FF" stroke-width="0.012499999" />
-<text x="1.9499999" y="5.9" fill="#000000FF" font-size="1.4" font-family="Bravura" text-anchor="end" dominant-baseline="baseline"></text>
-<line x1="0.790625" y1="7.5499997" x2="12.809375" y2="7.5499997" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="7.6499996" x2="12.809375" y2="7.6499996" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="7.75" x2="12.809375" y2="7.75" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="7.85" x2="12.809375" y2="7.85" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="7.95" x2="12.809375" y2="7.95" stroke="#000000FF" stroke-width="0.012499999" />
-<polygon points="1.9796668,9.470548 2.748333,9.3694515 2.748333,9.319451 1.9796668,9.4205475" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="3.4752498" y1="9.25" x2="3.6627498" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
-<line x1="1.8352499" y1="10.55" x2="2.02275" y2="10.55" stroke="#000000FF" stroke-width="0.011" />
-<line x1="1.8352499" y1="10.45" x2="2.02275" y2="10.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="1.8352499" y1="10.349999" x2="2.02275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="2.7052498" y1="8.65" x2="2.8927498" y2="8.65" stroke="#000000FF" stroke-width="0.011" />
-<line x1="4.9952497" y1="9.45" x2="5.18275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="4.9952497" y1="9.349999" x2="5.18275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="4.9952497" y1="9.25" x2="5.18275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
-<line x1="5.4352503" y1="9.45" x2="5.6227503" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="5.4352503" y1="9.349999" x2="5.6227503" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="5.4352503" y1="9.25" x2="5.6227503" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.49525" y1="9.45" x2="6.68275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.49525" y1="9.349999" x2="6.68275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.49525" y1="9.25" x2="6.68275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.94525" y1="9.45" x2="7.13275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.94525" y1="9.349999" x2="7.13275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.94525" y1="9.25" x2="7.13275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
-<line x1="4.65525" y1="10.349999" x2="4.8427496" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.15525" y1="10.349999" x2="6.34275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="8.209667,8.71 8.738,8.71 8.738,8.76 8.209667,8.76" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="8.999667,9.409733 9.788,9.460267 9.788,9.510267 8.999667,9.459732" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="8.06525" y1="9.45" x2="8.25275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="8.06525" y1="9.349999" x2="8.25275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="8.06525" y1="9.25" x2="8.25275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
-<line x1="8.58525" y1="9.25" x2="8.77275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
-<line x1="7.80525" y1="10.45" x2="7.99275" y2="10.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="7.80525" y1="10.349999" x2="7.99275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="10.339667,9.660325 10.988,9.609674 10.988,9.659675 10.339667,9.710325" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="11.87,10.590717 12.168332,10.539282 12.168332,10.489282 11.87,10.540717" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="10.19525" y1="10.45" x2="10.38275" y2="10.45" stroke="#000000FF" stroke-width="0.011" />
-<line x1="10.19525" y1="10.349999" x2="10.38275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="0.790625" y1="8.75" x2="12.809375" y2="8.75" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="8.849999" x2="12.809375" y2="8.849999" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="8.95" x2="12.809375" y2="8.95" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="9.05" x2="12.809375" y2="9.05" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="9.15" x2="12.809375" y2="9.15" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="9.849999" x2="12.809375" y2="9.849999" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="9.95" x2="12.809375" y2="9.95" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="10.05" x2="12.809375" y2="10.05" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="10.15" x2="12.809375" y2="10.15" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="10.25" x2="12.809375" y2="10.25" stroke="#000000FF" stroke-width="0.012499999" />
-<text x="0.75" y="10.25" fill="#000000FF" font-size="1.5" font-family="Bravura" text-anchor="end" dominant-baseline="baseline"></text>
-<line x1="0.790625" y1="11.9" x2="12.809375" y2="11.9" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="12" x2="12.809375" y2="12" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="12.099999" x2="12.809375" y2="12.099999" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="12.2" x2="12.809375" y2="12.2" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="12.3" x2="12.809375" y2="12.3" stroke="#000000FF" stroke-width="0.012499999" />
-<polygon points="2.039667,13.960301 2.738,13.9096985 2.738,13.959698 2.039667,14.010302" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="1.8952498" y1="14.9" x2="2.0827498" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="3.9399998,15.340306 4.628333,15.289693 4.628333,15.239694 3.9399998,15.290306" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="3.9052498" y1="14.9" x2="4.09275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
-<line x1="4.58525" y1="14.299999" x2="4.77275" y2="14.299999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="4.9052496" y1="14.299999" x2="5.0927496" y2="14.299999" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="6.2796674,14.110301 6.9779997,14.059698 6.9779997,14.109698 6.2796674,14.160301" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="7.639667,14.110453 8.108,14.059546 8.108,14.109547 7.639667,14.160453" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="7.9552503" y1="13.7" x2="8.14275" y2="13.7" stroke="#000000FF" stroke-width="0.011" />
-<line x1="7.9552503" y1="13.599999" x2="8.14275" y2="13.599999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.13525" y1="15.099999" x2="6.32275" y2="15.099999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.13525" y1="15" x2="6.32275" y2="15" stroke="#000000FF" stroke-width="0.011" />
-<line x1="6.13525" y1="14.9" x2="6.32275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
-<line x1="7.49525" y1="15" x2="7.68275" y2="15" stroke="#000000FF" stroke-width="0.011" />
-<line x1="7.49525" y1="14.9" x2="7.68275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="8.76,13.940409 9.278333,13.889591 9.278333,13.839591 8.76,13.8904085" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="9.51,13.939479 10.318,14.040521 10.318,14.090521 9.51,13.989478" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="8.6396675,14.0604 9.167999,14.0096 9.167999,14.059599 8.6396675,14.1104" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="9.93525" y1="14.299999" x2="10.12275" y2="14.299999" stroke="#000000FF" stroke-width="0.011" />
-<line x1="8.49525" y1="14.9" x2="8.68275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
-<polygon points="10.639999,13.789699 11.338332,13.8403015 11.338332,13.790301 10.639999,13.739698" fill="#000000FF" stroke="none" stroke-width="0" />
-<polygon points="11.849999,13.539701 12.558332,13.590298 12.558332,13.5402975 11.849999,13.489702" fill="#000000FF" stroke="none" stroke-width="0" />
-<line x1="11.81525" y1="12.9" x2="12.00275" y2="12.9" stroke="#000000FF" stroke-width="0.011" />
-<line x1="11.81525" y1="13" x2="12.00275" y2="13" stroke="#000000FF" stroke-width="0.011" />
-<line x1="12.05525" y1="13" x2="12.24275" y2="13" stroke="#000000FF" stroke-width="0.011" />
-<line x1="0.790625" y1="13.099999" x2="12.809375" y2="13.099999" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="13.2" x2="12.809375" y2="13.2" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="13.299999" x2="12.809375" y2="13.299999" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="13.4" x2="12.809375" y2="13.4" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="13.5" x2="12.809375" y2="13.5" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="14.4" x2="12.809375" y2="14.4" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="14.5" x2="12.809375" y2="14.5" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="14.599999" x2="12.809375" y2="14.599999" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="14.7" x2="12.809375" y2="14.7" stroke="#000000FF" stroke-width="0.012499999" />
-<line x1="0.790625" y1="14.799999" x2="12.809375" y2="14.799999" stroke="#000000FF" stroke-width="0.012499999" />
-<text x="0.75" y="14.799999" fill="#000000FF" font-size="1.6999999" font-family="Bravura" text-anchor="end" dominant-baseline="baseline"></text>
+<text x="2.1" y="3.3999999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.8488" y="3.1999998" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.8488" y="3.3999999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.4503999" y="3.1" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.4503999" y="2.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.4503999" y1="3.1" x2="2.55" y2="3.1" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.4503999" y="2.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.5343997" y="2.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.5343997" y="3.1595998" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.4503999" y="3.1895998" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.57" y="3.25" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.57" y="3.11" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.57" y1="3.25" x2="2.6695998" y2="3.25" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.57" y="3.11" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6539998" y="3.11" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6539998" y="3.3095999" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.57" y="3.3395998" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.6895998" y="3.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.6895998" y="2.9099998" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.6895998" y1="3.05" x2="2.7891998" y2="3.05" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6895998" y="2.9099998" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.7735999" y="2.9099998" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.7735999" y="3.1095998" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6895998" y="3.1395998" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="3.3899999" y="3.3" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.3904" y="3.1507998" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.3899999" y1="3.3" x2="3.4976" y2="3.3" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="3.85525" y1="3.6" x2="4.04275" y2="3.6" stroke="#000000FF" stroke-width="0.011" />
 <text x="3.8899999" y="3.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="3.8899999" y="3.55" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="3.8899999" y1="3.6" x2="4.008" y2="3.6" stroke="#FF0000FF" stroke-width="0.002" />
@@ -231,12 +106,22 @@
 <line x1="10.03" y1="3.4499998" x2="10.148" y2="3.4499998" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.03" y="3.3999999" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.124" y="3.4796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="9.9428005" y="3.4499998" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="9.9428005" y="3.3135998" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="9.9428005" y1="3.4499998" x2="10.01" y2="3.4499998" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="9.962" y="3.3135998" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="9.9428005" y="3.5328" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="10.143833" y1="3.4332" x2="10.143833" y2="3.1" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="11.09" y="3.3999999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="11.09" y="3.35" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="11.09" y1="3.3999999" x2="11.208" y2="3.3999999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="11.09" y="3.35" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="11.184" y="3.4295998" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="11.0028" y="3.3999999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="11.0028" y="3.2635999" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="11.0028" y1="3.3999999" x2="11.07" y2="3.3999999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="11.022" y="3.2635999" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="11.0028" y="3.4828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="11.203834" y1="3.3832" x2="11.203834" y2="3.05" stroke="#000000FF" stroke-width="0.008332999" />
 <rect x="11.189668" y="3.04" width="0.02" height="0.02" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <rect x="11.187168" y="3.0414999" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
@@ -258,12 +143,89 @@
 <rect x="12.517168" y="3.0414999" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
 <rect x="12.5146675" y="3.031" width="0.03" height="0.03" fill="#00000000" stroke="#0000FFFF" stroke-width="0.0025" />
 <text x="12.529668" y="3.046" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.1" y="3.3999999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.8488" y="3.1999998" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.8488" y="3.3999999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="3.3899999" y="3.3" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.3904" y="3.1507998" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.3899999" y1="3.3" x2="3.4976" y2="3.3" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="5.4" y1="4.5" x2="5.4" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="7.6" y1="4.5" x2="7.6" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="9.7699995" y1="4.5" x2="9.7699995" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="12.799999" y1="4.5" x2="12.799999" y2="5.9" stroke="#000000FF" stroke-width="0.018749999" />
+<text x="1.9499999" y="5.9" fill="#000000FF" font-size="1.4" font-family="Bravura" text-anchor="end" dominant-baseline="baseline"></text>
+<line x1="1.9906249" y1="4.5" x2="12.809375" y2="4.5" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="4.6" x2="12.809375" y2="4.6" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="4.7" x2="12.809375" y2="4.7" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="4.7999997" x2="12.809375" y2="4.7999997" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="4.9" x2="12.809375" y2="4.9" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="2.1" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.8488" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.8488" y="4.7999997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.4503999" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.4503999" y="4.46" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.4503999" y1="4.6" x2="2.55" y2="4.6" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.4503999" y="4.46" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.5343997" y="4.46" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.5343997" y="4.6596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.4503999" y="4.6896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.57" y="4.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.57" y="4.61" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.57" y1="4.75" x2="2.6695998" y2="4.75" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.57" y="4.61" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6539998" y="4.61" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6539998" y="4.8096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.57" y="4.8395996" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.6895998" y="4.5499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.6895998" y="4.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.6895998" y1="4.5499997" x2="2.7891998" y2="4.5499997" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6895998" y="4.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.7735999" y="4.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.7735999" y="4.6095996" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6895998" y="4.6396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="3.3899999" y="4.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.3899999" y="4.6304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.3899999" y1="4.7" x2="3.4888" y2="4.7" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="5.58" y="4.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="5.58" y="4.6304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="5.58" y1="4.7" x2="5.6788" y2="4.7" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="1.9906249" y1="5.5" x2="12.809375" y2="5.5" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="5.6" x2="12.809375" y2="5.6" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="5.7" x2="12.809375" y2="5.7" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="5.7999997" x2="12.809375" y2="5.7999997" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="1.9906249" y1="5.9" x2="12.809375" y2="5.9" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="2.1" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.8488" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.8488" y="5.7999997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="2.4503999" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.4503999" y="5.46" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.4503999" y1="5.6" x2="2.55" y2="5.6" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.4503999" y="5.46" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.5343997" y="5.46" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.5343997" y="5.6596003" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.4503999" y="5.6896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.57" y="5.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.57" y="5.6099997" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.57" y1="5.75" x2="2.6695998" y2="5.75" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.57" y="5.6099997" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6539998" y="5.6099997" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6539998" y="5.8096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.57" y="5.8396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.6895998" y="5.5499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.6895998" y="5.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.6895998" y1="5.5499997" x2="2.7891998" y2="5.5499997" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6895998" y="5.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.7735999" y="5.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.7735999" y="5.6096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.6895998" y="5.6396003" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="4.39" y="5.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="4.3904" y="5.5508" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="4.39" y1="5.7" x2="4.4976" y2="5.7" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="6.5899997" y="5.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="6.5903997" y="5.5508" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="6.5899997" y1="5.7" x2="6.6976" y2="5.7" stroke="#FF0000FF" stroke-width="0.002" />
+<polygon points="3.6399999,5.0904164 4.148333,5.039583 4.148333,4.9895835 3.6399999,5.0404162" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="4.39,5.0892644 5.2479997,5.2407355 5.2479997,5.2907352 4.39,5.1392646" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="3.85525" y1="4.2999997" x2="4.04275" y2="4.2999997" stroke="#000000FF" stroke-width="0.011" />
+<line x1="3.85525" y1="4.4" x2="4.04275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
+<line x1="4.10525" y1="4.4" x2="4.29275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
+<line x1="3.35525" y1="6.2" x2="3.54275" y2="6.2" stroke="#000000FF" stroke-width="0.011" />
+<line x1="3.35525" y1="6.1" x2="3.54275" y2="6.1" stroke="#000000FF" stroke-width="0.011" />
+<line x1="3.35525" y1="6" x2="3.54275" y2="6" stroke="#000000FF" stroke-width="0.011" />
 <text x="3.6399999" y="4.65" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="3.6399999" y="4.6" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="3.6399999" y1="4.65" x2="3.758" y2="4.65" stroke="#FF0000FF" stroke-width="0.002" />
@@ -317,6 +279,16 @@
 <rect x="3.3899999" y="5.7999997" width="0.020399999" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="3.488" y="5.8799996" width="0.019999992" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="3.5038333" y1="6.1832" x2="3.5038333" y2="5.5" stroke="#000000FF" stroke-width="0.008332999" />
+<polygon points="5.83,4.9404163 6.338332,4.889583 6.338332,4.8395834 5.83,4.8904166" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="6.58,5.089273 7.4479995,5.240727 7.4479995,5.2907267 6.58,5.139273" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="6.04525" y1="4.2" x2="6.23275" y2="4.2" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.04525" y1="4.2999997" x2="6.23275" y2="4.2999997" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.04525" y1="4.4" x2="6.23275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.29525" y1="4.2999997" x2="6.48275" y2="4.2999997" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.29525" y1="4.4" x2="6.48275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.54525" y1="4.4" x2="6.73275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
+<line x1="5.54525" y1="6.1" x2="5.73275" y2="6.1" stroke="#000000FF" stroke-width="0.011" />
+<line x1="5.54525" y1="6" x2="5.73275" y2="6" stroke="#000000FF" stroke-width="0.011" />
 <text x="5.83" y="4.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="5.83" y="4.45" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="5.83" y1="4.5" x2="5.948" y2="4.5" stroke="#FF0000FF" stroke-width="0.002" />
@@ -365,6 +337,11 @@
 <rect x="5.58" y="6.0499997" width="0.020399999" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="5.678" y="6.1299996" width="0.019999992" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="5.6938334" y1="6.0832" x2="5.6938334" y2="5.7" stroke="#000000FF" stroke-width="0.008332999" />
+<polygon points="7.889667,5.170661 8.528333,5.069339 8.528333,5.019339 7.889667,5.120661" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="8.869667,5.1706505 9.5183325,5.0693493 9.5183325,5.019349 8.869667,5.1206503" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="7.74525" y1="6" x2="7.93275" y2="6" stroke="#000000FF" stroke-width="0.011" />
+<line x1="8.72525" y1="6" x2="8.91275" y2="6" stroke="#000000FF" stroke-width="0.011" />
+<line x1="9.47525" y1="4.4" x2="9.66275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
 <text x="7.7799997" y="6.0499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="7.7799997" y="6" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="7.7799997" y1="6.0499997" x2="7.898" y2="6.0499997" stroke="#FF0000FF" stroke-width="0.002" />
@@ -423,6 +400,11 @@
 <rect x="9.51" y="4.2999997" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="9.604" y="4.3796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="9.514166" y1="4.3668" x2="9.514166" y2="5.045" stroke="#000000FF" stroke-width="0.008332999" />
+<polygon points="10.1396675,5.165438 11.098332,5.064562 11.098332,5.0145617 10.1396675,5.115438" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="11.629667,5.1705537 12.428332,5.0644464 12.428332,5.0144463 11.629667,5.1205535" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="9.99525" y1="6" x2="10.18275" y2="6" stroke="#000000FF" stroke-width="0.011" />
+<line x1="11.4852495" y1="6" x2="11.6727495" y2="6" stroke="#000000FF" stroke-width="0.011" />
+<line x1="12.38525" y1="4.4" x2="12.57275" y2="4.4" stroke="#000000FF" stroke-width="0.011" />
 <text x="10.03" y="6.0499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="10.03" y="6" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="10.03" y1="6.0499997" x2="10.148" y2="6.0499997" stroke="#FF0000FF" stroke-width="0.002" />
@@ -434,6 +416,11 @@
 <line x1="10.389999" y1="5.7999997" x2="10.508" y2="5.7999997" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.389999" y="5.75" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.484" y="5.8296" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="10.279599" y="5.7999997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="10.279599" y="5.6243997" width="0.090399995" height="0.24560001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="10.279599" y1="5.7999997" x2="10.37" y2="5.7999997" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.3048" y="5.6243997" width="0.06519999" height="0.11" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.33" y="5.8476" width="0.039999995" height="0.022400001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="10.503834" y1="5.7832" x2="10.503834" y2="5.1021185" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="10.67" y="5.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="10.67" y="5.65" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -446,11 +433,21 @@
 <line x1="11.09" y1="4.6" x2="11.208" y2="4.6" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="11.09" y="4.5499997" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="11.184" y="4.6296" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="10.945399" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="10.945399" y="4.4635997" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="10.945399" y1="4.6" x2="11.012599" y2="4.6" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.9646" y="4.4635997" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.945399" y="4.6828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <text x="11.09" y="4.45" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="11.09" y="4.4" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="11.09" y1="4.45" x2="11.208" y2="4.45" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="11.09" y="4.4" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="11.184" y="4.4796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="10.979599" y="4.45" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="10.979599" y="4.2743998" width="0.090399995" height="0.24560001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="10.979599" y1="4.45" x2="11.07" y2="4.45" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="11.0048" y="4.2743998" width="0.06519999" height="0.11" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="11.03" y="4.4976" width="0.039999995" height="0.022400001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="11.094166" y1="4.4667997" x2="11.094166" y2="5.04" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="11.5199995" y="6.0499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="11.5199995" y="6" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -469,6 +466,11 @@
 <line x1="12.139999" y1="5.6" x2="12.258" y2="5.6" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.139999" y="5.5499997" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.234" y="5.6296" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="12.0528" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="12.0528" y="5.4635997" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="12.0528" y1="5.6" x2="12.12" y2="5.6" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="12.0720005" y="5.4635997" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="12.0528" y="5.6828003" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="12.253834" y1="5.5832" x2="12.253834" y2="5.0626297" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="12.42" y="4.45" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="12.42" y="4.4" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -481,24 +483,41 @@
 <rect x="12.42" y="4.2999997" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.514" y="4.3796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="12.424166" y1="4.3668" x2="12.424166" y2="5.04" stroke="#000000FF" stroke-width="0.008332999" />
-<text x="2.1" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.8488" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.8488" y="4.7999997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="3.3899999" y="4.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.3899999" y="4.6304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.3899999" y1="4.7" x2="3.4888" y2="4.7" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="5.58" y="4.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="5.58" y="4.6304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="5.58" y1="4.7" x2="5.6788" y2="4.7" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.1" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.8488" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.8488" y="5.7999997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="4.39" y="5.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="4.3904" y="5.5508" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="4.39" y1="5.7" x2="4.4976" y2="5.7" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="6.5899997" y="5.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="6.5903997" y="5.5508" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="6.5899997" y1="5.7" x2="6.6976" y2="5.7" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="0.79999995" y1="7.5499997" x2="0.79999995" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="4.5099998" y1="7.5499997" x2="4.5099998" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="7.66" y1="7.5499997" x2="7.66" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="9.96" y1="7.5499997" x2="9.96" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="12.799999" y1="7.5499997" x2="12.799999" y2="7.95" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="0.790625" y1="7.5499997" x2="12.809375" y2="7.5499997" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="7.6499996" x2="12.809375" y2="7.6499996" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="7.75" x2="12.809375" y2="7.75" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="7.85" x2="12.809375" y2="7.85" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="7.95" x2="12.809375" y2="7.95" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="0.9" y="7.85" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="1.2504" y="7.5499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.2504" y="7.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.2504" y1="7.5499997" x2="1.35" y2="7.5499997" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="7.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="7.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="7.6096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="7.6396003" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.37" y="7.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.37" y="7.56" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.37" y1="7.7" x2="1.4696001" y2="7.7" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="7.56" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="7.56" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="7.7596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="7.7896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.4896001" y="7.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.4896001" y="7.3599997" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.4896001" y1="7.5" x2="1.5892001" y2="7.5" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="7.3599997" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="7.3599997" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="7.5596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="7.5896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="3.23" y="7.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.2304" y="7.6008" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.23" y1="7.75" x2="3.3376" y2="7.75" stroke="#FF0000FF" stroke-width="0.002" />
 <text x="1.87" y="7.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="1.87" y="7.8999996" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="1.87" y1="7.95" x2="1.988" y2="7.95" stroke="#FF0000FF" stroke-width="0.002" />
@@ -566,6 +585,13 @@
 <line x1="10.23" y1="7.6499996" x2="10.348001" y2="7.6499996" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.23" y="7.6" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.324" y="7.6796002" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="10.110399" y="7.6499996" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="10.110399" y="7.5099998" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="10.110399" y1="7.6499996" x2="10.21" y2="7.6499996" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.110399" y="7.5099998" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.1944" y="7.5099998" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.1944" y="7.7096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.110399" y="7.7396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="10.234166" y1="7.6667995" x2="10.234166" y2="8" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="11.16" y="7.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="11.16" y="7.6499996" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -588,15 +614,113 @@
 <line x1="12.45" y1="7.8999996" x2="12.568" y2="7.8999996" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.45" y="7.85" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.544" y="7.9296002" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="12.3312" y="7.8999996" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="12.3312" y="7.8492" width="0.098799996" height="0.1008" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="12.3312" y1="7.8999996" x2="12.429999" y2="7.8999996" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="12.563834" y1="7.8831997" x2="12.563834" y2="7.5499997" stroke="#000000FF" stroke-width="0.008332999" />
 <rect x="12.549667" y="7.54" width="0.02" height="0.02" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <rect x="12.547168" y="7.5415" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
 <rect x="12.544667" y="7.5309997" width="0.03" height="0.03" fill="#00000000" stroke="#0000FFFF" stroke-width="0.0025" />
 <text x="12.559668" y="7.5459995" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="0.9" y="7.85" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="3.23" y="7.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.2304" y="7.6008" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.23" y1="7.75" x2="3.3376" y2="7.75" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="4.5099998" y1="8.75" x2="4.5099998" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="7.66" y1="8.75" x2="7.66" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="9.96" y1="8.75" x2="9.96" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="12.799999" y1="8.75" x2="12.799999" y2="10.25" stroke="#000000FF" stroke-width="0.018749999" />
+<text x="0.75" y="10.25" fill="#000000FF" font-size="1.5" font-family="Bravura" text-anchor="end" dominant-baseline="baseline"></text>
+<line x1="0.790625" y1="8.75" x2="12.809375" y2="8.75" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="8.849999" x2="12.809375" y2="8.849999" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="8.95" x2="12.809375" y2="8.95" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="9.05" x2="12.809375" y2="9.05" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="9.15" x2="12.809375" y2="9.15" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="0.9" y="8.849999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="1.2504" y="8.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.2504" y="8.61" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.2504" y1="8.75" x2="1.35" y2="8.75" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="8.61" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="8.61" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="8.8096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="8.8396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.37" y="8.9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.37" y="8.76" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.37" y1="8.9" x2="1.4696001" y2="8.9" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="8.76" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="8.76" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="8.9596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="8.9896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.4896001" y="8.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.4896001" y="8.559999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.4896001" y1="8.7" x2="1.5892001" y2="8.7" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="8.559999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="8.559999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="8.7596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="8.7896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="3.23" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.23" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.23" y1="8.95" x2="3.3288" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.83" y="9.05" fill="#000000FF" font-size="0.32" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="3.84" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.84" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.84" y1="8.95" x2="3.9387999" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="4.69" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="4.69" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="4.69" y1="8.95" x2="4.7888" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="6.19" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="6.19" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="6.19" y1="8.95" x2="6.2888" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="7.8399997" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="7.8399997" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="7.8399997" y1="8.95" x2="7.9388" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="8.889999" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="8.8904" y="8.8008" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="8.889999" y1="8.95" x2="8.9976" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="0.790625" y1="9.849999" x2="12.809375" y2="9.849999" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="9.95" x2="12.809375" y2="9.95" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="10.05" x2="12.809375" y2="10.05" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="10.15" x2="12.809375" y2="10.15" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="10.25" x2="12.809375" y2="10.25" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="0.9" y="9.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="1.2504" y="9.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.2504" y="9.809999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.2504" y1="9.95" x2="1.35" y2="9.95" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="9.809999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="9.809999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="10.0096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="10.0396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.37" y="10.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.37" y="9.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.37" y1="10.099999" x2="1.4696001" y2="10.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="9.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="9.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="10.1596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="10.1896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.4896001" y="9.9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.4896001" y="9.76" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.4896001" y1="9.9" x2="1.5892001" y2="9.9" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="9.76" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="9.76" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="9.9596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="9.9896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="3.51" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.51" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.51" y1="10.05" x2="3.6088" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="4.17" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="4.17" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="4.17" y1="10.05" x2="4.2688" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="11.16" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="11.16" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="11.16" y1="10.05" x2="11.2588" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="11.59" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="11.59" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="11.59" y1="10.05" x2="11.6888" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="12.45" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="12.45" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="12.45" y1="10.05" x2="12.5487995" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
+<polygon points="1.9796668,9.470548 2.748333,9.3694515 2.748333,9.319451 1.9796668,9.4205475" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="3.4752498" y1="9.25" x2="3.6627498" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
+<line x1="1.8352499" y1="10.55" x2="2.02275" y2="10.55" stroke="#000000FF" stroke-width="0.011" />
+<line x1="1.8352499" y1="10.45" x2="2.02275" y2="10.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="1.8352499" y1="10.349999" x2="2.02275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="2.7052498" y1="8.65" x2="2.8927498" y2="8.65" stroke="#000000FF" stroke-width="0.011" />
 <text x="3.51" y="9.25" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="3.51" y="9.2" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="3.51" y1="9.25" x2="3.6279998" y2="9.25" stroke="#FF0000FF" stroke-width="0.002" />
@@ -676,6 +800,20 @@
 <rect x="3.9371667" y="9.7415" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
 <rect x="3.9346666" y="9.731" width="0.03" height="0.03" fill="#00000000" stroke="#0000FFFF" stroke-width="0.0025" />
 <text x="3.9496667" y="9.745999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<line x1="4.9952497" y1="9.45" x2="5.18275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="4.9952497" y1="9.349999" x2="5.18275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="4.9952497" y1="9.25" x2="5.18275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
+<line x1="5.4352503" y1="9.45" x2="5.6227503" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="5.4352503" y1="9.349999" x2="5.6227503" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="5.4352503" y1="9.25" x2="5.6227503" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.49525" y1="9.45" x2="6.68275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.49525" y1="9.349999" x2="6.68275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.49525" y1="9.25" x2="6.68275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.94525" y1="9.45" x2="7.13275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.94525" y1="9.349999" x2="7.13275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.94525" y1="9.25" x2="7.13275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
+<line x1="4.65525" y1="10.349999" x2="4.8427496" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.15525" y1="10.349999" x2="6.34275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
 <text x="5.0299997" y="9.45" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="5.0299997" y="9.4" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="5.0299997" y1="9.45" x2="5.148" y2="9.45" stroke="#FF0000FF" stroke-width="0.002" />
@@ -750,6 +888,14 @@
 <rect x="7.2458324" y="10.3743" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
 <rect x="7.2433324" y="10.398199" width="0.03" height="0.03" fill="#00000000" stroke="#0000FFFF" stroke-width="0.0025" />
 <text x="7.2583323" y="10.413199" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<polygon points="8.209667,8.71 8.738,8.71 8.738,8.76 8.209667,8.76" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="8.999667,9.409733 9.788,9.460267 9.788,9.510267 8.999667,9.459732" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="8.06525" y1="9.45" x2="8.25275" y2="9.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="8.06525" y1="9.349999" x2="8.25275" y2="9.349999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="8.06525" y1="9.25" x2="8.25275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
+<line x1="8.58525" y1="9.25" x2="8.77275" y2="9.25" stroke="#000000FF" stroke-width="0.011" />
+<line x1="7.80525" y1="10.45" x2="7.99275" y2="10.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="7.80525" y1="10.349999" x2="7.99275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
 <text x="8.099999" y="9.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="8.099999" y="9.45" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="8.099999" y1="9.5" x2="8.217999" y2="9.5" stroke="#FF0000FF" stroke-width="0.002" />
@@ -809,6 +955,10 @@
 <rect x="9.67" y="10.15" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="9.764" y="10.2296" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="9.7838335" y1="10.1832" x2="9.7838335" y2="9.485" stroke="#000000FF" stroke-width="0.008332999" />
+<polygon points="10.339667,9.660325 10.988,9.609674 10.988,9.659675 10.339667,9.710325" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="11.87,10.590717 12.168332,10.539282 12.168332,10.489282 11.87,10.540717" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="10.19525" y1="10.45" x2="10.38275" y2="10.45" stroke="#000000FF" stroke-width="0.011" />
+<line x1="10.19525" y1="10.349999" x2="10.38275" y2="10.349999" stroke="#000000FF" stroke-width="0.011" />
 <text x="10.23" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="10.23" y="8.9" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="10.23" y1="8.95" x2="10.348001" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
@@ -819,6 +969,13 @@
 <line x1="10.23" y1="8.849999" x2="10.348001" y2="8.849999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.23" y="8.8" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.324" y="8.8796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="10.110399" y="8.849999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="10.110399" y="8.71" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="10.110399" y1="8.849999" x2="10.21" y2="8.849999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.110399" y="8.71" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.1944" y="8.71" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.1944" y="8.9096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.110399" y="8.9396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="10.234166" y1="8.866799" x2="10.234166" y2="9.3" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="11.16" y="9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="11.16" y="8.95" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -851,11 +1008,21 @@
 <line x1="12.45" y1="9.2" x2="12.568" y2="9.2" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.45" y="9.15" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.544" y="9.2296" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="12.2166" y="9.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="12.2166" y="9.059999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="12.2166" y1="9.2" x2="12.316199" y2="9.2" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="12.2166" y="9.059999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="12.3006" y="9.059999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="12.3006" y="9.2596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="12.2166" y="9.2896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <text x="12.45" y="9.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="12.45" y="9.05" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="12.45" y1="9.099999" x2="12.568" y2="9.099999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.45" y="9.05" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.544" y="9.1296" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="12.3312" y="9.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="12.3312" y="9.0492" width="0.098799996" height="0.1008" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="12.3312" y1="9.099999" x2="12.429999" y2="9.099999" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="12.563834" y1="9.1832" x2="12.563834" y2="8.75" stroke="#000000FF" stroke-width="0.008332999" />
 <rect x="12.549667" y="8.74" width="0.02" height="0.02" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <rect x="12.547168" y="8.7415" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
@@ -878,6 +1045,13 @@
 <line x1="10.87" y1="10.05" x2="10.988" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.87" y="10" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.964" y="10.0796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="10.750401" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="10.750401" y="9.91" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="10.750401" y1="10.05" x2="10.849999" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.750401" y="9.91" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.8344" y="9.91" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.8344" y="10.1096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="10.750401" y="10.1396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="10.983834" y1="10.0332" x2="10.983834" y2="9.635" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="11.87" y="10.15" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="11.87" y="10.099999" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -891,41 +1065,54 @@
 <rect x="12.16" y="9.8" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="12.254" y="9.8796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="12.164166" y1="9.866799" x2="12.164166" y2="10.514999" stroke="#000000FF" stroke-width="0.008332999" />
-<text x="0.9" y="8.849999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="3.23" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.23" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.23" y1="8.95" x2="3.3288" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="3.84" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.84" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.84" y1="8.95" x2="3.9387999" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="4.69" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="4.69" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="4.69" y1="8.95" x2="4.7888" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="6.19" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="6.19" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="6.19" y1="8.95" x2="6.2888" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="7.8399997" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="7.8399997" y="8.8804" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="7.8399997" y1="8.95" x2="7.9388" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="8.889999" y="8.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="8.8904" y="8.8008" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="8.889999" y1="8.95" x2="8.9976" y2="8.95" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="0.9" y="9.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="3.51" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.51" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.51" y1="10.05" x2="3.6088" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="4.17" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="4.17" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="4.17" y1="10.05" x2="4.2688" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="11.16" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="11.16" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="11.16" y1="10.05" x2="11.2588" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="11.59" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="11.59" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="11.59" y1="10.05" x2="11.6888" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="12.45" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="12.45" y="9.980399" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="12.45" y1="10.05" x2="12.5487995" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="0.79999995" y1="11.9" x2="0.79999995" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="3.76" y1="11.9" x2="3.76" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="5.7799997" y1="11.9" x2="5.7799997" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="8.29" y1="11.9" x2="8.29" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="10.49" y1="11.9" x2="10.49" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="12.799999" y1="11.9" x2="12.799999" y2="12.3" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="0.790625" y1="11.9" x2="12.809375" y2="11.9" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="12" x2="12.809375" y2="12" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="12.099999" x2="12.809375" y2="12.099999" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="12.2" x2="12.809375" y2="12.2" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="12.3" x2="12.809375" y2="12.3" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="0.9" y="12.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="1.2504" y="11.9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.2504" y="11.759999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.2504" y1="11.9" x2="1.35" y2="11.9" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="11.759999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="11.759999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="11.9595995" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="11.989599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.37" y="12.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.37" y="11.91" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.37" y1="12.05" x2="1.4696001" y2="12.05" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="11.91" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="11.91" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="12.109599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="12.1396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.4896001" y="11.849999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.4896001" y="11.71" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.4896001" y1="11.849999" x2="1.5892001" y2="11.849999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="11.71" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="11.71" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="11.909599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="11.939599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.9099998" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.9099998" y="12.0432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.9099998" y1="12.099999" x2="3.0228" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="3.9199998" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.9199998" y="12.0432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.9199998" y1="12.099999" x2="4.0327997" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="4.94" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="4.9404" y="11.950799" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="4.94" y1="12.099999" x2="5.0476" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="9.5" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="9.5" y="12.0432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="9.5" y1="12.099999" x2="9.6128" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="11.6449995" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="11.6449995" y="12.0964" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="11.6449995" y1="12.099999" x2="11.7578" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
 <text x="1.93" y="12.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="1.93" y="12.15" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="1.93" y1="12.2" x2="2.048" y2="12.2" stroke="#FF0000FF" stroke-width="0.002" />
@@ -937,12 +1124,26 @@
 <line x1="5.35" y1="12.099999" x2="5.468" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="5.35" y="12.05" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="5.4440002" y="12.1296" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="5.2303996" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="5.2303996" y="11.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="5.2303996" y1="12.099999" x2="5.33" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.2303996" y="11.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.3143997" y="11.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.3143997" y="12.159599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.2303996" y="12.189599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="5.354166" y1="12.1168" x2="5.354166" y2="12.45" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="6.17" y="12" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="6.17" y="11.95" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="6.17" y1="12" x2="6.2879996" y2="12" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="6.17" y="11.95" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="6.264" y="12.029599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="6.0504" y="12" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="6.0504" y="11.86" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="6.0504" y1="12" x2="6.15" y2="12" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.0504" y="11.86" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.1344" y="11.86" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.1344" y="12.059599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.0504" y="12.0896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="6.174166" y1="12.0168" x2="6.174166" y2="12.349999" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="6.8599997" y="12.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="6.8599997" y="12" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -965,6 +1166,13 @@
 <line x1="7.99" y1="12.349999" x2="8.108" y2="12.349999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="7.99" y="12.3" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="8.084" y="12.3796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="7.8703995" y="12.349999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="7.8703995" y="12.21" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="7.8703995" y1="12.349999" x2="7.97" y2="12.349999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.8703995" y="12.21" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.9544" y="12.21" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.9544" y="12.409599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.8703995" y="12.439599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="8.103833" y1="12.3331995" x2="8.103833" y2="12" stroke="#000000FF" stroke-width="0.008332999" />
 <rect x="8.089667" y="11.99" width="0.02" height="0.02" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <rect x="8.087167" y="11.9915" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
@@ -976,22 +1184,89 @@
 <rect x="8.53" y="12.25" width="0.020399999" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="8.627999" y="12.33" width="0.019999992" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="8.643833" y1="12.283199" x2="8.643833" y2="11.95" stroke="#000000FF" stroke-width="0.008332999" />
-<text x="0.9" y="12.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="2.9099998" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.9099998" y="12.0432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.9099998" y1="12.099999" x2="3.0228" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="3.9199998" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.9199998" y="12.0432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.9199998" y1="12.099999" x2="4.0327997" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="4.94" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="4.9404" y="11.950799" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="4.94" y1="12.099999" x2="5.0476" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="9.5" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="9.5" y="12.0432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="9.5" y1="12.099999" x2="9.6128" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="11.6449995" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="11.6449995" y="12.0964" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="11.6449995" y1="12.099999" x2="11.7578" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="3.76" y1="13.099999" x2="3.76" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="5.7799997" y1="13.099999" x2="5.7799997" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="8.29" y1="13.099999" x2="8.29" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="10.49" y1="13.099999" x2="10.49" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
+<line x1="12.799999" y1="13.099999" x2="12.799999" y2="14.799999" stroke="#000000FF" stroke-width="0.018749999" />
+<text x="0.75" y="14.799999" fill="#000000FF" font-size="1.6999999" font-family="Bravura" text-anchor="end" dominant-baseline="baseline"></text>
+<line x1="0.790625" y1="13.099999" x2="12.809375" y2="13.099999" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="13.2" x2="12.809375" y2="13.2" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="13.299999" x2="12.809375" y2="13.299999" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="13.4" x2="12.809375" y2="13.4" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="13.5" x2="12.809375" y2="13.5" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="0.9" y="13.4" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="1.2504" y="13.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.2504" y="12.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.2504" y1="13.099999" x2="1.35" y2="13.099999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="12.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="12.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="13.159599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="13.189599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.37" y="13.25" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.37" y="13.11" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.37" y1="13.25" x2="1.4696001" y2="13.25" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="13.11" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="13.11" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="13.309599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="13.3396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.4896001" y="13.049999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.4896001" y="12.91" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.4896001" y1="13.049999" x2="1.5892001" y2="13.049999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="12.91" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="12.91" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="13.109599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="13.139599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="9.969999" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="9.969999" y="13.2304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="9.969999" y1="13.299999" x2="10.0688" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="8.53" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="8.53" y="13.2304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="8.53" y1="13.299999" x2="8.628799" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
+<line x1="0.790625" y1="14.4" x2="12.809375" y2="14.4" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="14.5" x2="12.809375" y2="14.5" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="14.599999" x2="12.809375" y2="14.599999" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="14.7" x2="12.809375" y2="14.7" stroke="#000000FF" stroke-width="0.012499999" />
+<line x1="0.790625" y1="14.799999" x2="12.809375" y2="14.799999" stroke="#000000FF" stroke-width="0.012499999" />
+<text x="0.9" y="14.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<text x="1.2504" y="14.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.2504" y="14.36" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.2504" y1="14.5" x2="1.35" y2="14.5" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="14.36" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="14.36" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.3343999" y="14.559599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.2504" y="14.5896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.37" y="14.65" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.37" y="14.509999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.37" y1="14.65" x2="1.4696001" y2="14.65" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="14.509999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="14.509999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4539999" y="14.7095995" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.37" y="14.739599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="1.4896001" y="14.45" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="1.4896001" y="14.309999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="1.4896001" y1="14.45" x2="1.5892001" y2="14.45" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="14.309999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="14.309999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.5735999" y="14.5096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="1.4896001" y="14.539599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="7.29" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="7.29" y="14.5304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="7.29" y1="14.599999" x2="7.3887997" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="9.2699995" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="9.2699995" y="14.5304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="9.2699995" y1="14.599999" x2="9.3688" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="9.51" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="9.5104" y="14.450799" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="9.51" y1="14.599999" x2="9.6175995" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="11.099999" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="11.1004" y="14.450799" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="11.099999" y1="14.599999" x2="11.2076" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="11.84" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="11.84" y="14.5432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="11.84" y1="14.599999" x2="11.9528" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
+<polygon points="2.039667,13.960301 2.738,13.9096985 2.738,13.959698 2.039667,14.010302" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="1.8952498" y1="14.9" x2="2.0827498" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
 <text x="1.93" y="13.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="1.93" y="13.45" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="1.93" y1="13.5" x2="2.048" y2="13.5" stroke="#FF0000FF" stroke-width="0.002" />
@@ -1019,6 +1294,13 @@
 <line x1="3.33" y1="13.2" x2="3.4479997" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="3.33" y="13.15" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="3.4239998" y="13.229599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="3.2104" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="3.2104" y="13.059999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="3.2104" y1="13.2" x2="3.31" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="3.2104" y="13.059999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="3.2944" y="13.059999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="3.2944" y="13.2596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="3.2104" y="13.289599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <text x="3.33" y="13.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="3.33" y="13.049999" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="3.33" y1="13.099999" x2="3.4479997" y2="13.099999" stroke="#FF0000FF" stroke-width="0.002" />
@@ -1054,6 +1336,13 @@
 <line x1="2.9199998" y1="14.349999" x2="3.0379999" y2="14.349999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="2.9199998" y="14.299999" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="3.014" y="14.3796" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="2.8004" y="14.349999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="2.8004" y="14.21" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="2.8004" y1="14.349999" x2="2.8999999" y2="14.349999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.8004" y="14.21" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.8844" y="14.21" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.8844" y="14.409599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="2.8004" y="14.439599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="2.9241664" y1="14.3668" x2="2.9241664" y2="14.7" stroke="#000000FF" stroke-width="0.008332999" />
 <rect x="2.918333" y="14.69" width="0.02" height="0.02" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <rect x="2.915833" y="14.6743" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
@@ -1075,6 +1364,10 @@
 <rect x="3.5158331" y="14.8743" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
 <rect x="3.513333" y="14.898199" width="0.03" height="0.03" fill="#00000000" stroke="#0000FFFF" stroke-width="0.0025" />
 <text x="3.528333" y="14.913199" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<polygon points="3.9399998,15.340306 4.628333,15.289693 4.628333,15.239694 3.9399998,15.290306" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="3.9052498" y1="14.9" x2="4.09275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
+<line x1="4.58525" y1="14.299999" x2="4.77275" y2="14.299999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="4.9052496" y1="14.299999" x2="5.0927496" y2="14.299999" stroke="#000000FF" stroke-width="0.011" />
 <text x="3.9399998" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="3.9399998" y="13.15" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="3.9399998" y1="13.2" x2="4.0579996" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
@@ -1107,6 +1400,13 @@
 <line x1="5.35" y1="13.299999" x2="5.468" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="5.35" y="13.25" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="5.4440002" y="13.329599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="5.2303996" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="5.2303996" y="13.16" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="5.2303996" y1="13.299999" x2="5.33" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.2303996" y="13.16" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.3143997" y="13.16" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.3143997" y="13.359599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.2303996" y="13.389599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="5.4638333" y1="13.383199" x2="5.4638333" y2="12.95" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="3.9399998" y="14.9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="3.9399998" y="14.849999" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -1137,6 +1437,11 @@
 <line x1="4.94" y1="14.25" x2="5.0579996" y2="14.25" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="4.94" y="14.2" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="5.034" y="14.279599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="4.8528" y="14.25" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="4.8528" y="14.1136" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="4.8528" y1="14.25" x2="4.92" y2="14.25" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="4.872" y="14.1136" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="4.8528" y="14.3328" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="4.9441667" y1="14.2668" x2="4.9441667" y2="14.599999" stroke="#000000FF" stroke-width="0.008332999" />
 <rect x="4.938333" y="14.589999" width="0.02" height="0.02" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <rect x="4.935833" y="14.5743" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
@@ -1158,16 +1463,37 @@
 <rect x="5.525832" y="14.8743" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
 <rect x="5.5233326" y="14.898199" width="0.03" height="0.03" fill="#00000000" stroke="#0000FFFF" stroke-width="0.0025" />
 <text x="5.5383325" y="14.913199" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<polygon points="6.2796674,14.110301 6.9779997,14.059698 6.9779997,14.109698 6.2796674,14.160301" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="7.639667,14.110453 8.108,14.059546 8.108,14.109547 7.639667,14.160453" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="7.9552503" y1="13.7" x2="8.14275" y2="13.7" stroke="#000000FF" stroke-width="0.011" />
+<line x1="7.9552503" y1="13.599999" x2="8.14275" y2="13.599999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.13525" y1="15.099999" x2="6.32275" y2="15.099999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.13525" y1="15" x2="6.32275" y2="15" stroke="#000000FF" stroke-width="0.011" />
+<line x1="6.13525" y1="14.9" x2="6.32275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
+<line x1="7.49525" y1="15" x2="7.68275" y2="15" stroke="#000000FF" stroke-width="0.011" />
+<line x1="7.49525" y1="14.9" x2="7.68275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
 <text x="6.17" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="6.17" y="13.25" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="6.17" y1="13.299999" x2="6.2879996" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="6.17" y="13.25" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="6.264" y="13.329599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="5.9681997" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="5.9681997" y="13.1636" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="5.9681997" y1="13.299999" x2="6.0353994" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.9873996" y="13.1636" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="5.9681997" y="13.3828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <text x="6.17" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="6.17" y="13.15" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="6.17" y1="13.2" x2="6.2879996" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="6.17" y="13.15" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="6.264" y="13.229599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="6.0504" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="6.0504" y="13.059999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="6.0504" y1="13.2" x2="6.15" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.0504" y="13.059999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.1344" y="13.059999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.1344" y="13.2596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="6.0504" y="13.289599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="6.174166" y1="13.216801" x2="6.174166" y2="13.65" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="6.8599997" y="13.349999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="6.8599997" y="13.299999" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -1205,6 +1531,13 @@
 <line x1="7.99" y1="13.549999" x2="8.108" y2="13.549999" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="7.99" y="13.5" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="8.084" y="13.579599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="7.8703995" y="13.549999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="7.8703995" y="13.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="7.8703995" y1="13.549999" x2="7.97" y2="13.549999" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.8703995" y="13.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.9544" y="13.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.9544" y="13.609599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="7.8703995" y="13.639599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="8.103833" y1="13.683199" x2="8.103833" y2="13.2" stroke="#000000FF" stroke-width="0.008332999" />
 <rect x="8.089667" y="13.19" width="0.02" height="0.02" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <rect x="8.087167" y="13.1915" width="0.024999999" height="0.024999999" fill="#00000000" stroke="#00FF00FF" stroke-width="0.0025" />
@@ -1252,6 +1585,11 @@
 <rect x="7.99" y="14.45" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="8.084" y="14.529599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="8.103833" y1="14.483199" x2="8.103833" y2="14.085" stroke="#000000FF" stroke-width="0.008332999" />
+<polygon points="8.76,13.940409 9.278333,13.889591 9.278333,13.839591 8.76,13.8904085" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="9.51,13.939479 10.318,14.040521 10.318,14.090521 9.51,13.989478" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="8.6396675,14.0604 9.167999,14.0096 9.167999,14.059599 8.6396675,14.1104" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="9.93525" y1="14.299999" x2="10.12275" y2="14.299999" stroke="#000000FF" stroke-width="0.011" />
+<line x1="8.49525" y1="14.9" x2="8.68275" y2="14.9" stroke="#000000FF" stroke-width="0.011" />
 <text x="10.2" y="13.4" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="10.2" y="13.349999" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="10.2" y1="13.4" x2="10.318" y2="13.4" stroke="#FF0000FF" stroke-width="0.002" />
@@ -1273,6 +1611,11 @@
 <line x1="9.05" y1="13.2" x2="9.167999" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="9.05" y="13.15" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="9.144" y="13.229599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<text x="8.9628" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
+<rect x="8.9628" y="13.0636" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
+<line x1="8.9628" y1="13.2" x2="9.03" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="8.982" y="13.0636" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
+<rect x="8.9628" y="13.2828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="9.054166" y1="13.216801" x2="9.054166" y2="13.886568" stroke="#000000FF" stroke-width="0.008332999" />
 <text x="9.2699995" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="9.2699995" y="13.25" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
@@ -1322,6 +1665,11 @@
 <rect x="9.05" y="14.4" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="9.144" y="14.479599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="9.163834" y1="14.433199" x2="9.163834" y2="14.035" stroke="#000000FF" stroke-width="0.008332999" />
+<polygon points="10.639999,13.789699 11.338332,13.8403015 11.338332,13.790301 10.639999,13.739698" fill="#000000FF" stroke="none" stroke-width="0" />
+<polygon points="11.849999,13.539701 12.558332,13.590298 12.558332,13.5402975 11.849999,13.489702" fill="#000000FF" stroke="none" stroke-width="0" />
+<line x1="11.81525" y1="12.9" x2="12.00275" y2="12.9" stroke="#000000FF" stroke-width="0.011" />
+<line x1="11.81525" y1="13" x2="12.00275" y2="13" stroke="#000000FF" stroke-width="0.011" />
+<line x1="12.05525" y1="13" x2="12.24275" y2="13" stroke="#000000FF" stroke-width="0.011" />
 <text x="10.639999" y="13.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
 <rect x="10.639999" y="13.049999" width="0.11799999" height="0.099999994" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
 <line x1="10.639999" y1="13.099999" x2="10.758" y2="13.099999" stroke="#FF0000FF" stroke-width="0.002" />
@@ -1377,352 +1725,4 @@
 <rect x="10.639999" y="14.5" width="0.020799998" height="0.019999998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <rect x="10.734" y="14.579599" width="0.023999996" height="0.020399999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 <line x1="10.644166" y1="14.5668" x2="10.644166" y2="14.9" stroke="#000000FF" stroke-width="0.008332999" />
-<text x="0.9" y="13.4" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="9.969999" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="9.969999" y="13.2304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="9.969999" y1="13.299999" x2="10.0688" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="8.53" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="8.53" y="13.2304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="8.53" y1="13.299999" x2="8.628799" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="0.9" y="14.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="7.29" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="7.29" y="14.5304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="7.29" y1="14.599999" x2="7.3887997" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="9.2699995" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="9.2699995" y="14.5304" width="0.098799996" height="0.17" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="9.2699995" y1="14.599999" x2="9.3688" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="9.51" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="9.5104" y="14.450799" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="9.51" y1="14.599999" x2="9.6175995" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="11.099999" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="11.1004" y="14.450799" width="0.10760001" height="0.2992" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="11.099999" y1="14.599999" x2="11.2076" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="11.84" y="14.599999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="11.84" y="14.5432" width="0.1128" height="0.057600003" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="11.84" y1="14.599999" x2="11.9528" y2="14.599999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="9.9428005" y="3.4499998" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="9.9428005" y="3.3135998" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="9.9428005" y1="3.4499998" x2="10.01" y2="3.4499998" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="9.962" y="3.3135998" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="9.9428005" y="3.5328" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="11.0028" y="3.3999999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="11.0028" y="3.2635999" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="11.0028" y1="3.3999999" x2="11.07" y2="3.3999999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="11.022" y="3.2635999" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="11.0028" y="3.4828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.4503999" y="3.1" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.4503999" y="2.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.4503999" y1="3.1" x2="2.55" y2="3.1" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.4503999" y="2.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.5343997" y="2.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.5343997" y="3.1595998" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.4503999" y="3.1895998" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.57" y="3.25" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.57" y="3.11" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.57" y1="3.25" x2="2.6695998" y2="3.25" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.57" y="3.11" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6539998" y="3.11" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6539998" y="3.3095999" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.57" y="3.3395998" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.6895998" y="3.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.6895998" y="2.9099998" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.6895998" y1="3.05" x2="2.7891998" y2="3.05" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6895998" y="2.9099998" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.7735999" y="2.9099998" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.7735999" y="3.1095998" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6895998" y="3.1395998" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="10.279599" y="5.7999997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="10.279599" y="5.6243997" width="0.090399995" height="0.24560001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="10.279599" y1="5.7999997" x2="10.37" y2="5.7999997" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.3048" y="5.6243997" width="0.06519999" height="0.11" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.33" y="5.8476" width="0.039999995" height="0.022400001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="10.960399" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="10.960399" y="4.4635997" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="10.960399" y1="4.6" x2="11.027598" y2="4.6" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.979599" y="4.4635997" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.960399" y="4.6828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="10.979599" y="4.45" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="10.979599" y="4.2743998" width="0.090399995" height="0.24560001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="10.979599" y1="4.45" x2="11.07" y2="4.45" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="11.0048" y="4.2743998" width="0.06519999" height="0.11" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="11.03" y="4.4976" width="0.039999995" height="0.022400001" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="12.0528" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="12.0528" y="5.4635997" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="12.0528" y1="5.6" x2="12.12" y2="5.6" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="12.0720005" y="5.4635997" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="12.0528" y="5.6828003" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.4503999" y="4.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.4503999" y="4.46" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.4503999" y1="4.6" x2="2.55" y2="4.6" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.4503999" y="4.46" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.5343997" y="4.46" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.5343997" y="4.6596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.4503999" y="4.6896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.57" y="4.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.57" y="4.61" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.57" y1="4.75" x2="2.6695998" y2="4.75" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.57" y="4.61" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6539998" y="4.61" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6539998" y="4.8096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.57" y="4.8395996" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.6895998" y="4.5499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.6895998" y="4.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.6895998" y1="4.5499997" x2="2.7891998" y2="4.5499997" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6895998" y="4.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.7735999" y="4.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.7735999" y="4.6095996" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6895998" y="4.6396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.4503999" y="5.6" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.4503999" y="5.46" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.4503999" y1="5.6" x2="2.55" y2="5.6" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.4503999" y="5.46" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.5343997" y="5.46" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.5343997" y="5.6596003" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.4503999" y="5.6896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.57" y="5.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.57" y="5.6099997" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.57" y1="5.75" x2="2.6695998" y2="5.75" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.57" y="5.6099997" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6539998" y="5.6099997" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6539998" y="5.8096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.57" y="5.8396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.6895998" y="5.5499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.6895998" y="5.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.6895998" y1="5.5499997" x2="2.7891998" y2="5.5499997" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6895998" y="5.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.7735999" y="5.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.7735999" y="5.6096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.6895998" y="5.6396003" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="10.110399" y="7.6499996" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="10.110399" y="7.5099998" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="10.110399" y1="7.6499996" x2="10.21" y2="7.6499996" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.110399" y="7.5099998" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.1944" y="7.5099998" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.1944" y="7.7096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.110399" y="7.7396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="12.3312" y="7.8999996" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="12.3312" y="7.8492" width="0.098799996" height="0.1008" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="12.3312" y1="7.8999996" x2="12.429999" y2="7.8999996" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.2504" y="7.5499997" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.2504" y="7.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.2504" y1="7.5499997" x2="1.35" y2="7.5499997" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="7.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="7.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="7.6096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="7.6396003" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.37" y="7.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.37" y="7.56" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.37" y1="7.7" x2="1.4696001" y2="7.7" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="7.56" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="7.56" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="7.7596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="7.7896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.4896001" y="7.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.4896001" y="7.3599997" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.4896001" y1="7.5" x2="1.5892001" y2="7.5" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="7.3599997" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="7.3599997" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="7.5596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="7.5896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="10.110399" y="8.849999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="10.110399" y="8.71" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="10.110399" y1="8.849999" x2="10.21" y2="8.849999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.110399" y="8.71" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.1944" y="8.71" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.1944" y="8.9096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.110399" y="8.9396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="12.2316" y="9.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="12.2316" y="9.059999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="12.2316" y1="9.2" x2="12.3312" y2="9.2" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="12.2316" y="9.059999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="12.3156" y="9.059999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="12.3156" y="9.2596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="12.2316" y="9.2896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="12.3312" y="9.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="12.3312" y="9.0492" width="0.098799996" height="0.1008" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="12.3312" y1="9.099999" x2="12.429999" y2="9.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="10.750401" y="10.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="10.750401" y="9.91" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="10.750401" y1="10.05" x2="10.849999" y2="10.05" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.750401" y="9.91" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.8344" y="9.91" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.8344" y="10.1096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="10.750401" y="10.1396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.2504" y="8.75" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.2504" y="8.61" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.2504" y1="8.75" x2="1.35" y2="8.75" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="8.61" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="8.61" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="8.8096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="8.8396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.37" y="8.9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.37" y="8.76" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.37" y1="8.9" x2="1.4696001" y2="8.9" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="8.76" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="8.76" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="8.9596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="8.9896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.4896001" y="8.7" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.4896001" y="8.559999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.4896001" y1="8.7" x2="1.5892001" y2="8.7" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="8.559999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="8.559999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="8.7596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="8.7896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.83" y="9.05" fill="#000000FF" font-size="0.32" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<text x="1.2504" y="9.95" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.2504" y="9.809999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.2504" y1="9.95" x2="1.35" y2="9.95" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="9.809999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="9.809999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="10.0096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="10.0396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.37" y="10.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.37" y="9.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.37" y1="10.099999" x2="1.4696001" y2="10.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="9.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="9.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="10.1596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="10.1896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.4896001" y="9.9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.4896001" y="9.76" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.4896001" y1="9.9" x2="1.5892001" y2="9.9" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="9.76" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="9.76" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="9.9596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="9.9896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="5.2303996" y="12.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="5.2303996" y="11.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="5.2303996" y1="12.099999" x2="5.33" y2="12.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.2303996" y="11.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.3143997" y="11.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.3143997" y="12.159599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.2303996" y="12.189599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="6.0504" y="12" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="6.0504" y="11.86" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="6.0504" y1="12" x2="6.15" y2="12" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.0504" y="11.86" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.1344" y="11.86" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.1344" y="12.059599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.0504" y="12.0896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="7.8703995" y="12.349999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="7.8703995" y="12.21" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="7.8703995" y1="12.349999" x2="7.97" y2="12.349999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.8703995" y="12.21" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.9544" y="12.21" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.9544" y="12.409599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.8703995" y="12.439599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.2504" y="11.9" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.2504" y="11.759999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.2504" y1="11.9" x2="1.35" y2="11.9" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="11.759999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="11.759999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="11.9595995" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="11.989599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.37" y="12.05" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.37" y="11.91" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.37" y1="12.05" x2="1.4696001" y2="12.05" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="11.91" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="11.91" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="12.109599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="12.1396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.4896001" y="11.849999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.4896001" y="11.71" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.4896001" y1="11.849999" x2="1.5892001" y2="11.849999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="11.71" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="11.71" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="11.909599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="11.939599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="3.2104" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="3.2104" y="13.059999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="3.2104" y1="13.2" x2="3.31" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="3.2104" y="13.059999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="3.2944" y="13.059999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="3.2944" y="13.2596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="3.2104" y="13.289599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="2.8004" y="14.349999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="2.8004" y="14.21" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="2.8004" y1="14.349999" x2="2.8999999" y2="14.349999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.8004" y="14.21" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.8844" y="14.21" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.8844" y="14.409599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="2.8004" y="14.439599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="5.2303996" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="5.2303996" y="13.16" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="5.2303996" y1="13.299999" x2="5.33" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.2303996" y="13.16" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.3143997" y="13.16" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.3143997" y="13.359599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.2303996" y="13.389599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="4.8528" y="14.25" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="4.8528" y="14.1136" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="4.8528" y1="14.25" x2="4.92" y2="14.25" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="4.872" y="14.1136" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="4.8528" y="14.3328" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="5.9832" y="13.299999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="5.9832" y="13.1636" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="5.9832" y1="13.299999" x2="6.0504" y2="13.299999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.0024" y="13.1636" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="5.9832" y="13.3828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="6.0504" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="6.0504" y="13.059999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="6.0504" y1="13.2" x2="6.15" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.0504" y="13.059999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.1344" y="13.059999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.1344" y="13.2596" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="6.0504" y="13.289599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="7.8703995" y="13.549999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="7.8703995" y="13.41" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="7.8703995" y1="13.549999" x2="7.97" y2="13.549999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.8703995" y="13.41" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.9544" y="13.41" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.9544" y="13.609599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="7.8703995" y="13.639599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="8.9628" y="13.2" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="8.9628" y="13.0636" width="0.0672" height="0.27040002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="8.9628" y1="13.2" x2="9.03" y2="13.2" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="8.982" y="13.0636" width="0.047999997" height="0.05879999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="8.9628" y="13.2828" width="0.0476" height="0.051200002" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.2504" y="13.099999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.2504" y="12.96" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.2504" y1="13.099999" x2="1.35" y2="13.099999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="12.96" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="12.96" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="13.159599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="13.189599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.37" y="13.25" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.37" y="13.11" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.37" y1="13.25" x2="1.4696001" y2="13.25" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="13.11" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="13.11" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="13.309599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="13.3396" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.4896001" y="13.049999" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.4896001" y="12.91" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.4896001" y1="13.049999" x2="1.5892001" y2="13.049999" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="12.91" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="12.91" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="13.109599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="13.139599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.2504" y="14.5" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.2504" y="14.36" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.2504" y1="14.5" x2="1.35" y2="14.5" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="14.36" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="14.36" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.3343999" y="14.559599" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.2504" y="14.5896" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.37" y="14.65" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.37" y="14.509999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.37" y1="14.65" x2="1.4696001" y2="14.65" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="14.509999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="14.509999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4539999" y="14.7095995" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.37" y="14.739599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<text x="1.4896001" y="14.45" fill="#000000FF" font-size="0.39999998" font-family="Bravura" text-anchor="start" dominant-baseline="baseline"></text>
-<rect x="1.4896001" y="14.309999" width="0.099599995" height="0.2792" fill="#00000000" stroke="#FF0000FF" stroke-width="0.0025" />
-<line x1="1.4896001" y1="14.45" x2="1.5892001" y2="14.45" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="14.309999" width="0.014399999" height="0.08319999" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="14.309999" width="0.015600001" height="0.050399993" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.5735999" y="14.5096" width="0.015600001" height="0.07959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
-<rect x="1.4896001" y="14.539599" width="0.014399999" height="0.04959998" fill="#00000000" stroke="#FF0000FF" stroke-width="0.002" />
 </svg>

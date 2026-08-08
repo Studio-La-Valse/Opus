@@ -1,5 +1,3 @@
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::visual::accidental::Accidental;
 use crate::visual::score_element::ScoreElement;
@@ -48,21 +46,5 @@ impl Layoutable for KeySignature {
 
             x += acc.width + 2.
         }
-    }
-}
-
-impl Drawable for KeySignature {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let mut result: Vec<&dyn Drawable> = vec![];
-
-        for (_, accidental) in self.accidentals.iter() {
-            result.push(accidental);
-        }
-
-        result
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

@@ -1,6 +1,4 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::visual::score_element::ScoreElement;
 
@@ -22,15 +20,5 @@ impl Layoutable for PartGroupMeasure {
 
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
-    }
-}
-
-impl Drawable for PartGroupMeasure {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        vec![]
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

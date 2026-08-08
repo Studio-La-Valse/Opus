@@ -2,15 +2,10 @@ use crate::app_defaults::AppDefaults;
 use crate::bounding_box::BoundingBox;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::line::Line;
-use crate::drawable::elements::rect::Rect;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
-use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::clef::Clef;
 use crate::visual::score_element::ScoreElement;
@@ -161,58 +156,5 @@ impl Layoutable for Rest {
 
     fn arrange(&mut self, _origin: &XY) {
         todo!("use arrange_ctx instead")
-    }
-}
-
-impl Drawable for Rest {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let mut content: Vec<&dyn Drawable> = Vec::new();
-
-        if let Some(ref clef) = self.clef_change {
-            content.push(clef)
-        }
-
-        content
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let mut result: Vec<DrawableElement> = Vec::new();
-
-        let glyph = &self.glyph;
-        let text = glyph.as_text(self.color, self.xy, self.scale);
-        result.push(text.into());
-
-        let bbox = self.scale_box(&glyph.bbox);
-
-        let rect = Rect {
-            xy: bbox.xy,
-            width: bbox.size.x,
-            height: bbox.size.y,
-            color: Color::TRANSPARENT,
-            stroke_width: Some(0.25),
-            stroke_color: Some(Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            }),
-        };
-
-        result.push(rect.into());
-
-        let origin = Line {
-            start: self.xy,
-            end: self.xy.mv(self.width, 0.),
-            stroke_color: Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            },
-            stroke_width: 0.2,
-        };
-        result.push(origin.into());
-
-        result
     }
 }

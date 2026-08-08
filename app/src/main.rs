@@ -1,6 +1,5 @@
 use clap::Parser;
 use lib::app_defaults::AppDefaults;
-use lib::drawable::bfs_iter::bfs_elements;
 use lib::drawable::drawable_element::{DrawableElement, scale_elem, to_svg};
 use lib::drawable::layoutable::Layoutable;
 use lib::layout::Layout;
@@ -13,6 +12,8 @@ use lib::visitors::content_visitor::ContentVisitor;
 use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
 use lib::visitors::layout_visitor::LayoutVisitor;
 use lib::visitors::setup_visitor::SetupVisitor;
+use lib::visual::render_compositor::RenderCompositor;
+use lib::visual::render_pass::{BaseRenderer, DebugRenderer, RenderPasses};
 use lib::visual::score::Score;
 use lib::visual::score_element::ScoreElement;
 use lib::walker::Walker;
@@ -37,6 +38,9 @@ struct Args {
 
     #[arg(long)]
     glyphs: String,
+
+    #[arg(long, short, action)]
+    debug: bool,
 }
 
 fn main() {
@@ -45,6 +49,7 @@ fn main() {
     let out = args.out;
     let meta = args.meta;
     let glyph_names = args.glyphs;
+    let debug = args.debug;
 
     let mut time = Instant::now();
 
@@ -123,7 +128,14 @@ fn main() {
     println!("Layout pass: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
-    let elements: Vec<DrawableElement> = bfs_elements(&visual).collect();
+    let mut passes = RenderPasses { passes: Vec::new() };
+    passes.passes.push(Box::new(BaseRenderer {}));
+    if debug {
+        passes.passes.push(Box::new(DebugRenderer {}));
+    }
+
+    let compositor = RenderCompositor { pass: passes };
+    let elements: Vec<DrawableElement> = compositor.walk(&visual);
 
     let svg = to_svg(&elements.iter().map(|e| scale_elem(e, 0.01)).collect());
     fs::write(out, svg).unwrap();

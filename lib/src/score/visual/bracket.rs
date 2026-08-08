@@ -1,12 +1,8 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::rect::Rect;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
-use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::score_element::ScoreElement;
 use crate::xy::XY;
@@ -58,35 +54,5 @@ impl Layoutable for Bracket {
 
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
-    }
-}
-
-impl Drawable for Bracket {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        vec![]
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let mut elements: Vec<DrawableElement> = Vec::new();
-
-        let text = self.bracket_top.as_text(self.color, self.xy, self.scale);
-        elements.push(text.into());
-
-        let text = self
-            .bracket_bottom
-            .as_text(self.color, self.xy.mv(0., self.height), self.scale);
-        elements.push(text.into());
-
-        let rect = Rect {
-            xy: self.xy.mv(0., -1.),
-            width: 5.,
-            height: self.height + 2.,
-            color: self.color,
-            stroke_color: None,
-            stroke_width: None,
-        };
-        elements.push(rect.into());
-
-        elements
     }
 }

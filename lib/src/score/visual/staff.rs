@@ -1,9 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::line::Line;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::visual::staff_measure::StaffMeasure;
@@ -146,63 +143,5 @@ impl Layoutable for Staff {
 
             _origin = _origin.mv(measure.width, 0.)
         }
-    }
-}
-
-impl Drawable for Staff {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let mut content = vec![];
-
-        if self.hidden {
-            return content;
-        }
-
-        for measure in self.measures.values() {
-            content.push(measure as &dyn Drawable);
-        }
-
-        content
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let mut elements: Vec<DrawableElement> = Vec::new();
-
-        if self.hidden {
-            return elements;
-        }
-
-        let mut start = XY {
-            x: self.xy.x - (self.barline_thickness_light / 2.),
-            y: self.xy.y,
-        };
-        let mut end = XY {
-            x: self.xy.x + self.width + (self.barline_thickness_light / 2.),
-            y: self.xy.y,
-        };
-
-        let stroke_color = self.color;
-        let stroke_width = self.line_thickness * self.scale;
-
-        for _i in 0..5 {
-            let line = Line {
-                start,
-                end,
-                stroke_color,
-                stroke_width,
-            };
-
-            elements.push(line.into());
-
-            start = XY {
-                x: start.x,
-                y: start.y + self.line_space(),
-            };
-            end = XY {
-                x: end.x,
-                y: end.y + self.line_space(),
-            };
-        }
-
-        elements
     }
 }

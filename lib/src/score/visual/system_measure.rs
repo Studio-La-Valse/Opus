@@ -1,8 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::user_layout::UserLayout;
@@ -56,15 +54,5 @@ impl Layoutable for SystemMeasure {
 
     fn arrange(&mut self, _origin: &XY) {
         self.xy = *_origin;
-    }
-}
-
-impl Drawable for SystemMeasure {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        vec![]
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

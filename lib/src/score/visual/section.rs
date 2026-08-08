@@ -1,6 +1,4 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
@@ -189,25 +187,5 @@ impl Layoutable for Section {
 
         let _origin = self.xy.mv(-10., first_visible_staff_distance);
         self.bracket.arrange(&_origin);
-    }
-}
-
-impl Drawable for Section {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let mut result = Vec::new();
-
-        result.extend(self.measures.values().map(|m| m as &dyn Drawable));
-
-        result.extend(self.part_groups.values().map(|s| s as &dyn Drawable));
-
-        if self.shows_bracket() {
-            result.push(&self.bracket);
-        }
-
-        result
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

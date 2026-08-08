@@ -11,7 +11,8 @@
                 "--file", "xmlsamples/BrahWiMeSample.musicxml", 
                 "--out", "xmltest/test.svg",
                 "--meta", "smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "smufl/metadata/glyphnames.json"
+                "--glyphs", "smufl/metadata/glyphnames.json",
+                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [

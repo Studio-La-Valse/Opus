@@ -1,19 +1,13 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::line::Line;
-use crate::drawable::elements::rect::Rect;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::ray::Ray;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::smufl::glyphs::flag::Flag;
-use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::score_element::ScoreElement;
-use crate::visual::staff::Staff;
 use crate::xy::XY;
 use std::collections::BTreeMap;
 
@@ -186,73 +180,4 @@ impl Layoutable for Stem {
             y: origin.y,
         }
     }
-}
-
-impl Drawable for Stem {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        vec![]
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let thickness = self.thickness * self.scale;
-
-        let mut elements: Vec<DrawableElement> = Vec::new();
-
-        let stem: DrawableElement = Line {
-            start: self.xy,
-            end: self.tip(),
-            stroke_color: self.color,
-            stroke_width: thickness,
-        }
-        .into();
-
-        elements.push(stem);
-
-        if let Some(flag) = &self.flag {
-            let stem_anchor = match self.direction {
-                UpDown::Up => self.nw(),
-                UpDown::Down => self.sw(),
-            };
-            elements.push(display(&stem_anchor, &2., &Color::RED).into());
-
-            let flag_anchor = flag.stem_anchor;
-            let flag_anchor = scale_pt(&flag_anchor, &stem_anchor, self.scale);
-            elements.push(display(&flag_anchor, &2.5, &Color::GREEN).into());
-
-            let delta = stem_anchor - flag_anchor;
-
-            let final_anchor = stem_anchor + delta;
-            elements.push(display(&final_anchor, &3., &Color::BLUE).into());
-
-            let flag: DrawableElement = flag.as_text(self.color, final_anchor, self.scale).into();
-
-            elements.push(flag);
-        }
-
-        elements
-    }
-}
-
-fn display(xy: &XY, size: &f32, color: &Color) -> Rect {
-    Rect {
-        xy: XY {
-            x: xy.x - size / 2.,
-            y: xy.y - size / 2.,
-        },
-        width: *size,
-        height: *size,
-        color: Color::TRANSPARENT,
-        stroke_color: Some(*color),
-        stroke_width: Some(0.25),
-    }
-}
-
-/// Scales a normalized point to current position and scale.
-fn scale_pt(flag_anchor: &XY, stem_anchor: &XY, scale: f32) -> XY {
-    let scaled = XY {
-        x: flag_anchor.x * (Staff::DEFAULT_SPACE_SIZE * scale),
-        y: flag_anchor.y * (Staff::DEFAULT_SPACE_SIZE * scale),
-    };
-
-    scaled + *stem_anchor
 }

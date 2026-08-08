@@ -10,6 +10,8 @@ pub mod part;
 pub mod part_group;
 pub mod part_group_measure;
 pub mod part_measure;
+pub mod render_compositor;
+pub mod render_pass;
 pub mod rest;
 pub mod score;
 pub mod score_element;

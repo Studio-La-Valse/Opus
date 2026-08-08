@@ -1,6 +1,4 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
@@ -106,15 +104,5 @@ impl Layoutable for Score {
             _origin = _origin.mv(page.width, 0.);
             _origin = _origin.mv(200., 0.);
         }
-    }
-}
-
-impl Drawable for Score {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        self.pages.values().map(|s| s as &dyn Drawable).collect()
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

@@ -1,10 +1,6 @@
 use crate::app_defaults::AppDefaults;
 use crate::core::color::Color;
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::line::Line;
-use crate::drawable::elements::rect::Rect;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::score::core::staff_idx::StaffIdx;
@@ -162,64 +158,5 @@ impl Layoutable for Page {
 
             origin = origin.mv(0., system.height + s_m_top);
         }
-    }
-}
-
-impl Drawable for Page {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        self.systems.values().map(|s| s as &dyn Drawable).collect()
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let mut elements: Vec<DrawableElement> = Vec::new();
-
-        let rect = Rect {
-            xy: self.xy,
-            width: self.width,
-            height: self.height,
-            color: self.color,
-            stroke_color: Some(self.foreground),
-            stroke_width: Some(1.),
-        };
-        elements.push(rect.into());
-
-        let stroke_color = Color {
-            a: 1.,
-            ..Color::RED
-        };
-        let stroke_width = 1.;
-        let left = Line {
-            start: self.xy.mv(self.margins.left, 0.),
-            end: self.xy.mv(self.margins.left, self.height),
-            stroke_width,
-            stroke_color,
-        };
-        elements.push(left.into());
-
-        let right = Line {
-            start: self.xy.mv(self.width - self.margins.right, 0.),
-            end: self.xy.mv(self.width - self.margins.right, self.height),
-            stroke_width,
-            stroke_color,
-        };
-        elements.push(right.into());
-
-        let top = Line {
-            start: self.xy.mv(0., self.margins.top),
-            end: self.xy.mv(self.width, self.margins.top),
-            stroke_width,
-            stroke_color,
-        };
-        elements.push(top.into());
-
-        let bottom = Line {
-            start: self.xy.mv(0., self.height - self.margins.bottom),
-            end: self.xy.mv(self.width, self.height - self.margins.bottom),
-            stroke_width,
-            stroke_color,
-        };
-        elements.push(bottom.into());
-
-        elements
     }
 }

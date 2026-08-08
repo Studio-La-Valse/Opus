@@ -1,6 +1,4 @@
 use crate::core::xy::XY;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
@@ -294,32 +292,5 @@ impl Layoutable for Part {
             let origin = origin.mv(-5., first_visible_staff_distance);
             self.brace.arrange(&origin);
         }
-    }
-}
-
-impl Drawable for Part {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        let shows_brace = self.shows_brace();
-
-        let mut result = Vec::new();
-
-        result.extend(self.measures.values().map(|m| m as &dyn Drawable));
-
-        result.extend(
-            self.staves
-                .values()
-                .filter(|s| !s.hidden)
-                .map(|s| s as &dyn Drawable),
-        );
-
-        if shows_brace {
-            result.push(&self.brace)
-        }
-
-        result
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        vec![]
     }
 }

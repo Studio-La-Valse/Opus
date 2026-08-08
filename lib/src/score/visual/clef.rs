@@ -1,11 +1,8 @@
 use crate::app_defaults::AppDefaults;
 use crate::color::Color;
-use crate::drawable::drawable_content::Drawable;
-use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::layoutable::Layoutable;
 use crate::layout::Layout;
 use crate::smufl::glyphs::clef::Clef as SmuflClef;
-use crate::smufl::smufl_glyph::SmuflGlyph;
 use crate::user_layout::UserLayout;
 use crate::visual::score_element::ScoreElement;
 use crate::xy::XY;
@@ -55,20 +52,5 @@ impl Layoutable for Clef {
     /// Supplied origin x coordinate is left of clef, y coordinate is the line in the staff.
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
-    }
-}
-
-impl Drawable for Clef {
-    fn content(&self) -> Vec<&dyn Drawable> {
-        Vec::new()
-    }
-
-    fn elements(&self) -> Vec<DrawableElement> {
-        let mut result = Vec::new();
-
-        let text = self.clef.as_text(self.color, self.xy, self.scale);
-        result.push(text.into());
-
-        result
     }
 }
