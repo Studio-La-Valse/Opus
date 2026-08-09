@@ -39,11 +39,11 @@ impl VerticalAlign {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Text {
-    pub text: String,
+pub struct Text<'a> {
+    pub text: &'a str,
     pub color: Color,
     pub font_size: f32,
-    pub font: String,
+    pub font: &'a str,
     pub xy: XY,
     pub vertical_alignment: VerticalAlign,
     pub horizontal_alignment: HorizontalAlign,
