@@ -4,11 +4,29 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug",
+            "name": "Debug (Actor Prelude Sample)",
             "preLaunchTask": "rust: cargo build",
             "program": "${workspaceRoot}/target/debug/app",
             "args": [
                 "--file", "xmlsamples/ActorPreludeSample.musicxml", 
+                "--out", "xmltest/test.svg",
+                "--meta", "smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "smufl/metadata/glyphnames.json",
+                //"--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Brahms Sample)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/app",
+            "args": [
+                "--file", "xmlsamples/BrahWiMeSample.musicxml", 
                 "--out", "xmltest/test.svg",
                 "--meta", "smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "smufl/metadata/glyphnames.json",

@@ -47,8 +47,9 @@ impl<V: Visitor> Walker<V> {
                                             self.visitor.enter_staff_details(&staff_details, ctx)
                                         }
 
-                                        // the key requires a clef to be visited first, even though it may be notated later.
-                                        if let Some(clef) = child.get_child("clef") {
+                                        // the key requires all clefs to be visited first, even though 
+                                        // they may appear after the key changes in the musicxml.
+                                        for clef in child.get_children("clef") {
                                             self.visitor.enter_clef(&clef, ctx);
                                         }
 

@@ -71,7 +71,11 @@ impl RenderCompositor {
                                     }
 
                                     if let Some(ref time_signature) = measure.time_signature_start {
-                                        self.pass.render_time_signature(time_signature, font, &mut out);
+                                        self.pass.render_time_signature(
+                                            time_signature,
+                                            font,
+                                            &mut out,
+                                        );
                                     }
 
                                     self.pass.render_key_signature(
@@ -87,7 +91,11 @@ impl RenderCompositor {
                                     }
 
                                     if let Some(ref time_signature) = measure.time_signature_end {
-                                        self.pass.render_time_signature(time_signature, font, &mut out);
+                                        self.pass.render_time_signature(
+                                            time_signature,
+                                            font,
+                                            &mut out,
+                                        );
                                     }
 
                                     if let Some(ref clef) = measure.clef_end {
@@ -115,7 +123,8 @@ impl RenderCompositor {
                                             self.pass.render_note(note, font, &mut out);
 
                                             if let Some(ref accidental) = note.accidental {
-                                                self.pass.render_accidental(accidental, font, &mut out);
+                                                self.pass
+                                                    .render_accidental(accidental, font, &mut out);
                                             }
                                         }
 

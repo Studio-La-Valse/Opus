@@ -80,10 +80,7 @@ impl SmuflFont {
         let glyph_box = self.meta.glyph_boxes.get(name).unwrap();
         let bbox: BoundingBox = glyph_box.into();
 
-        Rest {
-            codepoint,
-            bbox,
-        }
+        Rest { codepoint, bbox }
     }
 
     pub fn flag(&self, name: &str, dir: &UpDown) -> Flag {
@@ -166,9 +163,7 @@ impl SmuflFont {
             }
         }
 
-        Brace {
-            codepoint,
-        }
+        Brace { codepoint }
     }
 
     pub fn time_signature(&self, time_signature: TimeSignatureCore) -> (Number, Number) {
@@ -178,9 +173,7 @@ impl SmuflFont {
             .get(name.as_str())
             .unwrap()
             .codepoint_char();
-        let num = Number {
-            codepoint,
-        };
+        let num = Number { codepoint };
 
         let name = "timeSig".to_string() + time_signature.base.as_int().to_string().as_str();
         let codepoint = self
@@ -188,9 +181,7 @@ impl SmuflFont {
             .get(name.as_str())
             .unwrap()
             .codepoint_char();
-        let denom = Number {
-            codepoint,
-        };
+        let denom = Number { codepoint };
 
         (num, denom)
     }
