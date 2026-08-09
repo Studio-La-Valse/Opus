@@ -41,9 +41,7 @@ impl<V: Visitor> Walker<V> {
                                     "attributes" => {
                                         self.visitor.enter_attributes(&child, ctx);
 
-                                        if let Some(staff_details) =
-                                            child.get_child("staff-details")
-                                        {
+                                        for staff_details in child.get_children("staff-details") {
                                             self.visitor.enter_staff_details(&staff_details, ctx)
                                         }
 
