@@ -13,7 +13,7 @@ pub struct RenderCompositor {
 
 impl RenderCompositor {
     pub fn walk<'a>(&self, score: &Score, font: &'a SmuflFont) -> Vec<DrawableElement<'a>> {
-        let mut out: Vec<DrawableElement<'a>> = vec![];
+        let mut out: Vec<DrawableElement<'a>> = Vec::with_capacity(Self::estimate_element_count(score));
 
         for page in score.pages.values() {
             self.pass.render_page(page, font, &mut out);
@@ -147,5 +147,53 @@ impl RenderCompositor {
         }
 
         out
+    }
+
+    /// Cheap, pass-agnostic upper-bound-ish estimate of how many `DrawableElement`s
+    /// this walk will produce, used only to size `out` up front so it doesn't have
+    /// to repeatedly reallocate/copy itself as it grows. Only sums `BTreeMap`/`Vec`
+    /// lengths (all O(1)) while descending the same structure `walk` visits, so its
+    /// cost stays proportional to the score's structural size rather than to
+    /// per-note rendering work (no glyph lookups, no element construction).
+    fn estimate_element_count(score: &Score) -> usize {
+        let mut count = 0;
+
+        for page in score.pages.values() {
+            count += 1; // page
+
+            for system in page.systems.values() {
+                count += 1 + system.measures.len(); // system line + system measure lines
+
+                for section in system.sections.values() {
+                    count += 1 + section.measures.len(); // bracket/section + section measure lines
+
+                    for group in section.part_groups.values() {
+                        count += 1 + group.measures.len(); // brace + part group measure lines
+
+                        for part in group.parts.values() {
+                            count += 1; // brace
+
+                            for staff in part.staves.values() {
+                                count += 5; // 5 staff lines
+                                count += staff.measures.len() * 3; // clef/time sig/key sig, roughly
+                            }
+
+                            for measure in part.measures.values() {
+                                count += measure.beams.len() + measure.ledgers.len();
+
+                                for chords in measure.chords.values() {
+                                    // notehead + stem per chord, plus headroom for
+                                    // accidentals/flags/extra notes per chord.
+                                    count += chords.len() * 2;
+                                    count += chords.iter().map(|c| c.notes.len()).sum::<usize>();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        count
     }
 }
