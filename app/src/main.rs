@@ -46,7 +46,7 @@ struct Args {
 fn main() {
     println!(
         "Size of DrawableElement: {}",
-        std::mem::size_of::<DrawableElement>()
+        std::mem::size_of::<DrawableElement<'_>>()
     );
 
     let args = Args::parse();
@@ -151,7 +151,7 @@ fn main() {
     let compositor = RenderCompositor {
         pass: Box::new(pass),
     };
-    let mut elements: Vec<DrawableElement> = compositor.walk(&visual);
+    let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&visual, &font);
 
     println!("First render pass: {}ms", time.elapsed().as_millis());
     time = Instant::now();
@@ -161,7 +161,7 @@ fn main() {
         let compositor = RenderCompositor {
             pass: Box::new(pass),
         };
-        elements.extend(compositor.walk(&visual));
+        elements.extend(compositor.walk(&visual, &font));
 
         println!("Second render pass: {}ms", time.elapsed().as_millis());
         time = Instant::now();

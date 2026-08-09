@@ -1,4 +1,5 @@
 use crate::drawable::drawable_element::DrawableElement;
+use crate::smufl::smufl_font::SmuflFont;
 use crate::{
     color::Color,
     drawable::elements::{line::Line, rect::Rect},
@@ -30,69 +31,173 @@ use crate::{
 };
 
 pub trait RenderPass {
-    fn render_page(&self, _page: &Page, _out: &mut Vec<DrawableElement>) {}
+    fn render_page<'a>(
+        &self,
+        _page: &Page,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_system(&self, _system: &System, _out: &mut Vec<DrawableElement>) {}
+    fn render_system<'a>(
+        &self,
+        _system: &System,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_section(&self, _section: &Section, _out: &mut Vec<DrawableElement>) {}
+    fn render_section<'a>(
+        &self,
+        _section: &Section,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_bracket(&self, _bracket: &Bracket, _out: &mut Vec<DrawableElement>) {}
+    fn render_bracket<'a>(
+        &self,
+        _bracket: &Bracket,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_part_group(&self, _part_group: &PartGroup, _out: &mut Vec<DrawableElement>) {}
+    fn render_part_group<'a>(
+        &self,
+        _part_group: &PartGroup,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_brace(&self, _brace: &Brace, _out: &mut Vec<DrawableElement>) {}
+    fn render_brace<'a>(
+        &self,
+        _brace: &Brace,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_part(&self, _part: &Part, _out: &mut Vec<DrawableElement>) {}
+    fn render_part<'a>(
+        &self,
+        _part: &Part,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_staff(&self, _staff: &Staff, _out: &mut Vec<DrawableElement>) {}
+    fn render_staff<'a>(
+        &self,
+        _staff: &Staff,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_system_measure(
+    fn render_system_measure<'a>(
         &self,
         _system_measure: &SystemMeasure,
-        _out: &mut Vec<DrawableElement>,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
     ) {
     }
 
-    fn render_section_measure(
+    fn render_section_measure<'a>(
         &self,
         _section_measure: &SectionMeasure,
-        _out: &mut Vec<DrawableElement>,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
     ) {
     }
 
-    fn render_part_group_measure(
+    fn render_part_group_measure<'a>(
         &self,
         _part_group_measure: &PartGroupMeasure,
-        _out: &mut Vec<DrawableElement>,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
     ) {
     }
 
-    fn render_part_measure(&self, _part_measure: &PartMeasure, _out: &mut Vec<DrawableElement>) {}
-
-    fn render_staff_measure(&self, _staff_measure: &StaffMeasure, _out: &mut Vec<DrawableElement>) {
+    fn render_part_measure<'a>(
+        &self,
+        _part_measure: &PartMeasure,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
     }
 
-    fn render_clef(&self, _clef: &Clef, _out: &mut Vec<DrawableElement>) {}
-
-    fn render_key_signature(&self, _key_signature: &KeySignature, _out: &mut Vec<DrawableElement>) {
+    fn render_staff_measure<'a>(
+        &self,
+        _staff_measure: &StaffMeasure,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
     }
 
-    fn render_accidental(&self, _accidental: &Accidental, _out: &mut Vec<DrawableElement>) {}
+    fn render_clef<'a>(
+        &self,
+        _clef: &Clef,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_time_signature(
+    fn render_key_signature<'a>(
+        &self,
+        _key_signature: &KeySignature,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
+
+    fn render_accidental<'a>(
+        &self,
+        _accidental: &Accidental,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
+
+    fn render_time_signature<'a>(
         &self,
         _time_signature: &TimeSignature,
-        _out: &mut Vec<DrawableElement>,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
     ) {
     }
 
-    fn render_rest(&self, _rest: &Rest, _out: &mut Vec<DrawableElement>) {}
+    fn render_rest<'a>(
+        &self,
+        _rest: &Rest,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_chord(&self, _chord: &Chord, _out: &mut Vec<DrawableElement>) {}
+    fn render_chord<'a>(
+        &self,
+        _chord: &Chord,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_note(&self, _note: &Note, _out: &mut Vec<DrawableElement>) {}
+    fn render_note<'a>(
+        &self,
+        _note: &Note,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 
-    fn render_stem(&self, _stem: &Stem, _out: &mut Vec<DrawableElement>) {}
+    fn render_stem<'a>(
+        &self,
+        _stem: &Stem,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
 }
 
 pub struct RenderPasses {
@@ -100,145 +205,234 @@ pub struct RenderPasses {
 }
 
 impl RenderPass for RenderPasses {
-    fn render_page(&self, page: &Page, out: &mut Vec<DrawableElement>) {
+    fn render_page<'a>(
+        &self,
+        page: &Page,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_page(page, out);
+            pass.render_page(page, font, out);
         }
     }
 
-    fn render_system(&self, system: &System, out: &mut Vec<DrawableElement>) {
+    fn render_system<'a>(
+        &self,
+        system: &System,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_system(system, out);
+            pass.render_system(system, font, out);
         }
     }
 
-    fn render_section(&self, section: &Section, out: &mut Vec<DrawableElement>) {
+    fn render_section<'a>(
+        &self,
+        section: &Section,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_section(section, out);
+            pass.render_section(section, font, out);
         }
     }
 
-    fn render_bracket(&self, bracket: &Bracket, out: &mut Vec<DrawableElement>) {
+    fn render_bracket<'a>(
+        &self,
+        bracket: &Bracket,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_bracket(bracket, out);
+            pass.render_bracket(bracket, font, out);
         }
     }
 
-    fn render_part_group(&self, part_group: &PartGroup, out: &mut Vec<DrawableElement>) {
+    fn render_part_group<'a>(
+        &self,
+        part_group: &PartGroup,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_part_group(part_group, out);
+            pass.render_part_group(part_group, font, out);
         }
     }
 
-    fn render_brace(&self, brace: &Brace, out: &mut Vec<DrawableElement>) {
+    fn render_brace<'a>(
+        &self,
+        brace: &Brace,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_brace(brace, out);
+            pass.render_brace(brace, font, out);
         }
     }
 
-    fn render_part(&self, part: &Part, out: &mut Vec<DrawableElement>) {
+    fn render_part<'a>(
+        &self,
+        part: &Part,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_part(part, out);
+            pass.render_part(part, font, out);
         }
     }
 
-    fn render_staff(&self, staff: &Staff, out: &mut Vec<DrawableElement>) {
+    fn render_staff<'a>(
+        &self,
+        staff: &Staff,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_staff(staff, out);
+            pass.render_staff(staff, font, out);
         }
     }
 
-    fn render_system_measure(
+    fn render_system_measure<'a>(
         &self,
         system_measure: &SystemMeasure,
-        out: &mut Vec<DrawableElement>,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
     ) {
         for pass in self.passes.iter() {
-            pass.render_system_measure(system_measure, out);
+            pass.render_system_measure(system_measure, font, out);
         }
     }
 
-    fn render_section_measure(
+    fn render_section_measure<'a>(
         &self,
         section_measure: &SectionMeasure,
-        out: &mut Vec<DrawableElement>,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
     ) {
         for pass in self.passes.iter() {
-            pass.render_section_measure(section_measure, out);
+            pass.render_section_measure(section_measure, font, out);
         }
     }
 
-    fn render_part_group_measure(
+    fn render_part_group_measure<'a>(
         &self,
         part_group_measure: &PartGroupMeasure,
-        out: &mut Vec<DrawableElement>,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
     ) {
         for pass in self.passes.iter() {
-            pass.render_part_group_measure(part_group_measure, out);
+            pass.render_part_group_measure(part_group_measure, font, out);
         }
     }
 
-    fn render_part_measure(&self, part_measure: &PartMeasure, out: &mut Vec<DrawableElement>) {
+    fn render_part_measure<'a>(
+        &self,
+        part_measure: &PartMeasure,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_part_measure(part_measure, out);
+            pass.render_part_measure(part_measure, font, out);
         }
     }
 
-    fn render_staff_measure(&self, staff_measure: &StaffMeasure, out: &mut Vec<DrawableElement>) {
+    fn render_staff_measure<'a>(
+        &self,
+        staff_measure: &StaffMeasure,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_staff_measure(staff_measure, out);
+            pass.render_staff_measure(staff_measure, font, out);
         }
     }
 
-    fn render_clef(&self, clef: &Clef, out: &mut Vec<DrawableElement>) {
+    fn render_clef<'a>(
+        &self,
+        clef: &Clef,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_clef(clef, out);
+            pass.render_clef(clef, font, out);
         }
     }
 
-    fn render_key_signature(&self, key_signature: &KeySignature, out: &mut Vec<DrawableElement>) {
+    fn render_key_signature<'a>(
+        &self,
+        key_signature: &KeySignature,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_key_signature(key_signature, out);
+            pass.render_key_signature(key_signature, font, out);
         }
     }
 
-    fn render_accidental(&self, accidental: &Accidental, out: &mut Vec<DrawableElement>) {
+    fn render_accidental<'a>(
+        &self,
+        accidental: &Accidental,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_accidental(accidental, out);
+            pass.render_accidental(accidental, font, out);
         }
     }
 
-    fn render_time_signature(
+    fn render_time_signature<'a>(
         &self,
         time_signature: &TimeSignature,
-        out: &mut Vec<DrawableElement>,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
     ) {
         for pass in self.passes.iter() {
-            pass.render_time_signature(time_signature, out);
+            pass.render_time_signature(time_signature, font, out);
         }
     }
 
-    fn render_rest(&self, rest: &Rest, out: &mut Vec<DrawableElement>) {
+    fn render_rest<'a>(
+        &self,
+        rest: &Rest,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_rest(rest, out);
+            pass.render_rest(rest, font, out);
         }
     }
 
-    fn render_chord(&self, chord: &Chord, out: &mut Vec<DrawableElement>) {
+    fn render_chord<'a>(
+        &self,
+        chord: &Chord,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_chord(chord, out);
+            pass.render_chord(chord, font, out);
         }
     }
 
-    fn render_note(&self, note: &Note, out: &mut Vec<DrawableElement>) {
+    fn render_note<'a>(
+        &self,
+        note: &Note,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_note(note, out);
+            pass.render_note(note, font, out);
         }
     }
 
-    fn render_stem(&self, stem: &Stem, out: &mut Vec<DrawableElement>) {
+    fn render_stem<'a>(
+        &self,
+        stem: &Stem,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for pass in self.passes.iter() {
-            pass.render_stem(stem, out);
+            pass.render_stem(stem, font, out);
         }
     }
 }
@@ -246,7 +440,12 @@ impl RenderPass for RenderPasses {
 pub struct BaseRenderer {}
 
 impl RenderPass for BaseRenderer {
-    fn render_page(&self, page: &Page, out: &mut Vec<DrawableElement>) {
+    fn render_page<'a>(
+        &self,
+        page: &Page,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let rect = Rect {
             xy: page.xy,
             width: page.width,
@@ -258,7 +457,12 @@ impl RenderPass for BaseRenderer {
         out.push(rect.into());
     }
 
-    fn render_system(&self, system: &System, out: &mut Vec<DrawableElement>) {
+    fn render_system<'a>(
+        &self,
+        system: &System,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let stroke_color = system.color;
         let stroke_width = system.line_width;
 
@@ -271,13 +475,19 @@ impl RenderPass for BaseRenderer {
         out.push(left_line.into());
     }
 
-    fn render_bracket(&self, bracket: &Bracket, out: &mut Vec<DrawableElement>) {
+    fn render_bracket<'a>(
+        &self,
+        bracket: &Bracket,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let text = bracket
             .bracket_top
-            .as_text(bracket.color, bracket.xy, bracket.scale);
+            .as_text(font, bracket.color, bracket.xy, bracket.scale);
         out.push(text.into());
 
         let text = bracket.bracket_bottom.as_text(
+            font,
             bracket.color,
             bracket.xy.mv(0., bracket.height),
             bracket.scale,
@@ -295,15 +505,25 @@ impl RenderPass for BaseRenderer {
         out.push(rect.into());
     }
 
-    fn render_brace(&self, brace: &Brace, out: &mut Vec<DrawableElement>) {
+    fn render_brace<'a>(
+        &self,
+        brace: &Brace,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let def_height = Staff::SPACES as f32 * Staff::DEFAULT_SPACE_SIZE;
         let scale = brace.height / def_height;
 
-        let text = brace.brace.as_text(brace.color, brace.xy, scale);
+        let text = brace.brace.as_text(font, brace.color, brace.xy, scale);
         out.push(text.into());
     }
 
-    fn render_staff(&self, staff: &Staff, out: &mut Vec<DrawableElement>) {
+    fn render_staff<'a>(
+        &self,
+        staff: &Staff,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         if staff.hidden {
             return;
         }
@@ -334,10 +554,11 @@ impl RenderPass for BaseRenderer {
         }
     }
 
-    fn render_section_measure(
+    fn render_section_measure<'a>(
         &self,
         section_measure: &SectionMeasure,
-        out: &mut Vec<DrawableElement>,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
     ) {
         let stroke_color = section_measure.color;
         let stroke_width = section_measure.line_width;
@@ -353,7 +574,12 @@ impl RenderPass for BaseRenderer {
         out.push(right_line.into());
     }
 
-    fn render_part_measure(&self, part_measure: &PartMeasure, out: &mut Vec<DrawableElement>) {
+    fn render_part_measure<'a>(
+        &self,
+        part_measure: &PartMeasure,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         for beam in &part_measure.beams {
             let line: DrawableElement = beam.clone().into();
             out.push(line);
@@ -364,21 +590,27 @@ impl RenderPass for BaseRenderer {
         }
     }
 
-    fn render_clef(&self, clef: &Clef, out: &mut Vec<DrawableElement>) {
-        let text = clef.clef.as_text(clef.color, clef.xy, clef.scale);
+    fn render_clef<'a>(
+        &self,
+        clef: &Clef,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let text = clef.clef.as_text(font, clef.color, clef.xy, clef.scale);
         out.push(text.into());
     }
 
-    fn render_time_signature(
+    fn render_time_signature<'a>(
         &self,
         time_signature: &TimeSignature,
-        out: &mut Vec<DrawableElement>,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
     ) {
         let pos_num = time_signature.xy.mv(0., time_signature.height / 4.);
         out.push(
             time_signature
                 .num
-                .as_text(time_signature.color, pos_num, 1.)
+                .as_text(font, time_signature.color, pos_num, 1.)
                 .into(),
         );
 
@@ -386,30 +618,50 @@ impl RenderPass for BaseRenderer {
         out.push(
             time_signature
                 .denom
-                .as_text(time_signature.color, pos_denom, 1.)
+                .as_text(font, time_signature.color, pos_denom, 1.)
                 .into(),
         );
     }
 
-    fn render_accidental(&self, accidental: &Accidental, out: &mut Vec<DrawableElement>) {
+    fn render_accidental<'a>(
+        &self,
+        accidental: &Accidental,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let glyph = &accidental.glyph;
-        let text = glyph.as_text(accidental.color, accidental.xy, accidental.scale);
+        let text = glyph.as_text(font, accidental.color, accidental.xy, accidental.scale);
         out.push(text.into());
     }
 
-    fn render_rest(&self, rest: &Rest, out: &mut Vec<DrawableElement>) {
+    fn render_rest<'a>(
+        &self,
+        rest: &Rest,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let glyph = &rest.glyph;
-        let text = glyph.as_text(rest.color, rest.xy, rest.scale);
+        let text = glyph.as_text(font, rest.color, rest.xy, rest.scale);
         out.push(text.into());
     }
 
-    fn render_note(&self, note: &Note, out: &mut Vec<DrawableElement>) {
+    fn render_note<'a>(
+        &self,
+        note: &Note,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let glyph = &note.glyph;
-        let text = glyph.as_text(note.color, note.xy, note.scale);
+        let text = glyph.as_text(font, note.color, note.xy, note.scale);
         out.push(text.into());
     }
 
-    fn render_stem(&self, stem: &Stem, out: &mut Vec<DrawableElement>) {
+    fn render_stem<'a>(
+        &self,
+        stem: &Stem,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let thickness = stem.thickness * stem.scale;
 
         let line: DrawableElement = Line {
@@ -432,7 +684,9 @@ impl RenderPass for BaseRenderer {
             let delta = stem_anchor - flag_anchor;
             let final_anchor = stem_anchor + delta;
 
-            let flag: DrawableElement = flag.as_text(stem.color, final_anchor, stem.scale).into();
+            let flag: DrawableElement = flag
+                .as_text(font, stem.color, final_anchor, stem.scale)
+                .into();
             out.push(flag);
         }
     }
@@ -441,7 +695,12 @@ impl RenderPass for BaseRenderer {
 pub struct DebugRenderer {}
 
 impl RenderPass for DebugRenderer {
-    fn render_page(&self, page: &Page, out: &mut Vec<DrawableElement>) {
+    fn render_page<'a>(
+        &self,
+        page: &Page,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let stroke_color = Color {
             a: 1.,
             ..Color::RED
@@ -480,7 +739,12 @@ impl RenderPass for DebugRenderer {
         out.push(bottom.into());
     }
 
-    fn render_accidental(&self, accidental: &Accidental, out: &mut Vec<DrawableElement>) {
+    fn render_accidental<'a>(
+        &self,
+        accidental: &Accidental,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let glyph = &accidental.glyph;
         let bbox = accidental.glyph_bbox(&glyph.bbox);
 
@@ -527,7 +791,12 @@ impl RenderPass for DebugRenderer {
         }
     }
 
-    fn render_rest(&self, rest: &Rest, out: &mut Vec<DrawableElement>) {
+    fn render_rest<'a>(
+        &self,
+        rest: &Rest,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let glyph = &rest.glyph;
         let bbox = rest.scale_box(&glyph.bbox);
 
@@ -560,7 +829,12 @@ impl RenderPass for DebugRenderer {
         out.push(origin.into());
     }
 
-    fn render_note(&self, note: &Note, out: &mut Vec<DrawableElement>) {
+    fn render_note<'a>(
+        &self,
+        note: &Note,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         let glyph = &note.glyph;
         let bbox = note.scale_box(&glyph.bbox);
 
@@ -610,7 +884,12 @@ impl RenderPass for DebugRenderer {
         }
     }
 
-    fn render_stem(&self, stem: &Stem, out: &mut Vec<DrawableElement>) {
+    fn render_stem<'a>(
+        &self,
+        stem: &Stem,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         match stem.direction {
             UpDown::Down => {
                 out.push(display_xy(&stem.nw(), &1., &Color::RED).into());

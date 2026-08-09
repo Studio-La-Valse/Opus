@@ -187,8 +187,12 @@ impl Part {
         }
     }
 
+    pub fn visible_staves(&self) -> Vec<&Staff> {
+        self.staves.values().filter(|staff| !staff.hidden).collect()
+    }
+
     pub fn shows_brace(&self) -> bool {
-        self.staves.len() > 1
+        self.visible_staves().len() > 1
     }
 }
 

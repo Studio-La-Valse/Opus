@@ -8,7 +8,6 @@ use crate::visual::score_element::ScoreElement;
 use crate::visual::staff::Staff;
 use crate::visual::staff_ctx::StaffCtx;
 
-#[derive(Default)]
 pub struct StaffMeasure {
     pub xy: XY,
     pub width: f32,
@@ -28,6 +27,26 @@ pub struct StaffMeasure {
     pub time_signature_end: Option<TimeSignature>,
     // Clef right of measure
     pub clef_end: Option<Clef>,
+}
+
+impl Default for StaffMeasure {
+    fn default() -> Self {
+        Self {
+            xy: Default::default(),
+            width: Default::default(),
+            height: Default::default(),
+
+            scale: 1.,
+
+            rests: Default::default(),
+
+            clef_start: Default::default(),
+            key_signature_start: Default::default(),
+            time_signature_start: Default::default(),
+            time_signature_end: Default::default(),
+            clef_end: Default::default(),
+        }
+    }
 }
 
 impl StaffMeasure {

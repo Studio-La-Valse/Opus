@@ -19,15 +19,38 @@ use std::fs;
 pub struct SmuflFont {
     pub meta: SmuflMetadata,
     pub glyph_names: HashMap<String, GlyphName>,
+    glyph_text: HashMap<char, String>,
 }
 
 impl SmuflFont {
     pub fn load(path_meta_json: &str, path_glyphs_json: &str) -> SmuflFont {
         let data = fs::read_to_string(path_meta_json).expect("Cannot read metadata.json");
-        let meta = serde_json::from_str(&data).expect("Invalid SMuFL metadata");
+        let meta: SmuflMetadata = serde_json::from_str(&data).expect("Invalid SMuFL metadata");
         let glyph_names = load_glyph_names(path_glyphs_json);
 
-        SmuflFont { meta, glyph_names }
+        let mut glyph_text: HashMap<char, String> = HashMap::new();
+        for glyph in glyph_names.values() {
+            let c = glyph.codepoint_char();
+            glyph_text.entry(c).or_insert_with(|| c.to_string());
+        }
+        for alternates in meta.glyph_alternatives.values() {
+            for alternate in &alternates.alternates {
+                let c = alternate.codepoint.codepoint_char();
+                glyph_text.entry(c).or_insert_with(|| c.to_string());
+            }
+        }
+
+        SmuflFont {
+            meta,
+            glyph_names,
+            glyph_text,
+        }
+    }
+
+    pub fn glyph_str(&self, codepoint: char) -> &str {
+        self.glyph_text
+            .get(&codepoint)
+            .unwrap_or_else(|| panic!("no cached glyph text for codepoint {codepoint:?}"))
     }
 
     pub fn notehead(&self, name: &str) -> Notehead {
@@ -48,7 +71,6 @@ impl SmuflFont {
             cutouts,
             stem_anchor_left,
             stem_anchor_right,
-            font: self.meta.font.to_string(),
         }
     }
 
@@ -58,11 +80,7 @@ impl SmuflFont {
         let glyph_box = self.meta.glyph_boxes.get(name).unwrap();
         let bbox: BoundingBox = glyph_box.into();
 
-        Rest {
-            codepoint,
-            bbox,
-            font: self.meta.font.to_string(),
-        }
+        Rest { codepoint, bbox }
     }
 
     pub fn flag(&self, name: &str, dir: &UpDown) -> Flag {
@@ -84,7 +102,6 @@ impl SmuflFont {
             bbox,
             cutouts,
             stem_anchor,
-            font: self.meta.font.to_string(),
         }
     }
 
@@ -104,7 +121,6 @@ impl SmuflFont {
         Clef {
             codepoint,
             line: clef.anchor_line(),
-            font: self.meta.font.to_string(),
         }
     }
 
@@ -114,7 +130,6 @@ impl SmuflFont {
         BracketTop {
             codepoint,
             thickness: 0.5,
-            font: self.meta.font.to_string(),
         }
     }
 
@@ -128,7 +143,6 @@ impl SmuflFont {
         BracketBottom {
             codepoint,
             thickness: 0.5,
-            font: self.meta.font.to_string(),
         }
     }
 
@@ -149,10 +163,7 @@ impl SmuflFont {
             }
         }
 
-        Brace {
-            codepoint,
-            font: self.meta.font.to_string(),
-        }
+        Brace { codepoint }
     }
 
     pub fn time_signature(&self, time_signature: TimeSignatureCore) -> (Number, Number) {
@@ -162,10 +173,7 @@ impl SmuflFont {
             .get(name.as_str())
             .unwrap()
             .codepoint_char();
-        let num = Number {
-            codepoint,
-            font: self.meta.font.to_string(),
-        };
+        let num = Number { codepoint };
 
         let name = "timeSig".to_string() + time_signature.base.as_int().to_string().as_str();
         let codepoint = self
@@ -173,10 +181,7 @@ impl SmuflFont {
             .get(name.as_str())
             .unwrap()
             .codepoint_char();
-        let denom = Number {
-            codepoint,
-            font: self.meta.font.to_string(),
-        };
+        let denom = Number { codepoint };
 
         (num, denom)
     }
@@ -203,7 +208,6 @@ impl SmuflFont {
 
         Accidental {
             codepoint,
-            font: self.meta.font.to_string(),
 
             bbox,
             cutouts,

@@ -3,38 +3,38 @@ use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
 use crate::drawable::elements::text::Text;
 
-pub enum DrawableElement {
+pub enum DrawableElement<'a> {
     Line(Line),
     Rect(Rect),
-    Text(Text),
-    Polygon(Polygon),
+    Text(Text<'a>),
+    Polygon(Box<Polygon>),
 }
 
-impl From<Line> for DrawableElement {
+impl<'a> From<Line> for DrawableElement<'a> {
     fn from(value: Line) -> Self {
         DrawableElement::Line(value)
     }
 }
 
-impl From<Rect> for DrawableElement {
+impl<'a> From<Rect> for DrawableElement<'a> {
     fn from(r: Rect) -> Self {
         DrawableElement::Rect(r)
     }
 }
 
-impl From<Text> for DrawableElement {
-    fn from(t: Text) -> Self {
+impl<'a> From<Text<'a>> for DrawableElement<'a> {
+    fn from(t: Text<'a>) -> Self {
         DrawableElement::Text(t)
     }
 }
 
-impl From<Polygon> for DrawableElement {
+impl<'a> From<Polygon> for DrawableElement<'a> {
     fn from(p: Polygon) -> Self {
-        DrawableElement::Polygon(p)
+        DrawableElement::Polygon(Box::new(p))
     }
 }
 
-pub fn scale_elem(element: &DrawableElement, scale: f32) -> DrawableElement {
+pub fn scale_elem<'a>(element: &DrawableElement<'a>, scale: f32) -> DrawableElement<'a> {
     match element {
         DrawableElement::Line(l) => Line {
             start: l.start.scale(scale),
@@ -62,13 +62,13 @@ pub fn scale_elem(element: &DrawableElement, scale: f32) -> DrawableElement {
         DrawableElement::Polygon(p) => Polygon {
             pts: p.pts.iter().map(|p| p.scale(scale)).collect(),
             stroke_width: p.stroke_width.map(|v| v * scale),
-            ..p.clone()
+            ..p.as_ref().clone()
         }
         .into(),
     }
 }
 
-pub fn to_svg(elements: Vec<DrawableElement>) -> String {
+pub fn to_svg<'a>(elements: Vec<DrawableElement<'a>>) -> String {
     let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);
 
     let width = max_x - min_x;
@@ -116,7 +116,7 @@ pub fn to_svg(elements: Vec<DrawableElement>) -> String {
                 ff = t.font,
                 ha = t.horizontal_alignment.to_svg(),
                 va = t.vertical_alignment.to_svg(),
-                content = xml_escape(&t.text),
+                content = xml_escape(t.text),
             )),
             DrawableElement::Polygon(p) => {
                 let pts = p.pts
@@ -142,7 +142,7 @@ pub fn to_svg(elements: Vec<DrawableElement>) -> String {
     out
 }
 
-pub fn compute_bounds(elements: &Vec<DrawableElement>) -> (f32, f32, f32, f32) {
+pub fn compute_bounds(elements: &Vec<DrawableElement<'_>>) -> (f32, f32, f32, f32) {
     let mut min_x = f32::MAX;
     let mut min_y = f32::MAX;
     let mut max_x = f32::MIN;

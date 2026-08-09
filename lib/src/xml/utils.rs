@@ -38,6 +38,7 @@ pub trait NodeUtils<'a, 'input> {
     fn get_attribute(&self, name: &str) -> Option<&'input str>;
     fn req_child(&self, name: &str) -> Node<'a, 'input>;
     fn get_child(&self, name: &str) -> Option<Node<'a, 'input>>;
+    fn get_children(&self, name: &str) -> Vec<Node<'a, 'input>>;
     fn req_text(&self) -> &'input str;
     fn has_tag(&self, name: &str) -> bool;
     fn has_child(&self, name: &str) -> bool;
@@ -70,6 +71,12 @@ where
     fn get_child(&self, name: &str) -> Option<Node<'a, 'input>> {
         self.children()
             .find(|n| n.is_element() && n.has_tag_name(name))
+    }
+
+    fn get_children(&self, name: &str) -> Vec<Node<'a, 'input>> {
+        self.children()
+            .filter(|n| n.is_element() && n.has_tag_name(name))
+            .collect()
     }
 
     fn req_text(&self) -> &'input str {
