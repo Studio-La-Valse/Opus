@@ -30,7 +30,12 @@ impl RenderCompositor {
         out
     }
 
-    fn walk_system<'a>(&self, system: &System, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+    fn walk_system<'a>(
+        &self,
+        system: &System,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         self.pass.render_system(system, font, out);
 
         for measure in system.measures.values() {
@@ -42,7 +47,12 @@ impl RenderCompositor {
         }
     }
 
-    fn walk_section<'a>(&self, section: &Section, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+    fn walk_section<'a>(
+        &self,
+        section: &Section,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         self.pass.render_section(section, font, out);
 
         if section.shows_bracket() {
@@ -103,7 +113,12 @@ impl RenderCompositor {
         }
     }
 
-    fn walk_staff<'a>(&self, staff: &Staff, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+    fn walk_staff<'a>(
+        &self,
+        staff: &Staff,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         self.pass.render_staff(staff, font, out);
 
         for measure in staff.measures.values() {
@@ -157,7 +172,12 @@ impl RenderCompositor {
         }
     }
 
-    fn walk_chord<'a>(&self, chord: &Chord, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+    fn walk_chord<'a>(
+        &self,
+        chord: &Chord,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
         self.pass.render_chord(chord, font, out);
 
         for note in chord.notes.iter() {
