@@ -1,4 +1,4 @@
-use roxmltree::Node;
+﻿use roxmltree::Node;
 use std::str::FromStr;
 
 /// Extension trait for parsing values out of string slices and XML nodes.

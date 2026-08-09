@@ -3,26 +3,26 @@ use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::pitch::Pitch;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
+use crate::score::visual::chord::Chord;
+use crate::score::visual::clef::Clef;
 use crate::score::visual::note::Note;
-use crate::visitor::Visitor;
-use crate::visual::chord::Chord;
-use crate::visual::clef::Clef;
-use crate::visual::rest::Rest;
-use crate::visual::stem::{BeamType, Stem, UpDown};
+use crate::score::visual::rest::Rest;
+use crate::score::visual::stem::{BeamType, Stem, UpDown};
 use crate::xml::utils::NodeUtils;
+use crate::xml::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 
 use crate::score::core::accidental::Accidental as AccidentalCore;
 use crate::score::core::key::Key;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
+use crate::score::visual::accidental::Accidental as DrawableAccidental;
+use crate::score::visual::brace::Brace;
+use crate::score::visual::bracket::Bracket;
 use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
-use crate::utils::ReqParse;
-use crate::visual::accidental::Accidental as DrawableAccidental;
-use crate::visual::brace::Brace;
-use crate::visual::bracket::Bracket;
+use crate::xml::utils::ReqParse;
 
+use crate::score::visual::part::Part;
 use crate::smufl::smufl_font::SmuflFont;
-use crate::visual::part::Part;
 use roxmltree::Node;
 use std::collections::{BTreeMap, HashMap};
 

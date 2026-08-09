@@ -1,16 +1,16 @@
-use crate::app_defaults::AppDefaults;
-use crate::bounding_box::BoundingBox;
-use crate::color::Color;
-use crate::core::xy::XY;
 use crate::drawable::layoutable::Layoutable;
-use crate::layout::Layout;
+use crate::geometry::bounding_box::BoundingBox;
+use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
+use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::layout::Layout;
+use crate::score::user_layout::UserLayout;
+use crate::score::visual::accidental::Accidental;
+use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::staff::Staff;
+use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::notehead::Notehead;
-use crate::user_layout::UserLayout;
-use crate::visual::accidental::Accidental;
-use crate::visual::score_element::ScoreElement;
-use crate::visual::staff::Staff;
-use crate::visual::staff_ctx::StaffCtx;
 
 pub struct Note {
     pub xy: XY,

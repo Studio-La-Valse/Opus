@@ -1,6 +1,6 @@
-use crate::core::color::Color;
-use crate::core::xy::XY;
 use crate::drawable::elements::polygon::Polygon;
+use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
 use serde::Serialize;
 
 #[derive(Serialize, Copy, Clone)]

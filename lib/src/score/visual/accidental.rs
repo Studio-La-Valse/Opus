@@ -1,10 +1,10 @@
-use crate::bounding_box::BoundingBox;
-use crate::color::Color;
 use crate::drawable::layoutable::Layoutable;
+use crate::geometry::bounding_box::BoundingBox;
+use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
+use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::accidental::Accidental as SmuflAccidental;
-use crate::visual::score_element::ScoreElement;
-use crate::visual::staff::Staff;
-use crate::xy::XY;
 
 pub struct Accidental {
     pub xy: XY,
@@ -156,9 +156,9 @@ impl ScoreElement for Accidental {
 
     fn _apply_layout(
         &mut self,
-        _layout: &crate::layout::Layout,
-        user_layout: &crate::user_layout::UserLayout,
-        app_defaults: &crate::app_defaults::AppDefaults,
+        _layout: &crate::score::layout::Layout,
+        user_layout: &crate::score::user_layout::UserLayout,
+        app_defaults: &crate::score::app_defaults::AppDefaults,
     ) {
         self.color = user_layout
             .foreground_color

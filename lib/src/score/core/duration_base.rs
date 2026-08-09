@@ -1,4 +1,4 @@
-use crate::visual::stem::UpDown;
+﻿use crate::score::visual::stem::UpDown;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

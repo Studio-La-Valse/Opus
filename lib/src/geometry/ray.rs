@@ -1,4 +1,4 @@
-use crate::xy::XY;
+﻿use crate::geometry::xy::XY;
 
 #[derive(Copy, Clone)]
 pub struct Ray {

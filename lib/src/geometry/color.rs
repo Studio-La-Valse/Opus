@@ -1,4 +1,4 @@
-use serde::Serialize;
+﻿use serde::Serialize;
 
 #[derive(Debug, Clone, Copy, Serialize, Default)]
 pub struct Color {

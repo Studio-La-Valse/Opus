@@ -1,4 +1,4 @@
-use crate::score::core::clef::Clef;
+﻿use crate::score::core::clef::Clef;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::key::{Key, Mode};
 use crate::score::core::staff_idx::StaffIdx;

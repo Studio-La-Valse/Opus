@@ -1,8 +1,8 @@
-use crate::color::Color;
 use crate::drawable::layoutable::Layoutable;
+use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
+use crate::score::visual::score_element::ScoreElement;
 use crate::smufl::glyphs::number::Number;
-use crate::visual::score_element::ScoreElement;
-use crate::xy::XY;
 
 pub struct TimeSignature {
     pub xy: XY,

@@ -1,7 +1,8 @@
-use crate::bounding_box::BoundingBox;
+use crate::geometry::bounding_box::BoundingBox;
 use crate::score::core::accidental::Accidental as AccidentalCore;
 use crate::score::core::clef::Clef as ClefCore;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
+use crate::score::visual::stem::UpDown;
 use crate::smufl::glyph_name::{GlyphName, ToChar, load_glyph_names};
 use crate::smufl::glyphs::accidental::Accidental;
 use crate::smufl::glyphs::brace::Brace;
@@ -12,7 +13,6 @@ use crate::smufl::glyphs::notehead::Notehead;
 use crate::smufl::glyphs::number::Number;
 use crate::smufl::glyphs::rest::Rest;
 use crate::smufl::smufl_metadata::{Cutouts, SmuflMetadata};
-use crate::visual::stem::UpDown;
 use std::collections::HashMap;
 use std::fs;
 

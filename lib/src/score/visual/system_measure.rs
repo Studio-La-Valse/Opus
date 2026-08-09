@@ -1,10 +1,10 @@
-use crate::app_defaults::AppDefaults;
-use crate::color::Color;
-use crate::core::xy::XY;
 use crate::drawable::layoutable::Layoutable;
-use crate::layout::Layout;
-use crate::user_layout::UserLayout;
-use crate::visual::score_element::ScoreElement;
+use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
+use crate::score::app_defaults::AppDefaults;
+use crate::score::layout::Layout;
+use crate::score::user_layout::UserLayout;
+use crate::score::visual::score_element::ScoreElement;
 
 pub struct SystemMeasure {
     pub xy: XY,

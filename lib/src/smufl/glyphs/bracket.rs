@@ -1,9 +1,9 @@
-use crate::color::Color;
 use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
+use crate::score::visual::staff::Staff;
 use crate::smufl::smufl_font::SmuflFont;
 use crate::smufl::smufl_glyph::SmuflGlyph;
-use crate::visual::staff::Staff;
-use crate::xy::XY;
 
 #[derive(Clone)]
 pub struct BracketTop {

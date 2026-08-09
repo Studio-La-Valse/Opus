@@ -1,4 +1,4 @@
-use crate::utils::NodeUtils;
+use crate::xml::utils::NodeUtils;
 use crate::xml::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Document;
@@ -41,13 +41,11 @@ impl<V: Visitor> Walker<V> {
                                     "attributes" => {
                                         self.visitor.enter_attributes(&child, ctx);
 
-                                        if let Some(staff_details) =
-                                            child.get_child("staff-details")
-                                        {
+                                        for staff_details in child.get_children("staff-details") {
                                             self.visitor.enter_staff_details(&staff_details, ctx)
                                         }
 
-                                        // the key requires all clefs to be visited first, even though 
+                                        // the key requires all clefs to be visited first, even though
                                         // they may appear after the key changes in the musicxml.
                                         for clef in child.get_children("clef") {
                                             self.visitor.enter_clef(&clef, ctx);

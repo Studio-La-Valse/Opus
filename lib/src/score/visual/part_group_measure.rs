@@ -1,6 +1,6 @@
-use crate::core::xy::XY;
 use crate::drawable::layoutable::Layoutable;
-use crate::visual::score_element::ScoreElement;
+use crate::geometry::xy::XY;
+use crate::score::visual::score_element::ScoreElement;
 
 #[derive(Default)]
 pub struct PartGroupMeasure {

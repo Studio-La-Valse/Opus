@@ -1,8 +1,8 @@
 use crate::drawable::layoutable::Layoutable;
-use crate::visual::accidental::Accidental;
-use crate::visual::score_element::ScoreElement;
-use crate::visual::staff::Staff;
-use crate::xy::XY;
+use crate::geometry::xy::XY;
+use crate::score::visual::accidental::Accidental;
+use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::staff::Staff;
 
 #[derive(Default)]
 pub struct KeySignature {
