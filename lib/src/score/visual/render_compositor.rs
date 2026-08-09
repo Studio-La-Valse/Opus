@@ -1,14 +1,11 @@
 use crate::{
     drawable::drawable_element::DrawableElement,
     layout_ctx::Visibility,
-    visual::{
-        render_pass::{RenderPass, RenderPasses},
-        score::Score,
-    },
+    visual::{render_pass::RenderPass, score::Score},
 };
 
 pub struct RenderCompositor {
-    pub pass: RenderPasses,
+    pub pass: Box<dyn RenderPass>,
 }
 
 impl RenderCompositor {

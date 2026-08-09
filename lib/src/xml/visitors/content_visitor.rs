@@ -36,12 +36,21 @@ impl ContentVisitor {
         let measure_number = ctx.layout_ctx.measure.number;
         let _system_index = ctx.layout_ctx.system.index;
         let part_id = ctx.layout_ctx.part_id.as_str();
-        let scale = *ctx
+        let mut scale = *ctx
             .layout_ctx
             .staff
-            .staff_scaling
+            .content_scaling
             .get(&staff_idx)
             .unwrap_or(&1.0);
+
+        let is_grace = ctx.layout_ctx.grace;
+        if is_grace {
+            scale *= ctx
+                .layout
+                .appearance
+                .note_size_grace
+                .unwrap_or(ctx.app_defaults.note_size_grace);
+        }
 
         let staff_measure = ctx
             .visual_score
@@ -84,12 +93,21 @@ impl ContentVisitor {
         let position = ctx.layout_ctx.position;
         let voice = ctx.layout_ctx.voice;
         let part_id = ctx.layout_ctx.part_id.as_str();
-        let scale = *ctx
+        let mut scale = *ctx
             .layout_ctx
             .staff
-            .staff_scaling
+            .content_scaling
             .get(&staff_idx)
             .unwrap_or(&1.0);
+
+        let is_grace = ctx.layout_ctx.grace;
+        if is_grace {
+            scale *= ctx
+                .layout
+                .appearance
+                .note_size_grace
+                .unwrap_or(ctx.app_defaults.note_size_grace);
+        }
 
         // Parse Pitch
         let step = pitch_node.req_child("step");

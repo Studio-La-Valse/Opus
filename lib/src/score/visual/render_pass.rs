@@ -327,17 +327,10 @@ impl RenderPass for BaseRenderer {
                 stroke_color,
                 stroke_width,
             };
-
             out.push(line.into());
 
-            start = XY {
-                x: start.x,
-                y: start.y + staff.line_space(),
-            };
-            end = XY {
-                x: end.x,
-                y: end.y + staff.line_space(),
-            };
+            start = start.mv(0., staff.line_space());
+            end = end.mv(0., staff.line_space());
         }
     }
 
@@ -433,44 +426,14 @@ impl RenderPass for BaseRenderer {
                 UpDown::Up => stem.nw(),
                 UpDown::Down => stem.sw(),
             };
-            out.push(display(&stem_anchor, &2., &Color::RED).into());
 
             let flag_anchor = flag.stem_anchor;
             let flag_anchor = scale_pt(&flag_anchor, &stem_anchor, stem.scale);
-            out.push(display(&flag_anchor, &2.5, &Color::GREEN).into());
-
             let delta = stem_anchor - flag_anchor;
-
             let final_anchor = stem_anchor + delta;
-            out.push(display(&final_anchor, &3., &Color::BLUE).into());
 
             let flag: DrawableElement = flag.as_text(stem.color, final_anchor, stem.scale).into();
-
             out.push(flag);
-        }
-
-        fn display(xy: &XY, size: &f32, color: &Color) -> Rect {
-            Rect {
-                xy: XY {
-                    x: xy.x - size / 2.,
-                    y: xy.y - size / 2.,
-                },
-                width: *size,
-                height: *size,
-                color: Color::TRANSPARENT,
-                stroke_color: Some(*color),
-                stroke_width: Some(0.25),
-            }
-        }
-
-        /// Scales a normalized point to current position and scale.
-        fn scale_pt(flag_anchor: &XY, stem_anchor: &XY, scale: f32) -> XY {
-            let scaled = XY {
-                x: flag_anchor.x * (Staff::DEFAULT_SPACE_SIZE * scale),
-                y: flag_anchor.y * (Staff::DEFAULT_SPACE_SIZE * scale),
-            };
-
-            scaled + *stem_anchor
         }
     }
 }
@@ -529,7 +492,6 @@ impl RenderPass for DebugRenderer {
             stroke_width: Some(0.25),
             stroke_color: Some(Color::RED),
         };
-
         out.push(rect.into());
 
         let origin = Line {
@@ -560,7 +522,6 @@ impl RenderPass for DebugRenderer {
                     stroke_width: Some(0.2),
                     stroke_color: Some(Color::RED),
                 };
-
                 out.push(rect.into());
             }
         }
@@ -648,4 +609,57 @@ impl RenderPass for DebugRenderer {
             out.push(rect.into());
         }
     }
+
+    fn render_stem(&self, stem: &Stem, out: &mut Vec<DrawableElement>) {
+        match stem.direction {
+            UpDown::Down => {
+                out.push(display_xy(&stem.nw(), &1., &Color::RED).into());
+                out.push(display_xy(&stem.sw(), &2., &Color::RED).into());
+            }
+            UpDown::Up => {
+                out.push(display_xy(&stem.nw(), &1., &Color::RED).into());
+                out.push(display_xy(&stem.se(), &1., &Color::RED).into());
+            }
+        }
+
+        // if let Some(flag) = &stem.flag {
+        // let stem_anchor = match stem.direction {
+        //     UpDown::Up => stem.nw(),
+        //     UpDown::Down => stem.se(),
+        // };
+        // out.push(display(&stem_anchor, &2., &Color::RED).into());
+
+        // let flag_anchor = flag.stem_anchor;
+        // let flag_anchor = scale_pt(&flag_anchor, &stem_anchor, stem.scale);
+        // out.push(display(&flag_anchor, &2.5, &Color::GREEN).into());
+
+        // let delta = stem_anchor - flag_anchor;
+        // let final_anchor = stem_anchor + delta;
+        // out.push(display(&final_anchor, &3., &Color::BLUE).into());
+        // }
+    }
+}
+
+fn display_xy(xy: &XY, size: &f32, color: &Color) -> Rect {
+    Rect {
+        xy: XY {
+            x: xy.x - size / 2.,
+            y: xy.y - size / 2.,
+        },
+        width: *size,
+        height: *size,
+        color: *color,
+        stroke_color: None,
+        stroke_width: None,
+    }
+}
+
+/// Scales a normalized point to current position and scale.
+fn scale_pt(flag_anchor: &XY, stem_anchor: &XY, scale: f32) -> XY {
+    let scaled = XY {
+        x: flag_anchor.x * (Staff::DEFAULT_SPACE_SIZE * scale),
+        y: flag_anchor.y * (Staff::DEFAULT_SPACE_SIZE * scale),
+    };
+
+    scaled + *stem_anchor
 }

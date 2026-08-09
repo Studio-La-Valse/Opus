@@ -151,31 +151,13 @@ impl ScoreElement for Chord {
 
     fn _apply_layout(
         &mut self,
-        layout: &Layout,
+        _layout: &Layout,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
-
-        let scale = if self.grace {
-            layout
-                .appearance
-                .note_size_grace
-                .or(user_layout.note_size_grace)
-                .unwrap_or(app_defaults.note_size_grace)
-        } else {
-            1.
-        };
-
-        for note in self.notes.iter_mut() {
-            note.scale = scale;
-        }
-
-        if let Some(stem) = self.stem.as_mut() {
-            stem.scale = scale;
-        }
     }
 }
 

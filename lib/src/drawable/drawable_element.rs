@@ -2,10 +2,7 @@ use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
 use crate::drawable::elements::text::Text;
-use serde::Serialize;
 
-#[derive(Serialize)]
-#[serde(tag = "type", rename_all = "lowercase")]
 pub enum DrawableElement {
     Line(Line),
     Rect(Rect),
@@ -71,8 +68,8 @@ pub fn scale_elem(element: &DrawableElement, scale: f32) -> DrawableElement {
     }
 }
 
-pub fn to_svg(elements: &Vec<DrawableElement>) -> String {
-    let (min_x, min_y, max_x, max_y) = compute_bounds(elements);
+pub fn to_svg(elements: Vec<DrawableElement>) -> String {
+    let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);
 
     let width = max_x - min_x;
     let height = max_y - min_y;
@@ -80,12 +77,13 @@ pub fn to_svg(elements: &Vec<DrawableElement>) -> String {
     let mut out = String::new();
 
     out.push_str(&format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{min_x} {min_y} {w} {h}">"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{min_x} {min_y} {w} {h}" width="{w}" height="{h}">"#,
         min_x = min_x,
         min_y = min_y,
         w = width,
         h = height,
     ));
+    out.push_str("\r\n");
 
     for el in elements {
         match el {

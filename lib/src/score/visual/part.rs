@@ -11,7 +11,6 @@ use crate::visual::clef::Clef as DrawableClef;
 use crate::visual::score_element::ScoreElement;
 use crate::visual::staff_ctx::StaffCtx;
 use crate::visual::staff_measure::StaffMeasure;
-use itertools::Itertools;
 use std::collections::{BTreeMap, HashSet};
 
 pub struct Part {
@@ -130,16 +129,12 @@ impl Part {
         for (idx, clef) in clefs {
             let staff = self.staves.entry(*idx).or_default();
             let drawable = f(*clef);
-            let measure = staff.measures.values_mut().find_or_first(|_| true).unwrap();
+            let measure = staff.measures.values_mut().next().unwrap();
             measure.clef_start = Some(drawable);
         }
     }
 
     pub fn set_staff_scale(&mut self, staff_scales: &BTreeMap<StaffIdx, f32>) {
-        for staff in self.staves.values_mut() {
-            staff.set_scale(1.0);
-        }
-
         for (&idx, staff_scale) in staff_scales.iter() {
             let staff = self.staves.entry(idx).or_default();
             staff.set_scale(*staff_scale)

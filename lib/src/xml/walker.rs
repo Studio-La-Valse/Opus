@@ -1,3 +1,4 @@
+use crate::utils::NodeUtils;
 use crate::xml::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Document;
@@ -40,23 +41,19 @@ impl<V: Visitor> Walker<V> {
                                     "attributes" => {
                                         self.visitor.enter_attributes(&child, ctx);
 
-                                        // we have to handle all children of attributes twice,
-                                        // because the key requires a clef to be visited first, even though it may be notated later.
-
-                                        for child in child.children().filter(|n| n.is_element()) {
-                                            match child.tag_name().name() {
-                                                "clef" => self.visitor.enter_clef(&child, ctx),
-                                                "staff-details" => {
-                                                    self.visitor.enter_staff_details(&child, ctx)
-                                                }
-                                                _ => {}
-                                            }
+                                        if let Some(staff_details) =
+                                            child.get_child("staff-details")
+                                        {
+                                            self.visitor.enter_staff_details(&staff_details, ctx)
                                         }
 
-                                        for child in child.children().filter(|n| n.is_element()) {
-                                            if child.tag_name().name() == "key" {
-                                                self.visitor.enter_key(&child, ctx)
-                                            }
+                                        // the key requires a clef to be visited first, even though it may be notated later.
+                                        if let Some(clef) = child.get_child("clef") {
+                                            self.visitor.enter_clef(&clef, ctx);
+                                        }
+
+                                        if let Some(key) = child.get_child("key") {
+                                            self.visitor.enter_key(&key, ctx)
                                         }
                                     }
                                     "note" => {

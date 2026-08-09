@@ -1,6 +1,6 @@
 use clap::Parser;
 use lib::app_defaults::AppDefaults;
-use lib::drawable::drawable_element::{DrawableElement, scale_elem, to_svg};
+use lib::drawable::drawable_element::{DrawableElement, to_svg};
 use lib::drawable::layoutable::Layoutable;
 use lib::layout::Layout;
 use lib::layout_ctx::LayoutCtx;
@@ -13,7 +13,7 @@ use lib::visitors::layout_ctx_visitor::LayoutContextVisitor;
 use lib::visitors::layout_visitor::LayoutVisitor;
 use lib::visitors::setup_visitor::SetupVisitor;
 use lib::visual::render_compositor::RenderCompositor;
-use lib::visual::render_pass::{BaseRenderer, DebugRenderer, RenderPasses};
+use lib::visual::render_pass::{BaseRenderer, DebugRenderer};
 use lib::visual::score::Score;
 use lib::visual::score_element::ScoreElement;
 use lib::walker::Walker;
@@ -44,6 +44,11 @@ struct Args {
 }
 
 fn main() {
+    println!(
+        "Size of DrawableElement: {}",
+        std::mem::size_of::<DrawableElement>()
+    );
+
     let args = Args::parse();
     let file = args.file;
     let out = args.out;
@@ -69,6 +74,9 @@ fn main() {
     println!("Parsing doc tree: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
+    let user_layout: UserLayout = Default::default();
+    let app_defaults: AppDefaults = Default::default();
+
     let mut layout_ctx = LayoutCtx::default();
     let mut layout = Layout::default();
     let mut visual = Score::default();
@@ -80,7 +88,14 @@ fn main() {
             encountered: HashSet::new(),
         });
 
-    let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual, &font);
+    let mut ctx = WalkerCtx::new(
+        &user_layout,
+        &mut layout,
+        &app_defaults,
+        &mut layout_ctx,
+        &mut visual,
+        &font,
+    );
 
     Walker::new(visitor).walk(&document, &mut ctx);
 
@@ -96,7 +111,14 @@ fn main() {
             clef_change: HashMap::new(),
         });
 
-    let mut ctx = WalkerCtx::new(&mut layout, &mut layout_ctx, &mut visual, &font);
+    let mut ctx = WalkerCtx::new(
+        &user_layout,
+        &mut layout,
+        &app_defaults,
+        &mut layout_ctx,
+        &mut visual,
+        &font,
+    );
 
     Walker::new(visitor).walk(&document, &mut ctx);
 
@@ -105,9 +127,6 @@ fn main() {
         time.elapsed().as_millis()
     );
     time = Instant::now();
-
-    let user_layout: UserLayout = Default::default();
-    let app_defaults: AppDefaults = Default::default();
 
     visual.apply_layout(&layout, &user_layout, &app_defaults);
 
@@ -128,16 +147,27 @@ fn main() {
     println!("Layout pass: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
-    let mut passes = RenderPasses { passes: Vec::new() };
-    passes.passes.push(Box::new(BaseRenderer {}));
+    let pass = BaseRenderer {};
+    let compositor = RenderCompositor {
+        pass: Box::new(pass),
+    };
+    let mut elements: Vec<DrawableElement> = compositor.walk(&visual);
+
+    println!("First render pass: {}ms", time.elapsed().as_millis());
+    time = Instant::now();
+
     if debug {
-        passes.passes.push(Box::new(DebugRenderer {}));
+        let pass = DebugRenderer {};
+        let compositor = RenderCompositor {
+            pass: Box::new(pass),
+        };
+        elements.extend(compositor.walk(&visual));
+
+        println!("Second render pass: {}ms", time.elapsed().as_millis());
+        time = Instant::now();
     }
 
-    let compositor = RenderCompositor { pass: passes };
-    let elements: Vec<DrawableElement> = compositor.walk(&visual);
-
-    let svg = to_svg(&elements.iter().map(|e| scale_elem(e, 0.01)).collect());
+    let svg = to_svg(elements);
     fs::write(out, svg).unwrap();
 
     println!("Write to svg: {}ms", time.elapsed().as_millis());

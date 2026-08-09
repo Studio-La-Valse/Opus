@@ -108,15 +108,24 @@ impl Stem {
         }
     }
 
+    pub fn tail(&self) -> XY {
+        self.xy
+    }
+
     pub fn tip(&self) -> XY {
-        self.xy.mv(0., self.length)
+        let length = self.length.abs();
+
+        match self.direction {
+            UpDown::Up => self.tail().mv(0., -length),
+            UpDown::Down => self.tail().mv(0., length),
+        }
     }
 
     pub fn nw(&self) -> XY {
         let thickness = self.thickness * self.scale;
         match self.direction {
             UpDown::Up => self.tip().mv(thickness / -2., 0.),
-            UpDown::Down => self.xy.mv(-thickness / -2., 0.),
+            UpDown::Down => self.tail().mv(thickness / -2., 0.),
         }
     }
 
@@ -126,11 +135,13 @@ impl Stem {
     }
 
     pub fn se(&self) -> XY {
-        self.ne().mv(0., self.length)
+        let length = self.length.abs();
+        self.ne().mv(0., length)
     }
 
     pub fn sw(&self) -> XY {
-        self.nw().mv(0., self.length)
+        let length = self.length.abs();
+        self.nw().mv(0., length)
     }
 
     pub fn attach_ray(&mut self, ray: &Ray) {
