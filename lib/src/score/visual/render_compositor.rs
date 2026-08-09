@@ -1,8 +1,11 @@
-﻿use crate::{
+use crate::{
     drawable::drawable_element::DrawableElement,
     score::{
         layout_ctx::Visibility,
-        visual::{render_pass::RenderPass, score::Score},
+        visual::{
+            chord::Chord, part::Part, part_group::PartGroup, part_measure::PartMeasure,
+            render_pass::RenderPass, score::Score, section::Section, staff::Staff, system::System,
+        },
     },
     smufl::smufl_font::SmuflFont,
 };
@@ -13,140 +16,165 @@ pub struct RenderCompositor {
 
 impl RenderCompositor {
     pub fn walk<'a>(&self, score: &Score, font: &'a SmuflFont) -> Vec<DrawableElement<'a>> {
-        let mut out: Vec<DrawableElement<'a>> = Vec::with_capacity(Self::estimate_element_count(score));
+        let mut out: Vec<DrawableElement<'a>> =
+            Vec::with_capacity(Self::estimate_element_count(score));
 
         for page in score.pages.values() {
             self.pass.render_page(page, font, &mut out);
 
             for system in page.systems.values() {
-                self.pass.render_system(system, font, &mut out);
-
-                for measure in system.measures.values() {
-                    self.pass.render_system_measure(measure, font, &mut out);
-                }
-
-                for section in system.sections.values() {
-                    self.pass.render_section(section, font, &mut out);
-
-                    if section.shows_bracket() {
-                        self.pass.render_bracket(&section.bracket, font, &mut out);
-                    }
-
-                    for measure in section.measures.values() {
-                        self.pass.render_section_measure(measure, font, &mut out);
-                    }
-
-                    for group in section.part_groups.values() {
-                        self.pass.render_part_group(group, font, &mut out);
-
-                        if group.shows_brace() {
-                            self.pass.render_brace(&group.brace, font, &mut out);
-                        }
-
-                        for measure in group.measures.values() {
-                            self.pass.render_part_group_measure(measure, font, &mut out);
-                        }
-
-                        for part in group.parts.values() {
-                            if part.visibility == Visibility::Hidden {
-                                continue;
-                            }
-
-                            self.pass.render_part(part, font, &mut out);
-
-                            if part.shows_brace() {
-                                self.pass.render_brace(&part.brace, font, &mut out);
-                            }
-
-                            for staff in part.staves.values() {
-                                if staff.hidden {
-                                    continue;
-                                }
-
-                                self.pass.render_staff(staff, font, &mut out);
-
-                                for measure in staff.measures.values() {
-                                    self.pass.render_staff_measure(measure, font, &mut out);
-
-                                    if let Some(ref clef) = measure.clef_start {
-                                        self.pass.render_clef(clef, font, &mut out);
-                                    }
-
-                                    if let Some(ref time_signature) = measure.time_signature_start {
-                                        self.pass.render_time_signature(
-                                            time_signature,
-                                            font,
-                                            &mut out,
-                                        );
-                                    }
-
-                                    self.pass.render_key_signature(
-                                        &measure.key_signature_start,
-                                        font,
-                                        &mut out,
-                                    );
-
-                                    for (_, accidental) in
-                                        measure.key_signature_start.accidentals.iter()
-                                    {
-                                        self.pass.render_accidental(accidental, font, &mut out);
-                                    }
-
-                                    if let Some(ref time_signature) = measure.time_signature_end {
-                                        self.pass.render_time_signature(
-                                            time_signature,
-                                            font,
-                                            &mut out,
-                                        );
-                                    }
-
-                                    if let Some(ref clef) = measure.clef_end {
-                                        self.pass.render_clef(clef, font, &mut out);
-                                    }
-
-                                    for rest in measure.rests.iter() {
-                                        self.pass.render_rest(rest, font, &mut out);
-
-                                        if let Some(ref clef) = rest.clef_change {
-                                            self.pass.render_clef(clef, font, &mut out);
-                                        }
-                                    }
-                                }
-                            }
-
-                            for measure in part.measures.values() {
-                                self.pass.render_part_measure(measure, font, &mut out);
-
-                                for chords in measure.chords.values() {
-                                    for chord in chords.iter() {
-                                        self.pass.render_chord(chord, font, &mut out);
-
-                                        for note in chord.notes.iter() {
-                                            self.pass.render_note(note, font, &mut out);
-
-                                            if let Some(ref accidental) = note.accidental {
-                                                self.pass
-                                                    .render_accidental(accidental, font, &mut out);
-                                            }
-                                        }
-
-                                        if let Some(ref stem) = chord.stem {
-                                            self.pass.render_stem(stem, font, &mut out);
-                                        }
-
-                                        for clef_change in chord.clef_change.values() {
-                                            self.pass.render_clef(clef_change, font, &mut out);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                self.walk_system(system, font, &mut out);
             }
         }
 
         out
+    }
+
+    fn walk_system<'a>(&self, system: &System, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+        self.pass.render_system(system, font, out);
+
+        for measure in system.measures.values() {
+            self.pass.render_system_measure(measure, font, out);
+        }
+
+        for section in system.sections.values() {
+            self.walk_section(section, font, out);
+        }
+    }
+
+    fn walk_section<'a>(&self, section: &Section, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+        self.pass.render_section(section, font, out);
+
+        if section.shows_bracket() {
+            self.pass.render_bracket(&section.bracket, font, out);
+        }
+
+        for measure in section.measures.values() {
+            self.pass.render_section_measure(measure, font, out);
+        }
+
+        for group in section.part_groups.values() {
+            self.walk_part_group(group, font, out);
+        }
+    }
+
+    fn walk_part_group<'a>(
+        &self,
+        group: &PartGroup,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        self.pass.render_part_group(group, font, out);
+
+        if group.shows_brace() {
+            self.pass.render_brace(&group.brace, font, out);
+        }
+
+        for measure in group.measures.values() {
+            self.pass.render_part_group_measure(measure, font, out);
+        }
+
+        for part in group.parts.values() {
+            if part.visibility == Visibility::Hidden {
+                continue;
+            }
+
+            self.walk_part(part, font, out);
+        }
+    }
+
+    fn walk_part<'a>(&self, part: &Part, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+        self.pass.render_part(part, font, out);
+
+        if part.shows_brace() {
+            self.pass.render_brace(&part.brace, font, out);
+        }
+
+        for staff in part.staves.values() {
+            if staff.hidden {
+                continue;
+            }
+
+            self.walk_staff(staff, font, out);
+        }
+
+        for measure in part.measures.values() {
+            self.walk_part_measure(measure, font, out);
+        }
+    }
+
+    fn walk_staff<'a>(&self, staff: &Staff, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+        self.pass.render_staff(staff, font, out);
+
+        for measure in staff.measures.values() {
+            self.pass.render_staff_measure(measure, font, out);
+
+            if let Some(ref clef) = measure.clef_start {
+                self.pass.render_clef(clef, font, out);
+            }
+
+            if let Some(ref time_signature) = measure.time_signature_start {
+                self.pass.render_time_signature(time_signature, font, out);
+            }
+
+            self.pass
+                .render_key_signature(&measure.key_signature_start, font, out);
+
+            for (_, accidental) in measure.key_signature_start.accidentals.iter() {
+                self.pass.render_accidental(accidental, font, out);
+            }
+
+            if let Some(ref time_signature) = measure.time_signature_end {
+                self.pass.render_time_signature(time_signature, font, out);
+            }
+
+            if let Some(ref clef) = measure.clef_end {
+                self.pass.render_clef(clef, font, out);
+            }
+
+            for rest in measure.rests.iter() {
+                self.pass.render_rest(rest, font, out);
+
+                if let Some(ref clef) = rest.clef_change {
+                    self.pass.render_clef(clef, font, out);
+                }
+            }
+        }
+    }
+
+    fn walk_part_measure<'a>(
+        &self,
+        measure: &PartMeasure,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        self.pass.render_part_measure(measure, font, out);
+
+        for chords in measure.chords.values() {
+            for chord in chords.iter() {
+                self.walk_chord(chord, font, out);
+            }
+        }
+    }
+
+    fn walk_chord<'a>(&self, chord: &Chord, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
+        self.pass.render_chord(chord, font, out);
+
+        for note in chord.notes.iter() {
+            self.pass.render_note(note, font, out);
+
+            if let Some(ref accidental) = note.accidental {
+                self.pass.render_accidental(accidental, font, out);
+            }
+        }
+
+        if let Some(ref stem) = chord.stem {
+            self.pass.render_stem(stem, font, out);
+        }
+
+        for clef_change in chord.clef_change.values() {
+            self.pass.render_clef(clef_change, font, out);
+        }
     }
 
     /// Cheap, pass-agnostic upper-bound-ish estimate of how many `DrawableElement`s
@@ -156,44 +184,68 @@ impl RenderCompositor {
     /// cost stays proportional to the score's structural size rather than to
     /// per-note rendering work (no glyph lookups, no element construction).
     fn estimate_element_count(score: &Score) -> usize {
-        let mut count = 0;
+        score
+            .pages
+            .values()
+            .map(|page| {
+                1 + page
+                    .systems
+                    .values()
+                    .map(Self::estimate_system)
+                    .sum::<usize>()
+            })
+            .sum()
+    }
 
-        for page in score.pages.values() {
-            count += 1; // page
+    fn estimate_system(system: &System) -> usize {
+        1 + system.measures.len() // system line + system measure lines
+            + system
+                .sections
+                .values()
+                .map(Self::estimate_section)
+                .sum::<usize>()
+    }
 
-            for system in page.systems.values() {
-                count += 1 + system.measures.len(); // system line + system measure lines
+    fn estimate_section(section: &Section) -> usize {
+        1 + section.measures.len() // bracket/section + section measure lines
+            + section
+                .part_groups
+                .values()
+                .map(Self::estimate_part_group)
+                .sum::<usize>()
+    }
 
-                for section in system.sections.values() {
-                    count += 1 + section.measures.len(); // bracket/section + section measure lines
+    fn estimate_part_group(group: &PartGroup) -> usize {
+        1 + group.measures.len() // brace + part group measure lines
+            + group
+                .parts
+                .values()
+                .map(Self::estimate_part)
+                .sum::<usize>()
+    }
 
-                    for group in section.part_groups.values() {
-                        count += 1 + group.measures.len(); // brace + part group measure lines
+    fn estimate_part(part: &Part) -> usize {
+        let staves: usize = part.staves.values().map(Self::estimate_staff).sum();
+        let measures: usize = part
+            .measures
+            .values()
+            .map(Self::estimate_part_measure)
+            .sum();
 
-                        for part in group.parts.values() {
-                            count += 1; // brace
+        1 + staves + measures // brace + staves + measures
+    }
 
-                            for staff in part.staves.values() {
-                                count += 5; // 5 staff lines
-                                count += staff.measures.len() * 3; // clef/time sig/key sig, roughly
-                            }
+    fn estimate_staff(staff: &Staff) -> usize {
+        5 + staff.measures.len() * 3 // 5 staff lines + clef/time sig/key sig, roughly
+    }
 
-                            for measure in part.measures.values() {
-                                count += measure.beams.len() + measure.ledgers.len();
+    fn estimate_part_measure(measure: &PartMeasure) -> usize {
+        let chords = measure.chords.values().flatten();
 
-                                for chords in measure.chords.values() {
-                                    // notehead + stem per chord, plus headroom for
-                                    // accidentals/flags/extra notes per chord.
-                                    count += chords.len() * 2;
-                                    count += chords.iter().map(|c| c.notes.len()).sum::<usize>();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        count
+        // notehead + stem per chord, plus headroom for accidentals/flags/extra notes.
+        measure.beams.len()
+            + measure.ledgers.len()
+            + chords.clone().count() * 2
+            + chords.map(|c| c.notes.len()).sum::<usize>()
     }
 }
