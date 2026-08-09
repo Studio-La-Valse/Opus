@@ -1,20 +1,20 @@
-use crate::app_defaults::AppDefaults;
-use crate::color::Color;
-use crate::core::xy::XY;
 use crate::drawable::layoutable::Layoutable;
-use crate::layout::Layout;
-use crate::layout_ctx::Visibility;
+use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
+use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::layout::Layout;
+use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::user_layout::UserLayout;
+use crate::score::visual::bracket::Bracket;
+use crate::score::visual::part::Part;
+use crate::score::visual::part_measure::PartMeasure;
+use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::section::Section;
+use crate::score::visual::staff::Staff;
+use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system_measure::SystemMeasure;
-use crate::user_layout::UserLayout;
-use crate::visual::bracket::Bracket;
-use crate::visual::part::Part;
-use crate::visual::part_measure::PartMeasure;
-use crate::visual::score_element::ScoreElement;
-use crate::visual::staff::Staff;
-use crate::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
 #[derive(Default)]

@@ -1,11 +1,11 @@
 use crate::score::core::staff_idx::StaffIdx;
-use crate::visitor::Visitor;
-use crate::visual::brace::Brace;
-use crate::visual::bracket::Bracket;
+use crate::score::visual::brace::Brace;
+use crate::score::visual::bracket::Bracket;
+use crate::xml::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 
-use crate::visual::part_measure::PartMeasure;
-use crate::visual::system_measure::SystemMeasure;
+use crate::score::visual::part_measure::PartMeasure;
+use crate::score::visual::system_measure::SystemMeasure;
 use roxmltree::Node;
 use std::collections::HashSet;
 

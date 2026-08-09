@@ -1,4 +1,4 @@
-use crate::color::Color;
+﻿use crate::geometry::color::Color;
 
 pub struct AppDefaults {
     pub page_color: Color,

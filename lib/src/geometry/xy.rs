@@ -1,4 +1,4 @@
-use serde::Serialize;
+﻿use serde::Serialize;
 use std::ops::{Add, Sub};
 
 #[derive(Default, Debug, Copy, Clone, Serialize)]

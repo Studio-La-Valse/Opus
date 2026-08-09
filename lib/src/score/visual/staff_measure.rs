@@ -1,12 +1,12 @@
-use crate::core::xy::XY;
 use crate::drawable::layoutable::Layoutable;
+use crate::geometry::xy::XY;
+use crate::score::visual::clef::Clef;
+use crate::score::visual::key_signature::KeySignature;
+use crate::score::visual::rest::Rest;
+use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::staff::Staff;
+use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::time_signature::TimeSignature;
-use crate::visual::clef::Clef;
-use crate::visual::key_signature::KeySignature;
-use crate::visual::rest::Rest;
-use crate::visual::score_element::ScoreElement;
-use crate::visual::staff::Staff;
-use crate::visual::staff_ctx::StaffCtx;
 
 pub struct StaffMeasure {
     pub xy: XY,

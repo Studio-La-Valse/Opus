@@ -1,4 +1,4 @@
-use crate::color::Color;
+﻿use crate::geometry::color::Color;
 
 #[derive(Copy, Clone, Default)]
 pub struct UserLayout {

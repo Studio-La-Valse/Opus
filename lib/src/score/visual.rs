@@ -1,4 +1,4 @@
-pub mod accidental;
+﻿pub mod accidental;
 pub mod brace;
 pub mod bracket;
 pub mod chord;

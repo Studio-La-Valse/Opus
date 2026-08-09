@@ -1,7 +1,7 @@
-#[cfg(test)]
+﻿#[cfg(test)]
 mod tests {
-    use lib::bounding_box::BoundingBox;
-    use lib::xy::XY;
+    use lib::geometry::bounding_box::BoundingBox;
+    use lib::geometry::xy::XY;
 
     #[test]
     fn width_and_height() {

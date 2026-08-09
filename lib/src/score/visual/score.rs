@@ -1,13 +1,13 @@
-use crate::core::xy::XY;
 use crate::drawable::layoutable::Layoutable;
+use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::page::Page;
-use crate::visual::part_measure::PartMeasure;
-use crate::visual::score_element::ScoreElement;
-use crate::visual::staff_measure::StaffMeasure;
-use crate::visual::system::System;
-use crate::visual::system_measure::SystemMeasure;
+use crate::score::visual::part_measure::PartMeasure;
+use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::staff_measure::StaffMeasure;
+use crate::score::visual::system::System;
+use crate::score::visual::system_measure::SystemMeasure;
 use std::collections::BTreeMap;
 
 #[derive(Default)]

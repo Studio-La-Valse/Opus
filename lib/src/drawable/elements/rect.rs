@@ -1,5 +1,5 @@
-use crate::core::color::Color;
-use crate::core::xy::XY;
+﻿use crate::geometry::color::Color;
+use crate::geometry::xy::XY;
 use serde::Serialize;
 
 #[derive(Default, Copy, Clone, Serialize)]

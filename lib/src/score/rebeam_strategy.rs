@@ -1,5 +1,5 @@
-use crate::visual::chord::Chord;
-use crate::visual::stem::BeamType;
+﻿use crate::score::visual::chord::Chord;
+use crate::score::visual::stem::BeamType;
 
 pub trait RebeamStrategy {
     fn rebeam(&self, chords: &mut [&mut Chord]);

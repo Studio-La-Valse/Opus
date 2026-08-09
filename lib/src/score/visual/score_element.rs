@@ -1,6 +1,6 @@
-use crate::app_defaults::AppDefaults;
-use crate::layout::Layout;
-use crate::user_layout::UserLayout;
+﻿use crate::score::app_defaults::AppDefaults;
+use crate::score::layout::Layout;
+use crate::score::user_layout::UserLayout;
 
 pub trait ScoreElement {
     fn children(&mut self) -> Vec<&mut dyn ScoreElement> {

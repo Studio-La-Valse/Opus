@@ -1,4 +1,4 @@
-use crate::score::core::pitch::Pitch;
+﻿use crate::score::core::pitch::Pitch;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Clef {

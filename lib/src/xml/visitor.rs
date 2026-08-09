@@ -1,4 +1,4 @@
-use crate::core::chain::Chain;
+﻿use crate::geometry::chain::Chain;
 use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Node;
 

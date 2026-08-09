@@ -1,5 +1,5 @@
-use crate::bounding_box::BoundingBox;
-use crate::xy::XY;
+﻿use crate::geometry::bounding_box::BoundingBox;
+use crate::geometry::xy::XY;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

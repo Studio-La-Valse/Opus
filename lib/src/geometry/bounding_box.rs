@@ -1,6 +1,6 @@
-use serde::Serialize;
+﻿use serde::Serialize;
 
-use crate::xy::XY;
+use crate::geometry::xy::XY;
 
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct BoundingBox {

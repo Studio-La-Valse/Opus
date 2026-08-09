@@ -1,10 +1,9 @@
-use crate::drawable::drawable_element::DrawableElement;
+﻿use crate::drawable::drawable_element::DrawableElement;
 use crate::smufl::smufl_font::SmuflFont;
 use crate::{
-    color::Color,
     drawable::elements::{line::Line, rect::Rect},
-    smufl::smufl_glyph::SmuflGlyph,
-    visual::{
+    geometry::{color::Color, xy::XY},
+    score::visual::{
         accidental::Accidental,
         brace::Brace,
         bracket::Bracket,
@@ -27,7 +26,7 @@ use crate::{
         system_measure::SystemMeasure,
         time_signature::TimeSignature,
     },
-    xy::XY,
+    smufl::smufl_glyph::SmuflGlyph,
 };
 
 pub trait RenderPass {

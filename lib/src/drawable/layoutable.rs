@@ -1,4 +1,4 @@
-use crate::core::xy::XY;
+﻿use crate::geometry::xy::XY;
 
 pub trait Layoutable {
     fn measure(&mut self, available: &XY);

@@ -1,4 +1,4 @@
-use crate::score::core::duration_base::BaseDuration;
+﻿use crate::score::core::duration_base::BaseDuration;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TimeSignature {

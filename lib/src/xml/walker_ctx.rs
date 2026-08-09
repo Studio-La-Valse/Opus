@@ -1,9 +1,9 @@
-use crate::app_defaults::AppDefaults;
-use crate::layout::Layout;
-use crate::layout_ctx::LayoutCtx;
+use crate::score::app_defaults::AppDefaults;
+use crate::score::layout::Layout;
+use crate::score::layout_ctx::LayoutCtx;
+use crate::score::user_layout::UserLayout;
 use crate::score::visual::score::Score;
 use crate::smufl::smufl_font::SmuflFont;
-use crate::user_layout::UserLayout;
 
 pub struct WalkerCtx<'a> {
     pub user_layout: &'a UserLayout,

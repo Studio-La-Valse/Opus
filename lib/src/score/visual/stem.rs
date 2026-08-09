@@ -1,14 +1,14 @@
-use crate::app_defaults::AppDefaults;
-use crate::color::Color;
 use crate::drawable::layoutable::Layoutable;
-use crate::layout::Layout;
-use crate::ray::Ray;
+use crate::geometry::color::Color;
+use crate::geometry::ray::Ray;
+use crate::geometry::xy::XY;
+use crate::score::app_defaults::AppDefaults;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::layout::Layout;
+use crate::score::user_layout::UserLayout;
+use crate::score::visual::score_element::ScoreElement;
 use crate::smufl::glyphs::flag::Flag;
-use crate::user_layout::UserLayout;
-use crate::visual::score_element::ScoreElement;
-use crate::xy::XY;
 use std::collections::BTreeMap;
 
 #[derive(Default, Eq, PartialEq, Copy, Clone, Debug)]

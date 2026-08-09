@@ -1,8 +1,10 @@
-use crate::{
+﻿use crate::{
     drawable::drawable_element::DrawableElement,
-    layout_ctx::Visibility,
+    score::{
+        layout_ctx::Visibility,
+        visual::{render_pass::RenderPass, score::Score},
+    },
     smufl::smufl_font::SmuflFont,
-    visual::{render_pass::RenderPass, score::Score},
 };
 
 pub struct RenderCompositor {
