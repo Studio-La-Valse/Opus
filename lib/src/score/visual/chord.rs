@@ -100,6 +100,8 @@ impl Chord {
 
             let length = ((self.xy.y + staff_top) - default_y) - tail_anchor.y;
             stem.length = length;
+
+            stem.arrange_flag();
         }
     }
 

@@ -190,6 +190,10 @@ impl RenderCompositor {
 
         if let Some(ref stem) = chord.stem {
             self.pass.render_stem(stem, font, out);
+
+            if let Some(ref flag) = stem.flag {
+                self.pass.render_flag(flag, font, out);
+            }
         }
 
         for clef_change in chord.clef_change.values() {

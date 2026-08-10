@@ -7,8 +7,8 @@ use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::layout::Layout;
 use crate::score::user_layout::UserLayout;
+use crate::score::visual::flag::Flag;
 use crate::score::visual::score_element::ScoreElement;
-use crate::smufl::glyphs::flag::Flag;
 use std::collections::BTreeMap;
 
 #[derive(Default, Eq, PartialEq, Copy, Clone, Debug)]
@@ -157,9 +157,35 @@ impl Stem {
 
         self.length = intersection.y - self.xy.y;
     }
+
+    /// Positions the flag (if any) against this stem's own terminal corner.
+    /// Must be called once `length` is finalized - stem geometry is only
+    /// complete once the caller (`Chord::arrange_stem`) has computed and set
+    /// `length`, so this can't happen inside `arrange`, which runs before
+    /// `length` is known.
+    pub fn arrange_flag(&mut self) {
+        let anchor = match self.direction {
+            UpDown::Up => self.nw(),
+            UpDown::Down => self.sw(),
+        };
+
+        if let Some(flag) = self.flag.as_mut() {
+            flag.arrange(&anchor);
+        }
+    }
 }
 
 impl ScoreElement for Stem {
+    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
+        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+
+        if let Some(flag) = self.flag.as_mut() {
+            children.push(flag);
+        }
+
+        children
+    }
+
     fn _apply_layout(
         &mut self,
         layout: &Layout,
@@ -177,7 +203,11 @@ impl ScoreElement for Stem {
 }
 
 impl Layoutable for Stem {
-    fn measure(&mut self, _available: &XY) {}
+    fn measure(&mut self, available: &XY) {
+        if let Some(flag) = self.flag.as_mut() {
+            flag.measure(available);
+        }
+    }
 
     fn arrange(&mut self, origin: &XY) {
         let thickness = self.thickness * self.scale;

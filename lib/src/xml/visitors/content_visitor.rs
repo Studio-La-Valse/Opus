@@ -18,6 +18,7 @@ use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::score::visual::accidental::Accidental as DrawableAccidental;
 use crate::score::visual::brace::Brace;
 use crate::score::visual::bracket::Bracket;
+use crate::score::visual::flag::Flag as DrawableFlag;
 use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
 use crate::xml::utils::ReqParse;
 
@@ -165,7 +166,7 @@ impl ContentVisitor {
                 .collect();
             if beams.is_empty() && stem.beams.is_empty() {
                 if let Some(flag_name) = dur.flag_glyph(&dir) {
-                    stem.flag = Some(ctx.font.flag(flag_name, &dir));
+                    stem.flag = Some(DrawableFlag::new(ctx.font.flag(flag_name, &dir), scale));
                 }
             } else {
                 for beam in beams {

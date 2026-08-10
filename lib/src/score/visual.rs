@@ -1,8 +1,9 @@
-﻿pub mod accidental;
+pub mod accidental;
 pub mod brace;
 pub mod bracket;
 pub mod chord;
 pub mod clef;
+pub mod flag;
 pub mod key_signature;
 pub mod note;
 pub mod page;
