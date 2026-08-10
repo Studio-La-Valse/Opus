@@ -75,6 +75,8 @@ impl StaffMeasure {
     }
     fn arrange_time_signature_start(&mut self) {
         if let Some(ref mut time_signature) = self.time_signature_start {
+            time_signature.rescale(self.scale);
+
             let mut pos = self.xy.mv(5., 0.);
 
             if let Some(clef) = &self.clef_start {
@@ -88,6 +90,8 @@ impl StaffMeasure {
     }
     fn arrange_time_signature_end(&mut self) {
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
+            prepare_time_signature.rescale(self.scale);
+
             let pos = self
                 .xy
                 .mv(self.width - prepare_time_signature.width - 5., 0.);
