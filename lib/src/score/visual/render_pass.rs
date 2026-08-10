@@ -1,4 +1,4 @@
-﻿use crate::drawable::drawable_element::DrawableElement;
+use crate::drawable::drawable_element::DrawableElement;
 use crate::smufl::smufl_font::SmuflFont;
 use crate::{
     drawable::elements::{line::Line, rect::Rect},
@@ -605,19 +605,27 @@ impl RenderPass for BaseRenderer {
         font: &'a SmuflFont,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let pos_num = time_signature.xy.mv(0., time_signature.height / 4.);
         out.push(
             time_signature
                 .num
-                .as_text(font, time_signature.color, pos_num, 1.)
+                .as_text(
+                    font,
+                    time_signature.color,
+                    time_signature.num_xy(),
+                    time_signature.scale,
+                )
                 .into(),
         );
 
-        let pos_denom = time_signature.xy.mv(0., time_signature.height / 4. * 3.);
         out.push(
             time_signature
                 .denom
-                .as_text(font, time_signature.color, pos_denom, 1.)
+                .as_text(
+                    font,
+                    time_signature.color,
+                    time_signature.denom_xy(),
+                    time_signature.scale,
+                )
                 .into(),
         );
     }
@@ -736,6 +744,87 @@ impl RenderPass for DebugRenderer {
             stroke_color,
         };
         out.push(bottom.into());
+    }
+
+    fn render_clef<'a>(
+        &self,
+        clef: &Clef,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let bbox = clef.scale_box(&clef.clef.bbox);
+
+        let rect = Rect {
+            xy: bbox.xy,
+            width: bbox.width(),
+            height: bbox.height(),
+            color: Color::TRANSPARENT,
+            stroke_width: Some(0.25),
+            stroke_color: Some(Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            }),
+        };
+        out.push(rect.into());
+
+        let origin = Line {
+            start: clef.xy,
+            end: clef.xy.mv(clef.width, 0.),
+            stroke_color: Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            },
+            stroke_width: 0.2,
+        };
+        out.push(origin.into());
+    }
+
+    fn render_time_signature<'a>(
+        &self,
+        time_signature: &TimeSignature,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        for (glyph, xy) in [
+            (&time_signature.num, time_signature.num_xy()),
+            (&time_signature.denom, time_signature.denom_xy()),
+        ] {
+            let bbox = time_signature
+                .scale_box(&glyph.bbox)
+                .mv(0., xy.y - time_signature.xy.y);
+
+            let rect = Rect {
+                xy: bbox.xy,
+                width: bbox.width(),
+                height: bbox.height(),
+                color: Color::TRANSPARENT,
+                stroke_width: Some(0.25),
+                stroke_color: Some(Color {
+                    a: 1.,
+                    r: 255,
+                    g: 0,
+                    b: 0,
+                }),
+            };
+            out.push(rect.into());
+
+            let origin = Line {
+                start: xy,
+                end: xy.mv(bbox.width(), 0.),
+                stroke_color: Color {
+                    a: 1.,
+                    r: 255,
+                    g: 0,
+                    b: 0,
+                },
+                stroke_width: 0.2,
+            };
+            out.push(origin.into());
+        }
     }
 
     fn render_accidental<'a>(

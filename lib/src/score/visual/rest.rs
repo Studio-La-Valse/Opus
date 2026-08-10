@@ -78,6 +78,8 @@ impl Rest {
 
     fn arrange_clef_changes(&mut self, origin: &XY, ctx: &StaffCtx) {
         if let Some(ref mut clef) = self.clef_change {
+            clef.rescale(ctx.scaling * 0.8);
+
             let dx = -5. - clef.width;
             let dy = ctx.distance_from_top
                 + clef.clef.line as f32 * Staff::DEFAULT_SPACE_SIZE / 2. * ctx.scaling;
@@ -85,8 +87,6 @@ impl Rest {
             let origin = origin.mv(dx, dy);
 
             clef.arrange(&origin);
-
-            clef.scale = ctx.scaling * 0.8;
         }
     }
 

@@ -118,9 +118,13 @@ impl SmuflFont {
         };
         let codepoint = self.glyph_names.get(ref_name).unwrap().codepoint_char();
 
+        let glyph_box = self.meta.glyph_boxes.get(ref_name).unwrap();
+        let bbox: BoundingBox = glyph_box.into();
+
         Clef {
             codepoint,
             line: clef.anchor_line(),
+            bbox,
         }
     }
 
@@ -173,7 +177,9 @@ impl SmuflFont {
             .get(name.as_str())
             .unwrap()
             .codepoint_char();
-        let num = Number { codepoint };
+        let glyph_box = self.meta.glyph_boxes.get(name.as_str()).unwrap();
+        let bbox: BoundingBox = glyph_box.into();
+        let num = Number { codepoint, bbox };
 
         let name = "timeSig".to_string() + time_signature.base.as_int().to_string().as_str();
         let codepoint = self
@@ -181,7 +187,9 @@ impl SmuflFont {
             .get(name.as_str())
             .unwrap()
             .codepoint_char();
-        let denom = Number { codepoint };
+        let glyph_box = self.meta.glyph_boxes.get(name.as_str()).unwrap();
+        let bbox: BoundingBox = glyph_box.into();
+        let denom = Number { codepoint, bbox };
 
         (num, denom)
     }

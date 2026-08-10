@@ -1,4 +1,5 @@
 use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::visual::staff::Staff;
@@ -9,6 +10,7 @@ use crate::smufl::smufl_glyph::SmuflGlyph;
 pub struct Clef {
     pub codepoint: char,
     pub line: i32,
+    pub bbox: BoundingBox,
 }
 
 impl SmuflGlyph for Clef {
