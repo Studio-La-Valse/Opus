@@ -9,6 +9,7 @@ use crate::{
         bracket::Bracket,
         chord::Chord,
         clef::Clef,
+        flag::Flag,
         key_signature::KeySignature,
         note::Note,
         page::Page,
@@ -193,6 +194,14 @@ pub trait RenderPass {
     fn render_stem<'a>(
         &self,
         _stem: &Stem,
+        _font: &'a SmuflFont,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
+
+    fn render_flag<'a>(
+        &self,
+        _flag: &Flag,
         _font: &'a SmuflFont,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {
@@ -434,6 +443,17 @@ impl RenderPass for RenderPasses {
             pass.render_stem(stem, font, out);
         }
     }
+
+    fn render_flag<'a>(
+        &self,
+        flag: &Flag,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        for pass in self.passes.iter() {
+            pass.render_flag(flag, font, out);
+        }
+    }
 }
 
 pub struct BaseRenderer {}
@@ -666,7 +686,7 @@ impl RenderPass for BaseRenderer {
     fn render_stem<'a>(
         &self,
         stem: &Stem,
-        font: &'a SmuflFont,
+        _font: &'a SmuflFont,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let thickness = stem.thickness * stem.scale;
@@ -679,23 +699,17 @@ impl RenderPass for BaseRenderer {
         }
         .into();
         out.push(line);
+    }
 
-        if let Some(flag) = &stem.flag {
-            let stem_anchor = match stem.direction {
-                UpDown::Up => stem.nw(),
-                UpDown::Down => stem.sw(),
-            };
-
-            let flag_anchor = flag.stem_anchor;
-            let flag_anchor = scale_pt(&flag_anchor, &stem_anchor, stem.scale);
-            let delta = stem_anchor - flag_anchor;
-            let final_anchor = stem_anchor + delta;
-
-            let flag: DrawableElement = flag
-                .as_text(font, stem.color, final_anchor, stem.scale)
-                .into();
-            out.push(flag);
-        }
+    fn render_flag<'a>(
+        &self,
+        flag: &Flag,
+        font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let glyph = &flag.glyph;
+        let text = glyph.as_text(font, flag.color, flag.xy, flag.scale);
+        out.push(text.into());
     }
 }
 
@@ -980,30 +994,53 @@ impl RenderPass for DebugRenderer {
     ) {
         match stem.direction {
             UpDown::Down => {
-                out.push(display_xy(&stem.nw(), &1., &Color::RED).into());
-                out.push(display_xy(&stem.sw(), &2., &Color::RED).into());
+                out.push(display_xy(&stem.nw(), &2.5, &Color::RED).into());
+                out.push(display_xy(&stem.sw(), &2.5, &Color::RED).into());
             }
             UpDown::Up => {
-                out.push(display_xy(&stem.nw(), &1., &Color::RED).into());
-                out.push(display_xy(&stem.se(), &1., &Color::RED).into());
+                out.push(display_xy(&stem.nw(), &2.5, &Color::RED).into());
+                out.push(display_xy(&stem.se(), &2.5, &Color::RED).into());
             }
         }
+    }
 
-        // if let Some(flag) = &stem.flag {
-        // let stem_anchor = match stem.direction {
-        //     UpDown::Up => stem.nw(),
-        //     UpDown::Down => stem.se(),
-        // };
-        // out.push(display(&stem_anchor, &2., &Color::RED).into());
+    fn render_flag<'a>(
+        &self,
+        flag: &Flag,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let bbox = flag.scale_box(&flag.glyph.bbox);
 
-        // let flag_anchor = flag.stem_anchor;
-        // let flag_anchor = scale_pt(&flag_anchor, &stem_anchor, stem.scale);
-        // out.push(display(&flag_anchor, &2.5, &Color::GREEN).into());
+        let rect = Rect {
+            xy: bbox.xy,
+            width: bbox.width(),
+            height: bbox.height(),
+            color: Color::TRANSPARENT,
+            stroke_width: Some(0.25),
+            stroke_color: Some(Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            }),
+        };
+        out.push(rect.into());
 
-        // let delta = stem_anchor - flag_anchor;
-        // let final_anchor = stem_anchor + delta;
-        // out.push(display(&final_anchor, &3., &Color::BLUE).into());
-        // }
+        let origin = Line {
+            start: flag.xy,
+            end: flag.xy.mv(flag.width, 0.),
+            stroke_color: Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            },
+            stroke_width: 0.2,
+        };
+        out.push(origin.into());
+
+        out.push(display_xy(&flag.stem_anchor_world(), &1., &Color::GREEN).into());
     }
 }
 
@@ -1019,14 +1056,4 @@ fn display_xy(xy: &XY, size: &f32, color: &Color) -> Rect {
         stroke_color: None,
         stroke_width: None,
     }
-}
-
-/// Scales a normalized point to current position and scale.
-fn scale_pt(flag_anchor: &XY, stem_anchor: &XY, scale: f32) -> XY {
-    let scaled = XY {
-        x: flag_anchor.x * (Staff::DEFAULT_SPACE_SIZE * scale),
-        y: flag_anchor.y * (Staff::DEFAULT_SPACE_SIZE * scale),
-    };
-
-    scaled + *stem_anchor
 }
