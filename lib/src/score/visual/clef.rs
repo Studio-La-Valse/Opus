@@ -53,6 +53,14 @@ impl Clef {
         self.width = bbox.width();
         self.height = bbox.height();
     }
+
+    /// Sets the scale and re-derives width/height from it, so callers that
+    /// rescale a clef after construction (e.g. courtesy clefs at 0.8x) don't
+    /// end up positioning against a stale, pre-rescale size.
+    pub fn rescale(&mut self, scale: f32) {
+        self.scale = scale;
+        self.measure_size();
+    }
 }
 
 impl ScoreElement for Clef {

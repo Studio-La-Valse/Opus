@@ -57,6 +57,8 @@ impl StaffMeasure {
     fn arrange_clef_start(&mut self) {
         let line_space = self.line_space() / 2.;
         if let Some(ref mut clef) = self.clef_start {
+            clef.rescale(self.scale);
+
             let dy: f32 = clef.clef.line as f32 * line_space;
             let dx = 10. * self.scale;
             clef.arrange(&self.xy.mv(dx, dy));
@@ -94,6 +96,8 @@ impl StaffMeasure {
     }
     fn arrange_clef_end(&mut self) {
         if let Some(ref mut clef) = self.clef_end {
+            clef.rescale(self.scale * 0.8);
+
             let clef_origin = self.xy;
             let measure_right = clef_origin.mv(self.width, 0.);
             let arrange_left = measure_right.mv(-5. - clef.width, 0.);
@@ -103,8 +107,6 @@ impl StaffMeasure {
             let origin = arrange_left.mv(0., dy);
 
             clef.arrange(&origin);
-
-            clef.scale = self.scale * 0.8;
         }
     }
     fn arrange_rests(&mut self) {

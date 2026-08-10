@@ -107,6 +107,8 @@ impl Chord {
         for (staff_idx, clef) in self.clef_change.iter_mut() {
             let ctx = staff_ctx.get(staff_idx).unwrap();
 
+            clef.rescale(ctx.scaling * 0.8);
+
             let dx = -5. + self.notes.first().unwrap().default_x - clef.width;
             let dy = ctx.distance_from_top
                 + Staff::DEFAULT_SPACE_SIZE / 2. * clef.clef.line as f32 * ctx.scaling;
@@ -114,8 +116,6 @@ impl Chord {
             let origin = self.xy.mv(dx, dy);
 
             clef.arrange(&origin);
-
-            clef.scale = ctx.scaling * 0.8;
         }
     }
 
