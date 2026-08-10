@@ -738,6 +738,43 @@ impl RenderPass for DebugRenderer {
         out.push(bottom.into());
     }
 
+    fn render_clef<'a>(
+        &self,
+        clef: &Clef,
+        _font: &'a SmuflFont,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let bbox = clef.scale_box(&clef.clef.bbox);
+
+        let rect = Rect {
+            xy: bbox.xy,
+            width: bbox.width(),
+            height: bbox.height(),
+            color: Color::TRANSPARENT,
+            stroke_width: Some(0.25),
+            stroke_color: Some(Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            }),
+        };
+        out.push(rect.into());
+
+        let origin = Line {
+            start: clef.xy,
+            end: clef.xy.mv(clef.width, 0.),
+            stroke_color: Color {
+                a: 1.,
+                r: 255,
+                g: 0,
+                b: 0,
+            },
+            stroke_width: 0.2,
+        };
+        out.push(origin.into());
+    }
+
     fn render_accidental<'a>(
         &self,
         accidental: &Accidental,

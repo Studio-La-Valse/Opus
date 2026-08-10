@@ -118,9 +118,13 @@ impl SmuflFont {
         };
         let codepoint = self.glyph_names.get(ref_name).unwrap().codepoint_char();
 
+        let glyph_box = self.meta.glyph_boxes.get(ref_name).unwrap();
+        let bbox: BoundingBox = glyph_box.into();
+
         Clef {
             codepoint,
             line: clef.anchor_line(),
+            bbox,
         }
     }
 
