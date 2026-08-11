@@ -96,13 +96,11 @@ impl Layoutable for Score {
         }
     }
 
-    fn arrange(&mut self, origin: &XY) {
-        let mut _origin: XY = *origin;
-
-        for page in self.pages.values_mut() {
-            page.arrange(&_origin);
-            _origin = _origin.mv(page.width, 0.);
-            _origin = _origin.mv(200., 0.);
-        }
+    fn arrange(&mut self, _origin: &XY) {
+        todo!(
+            "Score::arrange is superseded by LayoutEngine::arrange_pages — construct a \
+             HorizontalPageLayout/VerticalPageLayout and call arrange_pages(&mut score, origin) \
+             instead of Layoutable::arrange on Score directly"
+        );
     }
 }

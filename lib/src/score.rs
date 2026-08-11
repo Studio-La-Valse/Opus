@@ -2,6 +2,7 @@
 pub mod core;
 pub mod layout;
 pub mod layout_ctx;
+pub mod page_orientation;
 pub mod rebeam_strategy;
 pub mod user_layout;
 pub mod visual;

@@ -40,6 +40,26 @@
             "sourceLanguages": [
                 "rust"
             ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Vertical Orientation Sample)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/app",
+            "args": [
+                "--file", "xmlsamples/ActorPreludeSample.musicxml",
+                "--out", "xmltest/test.svg",
+                "--meta", "smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "smufl/metadata/glyphnames.json",
+                "--page-orientation", "vertical",
+                "--vertical-gutter", "10",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
         }
     ]
 }
