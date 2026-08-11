@@ -1,16 +1,11 @@
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum PageOrientation {
+    #[default]
     Horizontal,
     Vertical,
-}
-
-impl Default for PageOrientation {
-    fn default() -> Self {
-        PageOrientation::Horizontal
-    }
 }
 
 #[derive(Debug)]
