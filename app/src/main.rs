@@ -6,8 +6,10 @@ use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::layout::Layout;
 use lib::score::layout_ctx::LayoutCtx;
+use lib::score::page_orientation::PageOrientation;
 use lib::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use lib::score::user_layout::UserLayout;
+use lib::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_pass::{BaseRenderer, DebugRenderer};
 use lib::score::visual::score::Score;
@@ -48,6 +50,18 @@ struct Args {
 
     #[arg(long)]
     foreground_color: Option<Color>,
+
+    #[arg(long)]
+    page_orientation: Option<PageOrientation>,
+
+    #[arg(long)]
+    horizontal_gutter_even: Option<f32>,
+
+    #[arg(long)]
+    horizontal_gutter_uneven: Option<f32>,
+
+    #[arg(long)]
+    vertical_gutter: Option<f32>,
 }
 
 fn main() {
@@ -64,6 +78,10 @@ fn main() {
     let debug = args.debug;
     let page_color = args.page_color;
     let foreground_color = args.foreground_color;
+    let page_orientation = args.page_orientation;
+    let horizontal_gutter_even = args.horizontal_gutter_even;
+    let horizontal_gutter_uneven = args.horizontal_gutter_uneven;
+    let vertical_gutter = args.vertical_gutter;
 
     let mut time = Instant::now();
 
@@ -86,6 +104,10 @@ fn main() {
     let user_layout = UserLayout {
         page_color,
         foreground_color,
+        page_orientation,
+        horizontal_gutter_even,
+        horizontal_gutter_uneven,
+        vertical_gutter,
         ..Default::default()
     };
     let app_defaults: AppDefaults = Default::default();
@@ -155,7 +177,26 @@ fn main() {
     time = Instant::now();
 
     visual.measure(&XY::INFINITE);
-    visual.arrange(&XY::ZERO);
+
+    let orientation = user_layout
+        .page_orientation
+        .unwrap_or(app_defaults.page_orientation);
+    let layout_engine: Box<dyn LayoutEngine> = match orientation {
+        PageOrientation::Horizontal => Box::new(HorizontalPageLayout {
+            gutter_even: user_layout
+                .horizontal_gutter_even
+                .unwrap_or(app_defaults.horizontal_gutter_even),
+            gutter_uneven: user_layout
+                .horizontal_gutter_uneven
+                .unwrap_or(app_defaults.horizontal_gutter_uneven),
+        }),
+        PageOrientation::Vertical => Box::new(VerticalPageLayout {
+            gutter: user_layout
+                .vertical_gutter
+                .unwrap_or(app_defaults.vertical_gutter),
+        }),
+    };
+    layout_engine.arrange_pages(&mut visual, &XY::ZERO);
 
     println!("Layout pass: {}ms", time.elapsed().as_millis());
     time = Instant::now();
