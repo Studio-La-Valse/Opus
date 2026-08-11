@@ -1,6 +1,7 @@
 use clap::Parser;
 use lib::drawable::drawable_element::{DrawableElement, to_svg};
 use lib::drawable::layoutable::Layoutable;
+use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::layout::Layout;
@@ -41,6 +42,12 @@ struct Args {
 
     #[arg(long, short, action)]
     debug: bool,
+
+    #[arg(long)]
+    page_color: Option<Color>,
+
+    #[arg(long)]
+    foreground_color: Option<Color>,
 }
 
 fn main() {
@@ -55,6 +62,8 @@ fn main() {
     let meta = args.meta;
     let glyph_names = args.glyphs;
     let debug = args.debug;
+    let page_color = args.page_color;
+    let foreground_color = args.foreground_color;
 
     let mut time = Instant::now();
 
@@ -74,7 +83,11 @@ fn main() {
     println!("Parsing doc tree: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
-    let user_layout: UserLayout = Default::default();
+    let user_layout = UserLayout {
+        page_color,
+        foreground_color,
+        ..Default::default()
+    };
     let app_defaults: AppDefaults = Default::default();
 
     let mut layout_ctx = LayoutCtx::default();

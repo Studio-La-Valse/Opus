@@ -193,7 +193,14 @@ impl PartMeasure {
                     None => continue,
                 };
 
-                let beams = create_beams(&group, &ray, &direction, &beam_thickness, &beam_spacing);
+                let beams = create_beams(
+                    &group,
+                    &ray,
+                    &direction,
+                    &beam_thickness,
+                    &beam_spacing,
+                    &self.color,
+                );
 
                 self.beams.extend(beams);
 
@@ -447,6 +454,7 @@ fn create_beams(
     direction: &UpDown,
     beam_thickness: &f32,
     beam_spacing: &f32,
+    color: &Color,
 ) -> Vec<Polygon> {
     let mut beams: Vec<Polygon> = vec![];
     if chords.is_empty() {
@@ -514,7 +522,7 @@ fn create_beams(
                         Line {
                             start: left_point,
                             end: right_point.unwrap(),
-                            stroke_color: Color::BLACK,
+                            stroke_color: *color,
                             stroke_width: *beam_thickness,
                         }
                         .extrude(&XY { x: 0., y: dy })
