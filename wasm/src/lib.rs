@@ -1,4 +1,5 @@
-use lib::drawable::drawable_element::{DrawableElement, to_svg};
+use lib::drawable::drawable_element::DrawableElement;
+use lib::drawable::flat_buffer::to_flat_buffer;
 use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
@@ -31,9 +32,56 @@ fn init() {
     console_error_panic_hook::set_once();
 }
 
+/// Canvas-ready render output. `geometry` is a tagged f32 stream and `text_blob`
+/// holds every Text record's content in encounter order, joined by
+/// [`lib::drawable::flat_buffer::TEXT_DELIMITER`]. See
+/// [`lib::drawable::flat_buffer::FlatBuffer`] for the exact record layout.
+#[wasm_bindgen]
+pub struct RenderOutput {
+    bounds_min_x: f32,
+    bounds_min_y: f32,
+    bounds_width: f32,
+    bounds_height: f32,
+    geometry: Vec<f32>,
+    text_blob: String,
+}
+
+#[wasm_bindgen]
+impl RenderOutput {
+    #[wasm_bindgen(getter)]
+    pub fn bounds_min_x(&self) -> f32 {
+        self.bounds_min_x
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn bounds_min_y(&self) -> f32 {
+        self.bounds_min_y
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn bounds_width(&self) -> f32 {
+        self.bounds_width
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn bounds_height(&self) -> f32 {
+        self.bounds_height
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn geometry(&self) -> Vec<f32> {
+        self.geometry.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn text_blob(&self) -> String {
+        self.text_blob.clone()
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen]
-pub fn render_score(
+pub fn render_elements(
     musicxml: &str,
     meta_json: &str,
     glyph_names_json: &str,
@@ -44,7 +92,7 @@ pub fn render_score(
     horizontal_gutter_even: Option<f32>,
     horizontal_gutter_uneven: Option<f32>,
     vertical_gutter: Option<f32>,
-) -> Result<String, JsValue> {
+) -> Result<RenderOutput, JsValue> {
     let page_color = page_color
         .map(|s| Color::from_str(&s))
         .transpose()
@@ -157,5 +205,13 @@ pub fn render_score(
         elements.extend(compositor.walk(&visual, &font));
     }
 
-    Ok(to_svg(elements))
+    let flat = to_flat_buffer(elements);
+    Ok(RenderOutput {
+        bounds_min_x: flat.bounds.0,
+        bounds_min_y: flat.bounds.1,
+        bounds_width: flat.bounds.2,
+        bounds_height: flat.bounds.3,
+        geometry: flat.geometry,
+        text_blob: flat.text_blob,
+    })
 }

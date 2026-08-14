@@ -4,12 +4,6 @@
   <meta charset="utf-8" />
   <title>Opus — wasm viewer</title>
   <style>
-    @font-face {
-      font-family: "Bravura";
-      src: url("../smufl/bravura-bravura-1.392/redist/woff/Bravura.woff2") format("woff2"),
-           url("../smufl/bravura-bravura-1.392/redist/woff/Bravura.woff") format("woff");
-    }
-
     body {
       font-family: sans-serif;
       margin: 1.5rem;
@@ -35,10 +29,16 @@
       max-width: 100%;
     }
 
-    #output svg {
-      max-width: 100%;
-      height: auto;
+    #output canvas {
       display: block;
+    }
+
+    input[type="color"] {
+      justify-self: start;
+      width: 3rem;
+      height: 2rem;
+      padding: 0;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
@@ -50,10 +50,10 @@
     <input type="file" id="musicxml-file" accept=".musicxml,.xml" required />
 
     <label for="page-color">Page color</label>
-    <input type="text" id="page-color" placeholder="#FFFFFF" />
+    <input type="color" id="page-color" value="#ffffff" />
 
     <label for="foreground-color">Foreground color</label>
-    <input type="text" id="foreground-color" placeholder="#000000" />
+    <input type="color" id="foreground-color" value="#000000" />
 
     <label for="page-orientation">Page orientation</label>
     <select id="page-orientation">
@@ -79,7 +79,9 @@
   </form>
 
   <div id="status"></div>
-  <div id="output"></div>
+  <div id="output">
+    <canvas id="score-canvas"></canvas>
+  </div>
 
   <script type="module" src="./main.js"></script>
 </body>
