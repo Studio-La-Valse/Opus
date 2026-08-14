@@ -72,15 +72,96 @@ function rgba(r, g, b, a) {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+// Assigning to these ctx properties is expensive even when the new value
+// equals the current one (ctx.font in particular forces font re-resolution),
+// and adjacent drawable records very often share style with their neighbor.
+// Comparing the raw numeric components (rather than building an rgba()/font
+// string first and comparing strings) avoids allocating and immediately
+// discarding a throwaway string for every element that didn't change -
+// that churn was enough to trigger unpredictable GC pauses given how many
+// thousands of elements a score can have.
+let currentFillR, currentFillG, currentFillB, currentFillA;
+let currentStrokeR, currentStrokeG, currentStrokeB, currentStrokeA;
+let currentLineWidth;
+let currentFontSize;
+let currentTextAlign;
+let currentTextBaseline;
+
+function setFillStyle(r, g, b, a) {
+  if (currentFillR !== r || currentFillG !== g || currentFillB !== b || currentFillA !== a) {
+    ctx.fillStyle = rgba(r, g, b, a);
+    currentFillR = r;
+    currentFillG = g;
+    currentFillB = b;
+    currentFillA = a;
+  }
+}
+
+function setStrokeStyle(r, g, b, a) {
+  if (
+    currentStrokeR !== r ||
+    currentStrokeG !== g ||
+    currentStrokeB !== b ||
+    currentStrokeA !== a
+  ) {
+    ctx.strokeStyle = rgba(r, g, b, a);
+    currentStrokeR = r;
+    currentStrokeG = g;
+    currentStrokeB = b;
+    currentStrokeA = a;
+  }
+}
+
+function setLineWidth(width) {
+  if (currentLineWidth !== width) {
+    ctx.lineWidth = width;
+    currentLineWidth = width;
+  }
+}
+
+function setFont(fontSize) {
+  if (currentFontSize !== fontSize) {
+    ctx.font = `${fontSize}px Bravura`;
+    currentFontSize = fontSize;
+  }
+}
+
+function setTextAlign(align) {
+  if (currentTextAlign !== align) {
+    ctx.textAlign = align;
+    currentTextAlign = align;
+  }
+}
+
+function setTextBaseline(baseline) {
+  if (currentTextBaseline !== baseline) {
+    ctx.textBaseline = baseline;
+    currentTextBaseline = baseline;
+  }
+}
+
 function draw(output) {
   const texts = output.text_blob === "" ? [] : output.text_blob.split(TEXT_DELIMITER);
   const geometry = output.geometry;
 
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = output.bounds_width * dpr;
-  canvas.height = output.bounds_height * dpr;
-  canvas.style.width = `${output.bounds_width}px`;
-  canvas.style.height = `${output.bounds_height}px`;
+  const width = output.bounds_width * dpr;
+  const height = output.bounds_height * dpr;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = `${output.bounds_width}px`;
+    canvas.style.height = `${output.bounds_height}px`;
+    // Setting canvas.width/height resets the entire 2D context state
+    // (fillStyle, font, ...) back to browser defaults, so the tracked
+    // "current" values above would otherwise go stale.
+    currentFillR = currentFillG = currentFillB = currentFillA = undefined;
+    currentStrokeR = currentStrokeG = currentStrokeB = currentStrokeA = undefined;
+    currentLineWidth = undefined;
+    currentFontSize = undefined;
+    currentTextAlign = undefined;
+    currentTextBaseline = undefined;
+  }
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, output.bounds_width, output.bounds_height);
@@ -104,8 +185,8 @@ function draw(output) {
         const a = geometry[i++];
         const strokeWidth = geometry[i++];
 
-        ctx.strokeStyle = rgba(r, g, b, a);
-        ctx.lineWidth = strokeWidth;
+        setStrokeStyle(r, g, b, a);
+        setLineWidth(strokeWidth);
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
@@ -128,11 +209,11 @@ function draw(output) {
         const sb = geometry[i++];
         const sa = geometry[i++];
 
-        ctx.fillStyle = rgba(r, g, b, a);
+        setFillStyle(r, g, b, a);
         ctx.fillRect(x, y, w, h);
         if (strokeWidth >= 0) {
-          ctx.strokeStyle = rgba(sr, sg, sb, sa);
-          ctx.lineWidth = strokeWidth;
+          setStrokeStyle(sr, sg, sb, sa);
+          setLineWidth(strokeWidth);
           ctx.strokeRect(x, y, w, h);
         }
         break;
@@ -149,10 +230,10 @@ function draw(output) {
         const hAlign = geometry[i++];
         const vAlign = geometry[i++];
 
-        ctx.fillStyle = rgba(r, g, b, a);
-        ctx.font = `${fontSize}px Bravura`;
-        ctx.textAlign = H_ALIGN[hAlign];
-        ctx.textBaseline = V_ALIGN[vAlign];
+        setFillStyle(r, g, b, a);
+        setFont(fontSize);
+        setTextAlign(H_ALIGN[hAlign]);
+        setTextBaseline(V_ALIGN[vAlign]);
         ctx.fillText(texts[textIndex++] ?? "", x, y);
         break;
       }
@@ -180,11 +261,11 @@ function draw(output) {
           }
         }
         ctx.closePath();
-        ctx.fillStyle = rgba(r, g, b, a);
+        setFillStyle(r, g, b, a);
         ctx.fill();
         if (strokeWidth >= 0) {
-          ctx.strokeStyle = rgba(sr, sg, sb, sa);
-          ctx.lineWidth = strokeWidth;
+          setStrokeStyle(sr, sg, sb, sa);
+          setLineWidth(strokeWidth);
           ctx.stroke();
         }
         break;
