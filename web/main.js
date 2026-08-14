@@ -1,4 +1,4 @@
-import init, { render_elements } from "../wasm/pkg/wasm.js";
+import init, { load_score, render } from "../wasm/pkg/wasm.js";
 
 // Keep in sync with lib/src/drawable/flat_buffer.rs.
 const TAG_LINE = 0;
@@ -18,6 +18,7 @@ const form = document.getElementById("render-form");
 let metaJson;
 let glyphNamesJson;
 let musicxmlText;
+let scoreLoaded = false;
 
 function setStatus(message) {
   statusEl.textContent = message ?? "";
@@ -198,7 +199,7 @@ function draw(output) {
 function renderNow(showFileError) {
   setStatus("");
 
-  if (!musicxmlText) {
+  if (!scoreLoaded) {
     if (showFileError) {
       setStatus("Choose a MusicXML file first.");
     }
@@ -207,10 +208,7 @@ function renderNow(showFileError) {
 
   let output;
   try {
-    output = render_elements(
-      musicxmlText,
-      metaJson,
-      glyphNamesJson,
+    output = render(
       document.getElementById("debug").checked,
       document.getElementById("page-color").value,
       document.getElementById("foreground-color").value,
@@ -231,7 +229,7 @@ function renderNow(showFileError) {
 let debounceTimer;
 function scheduleRender() {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => renderNow(false), 200);
+  debounceTimer = setTimeout(() => renderNow(false), 2);
 }
 
 form.addEventListener("submit", (event) => {
@@ -242,6 +240,18 @@ form.addEventListener("submit", (event) => {
 document.getElementById("musicxml-file").addEventListener("change", async () => {
   const file = document.getElementById("musicxml-file").files[0];
   musicxmlText = file ? await file.text() : undefined;
+  scoreLoaded = false;
+
+  if (musicxmlText) {
+    try {
+      load_score(musicxmlText, metaJson, glyphNamesJson);
+      scoreLoaded = true;
+    } catch (err) {
+      setStatus(String(err));
+      return;
+    }
+  }
+
   renderNow(true);
 });
 

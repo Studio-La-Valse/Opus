@@ -23,6 +23,7 @@ use lib::xml::visitors::setup_visitor::SetupVisitor;
 use lib::xml::walker::Walker;
 use lib::xml::walker_ctx::WalkerCtx;
 use roxmltree::{Document, ParsingOptions};
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
@@ -30,6 +31,19 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(start)]
 fn init() {
     console_error_panic_hook::set_once();
+}
+
+/// Everything built from a MusicXML document that doesn't depend on
+/// [`UserLayout`]. Rebuilt by [`load_score`], reused by every subsequent
+/// [`render`] call until the next [`load_score`] replaces it.
+struct ScoreCache {
+    layout: Layout,
+    score: Score,
+    font: SmuflFont,
+}
+
+thread_local! {
+    static CACHE: RefCell<Option<ScoreCache>> = const { RefCell::new(None) };
 }
 
 /// Canvas-ready render output. `geometry` is a tagged f32 stream and `text_blob`
@@ -79,12 +93,81 @@ impl RenderOutput {
     }
 }
 
+/// Parses `musicxml` and builds the [`Layout`]/[`Score`]/[`SmuflFont`] triple,
+/// none of which depend on [`UserLayout`]. Caches the result so subsequent
+/// [`render`] calls can re-layout and re-render without re-parsing or
+/// re-walking the document. Replaces (and drops) whatever was cached before.
+#[wasm_bindgen]
+pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Result<(), JsValue> {
+    let font = SmuflFont::load(meta_json, glyph_names_json);
+
+    let options = ParsingOptions {
+        allow_dtd: true,
+        ..ParsingOptions::default()
+    };
+    let document = Document::parse_with_options(musicxml, options)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    // Only used to satisfy `WalkerCtx::new` during the two walk passes below;
+    // no visitor reads it, since it doesn't affect the document's structure.
+    let user_layout = UserLayout::default();
+    let app_defaults: AppDefaults = Default::default();
+
+    let mut layout_ctx = LayoutCtx::default();
+    let mut layout = Layout::default();
+    let mut score = Score::default();
+
+    let visitor = DefaultVisitor {}
+        .uses(LayoutContextVisitor {})
+        .uses(SetupVisitor {})
+        .uses(LayoutVisitor {
+            encountered: HashSet::new(),
+        });
+
+    let mut ctx = WalkerCtx::new(
+        &user_layout,
+        &mut layout,
+        &app_defaults,
+        &mut layout_ctx,
+        &mut score,
+        &font,
+    );
+    Walker::new(visitor).walk(&document, &mut ctx);
+
+    let visitor = DefaultVisitor {}
+        .uses(LayoutContextVisitor {})
+        .uses(ContentVisitor {
+            clef_change: HashMap::new(),
+        });
+
+    let mut ctx = WalkerCtx::new(
+        &user_layout,
+        &mut layout,
+        &app_defaults,
+        &mut layout_ctx,
+        &mut score,
+        &font,
+    );
+    Walker::new(visitor).walk(&document, &mut ctx);
+
+    CACHE.with_borrow_mut(|cache| {
+        *cache = Some(ScoreCache {
+            layout,
+            score,
+            font,
+        });
+    });
+
+    Ok(())
+}
+
+/// Applies `UserLayout` to the [`Score`] cached by the last [`load_score`]
+/// call and returns the resulting drawable elements. Does no XML parsing or
+/// walking, so it's cheap to call on every layout-only change (e.g. a page
+/// color tweak).
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen]
-pub fn render_elements(
-    musicxml: &str,
-    meta_json: &str,
-    glyph_names_json: &str,
+pub fn render(
     debug: bool,
     page_color: Option<String>,
     foreground_color: Option<String>,
@@ -106,15 +189,6 @@ pub fn render_elements(
         .transpose()
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-    let font = SmuflFont::load(meta_json, glyph_names_json);
-
-    let options = ParsingOptions {
-        allow_dtd: true,
-        ..ParsingOptions::default()
-    };
-    let document = Document::parse_with_options(musicxml, options)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
     let user_layout = UserLayout {
         page_color,
         foreground_color,
@@ -126,92 +200,112 @@ pub fn render_elements(
     };
     let app_defaults: AppDefaults = Default::default();
 
-    let mut layout_ctx = LayoutCtx::default();
-    let mut layout = Layout::default();
-    let mut visual = Score::default();
+    CACHE.with_borrow_mut(|cache| {
+        let cache = cache
+            .as_mut()
+            .ok_or_else(|| JsValue::from_str("no score loaded; call load_score first"))?;
 
-    let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
-        .uses(SetupVisitor {})
-        .uses(LayoutVisitor {
-            encountered: HashSet::new(),
-        });
+        cache
+            .score
+            .apply_layout(&cache.layout, &user_layout, &app_defaults);
 
-    let mut ctx = WalkerCtx::new(
-        &user_layout,
-        &mut layout,
-        &app_defaults,
-        &mut layout_ctx,
-        &mut visual,
-        &font,
-    );
-    Walker::new(visitor).walk(&document, &mut ctx);
+        let strat_impl = Box::new(SimpleRebeamStrategy {});
+        let strategy = Box::new(OnlyWhenRequiredRebeamStrategy { imp: strat_impl });
+        cache.score.rebeam(strategy.as_ref());
 
-    let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
-        .uses(ContentVisitor {
-            clef_change: HashMap::new(),
-        });
+        cache.score.measure(&XY::INFINITE);
 
-    let mut ctx = WalkerCtx::new(
-        &user_layout,
-        &mut layout,
-        &app_defaults,
-        &mut layout_ctx,
-        &mut visual,
-        &font,
-    );
-    Walker::new(visitor).walk(&document, &mut ctx);
+        let orientation = user_layout
+            .page_orientation
+            .unwrap_or(app_defaults.page_orientation);
+        let layout_engine: Box<dyn LayoutEngine> = match orientation {
+            PageOrientation::Horizontal => Box::new(HorizontalPageLayout {
+                gutter_even: user_layout
+                    .horizontal_gutter_even
+                    .unwrap_or(app_defaults.horizontal_gutter_even),
+                gutter_uneven: user_layout
+                    .horizontal_gutter_uneven
+                    .unwrap_or(app_defaults.horizontal_gutter_uneven),
+            }),
+            PageOrientation::Vertical => Box::new(VerticalPageLayout {
+                gutter: user_layout
+                    .vertical_gutter
+                    .unwrap_or(app_defaults.vertical_gutter),
+            }),
+        };
+        layout_engine.arrange_pages(&mut cache.score, &XY::ZERO);
 
-    visual.apply_layout(&layout, &user_layout, &app_defaults);
-
-    let strat_impl = Box::new(SimpleRebeamStrategy {});
-    let strategy = Box::new(OnlyWhenRequiredRebeamStrategy { imp: strat_impl });
-    visual.rebeam(strategy.as_ref());
-
-    visual.measure(&XY::INFINITE);
-
-    let orientation = user_layout
-        .page_orientation
-        .unwrap_or(app_defaults.page_orientation);
-    let layout_engine: Box<dyn LayoutEngine> = match orientation {
-        PageOrientation::Horizontal => Box::new(HorizontalPageLayout {
-            gutter_even: user_layout
-                .horizontal_gutter_even
-                .unwrap_or(app_defaults.horizontal_gutter_even),
-            gutter_uneven: user_layout
-                .horizontal_gutter_uneven
-                .unwrap_or(app_defaults.horizontal_gutter_uneven),
-        }),
-        PageOrientation::Vertical => Box::new(VerticalPageLayout {
-            gutter: user_layout
-                .vertical_gutter
-                .unwrap_or(app_defaults.vertical_gutter),
-        }),
-    };
-    layout_engine.arrange_pages(&mut visual, &XY::ZERO);
-
-    let pass = BaseRenderer {};
-    let compositor = RenderCompositor {
-        pass: Box::new(pass),
-    };
-    let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&visual, &font);
-
-    if debug {
-        let pass = DebugRenderer {};
+        let pass = BaseRenderer {};
         let compositor = RenderCompositor {
             pass: Box::new(pass),
         };
-        elements.extend(compositor.walk(&visual, &font));
+        let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&cache.score, &cache.font);
+
+        if debug {
+            let pass = DebugRenderer {};
+            let compositor = RenderCompositor {
+                pass: Box::new(pass),
+            };
+            elements.extend(compositor.walk(&cache.score, &cache.font));
+        }
+
+        let flat = to_flat_buffer(elements);
+        Ok(RenderOutput {
+            bounds_min_x: flat.bounds.0,
+            bounds_min_y: flat.bounds.1,
+            bounds_width: flat.bounds.2,
+            bounds_height: flat.bounds.3,
+            geometry: flat.geometry,
+            text_blob: flat.text_blob,
+        })
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::read_to_string;
+
+    fn fixture(relative_path: &str) -> String {
+        read_to_string(format!(
+            "{}/../{relative_path}",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .unwrap_or_else(|e| panic!("failed to read {relative_path}: {e}"))
     }
 
-    let flat = to_flat_buffer(elements);
-    Ok(RenderOutput {
-        bounds_min_x: flat.bounds.0,
-        bounds_min_y: flat.bounds.1,
-        bounds_width: flat.bounds.2,
-        bounds_height: flat.bounds.3,
-        geometry: flat.geometry,
-        text_blob: flat.text_blob,
-    })
+    /// `render` reruns apply_layout/rebeam/measure/arrange_pages on the same
+    /// cached `Score` every call instead of rebuilding it from scratch. That's
+    /// only safe if those steps are idempotent; this guards the assumption by
+    /// calling `render` twice with identical arguments and requiring identical
+    /// output.
+    #[test]
+    fn render_is_idempotent_across_repeated_calls_with_the_same_layout() {
+        let musicxml = fixture("xmlsamples/ActorPreludeSample.musicxml");
+        let meta_json = fixture("smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
+        let glyph_names_json = fixture("smufl/metadata/glyphnames.json");
+
+        load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
+
+        let render_once = || {
+            render(
+                false,
+                Some("#ffffff".to_string()),
+                Some("#000000".to_string()),
+                None,
+                None,
+                None,
+                None,
+            )
+            .expect("render failed")
+        };
+
+        let first = render_once();
+        let second = render_once();
+
+        assert_eq!(first.geometry, second.geometry);
+        assert_eq!(first.text_blob, second.text_blob);
+        assert_eq!(first.bounds_width, second.bounds_width);
+        assert_eq!(first.bounds_height, second.bounds_height);
+    }
 }
