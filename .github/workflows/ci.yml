@@ -50,3 +50,16 @@ jobs:
         run: cargo build --workspace --all-targets
       - name: Run tests
         run: cargo test --workspace --all-targets
+
+  wasm:
+    name: Wasm build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Build wasm crate for wasm32-unknown-unknown
+        run: cargo build -p wasm --target wasm32-unknown-unknown

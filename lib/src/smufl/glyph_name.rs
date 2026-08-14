@@ -1,11 +1,9 @@
 ﻿use serde::Deserialize;
 use std::collections::HashMap;
-use std::fs;
 
-pub fn load_glyph_names(json: &str) -> HashMap<String, GlyphName> {
-    let raw = fs::read_to_string(json).expect("Failed to read file");
-    let res = serde_json::from_str(&raw);
-    res.expect("Invalid glyphnames.json file")
+pub fn load_glyph_names(json_content: &str) -> HashMap<String, GlyphName> {
+    let res = serde_json::from_str(json_content);
+    res.expect("Invalid glyphnames.json content")
 }
 
 #[derive(Deserialize)]
