@@ -1,4 +1,4 @@
-use lib::drawable::drawable_element::DrawableElement;
+use lib::drawable::drawable_element::{DrawableElement, compute_bounds, scale_elem};
 use lib::drawable::flat_buffer::to_flat_buffer;
 use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
@@ -82,14 +82,18 @@ impl RenderOutput {
         self.bounds_height
     }
 
+    // Takes ownership of the buffer instead of cloning it: `draw()` in main.js
+    // reads each property exactly once per RenderOutput before calling
+    // `output.free()`, so there's no reason to pay for a second copy on top of
+    // the copy wasm-bindgen already does when handing the Vec/String to JS.
     #[wasm_bindgen(getter)]
-    pub fn geometry(&self) -> Vec<f32> {
-        self.geometry.clone()
+    pub fn geometry(&mut self) -> Vec<f32> {
+        std::mem::take(&mut self.geometry)
     }
 
     #[wasm_bindgen(getter)]
-    pub fn text_blob(&self) -> String {
-        self.text_blob.clone()
+    pub fn text_blob(&mut self) -> String {
+        std::mem::take(&mut self.text_blob)
     }
 }
 
@@ -161,10 +165,26 @@ pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Re
     Ok(())
 }
 
+/// Upper bound on the canvas's physical pixel count (`width * height` in
+/// device pixels). A score's logical bounds can span many pages laid out
+/// side by side, which at a high `device_pixel_ratio` produces a canvas far
+/// larger than any viewport - and canvas raster/composite cost scales with
+/// physical pixel count, not element count. Chosen as roughly "one big
+/// native display's worth of pixels": scores that already fit render at full
+/// native sharpness, only oversized ones get scaled down. Purely a
+/// browser-canvas concern, so it lives here rather than in `lib`, which also
+/// backs non-canvas consumers (e.g. SVG export) that shouldn't be capped.
+const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
+
 /// Applies `UserLayout` to the [`Score`] cached by the last [`load_score`]
 /// call and returns the resulting drawable elements. Does no XML parsing or
 /// walking, so it's cheap to call on every layout-only change (e.g. a page
 /// color tweak).
+///
+/// `device_pixel_ratio` (the browser's `window.devicePixelRatio`) is used
+/// only to decide whether the result needs scaling down to stay within
+/// [`MAX_CANVAS_PIXELS`]; the caller still multiplies the returned bounds by
+/// it as usual when sizing the canvas backing store.
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen]
 pub fn render(
@@ -175,6 +195,7 @@ pub fn render(
     horizontal_gutter_even: Option<f32>,
     horizontal_gutter_uneven: Option<f32>,
     vertical_gutter: Option<f32>,
+    device_pixel_ratio: f32,
 ) -> Result<RenderOutput, JsValue> {
     let page_color = page_color
         .map(|s| Color::from_str(&s))
@@ -249,6 +270,25 @@ pub fn render(
             elements.extend(compositor.walk(&cache.score, &cache.font));
         }
 
+        let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);
+        let physical_width = (max_x - min_x) * device_pixel_ratio;
+        let physical_height = (max_y - min_y) * device_pixel_ratio;
+        let render_scale = if physical_width > 0.0 && physical_height > 0.0 {
+            (MAX_CANVAS_PIXELS / (physical_width * physical_height))
+                .sqrt()
+                .min(1.0)
+        } else {
+            1.0
+        };
+        let elements: Vec<DrawableElement<'_>> = if render_scale < 1.0 {
+            elements
+                .iter()
+                .map(|el| scale_elem(el, render_scale))
+                .collect()
+        } else {
+            elements
+        };
+
         let flat = to_flat_buffer(elements);
         Ok(RenderOutput {
             bounds_min_x: flat.bounds.0,
@@ -296,6 +336,7 @@ mod tests {
                 None,
                 None,
                 None,
+                1.0,
             )
             .expect("render failed")
         };
@@ -307,5 +348,59 @@ mod tests {
         assert_eq!(first.text_blob, second.text_blob);
         assert_eq!(first.bounds_width, second.bounds_width);
         assert_eq!(first.bounds_height, second.bounds_height);
+    }
+
+    /// A single small score stays within [`MAX_CANVAS_PIXELS`] even at a
+    /// typical devicePixelRatio, so it should render unscaled (this also
+    /// guards against `render_scale` kicking in when it shouldn't). At an
+    /// extreme device_pixel_ratio, though, the same score would blow well
+    /// past the budget if left unscaled, so `render` must shrink it down to
+    /// fit - this is what actually keeps the browser's canvas raster/composite
+    /// cost bounded regardless of how a caller reports its pixel ratio.
+    #[test]
+    fn render_keeps_the_canvas_backing_store_within_the_pixel_budget() {
+        let musicxml = fixture("xmlsamples/ActorPreludeSample.musicxml");
+        let meta_json = fixture("smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
+        let glyph_names_json = fixture("smufl/metadata/glyphnames.json");
+
+        load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
+
+        let render_at = |device_pixel_ratio: f32| {
+            render(
+                false,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                device_pixel_ratio,
+            )
+            .expect("render failed")
+        };
+
+        let unscaled = render_at(1.0);
+        let unscaled_physical_pixels =
+            unscaled.bounds_width as f64 * unscaled.bounds_height as f64;
+        assert!(
+            unscaled_physical_pixels <= MAX_CANVAS_PIXELS as f64,
+            "test fixture is expected to already fit the budget at device_pixel_ratio 1.0, \
+             got {unscaled_physical_pixels} physical pixels",
+        );
+
+        let huge_device_pixel_ratio = 1000.0;
+        let scaled = render_at(huge_device_pixel_ratio);
+        let scaled_physical_pixels = (scaled.bounds_width as f64 * huge_device_pixel_ratio as f64)
+            * (scaled.bounds_height as f64 * huge_device_pixel_ratio as f64);
+
+        assert!(
+            scaled_physical_pixels <= MAX_CANVAS_PIXELS as f64 * 1.01, // float slop
+            "expected the render at a huge device_pixel_ratio to stay within the canvas pixel \
+             budget, got {scaled_physical_pixels} physical pixels",
+        );
+        assert!(
+            scaled.bounds_width < unscaled.bounds_width,
+            "expected element coordinates to actually shrink once the budget kicks in",
+        );
     }
 }

@@ -11,3 +11,15 @@ pub struct Rect {
     pub stroke_color: Option<Color>,
     pub stroke_width: Option<f32>,
 }
+
+impl Rect {
+    pub fn scale(&self, scale: f32) -> Rect {
+        Rect {
+            xy: self.xy.scale(scale),
+            width: self.width * scale,
+            height: self.height * scale,
+            stroke_width: self.stroke_width.map(|v| v * scale),
+            ..*self
+        }
+    }
+}

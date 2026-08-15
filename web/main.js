@@ -140,13 +140,29 @@ function setTextBaseline(baseline) {
   }
 }
 
+// Temporary profiling instrumentation (see the perf investigation in web/main.js
+// history): logs a decode/draw timing breakdown to the console on every render
+// so we can see where the 100ms-for-10k-items time actually goes before
+// deciding between a glyph atlas, draw-call batching, etc. Safe to delete once
+// that's resolved.
 function draw(output) {
-  const texts = output.text_blob === "" ? [] : output.text_blob.split(TEXT_DELIMITER);
+  const tDrawStart = performance.now();
+  // Each property read below is a wasm-bindgen getter call that now takes
+  // (mem::take) rather than clones the underlying buffer, so it must be read
+  // exactly once - a second read would come back empty.
+  const textBlob = output.text_blob;
+  const texts = textBlob === "" ? [] : textBlob.split(TEXT_DELIMITER);
   const geometry = output.geometry;
+  const tDecoded = performance.now();
 
+  // The wasm side already scales elements down (see render()'s
+  // device_pixel_ratio param in wasm/src/lib.rs) so that bounds_width/height
+  // times dpr stays within its canvas pixel budget - this is a plain,
+  // budget-agnostic consumer of whatever bounds it's given.
   const dpr = window.devicePixelRatio || 1;
   const width = output.bounds_width * dpr;
   const height = output.bounds_height * dpr;
+  console.log(`[perf] canvas device pixels: ${width.toFixed(0)}x${height.toFixed(0)} (dpr=${dpr})`);
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
@@ -170,11 +186,35 @@ function draw(output) {
   let i = 0;
   let textIndex = 0;
 
+  // Adjacent TAG_LINE records overwhelmingly share the same stroke style
+  // (five staff lines, a run of beam/ledger segments, ...), so instead of
+  // beginPath()+stroke() per line - each stroke() is a real rasterization
+  // pass - accumulate consecutive same-style segments into one path and
+  // stroke it once. This only merges records that are already adjacent in
+  // the stream, so draw order (and therefore z-stacking) is unchanged.
+  let lineOpen = false;
+  let lineR, lineG, lineB, lineA, lineWidth;
+  let lineRecordCount = 0;
+  let lineStrokeCallCount = 0;
+
+  function flushLine() {
+    if (lineOpen) {
+      ctx.stroke();
+      lineStrokeCallCount++;
+      lineOpen = false;
+    }
+  }
+
   while (i < geometry.length) {
     const tag = geometry[i++];
 
+    if (tag !== TAG_LINE) {
+      flushLine();
+    }
+
     switch (tag) {
       case TAG_LINE: {
+        lineRecordCount++;
         const x1 = geometry[i++];
         const y1 = geometry[i++];
         const x2 = geometry[i++];
@@ -185,12 +225,28 @@ function draw(output) {
         const a = geometry[i++];
         const strokeWidth = geometry[i++];
 
-        setStrokeStyle(r, g, b, a);
-        setLineWidth(strokeWidth);
-        ctx.beginPath();
+        const styleChanged =
+          !lineOpen ||
+          lineR !== r ||
+          lineG !== g ||
+          lineB !== b ||
+          lineA !== a ||
+          lineWidth !== strokeWidth;
+
+        if (styleChanged) {
+          flushLine();
+          setStrokeStyle(r, g, b, a);
+          setLineWidth(strokeWidth);
+          ctx.beginPath();
+          lineOpen = true;
+          lineR = r;
+          lineG = g;
+          lineB = b;
+          lineA = a;
+          lineWidth = strokeWidth;
+        }
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
-        ctx.stroke();
         break;
       }
 
@@ -275,6 +331,17 @@ function draw(output) {
         throw new Error(`unknown drawable tag ${tag}`);
     }
   }
+
+  flushLine();
+
+  const tDrawEnd = performance.now();
+  console.log(
+    `[perf] draw: split+fetch ${(tDecoded - tDrawStart).toFixed(2)}ms, ` +
+      `decode+canvas ${(tDrawEnd - tDecoded).toFixed(2)}ms, ` +
+      `total ${(tDrawEnd - tDrawStart).toFixed(2)}ms ` +
+      `(${geometry.length} floats, ${texts.length} text records, ` +
+      `${lineRecordCount} line records batched into ${lineStrokeCallCount} stroke() calls)`,
+  );
 }
 
 function renderNow(showFileError) {
@@ -289,6 +356,7 @@ function renderNow(showFileError) {
 
   let output;
   try {
+    const tRenderStart = performance.now();
     output = render(
       document.getElementById("debug").checked,
       document.getElementById("page-color").value,
@@ -297,9 +365,28 @@ function renderNow(showFileError) {
       optionalNumber("horizontal-gutter-even"),
       optionalNumber("horizontal-gutter-uneven"),
       optionalNumber("vertical-gutter"),
+      window.devicePixelRatio || 1,
     );
+    const tRenderEnd = performance.now();
+    console.log(`[perf] wasm render() (rust + marshalling): ${(tRenderEnd - tRenderStart).toFixed(2)}ms`);
 
     draw(output);
+
+    // draw()'s own timer only covers building the display list - on an
+    // accelerated 2D canvas, Chrome defers the actual rasterization/composite
+    // to later, off that synchronous call stack (visible as "Composite" in
+    // the DevTools timeline). A double rAF callback runs after the browser
+    // has presented the frame, so this captures the time the user actually
+    // sees, including that deferred raster/composite work.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const tPainted = performance.now();
+        console.log(
+          `[perf] paint-inclusive: ${(tPainted - tRenderStart).toFixed(2)}ms from render() start to ` +
+            `actual on-screen paint`,
+        );
+      });
+    });
   } catch (err) {
     setStatus(String(err));
   } finally {
