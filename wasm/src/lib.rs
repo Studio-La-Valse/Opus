@@ -34,16 +34,22 @@ fn init() {
 }
 
 /// Everything built from a MusicXML document that doesn't depend on
-/// [`UserLayout`]. Rebuilt by [`load_score`], reused by every subsequent
-/// [`render`] call until the next [`load_score`] replaces it.
+/// [`UserLayout`]. Built by [`load_score`] and stored under the handle it
+/// returns; reused by every subsequent [`render`] call for that handle until
+/// [`free_score`] drops it.
 struct ScoreCache {
     layout: Layout,
     score: Score,
     font: SmuflFont,
 }
 
+// Keyed by handle rather than a single slot so that multiple independent
+// scores (e.g. several `<music-xml>` elements on one page, each backed by
+// this same wasm instance) can be loaded and re-rendered concurrently
+// without one's `load_score` call evicting another's cache.
 thread_local! {
-    static CACHE: RefCell<Option<ScoreCache>> = const { RefCell::new(None) };
+    static CACHE: RefCell<HashMap<u32, ScoreCache>> = RefCell::new(HashMap::new());
+    static NEXT_HANDLE: RefCell<u32> = const { RefCell::new(1) };
 }
 
 /// Canvas-ready render output. `geometry` is a tagged f32 stream and `text_blob`
@@ -98,11 +104,12 @@ impl RenderOutput {
 }
 
 /// Parses `musicxml` and builds the [`Layout`]/[`Score`]/[`SmuflFont`] triple,
-/// none of which depend on [`UserLayout`]. Caches the result so subsequent
-/// [`render`] calls can re-layout and re-render without re-parsing or
-/// re-walking the document. Replaces (and drops) whatever was cached before.
+/// none of which depend on [`UserLayout`]. Caches the result under a new
+/// handle so subsequent [`render`] calls for that handle can re-layout and
+/// re-render without re-parsing or re-walking the document. Call
+/// [`free_score`] with the returned handle once it's no longer needed.
 #[wasm_bindgen]
-pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Result<(), JsValue> {
+pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Result<u32, JsValue> {
     let font = SmuflFont::load(meta_json, glyph_names_json);
 
     let options = ParsingOptions {
@@ -154,15 +161,33 @@ pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Re
     );
     Walker::new(visitor).walk(&document, &mut ctx);
 
-    CACHE.with_borrow_mut(|cache| {
-        *cache = Some(ScoreCache {
-            layout,
-            score,
-            font,
-        });
+    let handle = NEXT_HANDLE.with_borrow_mut(|next| {
+        let handle = *next;
+        *next += 1;
+        handle
     });
 
-    Ok(())
+    CACHE.with_borrow_mut(|cache| {
+        cache.insert(
+            handle,
+            ScoreCache {
+                layout,
+                score,
+                font,
+            },
+        );
+    });
+
+    Ok(handle)
+}
+
+/// Drops the score cached under `handle` by [`load_score`]. A no-op if the
+/// handle doesn't exist (already freed, or never valid).
+#[wasm_bindgen]
+pub fn free_score(handle: u32) {
+    CACHE.with_borrow_mut(|cache| {
+        cache.remove(&handle);
+    });
 }
 
 /// Upper bound on the canvas's physical pixel count (`width * height` in
@@ -174,12 +199,12 @@ pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Re
 /// native sharpness, only oversized ones get scaled down. Purely a
 /// browser-canvas concern, so it lives here rather than in `lib`, which also
 /// backs non-canvas consumers (e.g. SVG export) that shouldn't be capped.
-const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
+pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 
-/// Applies `UserLayout` to the [`Score`] cached by the last [`load_score`]
-/// call and returns the resulting drawable elements. Does no XML parsing or
-/// walking, so it's cheap to call on every layout-only change (e.g. a page
-/// color tweak).
+/// Applies `UserLayout` to the [`Score`] cached under `handle` by
+/// [`load_score`] and returns the resulting drawable elements. Does no XML
+/// parsing or walking, so it's cheap to call on every layout-only change
+/// (e.g. a page color tweak).
 ///
 /// `device_pixel_ratio` (the browser's `window.devicePixelRatio`) is used
 /// only to decide whether the result needs scaling down to stay within
@@ -188,6 +213,7 @@ const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen]
 pub fn render(
+    handle: u32,
     debug: bool,
     page_color: Option<String>,
     foreground_color: Option<String>,
@@ -222,9 +248,9 @@ pub fn render(
     let app_defaults: AppDefaults = Default::default();
 
     CACHE.with_borrow_mut(|cache| {
-        let cache = cache
-            .as_mut()
-            .ok_or_else(|| JsValue::from_str("no score loaded; call load_score first"))?;
+        let cache = cache.get_mut(&handle).ok_or_else(|| {
+            JsValue::from_str("no score loaded for this handle; call load_score first")
+        })?;
 
         cache
             .score
@@ -299,108 +325,4 @@ pub fn render(
             text_blob: flat.text_blob,
         })
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs::read_to_string;
-
-    fn fixture(relative_path: &str) -> String {
-        read_to_string(format!(
-            "{}/../{relative_path}",
-            env!("CARGO_MANIFEST_DIR")
-        ))
-        .unwrap_or_else(|e| panic!("failed to read {relative_path}: {e}"))
-    }
-
-    /// `render` reruns apply_layout/rebeam/measure/arrange_pages on the same
-    /// cached `Score` every call instead of rebuilding it from scratch. That's
-    /// only safe if those steps are idempotent; this guards the assumption by
-    /// calling `render` twice with identical arguments and requiring identical
-    /// output.
-    #[test]
-    fn render_is_idempotent_across_repeated_calls_with_the_same_layout() {
-        let musicxml = fixture("xmlsamples/ActorPreludeSample.musicxml");
-        let meta_json = fixture("smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("smufl/metadata/glyphnames.json");
-
-        load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
-
-        let render_once = || {
-            render(
-                false,
-                Some("#ffffff".to_string()),
-                Some("#000000".to_string()),
-                None,
-                None,
-                None,
-                None,
-                1.0,
-            )
-            .expect("render failed")
-        };
-
-        let first = render_once();
-        let second = render_once();
-
-        assert_eq!(first.geometry, second.geometry);
-        assert_eq!(first.text_blob, second.text_blob);
-        assert_eq!(first.bounds_width, second.bounds_width);
-        assert_eq!(first.bounds_height, second.bounds_height);
-    }
-
-    /// A single small score stays within [`MAX_CANVAS_PIXELS`] even at a
-    /// typical devicePixelRatio, so it should render unscaled (this also
-    /// guards against `render_scale` kicking in when it shouldn't). At an
-    /// extreme device_pixel_ratio, though, the same score would blow well
-    /// past the budget if left unscaled, so `render` must shrink it down to
-    /// fit - this is what actually keeps the browser's canvas raster/composite
-    /// cost bounded regardless of how a caller reports its pixel ratio.
-    #[test]
-    fn render_keeps_the_canvas_backing_store_within_the_pixel_budget() {
-        let musicxml = fixture("xmlsamples/ActorPreludeSample.musicxml");
-        let meta_json = fixture("smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("smufl/metadata/glyphnames.json");
-
-        load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
-
-        let render_at = |device_pixel_ratio: f32| {
-            render(
-                false,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                device_pixel_ratio,
-            )
-            .expect("render failed")
-        };
-
-        let unscaled = render_at(1.0);
-        let unscaled_physical_pixels =
-            unscaled.bounds_width as f64 * unscaled.bounds_height as f64;
-        assert!(
-            unscaled_physical_pixels <= MAX_CANVAS_PIXELS as f64,
-            "test fixture is expected to already fit the budget at device_pixel_ratio 1.0, \
-             got {unscaled_physical_pixels} physical pixels",
-        );
-
-        let huge_device_pixel_ratio = 1000.0;
-        let scaled = render_at(huge_device_pixel_ratio);
-        let scaled_physical_pixels = (scaled.bounds_width as f64 * huge_device_pixel_ratio as f64)
-            * (scaled.bounds_height as f64 * huge_device_pixel_ratio as f64);
-
-        assert!(
-            scaled_physical_pixels <= MAX_CANVAS_PIXELS as f64 * 1.01, // float slop
-            "expected the render at a huge device_pixel_ratio to stay within the canvas pixel \
-             budget, got {scaled_physical_pixels} physical pixels",
-        );
-        assert!(
-            scaled.bounds_width < unscaled.bounds_width,
-            "expected element coordinates to actually shrink once the budget kicks in",
-        );
-    }
 }
