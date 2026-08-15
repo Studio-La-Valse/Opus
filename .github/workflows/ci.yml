@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
@@ -63,3 +61,29 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build wasm crate for wasm32-unknown-unknown
         run: cargo build -p wasm --target wasm32-unknown-unknown
+
+  # Not a publish step - assembles the @studiolavalse/music-xml package
+  # locally (scripts/build-wasm.sh + scripts/stage-package.sh) and runs
+  # `npm pack --dry-run` as a smoke test, so a broken relative asset path or
+  # an oversized bundle surfaces on every PR instead of at actual publish
+  # time. See packaging/package.json for the (still unpublished) draft
+  # manifest.
+  package:
+    name: Package (dry run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+      - name: Build wasm bindings
+        run: ./scripts/build-wasm.sh
+      - name: Stage package
+        run: ./scripts/stage-package.sh
+      - name: npm pack (dry run, no publish)
+        working-directory: dist/npm
+        run: npm pack --dry-run

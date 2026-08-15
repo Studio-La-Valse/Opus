@@ -49,7 +49,10 @@ async function loadBravuraFont() {
 }
 
 async function bootstrap() {
-  const wasmPromise = import(WASM_JS_URL);
+  // WASM_JS_URL is a runtime-computed URL, not a literal specifier, so
+  // bundlers that try to statically analyze dynamic import() (e.g. Vite)
+  // can't resolve it - tell them to leave it alone rather than warn/fail.
+  const wasmPromise = import(/* @vite-ignore */ WASM_JS_URL);
   const metaJsonPromise = fetch(BRAVURA_METADATA_URL).then((r) => r.text());
   const glyphNamesJsonPromise = fetch(GLYPHNAMES_URL).then((r) => r.text());
   const fontPromise = loadBravuraFont();

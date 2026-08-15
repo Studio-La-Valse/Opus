@@ -1,0 +1,27 @@
+{
+  "name": "@studiolavalse/music-xml",
+  "version": "0.0.0",
+  "description": "A <music-xml> web component that renders MusicXML scores to a canvas.",
+  "type": "module",
+  "main": "web/music-xml.js",
+  "exports": {
+    ".": "./web/music-xml.js"
+  },
+  "files": [
+    "web",
+    "wasm",
+    "smufl"
+  ],
+  "sideEffects": [
+    "./web/music-xml.js"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Studio-La-Valse/Opus.git",
+    "directory": "packaging"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
