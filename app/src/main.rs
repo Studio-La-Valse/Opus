@@ -86,7 +86,9 @@ fn main() {
     let mut time = Instant::now();
 
     let data = read_to_string(file).expect("Something went wrong reading the file");
-    let font = SmuflFont::load(&meta, &glyph_names);
+    let meta_content = read_to_string(&meta).expect("Cannot read metadata.json");
+    let glyph_names_content = read_to_string(&glyph_names).expect("Cannot read glyphnames.json");
+    let font = SmuflFont::load(&meta_content, &glyph_names_content);
 
     println!("Reading to string: {}ms", time.elapsed().as_millis());
     time = Instant::now();

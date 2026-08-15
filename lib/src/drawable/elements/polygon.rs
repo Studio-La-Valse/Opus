@@ -17,4 +17,12 @@ impl Polygon {
             ..self.clone()
         }
     }
+
+    pub fn scale(&self, scale: f32) -> Polygon {
+        Polygon {
+            pts: self.pts.iter().map(|pt| pt.scale(scale)).collect(),
+            stroke_width: self.stroke_width.map(|v| v * scale),
+            ..self.clone()
+        }
+    }
 }

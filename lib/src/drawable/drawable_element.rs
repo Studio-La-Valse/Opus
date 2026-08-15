@@ -36,35 +36,10 @@ impl<'a> From<Polygon> for DrawableElement<'a> {
 
 pub fn scale_elem<'a>(element: &DrawableElement<'a>, scale: f32) -> DrawableElement<'a> {
     match element {
-        DrawableElement::Line(l) => Line {
-            start: l.start.scale(scale),
-            end: l.end.scale(scale),
-            stroke_width: l.stroke_width * scale,
-            ..*l
-        }
-        .into(),
-
-        DrawableElement::Rect(r) => Rect {
-            xy: r.xy.scale(scale),
-            width: r.width * scale,
-            height: r.height * scale,
-            stroke_width: r.stroke_width.map(|v| v * scale),
-            ..*r
-        }
-        .into(),
-        DrawableElement::Text(t) => Text {
-            xy: t.xy.scale(scale),
-            font_size: t.font_size * scale,
-            ..t.clone()
-        }
-        .into(),
-
-        DrawableElement::Polygon(p) => Polygon {
-            pts: p.pts.iter().map(|p| p.scale(scale)).collect(),
-            stroke_width: p.stroke_width.map(|v| v * scale),
-            ..p.as_ref().clone()
-        }
-        .into(),
+        DrawableElement::Line(l) => l.scale(scale).into(),
+        DrawableElement::Rect(r) => r.scale(scale).into(),
+        DrawableElement::Text(t) => t.scale(scale).into(),
+        DrawableElement::Polygon(p) => p.scale(scale).into(),
     }
 }
 

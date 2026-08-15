@@ -14,7 +14,6 @@ use crate::smufl::glyphs::number::Number;
 use crate::smufl::glyphs::rest::Rest;
 use crate::smufl::smufl_metadata::{Cutouts, SmuflMetadata};
 use std::collections::HashMap;
-use std::fs;
 
 pub struct SmuflFont {
     pub meta: SmuflMetadata,
@@ -23,10 +22,10 @@ pub struct SmuflFont {
 }
 
 impl SmuflFont {
-    pub fn load(path_meta_json: &str, path_glyphs_json: &str) -> SmuflFont {
-        let data = fs::read_to_string(path_meta_json).expect("Cannot read metadata.json");
-        let meta: SmuflMetadata = serde_json::from_str(&data).expect("Invalid SMuFL metadata");
-        let glyph_names = load_glyph_names(path_glyphs_json);
+    pub fn load(meta_json_content: &str, glyph_names_json_content: &str) -> SmuflFont {
+        let meta: SmuflMetadata =
+            serde_json::from_str(meta_json_content).expect("Invalid SMuFL metadata");
+        let glyph_names = load_glyph_names(glyph_names_json_content);
 
         let mut glyph_text: HashMap<char, String> = HashMap::new();
         for glyph in glyph_names.values() {

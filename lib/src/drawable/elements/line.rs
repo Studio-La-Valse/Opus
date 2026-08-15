@@ -12,6 +12,15 @@ pub struct Line {
 }
 
 impl Line {
+    pub fn scale(&self, scale: f32) -> Line {
+        Line {
+            start: self.start.scale(scale),
+            end: self.end.scale(scale),
+            stroke_width: self.stroke_width * scale,
+            ..*self
+        }
+    }
+
     pub fn extrude(&self, dir: &XY) -> Polygon {
         Polygon {
             pts: vec![

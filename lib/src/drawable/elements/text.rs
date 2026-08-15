@@ -48,3 +48,13 @@ pub struct Text<'a> {
     pub vertical_alignment: VerticalAlign,
     pub horizontal_alignment: HorizontalAlign,
 }
+
+impl<'a> Text<'a> {
+    pub fn scale(&self, scale: f32) -> Text<'a> {
+        Text {
+            xy: self.xy.scale(scale),
+            font_size: self.font_size * scale,
+            ..self.clone()
+        }
+    }
+}
