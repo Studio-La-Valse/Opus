@@ -10,14 +10,14 @@
     Loads <code>&lt;music-xml&gt;</code> from <code>dist/npm/web/music-xml.js</code>
     (run <code>scripts/build-wasm.sh</code> then <code>scripts/stage-package.sh</code>
     first) instead of the source tree, to catch broken relative asset paths
-    (<code>../wasm/pkg/...</code>, <code>../smufl/...</code>) before they'd ever
-    reach a real consumer of the published package.
+    (<code>../wasm/pkg/...</code>, <code>../assets/smufl/...</code>) before
+    they'd ever reach a real consumer of the published package.
   </p>
 
   <music-xml file="../xmlsamples/ActorPreludeSample.musicxml"></music-xml>
 
   <script type="module">
-    import "../dist/npm/web/music-xml.js";
+    import "../../dist/npm/web/music-xml.js";
 
     const el = document.querySelector("music-xml");
     el.addEventListener("load", () => console.log("[staged] loaded"));

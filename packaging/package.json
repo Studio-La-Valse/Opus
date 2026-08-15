@@ -10,7 +10,7 @@
   "files": [
     "web",
     "wasm",
-    "smufl"
+    "assets/smufl"
   ],
   "sideEffects": [
     "./web/music-xml.js"

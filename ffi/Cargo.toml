@@ -1,0 +1,10 @@
+[package]
+name = "ffi"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+lib = { path = "../lib" }
