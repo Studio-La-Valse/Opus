@@ -1,8 +1,9 @@
 [workspace]
 members = [
     "lib",
-    "app",
+    "cli",
     "wasm",
+    "ffi",
     "tests",
 ]
 resolver = "3"

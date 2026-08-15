@@ -15,9 +15,9 @@ mod tests {
     /// output.
     #[test]
     fn render_is_idempotent_across_repeated_calls_with_the_same_layout() {
-        let musicxml = fixture("xmlsamples/ActorPreludeSample.musicxml");
-        let meta_json = fixture("smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("smufl/metadata/glyphnames.json");
+        let musicxml = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
+        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
+        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
 
         let handle =
             load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
@@ -63,9 +63,9 @@ mod tests {
     /// cost bounded regardless of how a caller reports its pixel ratio.
     #[test]
     fn render_keeps_the_canvas_backing_store_within_the_pixel_budget() {
-        let musicxml = fixture("xmlsamples/ActorPreludeSample.musicxml");
-        let meta_json = fixture("smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("smufl/metadata/glyphnames.json");
+        let musicxml = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
+        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
+        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
 
         let handle =
             load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
@@ -117,11 +117,11 @@ mod tests {
     /// `render` must keep reflecting only the document it was given.
     #[test]
     fn two_handles_render_independently_and_do_not_evict_each_other() {
-        let meta_json = fixture("smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("smufl/metadata/glyphnames.json");
+        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
+        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
 
-        let musicxml_a = fixture("xmlsamples/ActorPreludeSample.musicxml");
-        let musicxml_b = fixture("xmlsamples/BrahWiMeSample.musicxml");
+        let musicxml_a = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
+        let musicxml_b = fixture("assets/xmlsamples/BrahWiMeSample.musicxml");
 
         let handle_a =
             load_score(&musicxml_a, &meta_json, &glyph_names_json).expect("load_score a failed");

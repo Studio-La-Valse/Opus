@@ -9,7 +9,7 @@
 // resolved relative to *this file's own URL* via import.meta.url, not
 // relative to the page that imports it - so the tag works the same way
 // regardless of where it's dropped into a host page, as long as this file
-// stays in place relative to ../wasm/pkg and ../smufl.
+// stays in place relative to ../wasm/pkg and ../assets/smufl.
 
 // Keep in sync with lib/src/drawable/flat_buffer.rs.
 const TAG_LINE = 0;
@@ -22,16 +22,16 @@ const V_ALIGN = ["hanging", "middle", "alphabetic"];
 
 const WASM_JS_URL = new URL("../wasm/pkg/wasm.js", import.meta.url).href;
 const BRAVURA_METADATA_URL = new URL(
-  "../smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+  "../assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
   import.meta.url,
 );
-const GLYPHNAMES_URL = new URL("../smufl/metadata/glyphnames.json", import.meta.url);
+const GLYPHNAMES_URL = new URL("../assets/smufl/metadata/glyphnames.json", import.meta.url);
 const BRAVURA_WOFF2_URL = new URL(
-  "../smufl/bravura-bravura-1.392/redist/woff/Bravura.woff2",
+  "../assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff2",
   import.meta.url,
 );
 const BRAVURA_WOFF_URL = new URL(
-  "../smufl/bravura-bravura-1.392/redist/woff/Bravura.woff",
+  "../assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff",
   import.meta.url,
 );
 
