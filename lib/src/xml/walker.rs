@@ -1,18 +1,20 @@
 use crate::xml::utils::NodeUtils;
 use crate::xml::visitor::Visitor;
-use crate::xml::walker_ctx::WalkerCtx;
 use roxmltree::Document;
 
 pub struct Walker<V> {
     pub visitor: V,
 }
 
-impl<V: Visitor> Walker<V> {
+impl<V> Walker<V> {
     pub fn new(visitor: V) -> Self {
         Walker { visitor }
     }
 
-    pub fn walk(&mut self, document: &Document, ctx: &mut WalkerCtx) {
+    pub fn walk<C>(&mut self, document: &Document, ctx: &mut C)
+    where
+        V: Visitor<C>,
+    {
         let root = document.root_element();
         if root.tag_name().name() != "score-partwise" {
             panic!("Expected a score-partwise root node");

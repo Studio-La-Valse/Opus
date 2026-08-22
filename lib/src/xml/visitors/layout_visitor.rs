@@ -15,7 +15,7 @@ pub struct LayoutVisitor {
 
 impl LayoutVisitor {}
 
-impl Visitor for LayoutVisitor {
+impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
     fn enter(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_work(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}

@@ -8,7 +8,8 @@
             "preLaunchTask": "rust: cargo build",
             "program": "${workspaceRoot}/target/debug/cli",
             "args": [
-                "--file", "assets/xmlsamples/ActorPreludeSample.musicxml", 
+                "render",
+                "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
                 "--out", "assets/xmltest/test.svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
@@ -28,6 +29,7 @@
             "preLaunchTask": "rust: cargo build",
             "program": "${workspaceRoot}/target/debug/cli",
             "args": [
+                "render",
                 "--file", "assets/xmlsamples/BrahWiMeSample.musicxml",
                 "--out", "assets/xmltest/test.svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
@@ -48,6 +50,7 @@
             "preLaunchTask": "rust: cargo build",
             "program": "${workspaceRoot}/target/debug/cli",
             "args": [
+                "render",
                 "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
                 "--out", "assets/xmltest/test.svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
@@ -55,6 +58,21 @@
                 "--page-orientation", "vertical",
                 "--vertical-gutter", "10",
                 "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Validate Actor Prelude Sample)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/cli",
+            "args": [
+                "validate",
+                "--file", "assets/xmlsamples/ActorPreludeSample.musicxml"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [

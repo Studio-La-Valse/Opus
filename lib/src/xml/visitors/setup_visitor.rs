@@ -9,7 +9,7 @@ pub struct SetupVisitor {}
 
 impl SetupVisitor {}
 
-impl Visitor for SetupVisitor {
+impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
     fn enter(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
 
     fn enter_work(&mut self, element: &Node, ctx: &mut WalkerCtx) {

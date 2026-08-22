@@ -194,3 +194,81 @@ impl Default for LayoutCtx {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PositionError {
+    /// Moving the position backwards would take it before the start of the measure.
+    Underflow,
+    /// Moving the position forwards overflowed the counter.
+    Overflow,
+}
+
+impl LayoutCtx {
+    pub fn begin_measure(&mut self) {
+        self.position = 0;
+    }
+
+    pub fn set_divisions(&mut self, divisions: u32) {
+        self.divisions = divisions;
+    }
+
+    pub fn set_beats(&mut self, beats: u8) {
+        self.beats = beats;
+    }
+
+    pub fn set_beat_type(&mut self, beat_type: BaseDuration) {
+        self.beat_type = beat_type;
+    }
+
+    pub fn apply_backup(&mut self, duration: u32) -> Result<(), PositionError> {
+        self.position = self
+            .position
+            .checked_sub(duration)
+            .ok_or(PositionError::Underflow)?;
+        Ok(())
+    }
+
+    pub fn apply_forward(&mut self, duration: u32) -> Result<(), PositionError> {
+        self.position = self
+            .position
+            .checked_add(duration)
+            .ok_or(PositionError::Overflow)?;
+        Ok(())
+    }
+
+    /// Call when entering a `<note>`, after determining whether it's a chord note
+    /// and/or a grace note, and (for non-grace notes) its duration.
+    pub fn enter_note(
+        &mut self,
+        duration: u32,
+        is_chord: bool,
+        is_grace: bool,
+    ) -> Result<(), PositionError> {
+        self.chord = is_chord;
+        self.grace = is_grace;
+
+        if is_chord {
+            // move the position backwards (by the previous note duration), so that
+            // this chord note starts at the same position as the note it's attached to.
+            self.apply_backup(self.duration)?;
+        }
+
+        self.duration = if is_grace { 0 } else { duration };
+        Ok(())
+    }
+
+    /// Call when exiting a `<note>`, moving the position forward by its duration.
+    pub fn exit_note(&mut self) -> Result<(), PositionError> {
+        self.apply_forward(self.duration)
+    }
+
+    /// Divisions are annotated per quarter note. For example, if duration = 1 and
+    /// divisions = 2, this is an eighth note duration.
+    pub fn position_exceeds_measure(&self) -> bool {
+        let whole_beats = self.beat_type.as_int() as f32; // eg 4. for a 3/4 measure, 8. for a 7/8 measure.
+        let quarter_beats = self.beats as f32 * (4. / whole_beats); // eg 1.5 for 3/8, 4. for 2/2.
+        let divisions_in_measure = self.divisions as f32 * quarter_beats;
+
+        self.position as f32 > divisions_in_measure
+    }
+}

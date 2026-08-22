@@ -240,7 +240,7 @@ impl ContentVisitor {
     }
 }
 
-impl Visitor for ContentVisitor {
+impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
     fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         if node.has_child("time") {
             let page_number = &ctx.layout_ctx.page.page_number;

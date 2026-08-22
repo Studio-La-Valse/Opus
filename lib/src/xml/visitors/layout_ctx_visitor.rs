@@ -1,7 +1,6 @@
 use crate::score::core::clef::Clef;
 use crate::score::core::key::Key;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout_ctx::LayoutCtx;
 use crate::score::layout_ctx::Visibility;
 use crate::xml::utils::NodeUtils;
 use crate::xml::utils::ReqParse;
@@ -11,7 +10,7 @@ use roxmltree::Node;
 
 pub struct LayoutContextVisitor {}
 
-impl Visitor for LayoutContextVisitor {
+impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
     fn enter(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         ctx.layout_ctx.reset();
     }
@@ -53,7 +52,7 @@ impl Visitor for LayoutContextVisitor {
                 .insert(0, *clef);
         }
 
-        ctx.layout_ctx.position = 0;
+        ctx.layout_ctx.begin_measure();
 
         // These 2 values are set in print. Not every measure has print, so default to false.
         ctx.layout_ctx.new_page = false;
@@ -156,18 +155,18 @@ impl Visitor for LayoutContextVisitor {
     fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         for node in element.children() {
             if node.has_tag_name("divisions") {
-                ctx.layout_ctx.divisions = node.req_parse();
+                ctx.layout_ctx.set_divisions(node.req_parse());
             }
 
             if node.has_tag_name("time") {
                 for node in node.children() {
                     if node.has_tag_name("beats") {
-                        ctx.layout_ctx.beats = node.req_parse();
+                        ctx.layout_ctx.set_beats(node.req_parse());
                     }
 
                     if node.has_tag_name("beat-type") {
                         let beat_type: u32 = node.req_parse();
-                        ctx.layout_ctx.beat_type = beat_type.into();
+                        ctx.layout_ctx.set_beat_type(beat_type.into());
                     }
                 }
             }
@@ -271,39 +270,31 @@ impl Visitor for LayoutContextVisitor {
 
     fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let duration: u32 = node.req_child("duration").req_parse();
-        ctx.layout_ctx.position -= duration;
+        ctx.layout_ctx
+            .apply_backup(duration)
+            .expect("backup duration exceeds current position");
     }
 
     fn enter_forward(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let duration: u32 = node.req_child("duration").req_parse();
-        ctx.layout_ctx.position += duration;
-
-        validate_position(ctx.layout_ctx)
+        ctx.layout_ctx
+            .apply_forward(duration)
+            .expect("forward duration overflowed position");
     }
 
     fn enter_note(&mut self, element: &Node, ctx: &mut WalkerCtx) {
-        ctx.layout_ctx.chord = false;
+        let is_chord = element.get_child("chord").is_some();
+        let is_grace = element.has_child("grace");
 
-        if element.get_child("chord").is_some() {
-            ctx.layout_ctx.chord = true;
-
-            // we move the position backwards (by the previous note duration),
-            // so that when we enter a note upstream (a subsequent callback),
-            // the position is correct.
-            // When exiting a note, the position is always pushed forwards
-            // the duration of this note.
-            ctx.layout_ctx.position -= ctx.layout_ctx.duration;
-        }
-
-        ctx.layout_ctx.grace = element.has_child("grace");
-
-        let duration: u32 = if ctx.layout_ctx.grace {
+        let duration: u32 = if is_grace {
             0
         } else {
             element.req_child("duration").req_parse()
         };
 
-        ctx.layout_ctx.duration = duration;
+        ctx.layout_ctx
+            .enter_note(duration, is_chord, is_grace)
+            .expect("chord note duration exceeds current position");
 
         for node in element.children() {
             if node.has_tag_name("voice") {
@@ -322,9 +313,9 @@ impl Visitor for LayoutContextVisitor {
         // We move the position forwards the duration of the note, even it is a chord.
         // When we enter a chord note, the position is moved backwards, so that
         // the position is correct upstream (a subsequent callback).
-        ctx.layout_ctx.position += ctx.layout_ctx.duration;
-
-        validate_position(ctx.layout_ctx)
+        ctx.layout_ctx
+            .exit_note()
+            .expect("note duration overflowed position");
     }
 
     fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}
@@ -332,24 +323,4 @@ impl Visitor for LayoutContextVisitor {
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn exit(&mut self, _ctx: &mut WalkerCtx) {}
-}
-
-/// Divisions are annotated per quarter note.
-/// For example, if duration = 1 and divisions = 2, this is an eighth note duration.
-fn validate_position(layout_ctx: &LayoutCtx) {
-    let whole_beats = layout_ctx.beat_type.as_int() as f32; // eg 4. for a 3/4 measure, 8. for a 7/8 measure.
-    let quarter_beats = layout_ctx.beats as f32 * (4. / whole_beats); // eg 1.5 for 3/8, 4. for 2/2.
-    let divisions_in_measure = layout_ctx.divisions as f32 * quarter_beats;
-
-    if layout_ctx.position as f32 > divisions_in_measure {
-        panic!(
-            "Invalid document: entered position {} in measure with {} beats of type {}, and {} divisions. Part {}, measure {}",
-            layout_ctx.position,
-            layout_ctx.beats,
-            layout_ctx.beat_type,
-            layout_ctx.divisions,
-            layout_ctx.part_id,
-            layout_ctx.measure.number
-        );
-    }
 }
