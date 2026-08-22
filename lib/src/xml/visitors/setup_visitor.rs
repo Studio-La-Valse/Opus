@@ -1,4 +1,5 @@
-use crate::score::layout::{PageMargins, Part, PartGroupLevel, PartListTracker};
+use crate::score::layout::PageMargins;
+use crate::score::part_list_tree::{PartGroupAction, PartListBuilder, layout_from_part_list};
 use crate::xml::utils::NodeUtils;
 use crate::xml::utils::ReqParse;
 use crate::xml::visitor::Visitor;
@@ -90,81 +91,21 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
     fn exit_defaults(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn enter_part_list(&mut self, element: &Node, ctx: &mut WalkerCtx) {
-        ctx.layout.parts.clear();
-        ctx.layout.sections.clear();
+        let mut builder = PartListBuilder::default();
 
-        let mut tracker = PartListTracker::default();
+        builder.build(
+            element,
+            |n| match n.req_attribute("type") {
+                "start" => PartGroupAction::Start,
+                "stop" => PartGroupAction::Stop,
+                _ => PartGroupAction::Other,
+            },
+            |n| Some(n.req_attribute("id").to_string()),
+        );
 
-        for child in element.children().filter(|n| n.is_element()) {
-            if child.has_tag_name("part-group") {
-                match child.req_attribute("type") {
-                    "start" => match tracker.open_part_group() {
-                        Some(PartGroupLevel::Section { index }) => {
-                            let name = child
-                                .children()
-                                .find(|n| n.has_tag_name("group-name"))
-                                .and_then(|n| n.text())
-                                .map(|s| s.to_string());
-
-                            let brace_type = brace_type(&child);
-
-                            let group_first = ctx.layout.sections.entry(index).or_default();
-                            group_first.name = name;
-                            group_first.brace = brace_type;
-                        }
-                        Some(PartGroupLevel::Group { section, index }) => {
-                            let group_first = ctx.layout.sections.entry(section).or_default();
-
-                            let name = child
-                                .children()
-                                .find(|n| n.has_tag_name("group-name"))
-                                .and_then(|n| n.text())
-                                .map(|s| s.to_string());
-
-                            let brace = brace_type(&child);
-
-                            let group_second = group_first.groups.entry(index).or_default();
-
-                            group_second.name = name;
-                            group_second.brace = brace;
-                        }
-                        None => {}
-                    },
-                    "stop" => tracker.close_part_group(),
-                    _ => {}
-                }
-            }
-
-            if child.has_tag_name("score-part") {
-                let id = child.req_attribute("id").to_string();
-
-                let name = child
-                    .children()
-                    .find(|n| n.has_tag_name("part-name"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
-
-                let abbr = child
-                    .children()
-                    .find(|n| n.has_tag_name("part-abbreviation"))
-                    .and_then(|n| n.text())
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| name.clone());
-
-                let (section, part_group) = tracker.register_score_part();
-
-                let part = Part {
-                    name,
-                    abbr,
-                    section,
-                    part_group,
-                    brace: None,
-                };
-
-                ctx.layout.parts.insert(id, part);
-            }
-        }
+        let (parts, sections) = layout_from_part_list(&builder.finish());
+        ctx.layout.parts = parts;
+        ctx.layout.sections = sections;
     }
 
     fn enter_part(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
@@ -204,11 +145,4 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
     fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
 
     fn exit(&mut self, _ctx: &mut WalkerCtx) {}
-}
-
-fn brace_type(node: &Node) -> Option<String> {
-    node.children()
-        .find(|n| n.has_tag_name("group-symbol"))
-        .and_then(|n| n.text())
-        .map(|s| s.to_string())
 }
