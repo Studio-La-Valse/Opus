@@ -16,9 +16,6 @@ impl<V> Walker<V> {
         V: Visitor<C>,
     {
         let root = document.root_element();
-        if root.tag_name().name() != "score-partwise" {
-            panic!("Expected a score-partwise root node");
-        }
 
         self.visitor.enter(&root, ctx);
 
@@ -70,6 +67,8 @@ impl<V> Walker<V> {
                             self.visitor.exit_measure(ctx);
                         }
                     }
+
+                    self.visitor.exit_part(ctx);
                 }
                 _ => {} // todo: ignore for now, panic! later.
             }

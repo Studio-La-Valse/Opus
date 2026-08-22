@@ -1,7 +1,6 @@
 use crate::commands::print_issues;
 use clap::Args;
 use lib::xml::validate::ValidationCtx;
-use lib::xml::validation_issue::{Severity, ValidationIssue};
 use lib::xml::visitor::{DefaultVisitor, Visitor};
 use lib::xml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::xml::visitors::position_visitor::PositionVisitor;
@@ -16,33 +15,30 @@ pub struct ValidateArgs {
 }
 
 pub fn run(args: ValidateArgs) {
-    let data = read_to_string(args.file).expect("Something went wrong reading the file");
+    println!("Reading {}", args.file);
+    let data = read_to_string(&args.file)
+        .unwrap_or_else(|err| panic!("Failed to read '{}': {err}", args.file));
+    println!(
+        "Read {} successfully ({} lines, {} bytes)",
+        args.file,
+        data.lines().count(),
+        data.len()
+    );
 
     let options = ParsingOptions {
         allow_dtd: true,
         ..ParsingOptions::default()
     };
     let document = Document::parse_with_options(&data, options).unwrap();
+    println!("Parsed {} successfully", args.file);
 
     let mut ctx = ValidationCtx::default();
 
-    let root = document.root_element();
-    if root.tag_name().name() != "score-partwise" {
-        ctx.issues.push(ValidationIssue {
-            severity: Severity::Error,
-            message: format!(
-                "Expected root element <score-partwise>, found <{}>",
-                root.tag_name().name()
-            ),
-            at: root.range().start,
-        });
-    } else {
-        let visitor = DefaultVisitor {}
-            .uses(PartConsistencyVisitor::default())
-            .uses(PositionVisitor::default());
+    let visitor = DefaultVisitor {}
+        .uses(PartConsistencyVisitor::default())
+        .uses(PositionVisitor::default());
 
-        Walker::new(visitor).walk(&document, &mut ctx);
-    }
+    Walker::new(visitor).walk(&document, &mut ctx);
 
     print_issues(&document, &ctx.issues);
 }

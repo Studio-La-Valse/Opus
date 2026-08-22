@@ -1,4 +1,4 @@
-use crate::score::layout::{PageMargins, Part};
+use crate::score::layout::{PageMargins, Part, PartGroupLevel, PartListTracker};
 use crate::xml::utils::NodeUtils;
 use crate::xml::utils::ReqParse;
 use crate::xml::visitor::Visitor;
@@ -93,62 +93,44 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
         ctx.layout.parts.clear();
         ctx.layout.sections.clear();
 
-        let mut first_order_index: u32 = 0;
-        let mut second_order_index: u32 = 0;
-
-        let mut first_order_group_open = false;
-        let mut second_order_group_open = false;
+        let mut tracker = PartListTracker::default();
 
         for child in element.children().filter(|n| n.is_element()) {
             if child.has_tag_name("part-group") {
-                let type_attr = child.req_attribute("type");
+                match child.req_attribute("type") {
+                    "start" => match tracker.open_part_group() {
+                        Some(PartGroupLevel::Section { index }) => {
+                            let name = child
+                                .children()
+                                .find(|n| n.has_tag_name("group-name"))
+                                .and_then(|n| n.text())
+                                .map(|s| s.to_string());
 
-                match type_attr {
-                    "start" if !first_order_group_open => {
-                        let brace_type = brace_type(&child);
+                            let brace_type = brace_type(&child);
 
-                        let group_first = ctx.layout.sections.entry(first_order_index).or_default();
-                        group_first.brace = brace_type;
+                            let group_first = ctx.layout.sections.entry(index).or_default();
+                            group_first.name = name;
+                            group_first.brace = brace_type;
+                        }
+                        Some(PartGroupLevel::Group { section, index }) => {
+                            let group_first = ctx.layout.sections.entry(section).or_default();
 
-                        first_order_group_open = true;
+                            let name = child
+                                .children()
+                                .find(|n| n.has_tag_name("group-name"))
+                                .and_then(|n| n.text())
+                                .map(|s| s.to_string());
 
-                        second_order_index = 0;
-                        second_order_group_open = false;
-                    }
+                            let brace = brace_type(&child);
 
-                    "start" if !second_order_group_open => {
-                        let group_first = ctx.layout.sections.entry(first_order_index).or_default();
+                            let group_second = group_first.groups.entry(index).or_default();
 
-                        let name = child
-                            .children()
-                            .find(|n| n.has_tag_name("group-name"))
-                            .and_then(|n| n.text())
-                            .map(|s| s.to_string());
-
-                        let brace = brace_type(&child);
-
-                        let group_second =
-                            group_first.groups.entry(second_order_index).or_default();
-
-                        group_second.name = name;
-                        group_second.brace = brace;
-
-                        second_order_group_open = true;
-                    }
-
-                    "stop" if second_order_group_open => {
-                        second_order_index += 1;
-                        second_order_group_open = false;
-                    }
-
-                    "stop" if first_order_group_open => {
-                        first_order_index += 1;
-                        first_order_group_open = false;
-
-                        second_order_index = 0;
-                        second_order_group_open = false;
-                    }
-
+                            group_second.name = name;
+                            group_second.brace = brace;
+                        }
+                        None => {}
+                    },
+                    "stop" => tracker.close_part_group(),
                     _ => {}
                 }
             }
@@ -170,22 +152,17 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| name.clone());
 
+                let (section, part_group) = tracker.register_score_part();
+
                 let part = Part {
                     name,
                     abbr,
-                    section: first_order_index,
-                    part_group: second_order_index,
+                    section,
+                    part_group,
                     brace: None,
                 };
 
                 ctx.layout.parts.insert(id, part);
-
-                if !first_order_group_open {
-                    first_order_index += 1;
-                    second_order_index = 0;
-                } else if !second_order_group_open {
-                    second_order_index += 1;
-                }
             }
         }
     }

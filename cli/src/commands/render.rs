@@ -17,7 +17,6 @@ use lib::score::visual::score::Score;
 use lib::score::visual::score_element::ScoreElement;
 use lib::smufl::smufl_font::SmuflFont;
 use lib::xml::validate::ValidationCtx;
-use lib::xml::validation_issue::{Severity, ValidationIssue};
 use lib::xml::visitor::{DefaultVisitor, Visitor};
 use lib::xml::visitors::content_visitor::ContentVisitor;
 use lib::xml::visitors::layout_ctx_visitor::LayoutContextVisitor;
@@ -84,9 +83,11 @@ pub fn run(args: RenderArgs) {
 
     let mut time = Instant::now();
 
-    let data = read_to_string(file).expect("Something went wrong reading the file");
-    let meta_content = read_to_string(&meta).expect("Cannot read metadata.json");
-    let glyph_names_content = read_to_string(&glyph_names).expect("Cannot read glyphnames.json");
+    let data = read_to_string(&file).unwrap_or_else(|err| panic!("Failed to read '{file}': {err}"));
+    let meta_content = read_to_string(&meta)
+        .unwrap_or_else(|err| panic!("Failed to read metadata '{meta}': {err}"));
+    let glyph_names_content = read_to_string(&glyph_names)
+        .unwrap_or_else(|err| panic!("Failed to read glyph names '{glyph_names}': {err}"));
     let font = SmuflFont::load(&meta_content, &glyph_names_content);
 
     println!("Reading to string: {}ms", time.elapsed().as_millis());
@@ -104,23 +105,11 @@ pub fn run(args: RenderArgs) {
 
     let mut validation_ctx = ValidationCtx::default();
 
-    let root = document.root_element();
-    if root.tag_name().name() != "score-partwise" {
-        validation_ctx.issues.push(ValidationIssue {
-            severity: Severity::Error,
-            message: format!(
-                "Expected root element <score-partwise>, found <{}>",
-                root.tag_name().name()
-            ),
-            at: root.range().start,
-        });
-    } else {
-        let visitor = DefaultVisitor {}
-            .uses(PartConsistencyVisitor::default())
-            .uses(PositionVisitor::default());
+    let visitor = DefaultVisitor {}
+        .uses(PartConsistencyVisitor::default())
+        .uses(PositionVisitor::default());
 
-        Walker::new(visitor).walk(&document, &mut validation_ctx);
-    }
+    Walker::new(visitor).walk(&document, &mut validation_ctx);
 
     print_issues(&document, &validation_ctx.issues);
 

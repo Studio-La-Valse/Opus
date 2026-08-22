@@ -11,12 +11,21 @@ use roxmltree::Node;
 /// signature allows, instead of panicking the way render's guard used to.
 #[derive(Default)]
 pub struct PositionVisitor {
+    root_at: usize,
     last_note_at: usize,
     measure_at: usize,
     measure_has_content: bool,
+    note_count: u32,
+    rest_count: u32,
+    backup_count: u32,
+    forward_count: u32,
 }
 
 impl Visitor<ValidationCtx> for PositionVisitor {
+    fn enter(&mut self, node: &Node, _ctx: &mut ValidationCtx) {
+        self.root_at = node.range().start;
+    }
+
     fn enter_part(&mut self, _node: &Node, ctx: &mut ValidationCtx) {
         ctx.layout_ctx.reset();
     }
@@ -78,6 +87,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
 
     fn enter_backup(&mut self, node: &Node, ctx: &mut ValidationCtx) {
         self.measure_has_content = true;
+        self.backup_count += 1;
 
         let Some(duration) = node
             .get_child("duration")
@@ -98,6 +108,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
 
     fn enter_forward(&mut self, node: &Node, ctx: &mut ValidationCtx) {
         self.measure_has_content = true;
+        self.forward_count += 1;
 
         let Some(duration) = node
             .get_child("duration")
@@ -122,6 +133,10 @@ impl Visitor<ValidationCtx> for PositionVisitor {
     fn enter_note(&mut self, element: &Node, ctx: &mut ValidationCtx) {
         self.last_note_at = element.range().start;
         self.measure_has_content = true;
+        self.note_count += 1;
+        if element.has_child("rest") {
+            self.rest_count += 1;
+        }
 
         let is_chord = element.has_child("chord");
         let is_grace = element.has_child("grace");
@@ -155,6 +170,17 @@ impl Visitor<ValidationCtx> for PositionVisitor {
         }
 
         self.check_position(ctx, self.last_note_at);
+    }
+
+    fn exit(&mut self, ctx: &mut ValidationCtx) {
+        ctx.issues.push(ValidationIssue {
+            severity: Severity::Info,
+            message: format!(
+                "found {} note(s) ({} rest(s)), {} backup(s), {} forward(s)",
+                self.note_count, self.rest_count, self.backup_count, self.forward_count
+            ),
+            at: self.root_at,
+        });
     }
 }
 
