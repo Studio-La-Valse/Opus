@@ -237,7 +237,9 @@ pub fn run(args: RenderArgs) {
     }
 
     let svg = to_svg(elements);
-    fs::write(out, svg).unwrap();
+    fs::write(out.clone(), svg).unwrap();
 
     println!("Write to svg: {}ms", time.elapsed().as_millis());
+
+    println!("Written to: {}", out)
 }

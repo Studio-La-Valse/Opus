@@ -76,7 +76,7 @@ pub fn to_svg<'a>(elements: Vec<DrawableElement<'a>>) -> String {
                 r#"<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{}" stroke="{}" stroke-width="{}" />"#,
                 r.color.to_hex(),
                 r.stroke_color.map_or("none".to_string(), |s| s.to_hex()),
-                r.stroke_width.map_or(0.0, |w| w),
+                r.stroke_width.unwrap_or(0.0),
                 x = r.xy.x,
                 y = r.xy.y,
                 w = r.width,
