@@ -1,5 +1,12 @@
-﻿use crate::score::part_list::entries::{PartListSection, ScorePart};
-use std::collections::BTreeMap;
+﻿use crate::score::part_list::tree::PartListNode;
+
+/// A `<score-part>`'s section/part-group assignment, returned by
+/// `Layout::lookup` for a given part id.
+#[derive(Default, Clone, Copy)]
+pub struct ScorePart {
+    pub section: u32,
+    pub part_group: u32,
+}
 
 #[derive(Copy, Clone)]
 pub struct Defaults {
@@ -68,8 +75,7 @@ pub struct Layout {
 
     pub staff_distance: f32,
 
-    pub parts: BTreeMap<String, ScorePart>,
-    pub sections: BTreeMap<u32, PartListSection>,
+    pub part_list: Vec<PartListNode>,
 }
 
 impl Layout {
@@ -85,6 +91,57 @@ impl Layout {
                 .or(self.page_margins_both)
                 .unwrap_or_default()
         }
+    }
+
+    /// Finds a part's section/part-group assignment by id, searching the
+    /// part-list tree directly -- a part-list is small enough that a linear
+    /// walk costs nothing, so there's no need to also keep a flattened map.
+    pub fn lookup(&self, part_id: &str) -> Option<ScorePart> {
+        fn find(nodes: &[PartListNode], part_id: &str) -> Option<ScorePart> {
+            for node in nodes {
+                match node {
+                    PartListNode::Part {
+                        id,
+                        section,
+                        part_group,
+                        ..
+                    } if id == part_id => {
+                        return Some(ScorePart {
+                            section: *section,
+                            part_group: *part_group,
+                        });
+                    }
+                    PartListNode::Section { children, .. }
+                    | PartListNode::Group { children, .. } => {
+                        if let Some(found) = find(children, part_id) {
+                            return Some(found);
+                        }
+                    }
+                    PartListNode::Part { .. } => {}
+                }
+            }
+
+            None
+        }
+
+        find(&self.part_list, part_id)
+    }
+
+    /// Ensures a part is present in the part-list, registering a bare
+    /// top-level entry (no name/abbr, default section/part-group 0) if the
+    /// id was never declared in `<part-list>`.
+    pub fn ensure_part(&mut self, part_id: &str) {
+        if self.lookup(part_id).is_some() {
+            return;
+        }
+
+        self.part_list.push(PartListNode::Part {
+            id: part_id.to_string(),
+            name: String::new(),
+            abbr: String::new(),
+            section: 0,
+            part_group: 0,
+        });
     }
 }
 
@@ -106,8 +163,7 @@ impl Default for Layout {
 
             staff_distance: 80.,
 
-            parts: BTreeMap::new(),
-            sections: BTreeMap::new(),
+            part_list: Vec::new(),
         }
     }
 }

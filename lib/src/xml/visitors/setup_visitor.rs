@@ -1,6 +1,5 @@
 use crate::score::layout::PageMargins;
 use crate::score::part_list::builder::{PartGroupAction, PartListBuilder};
-use crate::score::part_list::from_tree::layout_from_part_list;
 use crate::xml::utils::NodeUtils;
 use crate::xml::utils::ReqParse;
 use crate::xml::visitor::Visitor;
@@ -104,23 +103,13 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
             |n| Some(n.req_attribute("id").to_string()),
         );
 
-        let (parts, sections) = layout_from_part_list(&builder.finish());
-        ctx.layout.parts = parts;
-        ctx.layout.sections = sections;
+        ctx.layout.part_list = builder.finish();
     }
 
     fn enter_part(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         // Ensure part is registered in part list
         let part_id = ctx.layout_ctx.part_id.clone();
-        let part = ctx.layout.parts.get(&part_id).unwrap();
-
-        // Ensure section is registered
-        let section_number = part.section;
-        let section = ctx.layout.sections.entry(section_number).or_default();
-
-        // Ensure part group is registered
-        let part_group_number = part.part_group;
-        section.groups.entry(part_group_number).or_default();
+        ctx.layout.ensure_part(&part_id);
     }
 
     fn enter_measure(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}

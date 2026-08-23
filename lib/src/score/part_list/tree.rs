@@ -1,8 +1,7 @@
-/// An ordered node in a `<part-list>`'s structure. Preserves the exact
-/// document order things appeared in, unlike `Layout::sections`/
-/// `Layout::parts` (`BTreeMap`s keyed for O(1) render lookups) -- but it
-/// carries the same section/part-group assignment those maps need, so
-/// `from_tree::layout_from_part_list` can build them straight from this tree.
+/// An ordered node in a `<part-list>`'s structure, preserving the exact
+/// document order things appeared in. Stored directly as `Layout::part_list`;
+/// `Layout::lookup` searches it for a part's section/part-group assignment.
+#[derive(Clone)]
 pub enum PartListNode {
     Part {
         id: String,

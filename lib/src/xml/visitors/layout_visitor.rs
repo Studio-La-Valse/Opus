@@ -63,9 +63,9 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
         let measure_number = ctx.layout_ctx.measure.number;
 
         let part_id = ctx.layout_ctx.part_id.clone();
-        let part = ctx.layout.parts.get(&part_id).unwrap();
-        let section_number = part.section;
-        let part_group_number = part.part_group;
+        let assignment = ctx.layout.lookup(&part_id).unwrap();
+        let section_number = assignment.section;
+        let part_group_number = assignment.part_group;
 
         // get or create the page
         let page = ctx.visual_score.get_page_or_insert(page_number);
