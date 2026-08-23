@@ -1,4 +1,5 @@
-use crate::score::part_list_tree::{PartGroupAction, PartListBuilder, format_part_list_tree};
+use crate::score::part_list::builder::{PartGroupAction, PartListBuilder};
+use crate::score::part_list::display::format_part_list_tree;
 use crate::xml::validate::ValidationCtx;
 use crate::xml::validation_issue::{Severity, ValidationIssue};
 use crate::xml::visitor::Visitor;

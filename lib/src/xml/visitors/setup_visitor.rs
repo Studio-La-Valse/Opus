@@ -1,5 +1,6 @@
 use crate::score::layout::PageMargins;
-use crate::score::part_list_tree::{PartGroupAction, PartListBuilder, layout_from_part_list};
+use crate::score::part_list::builder::{PartGroupAction, PartListBuilder};
+use crate::score::part_list::from_tree::layout_from_part_list;
 use crate::xml::utils::NodeUtils;
 use crate::xml::utils::ReqParse;
 use crate::xml::visitor::Visitor;
