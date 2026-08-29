@@ -1,6 +1,8 @@
 use crate::commands::print_issues;
 use clap::Args;
-use lib::drawable::drawable_element::{DrawableElement, to_svg};
+use lib::drawable::canvas::CanvasPainter;
+use lib::drawable::canvas::svg::SvgCanvas;
+use lib::drawable::drawable_element::DrawableElement;
 use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
@@ -236,7 +238,7 @@ pub fn run(args: RenderArgs) {
         time = Instant::now();
     }
 
-    let svg = to_svg(elements);
+    let svg = CanvasPainter::new(SvgCanvas::new()).paint(&elements);
     fs::write(out.clone(), svg).unwrap();
 
     println!("Write to svg: {}ms", time.elapsed().as_millis());

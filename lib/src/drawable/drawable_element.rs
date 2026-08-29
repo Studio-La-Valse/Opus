@@ -1,4 +1,4 @@
-﻿use crate::drawable::elements::line::Line;
+use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
 use crate::drawable::elements::text::Text;
@@ -43,81 +43,7 @@ pub fn scale_elem<'a>(element: &DrawableElement<'a>, scale: f32) -> DrawableElem
     }
 }
 
-pub fn to_svg<'a>(elements: Vec<DrawableElement<'a>>) -> String {
-    let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);
-
-    let width = max_x - min_x;
-    let height = max_y - min_y;
-
-    let mut out = String::new();
-
-    out.push_str(&format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{min_x} {min_y} {w} {h}" width="{w}" height="{h}">"#,
-        min_x = min_x,
-        min_y = min_y,
-        w = width,
-        h = height,
-    ));
-    out.push_str("\r\n");
-
-    for el in elements {
-        match el {
-            DrawableElement::Line(l) => out.push_str(&format!(
-                r#"<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{}" stroke-width="{}" />"#,
-                l.stroke_color.to_hex(),
-                l.stroke_width,
-                x1 = l.start.x,
-                y1 = l.start.y,
-                x2 = l.end.x,
-                y2 = l.end.y,
-            )),
-
-            DrawableElement::Rect(r) => out.push_str(&format!(
-                r#"<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{}" stroke="{}" stroke-width="{}" />"#,
-                r.color.to_hex(),
-                r.stroke_color.map_or("none".to_string(), |s| s.to_hex()),
-                r.stroke_width.unwrap_or(0.0),
-                x = r.xy.x,
-                y = r.xy.y,
-                w = r.width,
-                h = r.height,
-            )),
-            DrawableElement::Text(t) => out.push_str(&format!(
-                r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" text-anchor="{ha}" dominant-baseline="{va}">{content}</text>"#,
-                x = t.xy.x,
-                y = t.xy.y,
-                fill = t.color.to_hex(),
-                fs = t.font_size,
-                ff = t.font,
-                ha = t.horizontal_alignment.to_svg(),
-                va = t.vertical_alignment.to_svg(),
-                content = xml_escape(t.text),
-            )),
-            DrawableElement::Polygon(p) => {
-                let pts = p.pts
-                    .iter()
-                    .map(|xy| format!("{},{}", xy.x, xy.y))
-                    .collect::<Vec<_>>()
-                    .join(" ");
-
-                out.push_str(&format!(
-                    r#"<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}" />"#,
-                    pts = pts,
-                    fill = p.color.to_hex(),
-                    stroke = p.stroke_color.as_ref().map_or("none".to_string(), |c| c.to_hex()),
-                    sw = p.stroke_width.unwrap_or(0.0),
-                ));
-            }
-        }
-
-        out.push_str("\r\n")
-    }
-
-    out.push_str("</svg>");
-    out
-}
-
-pub fn compute_bounds(elements: &Vec<DrawableElement<'_>>) -> (f32, f32, f32, f32) {
+pub fn compute_bounds(elements: &[DrawableElement<'_>]) -> (f32, f32, f32, f32) {
     let mut min_x = f32::MAX;
     let mut min_y = f32::MAX;
     let mut max_x = f32::MIN;
@@ -157,13 +83,4 @@ pub fn compute_bounds(elements: &Vec<DrawableElement<'_>>) -> (f32, f32, f32, f3
     }
 
     (min_x, min_y, max_x, max_y)
-}
-
-// Very small XML escape helper
-fn xml_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&apos;")
 }

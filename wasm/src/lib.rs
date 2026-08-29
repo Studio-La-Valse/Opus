@@ -1,5 +1,6 @@
+use lib::drawable::canvas::CanvasPainter;
+use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
 use lib::drawable::drawable_element::{DrawableElement, compute_bounds, scale_elem};
-use lib::drawable::flat_buffer::to_flat_buffer;
 use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
@@ -54,8 +55,8 @@ thread_local! {
 
 /// Canvas-ready render output. `geometry` is a tagged f32 stream and `text_blob`
 /// holds every Text record's content in encounter order, joined by
-/// [`lib::drawable::flat_buffer::TEXT_DELIMITER`]. See
-/// [`lib::drawable::flat_buffer::FlatBuffer`] for the exact record layout.
+/// [`lib::drawable::canvas::flat_buffer::TEXT_DELIMITER`]. See
+/// [`lib::drawable::canvas::flat_buffer::FlatBuffer`] for the exact record layout.
 #[wasm_bindgen]
 pub struct RenderOutput {
     bounds_min_x: f32,
@@ -315,7 +316,7 @@ pub fn render(
             elements
         };
 
-        let flat = to_flat_buffer(elements);
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
         Ok(RenderOutput {
             bounds_min_x: flat.bounds.0,
             bounds_min_y: flat.bounds.1,

@@ -1,11 +1,14 @@
 #[cfg(test)]
 mod tests {
+    use lib::drawable::canvas::CanvasPainter;
+    use lib::drawable::canvas::flat_buffer::{
+        FlatBufferCanvas, TAG_LINE, TAG_POLYGON, TAG_RECT, TAG_TEXT,
+    };
     use lib::drawable::drawable_element::DrawableElement;
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
     use lib::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
-    use lib::drawable::flat_buffer::{TAG_LINE, TAG_POLYGON, TAG_RECT, TAG_TEXT, to_flat_buffer};
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
 
@@ -21,7 +24,7 @@ mod tests {
             .into(),
         ];
 
-        let flat = to_flat_buffer(elements);
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
 
         assert_eq!(
             flat.geometry,
@@ -44,7 +47,7 @@ mod tests {
             .into(),
         ];
 
-        let flat = to_flat_buffer(elements);
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
 
         assert_eq!(
             flat.geometry,
@@ -79,7 +82,7 @@ mod tests {
             .into(),
         ];
 
-        let flat = to_flat_buffer(elements);
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
 
         assert_eq!(
             flat.geometry,
@@ -90,7 +93,7 @@ mod tests {
         );
         assert_eq!(
             flat.text_blob,
-            format!("a{}bb", lib::drawable::flat_buffer::TEXT_DELIMITER)
+            format!("a{}bb", lib::drawable::canvas::flat_buffer::TEXT_DELIMITER)
         );
     }
 
@@ -110,7 +113,7 @@ mod tests {
             .into(),
         ];
 
-        let flat = to_flat_buffer(elements);
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
 
         assert_eq!(
             flat.geometry,
