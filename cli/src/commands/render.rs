@@ -1,14 +1,14 @@
 use crate::commands::print_issues;
 use clap::Args;
 use lib::drawable::canvas::CanvasPainter;
-use lib::drawable::canvas::pdf::{PdfPage, PdfPageCanvas, write_pdf};
+use lib::drawable::canvas::pdf::{self, PdfPage, PdfPageCanvas};
 use lib::drawable::canvas::svg::SvgCanvas;
 use lib::drawable::drawable_element::DrawableElement;
 use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
-use lib::score::layout::Layout;
+use lib::score::layout::{Defaults, Layout};
 use lib::score::layout_ctx::LayoutCtx;
 use lib::score::page_orientation::PageOrientation;
 use lib::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
@@ -238,85 +238,92 @@ pub fn run(args: RenderArgs) {
     layout_engine.arrange_pages(&mut visual, &XY::ZERO);
 
     println!("Layout pass: {}ms", time.elapsed().as_millis());
-    time = Instant::now();
-
-    let base = RenderCompositor {
-        pass: Box::new(BaseRenderer {}),
-    };
 
     match format {
-        OutputFormat::Svg => {
-            let mut elements: Vec<DrawableElement<'_>> = base.walk(&visual, &font);
-
-            println!("First render pass: {}ms", time.elapsed().as_millis());
-            time = Instant::now();
-
-            if debug {
-                let debug_pass = RenderCompositor {
-                    pass: Box::new(DebugRenderer {}),
-                };
-                elements.extend(debug_pass.walk(&visual, &font));
-
-                println!("Second render pass: {}ms", time.elapsed().as_millis());
-                time = Instant::now();
-            }
-
-            let svg = CanvasPainter::new(SvgCanvas::new()).paint(&elements);
-            fs::write(&out, svg).unwrap();
-
-            println!("Write to svg: {}ms", time.elapsed().as_millis());
-        }
-
-        OutputFormat::Pdf => {
-            let font_path =
-                font_path.expect("--format pdf requires --font <path to the SMuFL music font>");
-            let font_bytes = fs::read(&font_path)
-                .unwrap_or_else(|err| panic!("Failed to read font '{font_path}': {err}"));
-            let face = Face::parse(&font_bytes, 0)
-                .unwrap_or_else(|err| panic!("Font '{font_path}' is not valid OpenType: {err}"));
-
-            // MusicXML tenths -> PDF points: the score's mm-per-tenth scaling
-            // times 72 points per inch over 25.4 mm per inch.
-            let pt_per_tenth =
-                layout.defaults.scaling_millimeters / layout.defaults.scaling_tenths * 72.0 / 25.4;
-
-            let mut pages = base.walk_pages(&visual, &font);
-
-            println!("First render pass: {}ms", time.elapsed().as_millis());
-            time = Instant::now();
-
-            if debug {
-                let debug_pass = RenderCompositor {
-                    pass: Box::new(DebugRenderer {}),
-                };
-                for (page, debug_page) in
-                    pages.iter_mut().zip(debug_pass.walk_pages(&visual, &font))
-                {
-                    page.elements.extend(debug_page.elements);
-                }
-
-                println!("Second render pass: {}ms", time.elapsed().as_millis());
-                time = Instant::now();
-            }
-
-            let pdf_pages: Vec<PdfPage> = pages
-                .iter()
-                .map(|page| {
-                    let canvas = PdfPageCanvas::new(
-                        page.origin,
-                        (page.width, page.height),
-                        pt_per_tenth,
-                        &face,
-                    );
-                    CanvasPainter::new(canvas).paint(&page.elements)
-                })
-                .collect();
-
-            fs::write(&out, write_pdf(&pdf_pages, &font_bytes)).unwrap();
-
-            println!("Write to pdf: {}ms", time.elapsed().as_millis());
-        }
+        OutputFormat::Svg => write_svg(&visual, &font, debug, &out),
+        OutputFormat::Pdf => write_pdf(&visual, &font, debug, font_path, &layout.defaults, &out),
     }
 
     println!("Written to: {}", out)
+}
+
+/// Renders `score` to a single SVG document and writes it to `out`.
+fn write_svg(score: &Score, font: &SmuflFont, debug: bool, out: &str) {
+    let mut time = Instant::now();
+
+    let mut elements: Vec<DrawableElement<'_>> = RenderCompositor {
+        pass: Box::new(BaseRenderer {}),
+    }
+    .walk(score, font);
+
+    if debug {
+        elements.extend(
+            RenderCompositor {
+                pass: Box::new(DebugRenderer {}),
+            }
+            .walk(score, font),
+        );
+    }
+
+    println!("Render pass: {}ms", time.elapsed().as_millis());
+    time = Instant::now();
+
+    let svg = CanvasPainter::new(SvgCanvas::new()).paint(&elements);
+    fs::write(out, svg).unwrap();
+
+    println!("Write to svg: {}ms", time.elapsed().as_millis());
+}
+
+/// Renders `score` to a multi-page PDF -- one physical page per laid-out page --
+/// with the SMuFL music font embedded, and writes it to `out`.
+fn write_pdf(
+    score: &Score,
+    font: &SmuflFont,
+    debug: bool,
+    font_path: Option<String>,
+    defaults: &Defaults,
+    out: &str,
+) {
+    let font_path = font_path.expect("--format pdf requires --font <path to the SMuFL music font>");
+    let font_otf = fs::read(&font_path)
+        .unwrap_or_else(|err| panic!("Failed to read font '{font_path}': {err}"));
+    let face = Face::parse(&font_otf, 0)
+        .unwrap_or_else(|err| panic!("Font '{font_path}' is not valid OpenType: {err}"));
+
+    // MusicXML tenths -> PDF points: the score's mm-per-tenth scaling times 72
+    // points per inch over 25.4 mm per inch.
+    let pt_per_tenth = defaults.scaling_millimeters / defaults.scaling_tenths * 72.0 / 25.4;
+
+    let mut time = Instant::now();
+
+    let mut pages = RenderCompositor {
+        pass: Box::new(BaseRenderer {}),
+    }
+    .walk_pages(score, font);
+
+    if debug {
+        let overlay = RenderCompositor {
+            pass: Box::new(DebugRenderer {}),
+        }
+        .walk_pages(score, font);
+        for (page, debug_page) in pages.iter_mut().zip(overlay) {
+            page.elements.extend(debug_page.elements);
+        }
+    }
+
+    println!("Render pass: {}ms", time.elapsed().as_millis());
+    time = Instant::now();
+
+    let pdf_pages: Vec<PdfPage> = pages
+        .iter()
+        .map(|page| {
+            let canvas =
+                PdfPageCanvas::new(page.origin, (page.width, page.height), pt_per_tenth, &face);
+            CanvasPainter::new(canvas).paint(&page.elements)
+        })
+        .collect();
+
+    fs::write(out, pdf::write_pdf(&pdf_pages, &font_otf)).unwrap();
+
+    println!("Write to pdf: {}ms", time.elapsed().as_millis());
 }
