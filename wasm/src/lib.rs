@@ -1,5 +1,6 @@
+use lib::drawable::canvas::CanvasPainter;
+use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
 use lib::drawable::drawable_element::{DrawableElement, compute_bounds, scale_elem};
-use lib::drawable::flat_buffer::to_flat_buffer;
 use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
@@ -11,6 +12,7 @@ use lib::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamSt
 use lib::score::user_layout::UserLayout;
 use lib::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use lib::score::visual::render_compositor::RenderCompositor;
+use lib::score::visual::render_fonts::RenderFonts;
 use lib::score::visual::render_pass::{BaseRenderer, DebugRenderer};
 use lib::score::visual::score::Score;
 use lib::score::visual::score_element::ScoreElement;
@@ -54,8 +56,8 @@ thread_local! {
 
 /// Canvas-ready render output. `geometry` is a tagged f32 stream and `text_blob`
 /// holds every Text record's content in encounter order, joined by
-/// [`lib::drawable::flat_buffer::TEXT_DELIMITER`]. See
-/// [`lib::drawable::flat_buffer::FlatBuffer`] for the exact record layout.
+/// [`lib::drawable::canvas::flat_buffer::TEXT_DELIMITER`]. See
+/// [`lib::drawable::canvas::flat_buffer::FlatBuffer`] for the exact record layout.
 #[wasm_bindgen]
 pub struct RenderOutput {
     bounds_min_x: f32,
@@ -64,6 +66,8 @@ pub struct RenderOutput {
     bounds_height: f32,
     geometry: Vec<f32>,
     text_blob: String,
+    font_blob: String,
+    font_styles: Vec<f32>,
 }
 
 #[wasm_bindgen]
@@ -100,6 +104,20 @@ impl RenderOutput {
     #[wasm_bindgen(getter)]
     pub fn text_blob(&mut self) -> String {
         std::mem::take(&mut self.text_blob)
+    }
+
+    /// The distinct font families every `TAG_TEXT` record's `fontIndex` points
+    /// into, joined by [`lib::drawable::canvas::flat_buffer::TEXT_DELIMITER`].
+    #[wasm_bindgen(getter)]
+    pub fn font_blob(&mut self) -> String {
+        std::mem::take(&mut self.font_blob)
+    }
+
+    /// Parallel to `font_blob`: per family, `FONT_STYLE_BOLD` / `FONT_STYLE_ITALIC`
+    /// bits or'd together.
+    #[wasm_bindgen(getter)]
+    pub fn font_styles(&mut self) -> Vec<f32> {
+        std::mem::take(&mut self.font_styles)
     }
 }
 
@@ -210,6 +228,24 @@ pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 /// only to decide whether the result needs scaling down to stay within
 /// [`MAX_CANVAS_PIXELS`]; the caller still multiplies the returned bounds by
 /// it as usual when sizing the canvas backing store.
+///
+/// # Adding a `render_pdf` export
+///
+/// A PDF download would be a sibling `#[wasm_bindgen] pub fn render_pdf(handle:
+/// u32, debug: bool, /* same layout args */) -> Result<Vec<u8>, JsValue>`
+/// returning the bytes (wasm-bindgen marshals `Vec<u8>` to a `Uint8Array`).
+/// Body: run the same layout steps as below, then instead of
+/// `compositor.walk(..)` + `FlatBufferCanvas` do what
+/// `cli/src/commands/render.rs` does for `OutputFormat::Pdf` --
+/// `compositor.walk_pages(&cache.score, &fonts)`, one
+/// `lib::drawable::canvas::pdf::PdfPageCanvas` per page, then
+/// `lib::drawable::canvas::pdf::write_pdf(&pages, &font_set)`. The missing
+/// pieces are the actual font programs the
+/// [`lib::drawable::canvas::pdf::FontSet`] embeds: there's no system font
+/// database in the browser, so bundle them with
+/// `include_bytes!("../../assets/.../Bravura.otf")` (plus a text font) or
+/// thread the bytes through `load_score` and stash them in the cache next to
+/// `SmuflFont`.
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen]
 pub fn render(
@@ -221,6 +257,8 @@ pub fn render(
     horizontal_gutter_even: Option<f32>,
     horizontal_gutter_uneven: Option<f32>,
     vertical_gutter: Option<f32>,
+    title_font: Option<String>,
+    lyric_font: Option<String>,
     device_pixel_ratio: f32,
 ) -> Result<RenderOutput, JsValue> {
     let page_color = page_color
@@ -246,6 +284,9 @@ pub fn render(
         ..Default::default()
     };
     let app_defaults: AppDefaults = Default::default();
+
+    let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
+    let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);
 
     CACHE.with_borrow_mut(|cache| {
         let cache = cache.get_mut(&handle).ok_or_else(|| {
@@ -282,18 +323,20 @@ pub fn render(
         };
         layout_engine.arrange_pages(&mut cache.score, &XY::ZERO);
 
+        let fonts = RenderFonts::create(&cache.font, title_font, lyric_font);
+
         let pass = BaseRenderer {};
         let compositor = RenderCompositor {
             pass: Box::new(pass),
         };
-        let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&cache.score, &cache.font);
+        let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&cache.score, &fonts);
 
         if debug {
             let pass = DebugRenderer {};
             let compositor = RenderCompositor {
                 pass: Box::new(pass),
             };
-            elements.extend(compositor.walk(&cache.score, &cache.font));
+            elements.extend(compositor.walk(&cache.score, &fonts));
         }
 
         let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);
@@ -315,7 +358,7 @@ pub fn render(
             elements
         };
 
-        let flat = to_flat_buffer(elements);
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
         Ok(RenderOutput {
             bounds_min_x: flat.bounds.0,
             bounds_min_y: flat.bounds.1,
@@ -323,6 +366,8 @@ pub fn render(
             bounds_height: flat.bounds.3,
             geometry: flat.geometry,
             text_blob: flat.text_blob,
+            font_blob: flat.font_blob,
+            font_styles: flat.font_styles,
         })
     })
 }

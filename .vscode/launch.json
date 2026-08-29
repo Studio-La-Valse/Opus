@@ -11,6 +11,7 @@
                 "render",
                 "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
                 "--out", "assets/xmltest/test.svg",
+                "--format", "svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
                 "--debug",
@@ -32,6 +33,7 @@
                 "render",
                 "--file", "assets/xmlsamples/BrahWiMeSample.musicxml",
                 "--out", "assets/xmltest/test.svg",
+                "--format", "svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
                 //"--debug",
@@ -53,11 +55,31 @@
                 "render",
                 "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
                 "--out", "assets/xmltest/test.svg",
+                "--format", "svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
                 "--page-orientation", "vertical",
                 "--vertical-gutter", "10",
                 "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Render PDF (Actor Prelude Sample)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/cli",
+            "args": [
+                "render",
+                "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
+                "--out", "assets/xmltest/test.pdf",
+                "--format", "pdf",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [

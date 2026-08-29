@@ -1,4 +1,4 @@
-﻿use crate::geometry::color::Color;
+use crate::geometry::color::Color;
 use crate::score::page_orientation::PageOrientation;
 
 #[derive(Copy, Clone, Default)]

@@ -11,7 +11,7 @@
 // regardless of where it's dropped into a host page, as long as this file
 // stays in place relative to ../wasm/pkg and ../assets/smufl.
 
-// Keep in sync with lib/src/drawable/flat_buffer.rs.
+// Keep in sync with lib/src/drawable/canvas/flat_buffer/mod.rs.
 const TAG_LINE = 0;
 const TAG_RECT = 1;
 const TAG_TEXT = 2;
@@ -19,6 +19,11 @@ const TAG_POLYGON = 3;
 const TEXT_DELIMITER = "";
 const H_ALIGN = ["left", "center", "right"];
 const V_ALIGN = ["hanging", "middle", "alphabetic"];
+// Bits in a `font_styles` entry (see the flat-buffer module).
+const FONT_STYLE_BOLD = 1;
+const FONT_STYLE_ITALIC = 2;
+// Generic fallback appended after every resolved family.
+const FONT_FALLBACK = "serif";
 
 const WASM_JS_URL = new URL("../wasm/pkg/wasm.js", import.meta.url).href;
 const BRAVURA_METADATA_URL = new URL(
@@ -267,6 +272,8 @@ export class MusicXmlElement extends HTMLElement {
         this._cssNumberVar("horizontal-gutter-even"),
         this._cssNumberVar("horizontal-gutter-uneven"),
         this._cssNumberVar("vertical-gutter"),
+        this._cssVar("title-font"),
+        this._cssVar("lyric-font"),
         window.devicePixelRatio || 1,
       );
       this._draw(output);
@@ -295,7 +302,7 @@ export class MusicXmlElement extends HTMLElement {
       strokeB: undefined,
       strokeA: undefined,
       lineWidth: undefined,
-      fontSize: undefined,
+      font: undefined,
       textAlign: undefined,
       textBaseline: undefined,
     };
@@ -330,10 +337,14 @@ export class MusicXmlElement extends HTMLElement {
     }
   }
 
-  _setFont(fontSize) {
-    if (this._style.fontSize !== fontSize) {
-      this._ctx.font = `${fontSize}px Bravura`;
-      this._style.fontSize = fontSize;
+  _setFont(fontSize, family, styleFlags) {
+    const prefix =
+      (styleFlags & FONT_STYLE_ITALIC ? "italic " : "") +
+      (styleFlags & FONT_STYLE_BOLD ? "bold " : "");
+    const font = `${prefix}${fontSize}px ${family}, ${FONT_FALLBACK}`;
+    if (this._style.font !== font) {
+      this._ctx.font = font;
+      this._style.font = font;
     }
   }
 
@@ -361,6 +372,12 @@ export class MusicXmlElement extends HTMLElement {
     const textBlob = output.text_blob;
     const texts = textBlob === "" ? [] : textBlob.split(TEXT_DELIMITER);
     const geometry = output.geometry;
+
+    // Font table: families joined by TEXT_DELIMITER, parallel style-flag array.
+    // A TAG_TEXT record's trailing fontIndex points into both.
+    const fontBlob = output.font_blob;
+    const fontFamilies = fontBlob === "" ? [] : fontBlob.split(TEXT_DELIMITER);
+    const fontStyles = output.font_styles;
 
     // The wasm side already scales elements down (see render()'s
     // device_pixel_ratio param in wasm/src/lib.rs) so that bounds_width/height
@@ -483,9 +500,14 @@ export class MusicXmlElement extends HTMLElement {
           const a = geometry[i++];
           const hAlign = geometry[i++];
           const vAlign = geometry[i++];
+          const fontIndex = geometry[i++];
 
           this._setFillStyle(r, g, b, a);
-          this._setFont(fontSize);
+          this._setFont(
+            fontSize,
+            fontFamilies[fontIndex] ?? "Bravura",
+            fontStyles[fontIndex] ?? 0,
+          );
           this._setTextAlign(H_ALIGN[hAlign]);
           this._setTextBaseline(V_ALIGN[vAlign]);
           ctx.fillText(texts[textIndex++] ?? "", x, y);

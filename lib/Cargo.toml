@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 itertools = "0.15.0"
 ordered-float = "5.3.0"
+pdf-writer = "0.15.0"
 roxmltree = { workspace = true }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
+ttf-parser = "0.25.1"

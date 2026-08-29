@@ -32,6 +32,8 @@ mod tests {
                 None,
                 None,
                 None,
+                None,
+                None,
                 1.0,
             )
             .expect("render failed")
@@ -74,6 +76,8 @@ mod tests {
             render(
                 handle,
                 false,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -133,7 +137,10 @@ mod tests {
         );
 
         let render_handle = |handle: u32| {
-            render(handle, false, None, None, None, None, None, None, 1.0).expect("render failed")
+            render(
+                handle, false, None, None, None, None, None, None, None, None, 1.0,
+            )
+            .expect("render failed")
         };
 
         let mut a_before = render_handle(handle_a);
