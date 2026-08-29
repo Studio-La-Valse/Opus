@@ -24,10 +24,10 @@ mod tests {
         assert_eq!(scaled.stroke_width, 1.0);
         assert_eq!(
             (
-                scaled.stroke_color.r,
-                scaled.stroke_color.g,
-                scaled.stroke_color.b,
-                scaled.stroke_color.a
+                scaled.stroke_color.r(),
+                scaled.stroke_color.g(),
+                scaled.stroke_color.b(),
+                scaled.stroke_color.a()
             ),
             (255, 0, 0, 1.0)
         );

@@ -224,7 +224,7 @@ impl Canvas for PdfPageCanvas<'_> {
     }
 
     fn draw_line(&mut self, l: &Line) {
-        self.set_stroke_alpha(l.stroke_color.a);
+        self.set_stroke_alpha(l.stroke_color.a());
         set_stroke_rgb(&mut self.content, l.stroke_color);
         self.content.set_line_width(l.stroke_width);
         self.content.move_to(l.start.x, l.start.y);
@@ -235,10 +235,10 @@ impl Canvas for PdfPageCanvas<'_> {
     fn draw_rect(&mut self, r: &Rect) {
         let stroke = stroke_of(r.stroke_color, r.stroke_width);
 
-        self.set_fill_alpha(r.color.a);
+        self.set_fill_alpha(r.color.a());
         set_fill_rgb(&mut self.content, r.color);
         if let Some((color, width)) = stroke {
-            self.set_stroke_alpha(color.a);
+            self.set_stroke_alpha(color.a());
             set_stroke_rgb(&mut self.content, color);
             self.content.set_line_width(width);
         }
@@ -286,7 +286,7 @@ impl Canvas for PdfPageCanvas<'_> {
             VerticalAlign::Middle => t.xy.y + (ascent + descent) / 2.0,
         };
 
-        self.set_fill_alpha(t.color.a);
+        self.set_fill_alpha(t.color.a());
         set_fill_rgb(&mut self.content, t.color);
         self.content.begin_text();
         self.content
@@ -303,10 +303,10 @@ impl Canvas for PdfPageCanvas<'_> {
         };
         let stroke = stroke_of(p.stroke_color, p.stroke_width);
 
-        self.set_fill_alpha(p.color.a);
+        self.set_fill_alpha(p.color.a());
         set_fill_rgb(&mut self.content, p.color);
         if let Some((color, width)) = stroke {
-            self.set_stroke_alpha(color.a);
+            self.set_stroke_alpha(color.a());
             set_stroke_rgb(&mut self.content, color);
             self.content.set_line_width(width);
         }
@@ -354,9 +354,9 @@ fn set_stroke_rgb(content: &mut Content, color: Color) {
 
 fn rgb_unit(color: Color) -> [f32; 3] {
     [
-        color.r as f32 / 255.0,
-        color.g as f32 / 255.0,
-        color.b as f32 / 255.0,
+        color.r() as f32 / 255.0,
+        color.g() as f32 / 255.0,
+        color.b() as f32 / 255.0,
     ]
 }
 
