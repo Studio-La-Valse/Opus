@@ -1,7 +1,7 @@
 pub mod render;
 pub mod validate;
 
-use lib::xml::validation_issue::{Severity, ValidationIssue};
+use lib::musicxml::validation_issue::{Severity, ValidationIssue};
 use roxmltree::Document;
 
 pub fn print_issues(document: &Document, issues: &[ValidationIssue]) {

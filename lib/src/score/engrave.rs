@@ -18,6 +18,13 @@ use roxmltree::Document;
 
 use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
+use crate::musicxml::visitor::{DefaultVisitor, Visitor};
+use crate::musicxml::visitors::content_visitor::ContentVisitor;
+use crate::musicxml::visitors::layout_ctx_visitor::LayoutContextVisitor;
+use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
+use crate::musicxml::visitors::setup_visitor::SetupVisitor;
+use crate::musicxml::walker::Walker;
+use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::layout::Layout;
 use crate::score::layout_ctx::LayoutCtx;
@@ -28,13 +35,6 @@ use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, Ve
 use crate::score::visual::score::Score;
 use crate::score::visual::score_element::ScoreElement;
 use crate::smufl::smufl_font::SmuflFont;
-use crate::xml::visitor::{DefaultVisitor, Visitor};
-use crate::xml::visitors::content_visitor::ContentVisitor;
-use crate::xml::visitors::layout_ctx_visitor::LayoutContextVisitor;
-use crate::xml::visitors::layout_visitor::LayoutVisitor;
-use crate::xml::visitors::setup_visitor::SetupVisitor;
-use crate::xml::walker::Walker;
-use crate::xml::walker_ctx::WalkerCtx;
 
 /// A fully laid-out score together with the [`Layout`] it was engraved against.
 /// PDF output needs `layout.defaults` for its tenths-to-points scaling.

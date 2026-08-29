@@ -1,10 +1,10 @@
 use crate::commands::print_issues;
 use clap::Args;
-use lib::xml::validate::ValidationCtx;
-use lib::xml::visitor::{DefaultVisitor, Visitor};
-use lib::xml::visitors::part_consistency_visitor::PartConsistencyVisitor;
-use lib::xml::visitors::position_visitor::PositionVisitor;
-use lib::xml::walker::Walker;
+use lib::musicxml::validate::ValidationCtx;
+use lib::musicxml::visitor::{DefaultVisitor, Visitor};
+use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
+use lib::musicxml::visitors::position_visitor::PositionVisitor;
+use lib::musicxml::walker::Walker;
 use roxmltree::{Document, ParsingOptions};
 use std::fs::read_to_string;
 

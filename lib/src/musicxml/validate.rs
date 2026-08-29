@@ -1,5 +1,5 @@
+use crate::musicxml::validation_issue::ValidationIssue;
 use crate::score::layout_ctx::LayoutCtx;
-use crate::xml::validation_issue::ValidationIssue;
 
 /// The context threaded through a validation walk. Deliberately holds only
 /// what validation rules actually need: the position-tracking subset of

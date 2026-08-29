@@ -1,8 +1,8 @@
+use crate::musicxml::utils::NodeUtils;
+use crate::musicxml::validate::ValidationCtx;
+use crate::musicxml::validation_issue::{Severity, ValidationIssue};
+use crate::musicxml::visitor::Visitor;
 use crate::score::core::duration_base::BaseDuration;
-use crate::xml::utils::NodeUtils;
-use crate::xml::validate::ValidationCtx;
-use crate::xml::validation_issue::{Severity, ValidationIssue};
-use crate::xml::visitor::Visitor;
 use roxmltree::Node;
 
 /// Tracks the running position within each measure via `LayoutCtx` -- the same

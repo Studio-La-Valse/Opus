@@ -1,6 +1,6 @@
+use crate::musicxml::visitor::Visitor;
+use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::xml::visitor::Visitor;
-use crate::xml::walker_ctx::WalkerCtx;
 
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::system_measure::SystemMeasure;
