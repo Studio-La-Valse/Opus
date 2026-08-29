@@ -15,14 +15,6 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
         ctx.layout_ctx.reset();
     }
 
-    fn enter_work(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_defaults(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn exit_defaults(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn enter_part_list(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
     fn enter_part(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         ctx.layout_ctx.reset();
 
@@ -170,8 +162,6 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
                     }
                 }
             }
-
-            if node.has_tag_name("key") {}
         }
     }
 
@@ -317,10 +307,4 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
             .exit_note()
             .expect("note duration overflowed position");
     }
-
-    fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn exit(&mut self, _ctx: &mut WalkerCtx) {}
 }

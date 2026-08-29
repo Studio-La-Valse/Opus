@@ -8,11 +8,7 @@ use roxmltree::Node;
 
 pub struct SetupVisitor {}
 
-impl SetupVisitor {}
-
 impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
-    fn enter(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
     fn enter_work(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         ctx.layout.work_title = element.req_child("work-title").req_parse();
     }
@@ -88,8 +84,6 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
         }
     }
 
-    fn exit_defaults(&mut self, _ctx: &mut WalkerCtx) {}
-
     fn enter_part_list(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         let mut builder = PartListBuilder::default();
 
@@ -111,28 +105,4 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
         let part_id = ctx.layout_ctx.part_id.clone();
         ctx.layout.ensure_part(&part_id);
     }
-
-    fn enter_measure(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_print(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_attributes(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_clef(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_staff_details(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_backup(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_forward(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn enter_note(&mut self, _node: &Node, _ctx: &mut WalkerCtx) {}
-
-    fn exit_note(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn exit_measure(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn exit_part(&mut self, _ctx: &mut WalkerCtx) {}
-
-    fn exit(&mut self, _ctx: &mut WalkerCtx) {}
 }

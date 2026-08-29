@@ -216,10 +216,11 @@ pub fn run(args: RenderArgs) {
     println!("Applying user layout: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
-    let strat_impl = Box::new(SimpleRebeamStrategy {});
-    let strategy = Box::new(OnlyWhenRequiredRebeamStrategy { imp: strat_impl });
+    let strategy = OnlyWhenRequiredRebeamStrategy {
+        inner: Box::new(SimpleRebeamStrategy {}),
+    };
 
-    visual.rebeam(strategy.as_ref());
+    visual.rebeam(&strategy);
 
     println!("Rebeaming: {}ms", time.elapsed().as_millis());
     time = Instant::now();

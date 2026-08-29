@@ -15,6 +15,10 @@ use crate::score::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
 
+/// Default stem length (in tenths) used when the source has no explicit stem
+/// `default-y`; negative points up, positive points down.
+const DEFAULT_STEM_LENGTH: f32 = 30.;
+
 #[derive(Default)]
 pub struct Chord {
     pub xy: XY,
@@ -76,8 +80,8 @@ impl Chord {
                 *def_y
             } else {
                 let default_length = match stem.direction {
-                    UpDown::Up => -30.,
-                    UpDown::Down => 30.,
+                    UpDown::Up => -DEFAULT_STEM_LENGTH,
+                    UpDown::Down => DEFAULT_STEM_LENGTH,
                 };
 
                 let tip_note = match stem.direction {
@@ -109,7 +113,7 @@ impl Chord {
         for (staff_idx, clef) in self.clef_change.iter_mut() {
             let ctx = staff_ctx.get(staff_idx).unwrap();
 
-            clef.rescale(ctx.scaling * 0.8);
+            clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
 
             let dx = -5. + self.notes.first().unwrap().default_x - clef.width;
             let dy = ctx.distance_from_top
@@ -186,7 +190,6 @@ impl Layoutable for Chord {
 
 /// Rearranges accidentals in-place from top to bottom, moving each accidental
 /// left by the exact minimal amount to nest into cutouts of accidentals above it.
-/// AI generated.
 pub fn rearrange_accidentals(accidentals: &mut Vec<&mut Accidental>) {
     if accidentals.is_empty() {
         return;

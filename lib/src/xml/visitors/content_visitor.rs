@@ -35,7 +35,6 @@ impl ContentVisitor {
     fn handle_rest(&mut self, node: &Node, rest_node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx = ctx.layout_ctx.staff.number;
         let measure_number = ctx.layout_ctx.measure.number;
-        let _system_index = ctx.layout_ctx.system.index;
         let part_id = ctx.layout_ctx.part_id.as_str();
         let mut scale = *ctx
             .layout_ctx
@@ -62,12 +61,26 @@ impl ContentVisitor {
 
         let mut rest = if is_measure {
             let glyph = ctx.font.rest(BaseDuration::Whole.rest_glyph());
-            Rest::new(glyph, is_measure, None, staff_idx, 4, scale)
+            Rest::new(
+                glyph,
+                is_measure,
+                None,
+                staff_idx,
+                Rest::CENTER_STAFF_LINE,
+                scale,
+            )
         } else {
             let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
             let glyph = ctx.font.rest(dur.rest_glyph());
             let default_x: f32 = node.req_attribute("default-x").req_parse();
-            Rest::new(glyph, is_measure, Some(default_x), staff_idx, 4, scale)
+            Rest::new(
+                glyph,
+                is_measure,
+                Some(default_x),
+                staff_idx,
+                Rest::CENTER_STAFF_LINE,
+                scale,
+            )
         };
 
         // Attach pending clef change specifically for this staff
@@ -87,7 +100,6 @@ impl ContentVisitor {
             None => return,
         };
 
-        let _page_number = ctx.layout_ctx.page.page_number;
         let system_index = ctx.layout_ctx.system.index;
         let staff_idx = ctx.layout_ctx.staff.number;
         let measure_number = ctx.layout_ctx.measure.number;
@@ -196,11 +208,11 @@ impl ContentVisitor {
     /// Populates key signature accidentals at the start of a measure for all staves in a part.
     fn populate_key_signature(
         &self,
-        part: &mut Part, // adjust type to match your codebase
+        part: &mut Part,
         measure_number: u32,
         key: Key,
-        active_clef: &BTreeMap<StaffIdx, ClefCore>, // adjust container type if different
-        font: &SmuflFont,                           // adjust Font type if different
+        active_clef: &BTreeMap<StaffIdx, ClefCore>,
+        font: &SmuflFont,
     ) {
         let n_accidentals = key.accidentals();
 
@@ -361,13 +373,13 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
         let part_group_number = assignment.part_group;
 
         // get or create the page
-        let page = ctx.visual_score.get_page_or_insert(page_number);
+        let page = ctx.visual_score.page_or_insert(page_number);
 
         // get or create the system on the page
-        let system = page.get_system_or_insert(system_index);
+        let system = page.system_or_insert(system_index);
 
         // get or create the section in this system.
-        let section = system.get_section_or_insert(section_number, || {
+        let section = system.section_or_insert(section_number, || {
             let bracket_top = ctx.font.bracket_top();
             let bracket_bottom = ctx.font.bracket_bottom();
             Bracket::new(bracket_top, bracket_bottom)

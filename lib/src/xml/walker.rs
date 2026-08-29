@@ -60,7 +60,8 @@ impl<V> Walker<V> {
                                     }
                                     "forward" => self.visitor.enter_forward(&child, ctx),
                                     "backup" => self.visitor.enter_backup(&child, ctx),
-                                    _ => {} // todo: ignore for now, panic! later.
+                                    // unrecognized measure children are ignored
+                                    _ => {}
                                 }
                             }
 
@@ -70,7 +71,8 @@ impl<V> Walker<V> {
 
                     self.visitor.exit_part(ctx);
                 }
-                _ => {} // todo: ignore for now, panic! later.
+                // unrecognized top-level elements are ignored
+                _ => {}
             }
         }
 

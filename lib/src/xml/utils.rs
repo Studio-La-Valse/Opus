@@ -46,7 +46,7 @@ pub trait NodeUtils<'a, 'input> {
 
 impl<'a, 'input> NodeUtils<'a, 'input> for Node<'a, 'input>
 where
-    'a: 'input, // <--- Add this bound here
+    'a: 'input,
 {
     fn req_attribute(&self, name: &str) -> &'input str {
         match self.attribute(name) {

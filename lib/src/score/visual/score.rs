@@ -16,7 +16,7 @@ pub struct Score {
 }
 
 impl Score {
-    pub fn get_page_or_insert(&mut self, page_number: u32) -> &mut Page {
+    pub fn page_or_insert(&mut self, page_number: u32) -> &mut Page {
         self.pages.entry(page_number).or_default()
     }
 

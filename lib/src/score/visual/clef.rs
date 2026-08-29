@@ -21,6 +21,10 @@ pub struct Clef {
 }
 
 impl Clef {
+    /// Scale factor applied to courtesy / mid-measure clef changes relative to
+    /// the staff scale.
+    pub const COURTESY_SCALE: f32 = 0.8;
+
     pub fn new(clef: crate::smufl::glyphs::clef::Clef) -> Clef {
         let mut result = Clef {
             xy: Default::default(),

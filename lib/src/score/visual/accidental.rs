@@ -84,7 +84,6 @@ impl Accidental {
     }
 
     /// Calculates the exact minimal leftward shift needed for `self` to clear `other`.
-    /// AI generated.
     pub fn required_left_shift(&self, other: &Accidental) -> f32 {
         let box_a = self.world_bbox();
         let box_b = other.world_bbox();

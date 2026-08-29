@@ -100,7 +100,7 @@ impl StaffMeasure {
     }
     fn arrange_clef_end(&mut self) {
         if let Some(ref mut clef) = self.clef_end {
-            clef.rescale(self.scale * 0.8);
+            clef.rescale(self.scale * Clef::COURTESY_SCALE);
 
             let clef_origin = self.xy;
             let measure_right = clef_origin.mv(self.width, 0.);

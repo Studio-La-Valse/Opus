@@ -19,6 +19,20 @@ use crate::score::visual::stem::{BeamType, Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
 
+/// Ledger-line length as a multiple of the default staff space size.
+const LEDGER_WIDTH_SPACES: f32 = 1.875;
+
+/// Staff-line index of the top staff line; notes with a lower index sit above the
+/// staff and need ledger lines.
+const LEDGER_ABOVE_STAFF_LINE: i32 = 0;
+
+/// Staff-line index of the bottom staff line; notes with a higher index sit below
+/// the staff and need ledger lines.
+const LEDGER_BELOW_STAFF_LINE: i32 = 9;
+
+/// Maximum vertical span a beam is allowed to slant before it is clamped.
+const MAX_BEAM_SLANT_DY: f32 = 20.;
+
 #[derive(Default)]
 pub struct PartMeasure {
     pub part_id: String,
@@ -98,13 +112,12 @@ impl PartMeasure {
                     .min_by_key(key);
 
                 if let Some(highest_note) = highest_note
-                    && highest_note.staff_line < 0
+                    && highest_note.staff_line < LEDGER_ABOVE_STAFF_LINE
                 {
                     let middle = highest_note.xy.mv(highest_note.width / 2., 0.);
-                    let bottom = middle.mv(0., 0.);
 
-                    let left = bottom.mv(self.ledger_width / -2., 0.);
-                    let right = bottom.mv(self.ledger_width / 2., 0.);
+                    let left = middle.mv(self.ledger_width / -2., 0.);
+                    let right = middle.mv(self.ledger_width / 2., 0.);
 
                     let mut dy = 0.;
 
@@ -114,14 +127,12 @@ impl PartMeasure {
                             continue;
                         }
 
-                        let _line: Line = Line {
+                        self.ledgers.push(Line {
                             start: left.mv(0., dy),
                             end: right.mv(0., dy),
                             stroke_width: self.ledger_thickness,
                             stroke_color: self.color,
-                        };
-
-                        self.ledgers.push(_line);
+                        });
 
                         dy += each_line;
                     }
@@ -133,32 +144,29 @@ impl PartMeasure {
                     .filter(|n| n.staff == *idx)
                     .max_by_key(key);
                 if let Some(lowest_note) = lowest_note
-                    && lowest_note.staff_line > 9
+                    && lowest_note.staff_line > LEDGER_BELOW_STAFF_LINE
                 {
                     let middle = lowest_note.xy.mv(lowest_note.width / 2., 0.);
-                    let top = middle.mv(0., 0.);
 
-                    let left = top.mv(self.ledger_width / -2., 0.);
-                    let right = top.mv(self.ledger_width / 2., 0.);
+                    let left = middle.mv(self.ledger_width / -2., 0.);
+                    let right = middle.mv(self.ledger_width / 2., 0.);
 
                     let mut dy = 0.;
                     let mut line = lowest_note.staff_line;
 
-                    while line >= 10 {
+                    while line > LEDGER_BELOW_STAFF_LINE {
                         if line % 2 != 0 {
                             dy -= each_line;
                             line -= 1;
                             continue;
                         }
 
-                        let _line: Line = Line {
+                        self.ledgers.push(Line {
                             start: left.mv(0., dy),
                             end: right.mv(0., dy),
                             stroke_width: self.ledger_thickness,
                             stroke_color: self.color,
-                        };
-
-                        self.ledgers.push(_line);
+                        });
 
                         dy -= each_line;
                         line -= 1;
@@ -242,7 +250,7 @@ impl ScoreElement for PartMeasure {
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
 
-        self.ledger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
+        self.ledger_width = LEDGER_WIDTH_SPACES * Staff::DEFAULT_SPACE_SIZE;
 
         self.note_size_grace = layout
             .appearance
@@ -429,11 +437,10 @@ fn create_ray(
         first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
     );
 
-    let max_dy = 20.;
     let dy = (right.y - left.y).abs();
 
-    if dy > max_dy {
-        let overshoot = dy - max_dy;
+    if dy > MAX_BEAM_SLANT_DY {
+        let overshoot = dy - MAX_BEAM_SLANT_DY;
         let adjust = overshoot / 2.;
 
         if left.y > right.y {

@@ -172,20 +172,20 @@ impl Layoutable for Section {
         self.xy = *origin;
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let mut _origin = self.xy.mv(0., first_visible_staff_distance);
+        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance);
 
         for measure in self.measures.values_mut() {
-            measure.arrange(&_origin);
-            _origin = _origin.mv(measure.width, 0.);
+            measure.arrange(&measure_origin);
+            measure_origin = measure_origin.mv(measure.width, 0.);
         }
 
-        let mut _origin = self.xy;
+        let mut part_group_origin = self.xy;
         for part_group in self.part_groups.values_mut() {
-            part_group.arrange(&_origin);
-            _origin = _origin.mv(0., part_group.height);
+            part_group.arrange(&part_group_origin);
+            part_group_origin = part_group_origin.mv(0., part_group.height);
         }
 
-        let _origin = self.xy.mv(-10., first_visible_staff_distance);
-        self.bracket.arrange(&_origin);
+        let bracket_origin = self.xy.mv(-10., first_visible_staff_distance);
+        self.bracket.arrange(&bracket_origin);
     }
 }

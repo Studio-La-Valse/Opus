@@ -37,7 +37,7 @@ pub struct System {
 }
 
 impl System {
-    pub fn get_section_or_insert<F: FnOnce() -> Bracket>(
+    pub fn section_or_insert<F: FnOnce() -> Bracket>(
         &mut self,
         section_id: u32,
         bracket_factory: F,

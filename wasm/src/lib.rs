@@ -297,9 +297,10 @@ pub fn render(
             .score
             .apply_layout(&cache.layout, &user_layout, &app_defaults);
 
-        let strat_impl = Box::new(SimpleRebeamStrategy {});
-        let strategy = Box::new(OnlyWhenRequiredRebeamStrategy { imp: strat_impl });
-        cache.score.rebeam(strategy.as_ref());
+        let strategy = OnlyWhenRequiredRebeamStrategy {
+            inner: Box::new(SimpleRebeamStrategy {}),
+        };
+        cache.score.rebeam(&strategy);
 
         cache.score.measure(&XY::INFINITE);
 

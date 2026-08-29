@@ -33,6 +33,10 @@ pub struct Rest {
 }
 
 impl Rest {
+    /// Staff-line index of the middle line of a five-line staff, where rests are
+    /// vertically centred by default.
+    pub const CENTER_STAFF_LINE: i32 = 4;
+
     pub fn new(
         glyph: SmuflRest,
         is_measure: bool,
@@ -78,7 +82,7 @@ impl Rest {
 
     fn arrange_clef_changes(&mut self, origin: &XY, ctx: &StaffCtx) {
         if let Some(ref mut clef) = self.clef_change {
-            clef.rescale(ctx.scaling * 0.8);
+            clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
 
             let dx = -5. - clef.width;
             let dy = ctx.distance_from_top

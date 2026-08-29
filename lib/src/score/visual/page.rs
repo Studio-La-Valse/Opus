@@ -31,7 +31,7 @@ pub struct Page {
 }
 
 impl Page {
-    pub fn get_system_or_insert(&mut self, system_id: u32) -> &mut System {
+    pub fn system_or_insert(&mut self, system_id: u32) -> &mut System {
         self.systems.entry(system_id).or_default()
     }
 
