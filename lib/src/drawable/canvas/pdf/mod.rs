@@ -26,6 +26,17 @@
 //! Sourcing the bytes -- a bundled asset, a system font database -- is the
 //! caller's job; this module only consumes what it's handed.
 //!
+//! ## `FontSource` seam (not yet built)
+//!
+//! The CLI builds its [`FontSet`] from `fontdb` + the installed system fonts.
+//! The wasm target has no system font database, so a browser-side PDF export
+//! would need the font programs bundled (`include_bytes!` of Bravura plus a
+//! text face) or threaded through `load_score` and stashed in the score cache.
+//! The clean shape is a `trait FontSource { fn resolve(&self, family: &str) ->
+//! Option<&[u8]> }` with a `SystemFontSource` (CLI) and a `BundledFontSource`
+//! (wasm) implementation, handed to whatever builds the [`FontSet`]. Until a
+//! wasm `render_pdf` actually exists this stays a note rather than a trait.
+//!
 //! # Coordinate system
 //!
 //! Score coordinates are MusicXML tenths, x-right / y-down, with every page

@@ -5,34 +5,23 @@ use lib::drawable::canvas::pdf::{self, EmbeddedFont, FontSet, PdfPage, PdfPageCa
 use lib::drawable::canvas::svg::SvgCanvas;
 use lib::drawable::drawable_element::DrawableElement;
 use lib::drawable::elements::text::{FontStyle, FontWeight};
-use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
-use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
-use lib::score::layout::{Defaults, Layout};
-use lib::score::layout_ctx::LayoutCtx;
+use lib::score::engrave::{EngravedScore, Stage, engrave};
+use lib::score::layout::Defaults;
 use lib::score::page_orientation::PageOrientation;
-use lib::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use lib::score::user_layout::UserLayout;
-use lib::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
 use lib::score::visual::render_pass::{BaseRenderer, DebugRenderer};
 use lib::score::visual::score::Score;
-use lib::score::visual::score_element::ScoreElement;
 use lib::smufl::smufl_font::SmuflFont;
 use lib::xml::validate::ValidationCtx;
 use lib::xml::visitor::{DefaultVisitor, Visitor};
-use lib::xml::visitors::content_visitor::ContentVisitor;
-use lib::xml::visitors::layout_ctx_visitor::LayoutContextVisitor;
-use lib::xml::visitors::layout_visitor::LayoutVisitor;
 use lib::xml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::xml::visitors::position_visitor::PositionVisitor;
-use lib::xml::visitors::setup_visitor::SetupVisitor;
 use lib::xml::walker::Walker;
-use lib::xml::walker_ctx::WalkerCtx;
 use roxmltree::{Document, ParsingOptions};
-use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::fs::read_to_string;
 use std::time::Instant;
@@ -99,20 +88,22 @@ pub struct RenderArgs {
 }
 
 pub fn run(args: RenderArgs) {
-    let file = args.file;
-    let out = args.out;
-    let format = args.format;
-    let meta = args.meta;
-    let glyph_names = args.glyphs;
-    let title_font = args.title_font;
-    let lyric_font = args.lyric_font;
-    let debug = args.debug;
-    let page_color = args.page_color;
-    let foreground_color = args.foreground_color;
-    let page_orientation = args.page_orientation;
-    let horizontal_gutter_even = args.horizontal_gutter_even;
-    let horizontal_gutter_uneven = args.horizontal_gutter_uneven;
-    let vertical_gutter = args.vertical_gutter;
+    let RenderArgs {
+        file,
+        out,
+        format,
+        meta,
+        glyphs: glyph_names,
+        title_font,
+        lyric_font,
+        debug,
+        page_color,
+        foreground_color,
+        page_orientation,
+        horizontal_gutter_even,
+        horizontal_gutter_uneven,
+        vertical_gutter,
+    } = args;
 
     let mut time = Instant::now();
 
@@ -130,24 +121,19 @@ pub fn run(args: RenderArgs) {
         allow_dtd: true,
         ..ParsingOptions::default()
     };
-
     let document = Document::parse_with_options(&data, options).unwrap();
 
     println!("Parsing doc tree: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
     let mut validation_ctx = ValidationCtx::default();
-
     let visitor = DefaultVisitor {}
         .uses(PartConsistencyVisitor::default())
         .uses(PositionVisitor::default());
-
     Walker::new(visitor).walk(&document, &mut validation_ctx);
-
     print_issues(&document, &validation_ctx.issues);
 
     println!("Validation: {}ms", time.elapsed().as_millis());
-    time = Instant::now();
 
     let user_layout = UserLayout {
         page_color,
@@ -160,94 +146,28 @@ pub fn run(args: RenderArgs) {
     };
     let app_defaults: AppDefaults = Default::default();
 
-    let mut layout_ctx = LayoutCtx::default();
-    let mut layout = Layout::default();
-    let mut visual = Score::default();
-
-    let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
-        .uses(SetupVisitor {})
-        .uses(LayoutVisitor {
-            encountered: HashSet::new(),
-        });
-
-    let mut ctx = WalkerCtx::new(
-        &user_layout,
-        &mut layout,
-        &app_defaults,
-        &mut layout_ctx,
-        &mut visual,
+    let EngravedScore {
+        score: visual,
+        layout,
+    } = engrave(
+        &document,
         &font,
-    );
-
-    Walker::new(visitor).walk(&document, &mut ctx);
-
-    println!(
-        "First read pass: walking doc tree for layout: {}ms",
-        time.elapsed().as_millis()
-    );
-    time = Instant::now();
-
-    let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
-        .uses(ContentVisitor {
-            clef_change: HashMap::new(),
-        });
-
-    let mut ctx = WalkerCtx::new(
         &user_layout,
-        &mut layout,
         &app_defaults,
-        &mut layout_ctx,
-        &mut visual,
-        &font,
+        &mut |stage| match stage {
+            Stage::FirstPass(d) => println!(
+                "First read pass: walking doc tree for layout: {}ms",
+                d.as_millis()
+            ),
+            Stage::SecondPass(d) => println!(
+                "Second read pass: walking doc tree for content: {}ms",
+                d.as_millis()
+            ),
+            Stage::ApplyLayout(d) => println!("Applying user layout: {}ms", d.as_millis()),
+            Stage::Rebeam(d) => println!("Rebeaming: {}ms", d.as_millis()),
+            Stage::LayoutPass(d) => println!("Layout pass: {}ms", d.as_millis()),
+        },
     );
-
-    Walker::new(visitor).walk(&document, &mut ctx);
-
-    println!(
-        "Second read pass: walking doc tree for content: {}ms",
-        time.elapsed().as_millis()
-    );
-    time = Instant::now();
-
-    visual.apply_layout(&layout, &user_layout, &app_defaults);
-
-    println!("Applying user layout: {}ms", time.elapsed().as_millis());
-    time = Instant::now();
-
-    let strategy = OnlyWhenRequiredRebeamStrategy {
-        inner: Box::new(SimpleRebeamStrategy {}),
-    };
-
-    visual.rebeam(&strategy);
-
-    println!("Rebeaming: {}ms", time.elapsed().as_millis());
-    time = Instant::now();
-
-    visual.measure(&XY::INFINITE);
-
-    let orientation = user_layout
-        .page_orientation
-        .unwrap_or(app_defaults.page_orientation);
-    let layout_engine: Box<dyn LayoutEngine> = match orientation {
-        PageOrientation::Horizontal => Box::new(HorizontalPageLayout {
-            gutter_even: user_layout
-                .horizontal_gutter_even
-                .unwrap_or(app_defaults.horizontal_gutter_even),
-            gutter_uneven: user_layout
-                .horizontal_gutter_uneven
-                .unwrap_or(app_defaults.horizontal_gutter_uneven),
-        }),
-        PageOrientation::Vertical => Box::new(VerticalPageLayout {
-            gutter: user_layout
-                .vertical_gutter
-                .unwrap_or(app_defaults.vertical_gutter),
-        }),
-    };
-    layout_engine.arrange_pages(&mut visual, &XY::ZERO);
-
-    println!("Layout pass: {}ms", time.elapsed().as_millis());
 
     let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
     let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);
