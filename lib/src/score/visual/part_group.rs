@@ -1,14 +1,13 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::brace::Brace;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::score::walk_cursor::Visibility;
 use std::collections::BTreeMap;
 
 pub struct PartGroup {
@@ -132,32 +131,8 @@ impl PartGroup {
         }
     }
 }
-
-impl ScoreElement for PartGroup {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let show_brace = self.shows_brace();
-
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-
-        for staff in self.parts.values_mut() {
-            result.push(staff);
-        }
-
-        for measure in self.measures.values_mut() {
-            result.push(measure);
-        }
-
-        if show_brace {
-            let brace = &mut self.brace;
-            result.push(brace);
-        }
-
-        result
-    }
-}
-
 impl Layoutable for PartGroup {
-    fn measure(&mut self, _: &XY) {
+    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -165,7 +140,7 @@ impl Layoutable for PartGroup {
 
         for part in self.parts.values_mut() {
             let available = XY::INFINITE;
-            part.measure(&available);
+            part.measure(&available, params);
             self.height += part.height;
         }
 
@@ -177,7 +152,7 @@ impl Layoutable for PartGroup {
                 x: f32::INFINITY,
                 y: self.height,
             };
-            measure.measure(&available);
+            measure.measure(&available, params);
             self.width += measure.width;
         }
 
@@ -186,7 +161,7 @@ impl Layoutable for PartGroup {
                 x: f32::INFINITY,
                 y: staves_height,
             };
-            self.brace.measure(&available);
+            self.brace.measure(&available, params);
         }
     }
 

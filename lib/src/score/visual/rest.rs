@@ -1,13 +1,9 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout::Layout;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::clef::Clef;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
@@ -33,6 +29,10 @@ pub struct Rest {
 }
 
 impl Rest {
+    /// Staff-line index of the middle line of a five-line staff, where rests are
+    /// vertically centred by default.
+    pub const CENTER_STAFF_LINE: i32 = 4;
+
     pub fn new(
         glyph: SmuflRest,
         is_measure: bool,
@@ -78,7 +78,7 @@ impl Rest {
 
     fn arrange_clef_changes(&mut self, origin: &XY, ctx: &StaffCtx) {
         if let Some(ref mut clef) = self.clef_change {
-            clef.rescale(ctx.scaling * 0.8);
+            clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
 
             let dx = -5. - clef.width;
             let dy = ctx.distance_from_top
@@ -117,44 +117,33 @@ impl Rest {
     }
 }
 
-impl ScoreElement for Rest {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+impl Rest {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
 
-        if let Some(clef) = self.clef_change.as_mut() {
-            children.push(clef)
-        }
-
-        children
-    }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
 }
 
-impl Layoutable for Rest {
-    fn measure(&mut self, _available: &XY) {
+impl Rest {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;
         let bbox = self.scale_box(&glyph.bbox);
 
         if let Some(clef) = self.clef_change.as_mut() {
-            clef.measure(_available);
+            clef.measure(available, params);
         }
 
         self.width = bbox.width();
-    }
-
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("use arrange_ctx instead")
     }
 }

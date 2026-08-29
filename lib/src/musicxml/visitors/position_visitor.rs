@@ -1,12 +1,12 @@
+use crate::musicxml::utils::NodeUtils;
+use crate::musicxml::validate::ValidationCtx;
+use crate::musicxml::validation_issue::{Severity, ValidationIssue};
+use crate::musicxml::visitor::Visitor;
 use crate::score::core::duration_base::BaseDuration;
-use crate::xml::utils::NodeUtils;
-use crate::xml::validate::ValidationCtx;
-use crate::xml::validation_issue::{Severity, ValidationIssue};
-use crate::xml::visitor::Visitor;
 use roxmltree::Node;
 
-/// Tracks the running position within each measure via `LayoutCtx` -- the same
-/// state model and transition methods `LayoutContextVisitor` uses for render --
+/// Tracks the running position within each measure via `WalkCursor` -- the same
+/// state model and transition methods `WalkCursorVisitor` uses for render --
 /// and reports when a note/backup/forward pushes it past what the time
 /// signature allows, instead of panicking the way render's guard used to.
 #[derive(Default)]
@@ -27,11 +27,11 @@ impl Visitor<ValidationCtx> for PositionVisitor {
     }
 
     fn enter_part(&mut self, _node: &Node, ctx: &mut ValidationCtx) {
-        ctx.layout_ctx.reset();
+        ctx.cursor.reset();
     }
 
     fn enter_measure(&mut self, node: &Node, ctx: &mut ValidationCtx) {
-        ctx.layout_ctx.begin_measure();
+        ctx.cursor.begin_measure();
         self.measure_at = node.range().start;
         self.measure_has_content = false;
     }
@@ -52,7 +52,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
             if node.has_tag_name("divisions")
                 && let Some(v) = node.text().and_then(|s| s.trim().parse::<u32>().ok())
             {
-                ctx.layout_ctx.set_divisions(v);
+                ctx.cursor.set_divisions(v);
             }
 
             if node.has_tag_name("time") {
@@ -60,7 +60,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
                     if child.has_tag_name("beats")
                         && let Some(v) = child.text().and_then(|s| s.trim().parse::<u8>().ok())
                     {
-                        ctx.layout_ctx.set_beats(v);
+                        ctx.cursor.set_beats(v);
                     }
 
                     if child.has_tag_name("beat-type") {
@@ -69,7 +69,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
                             .and_then(|s| s.trim().parse::<u8>().ok())
                             .map(BaseDuration::try_from)
                         {
-                            Some(Ok(beat_type)) => ctx.layout_ctx.set_beat_type(beat_type),
+                            Some(Ok(beat_type)) => ctx.cursor.set_beat_type(beat_type),
                             _ => ctx.issues.push(ValidationIssue {
                                 severity: Severity::Error,
                                 message: format!(
@@ -97,7 +97,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
             return;
         };
 
-        if ctx.layout_ctx.apply_backup(duration).is_err() {
+        if ctx.cursor.apply_backup(duration).is_err() {
             ctx.issues.push(ValidationIssue {
                 severity: Severity::Error,
                 message: format!("<backup> duration {duration} exceeds the current position"),
@@ -118,7 +118,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
             return;
         };
 
-        if ctx.layout_ctx.apply_forward(duration).is_err() {
+        if ctx.cursor.apply_forward(duration).is_err() {
             ctx.issues.push(ValidationIssue {
                 severity: Severity::Error,
                 message: format!("<forward> duration {duration} overflowed the position"),
@@ -146,11 +146,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
             .and_then(|s| s.trim().parse::<u32>().ok())
             .unwrap_or(0);
 
-        if ctx
-            .layout_ctx
-            .enter_note(duration, is_chord, is_grace)
-            .is_err()
-        {
+        if ctx.cursor.enter_note(duration, is_chord, is_grace).is_err() {
             ctx.issues.push(ValidationIssue {
                 severity: Severity::Error,
                 message: "chord note duration exceeds the current position".to_string(),
@@ -160,7 +156,7 @@ impl Visitor<ValidationCtx> for PositionVisitor {
     }
 
     fn exit_note(&mut self, ctx: &mut ValidationCtx) {
-        if ctx.layout_ctx.exit_note().is_err() {
+        if ctx.cursor.exit_note().is_err() {
             ctx.issues.push(ValidationIssue {
                 severity: Severity::Error,
                 message: "note duration overflowed the position".to_string(),
@@ -186,12 +182,12 @@ impl Visitor<ValidationCtx> for PositionVisitor {
 
 impl PositionVisitor {
     fn check_position(&self, ctx: &mut ValidationCtx, at: usize) {
-        if ctx.layout_ctx.position_exceeds_measure() {
+        if ctx.cursor.position_exceeds_measure() {
             ctx.issues.push(ValidationIssue {
                 severity: Severity::Error,
                 message: format!(
                     "position {} exceeds the divisions available in a measure with {} beats of type {}",
-                    ctx.layout_ctx.position, ctx.layout_ctx.beats, ctx.layout_ctx.beat_type
+                    ctx.cursor.position, ctx.cursor.beats, ctx.cursor.beat_type
                 ),
                 at,
             });

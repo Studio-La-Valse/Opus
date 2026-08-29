@@ -1,10 +1,6 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
-use crate::score::layout::Layout;
-use crate::score::user_layout::UserLayout;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
@@ -78,45 +74,39 @@ impl Staff {
     }
 }
 
-impl ScoreElement for Staff {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut result: Vec<&mut dyn ScoreElement> = vec![];
-        for measure in self.measures.values_mut() {
-            result.push(measure);
-        }
+impl Staff {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            score_defaults,
+            user_layout,
+            app_defaults,
+        } = params;
 
-        result
-    }
-
-    fn _apply_layout(
-        &mut self,
-        layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
         self.line_thickness = user_layout
             .staff
-            .or(layout.appearance.staff)
+            .or(score_defaults.appearance.staff)
             .unwrap_or(app_defaults.staff_line_thickness);
 
         self.barline_thickness_light = user_layout
             .light_barline
-            .or(layout.appearance.light_barline)
+            .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.barline_light);
 
         self.barline_thickness_heavy = user_layout
             .heavy_barline
-            .or(layout.appearance.heavy_barline)
+            .or(score_defaults.appearance.heavy_barline)
             .unwrap_or(app_defaults.barline_heavy);
     }
 }
 
 impl Layoutable for Staff {
-    fn measure(&mut self, _available: &XY) {
+    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         self.height = self.height();
         self.width = 0.;
 
@@ -129,7 +119,7 @@ impl Layoutable for Staff {
                 x: f32::INFINITY,
                 y: self.height,
             };
-            measure.measure(available);
+            measure.measure(available, params);
             self.width += measure.width;
         }
     }

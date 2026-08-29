@@ -1,19 +1,19 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout::Layout;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::accidental::Accidental;
 use crate::score::visual::clef::Clef;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::Note;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::stem::{Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
+
+/// Default stem length (in tenths) used when the source has no explicit stem
+/// `default-y`; negative points up, positive points down.
+const DEFAULT_STEM_LENGTH: f32 = 30.;
 
 #[derive(Default)]
 pub struct Chord {
@@ -76,8 +76,8 @@ impl Chord {
                 *def_y
             } else {
                 let default_length = match stem.direction {
-                    UpDown::Up => -30.,
-                    UpDown::Down => 30.,
+                    UpDown::Up => -DEFAULT_STEM_LENGTH,
+                    UpDown::Down => DEFAULT_STEM_LENGTH,
                 };
 
                 let tip_note = match stem.direction {
@@ -109,7 +109,7 @@ impl Chord {
         for (staff_idx, clef) in self.clef_change.iter_mut() {
             let ctx = staff_ctx.get(staff_idx).unwrap();
 
-            clef.rescale(ctx.scaling * 0.8);
+            clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
 
             let dx = -5. + self.notes.first().unwrap().default_x - clef.width;
             let dy = ctx.distance_from_top
@@ -132,61 +132,40 @@ impl Chord {
     }
 }
 
-impl ScoreElement for Chord {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+impl Chord {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
 
-        for note in self.notes.iter_mut() {
-            children.push(note);
-        }
-
-        if let Some(stem) = self.stem.as_mut() {
-            children.push(stem);
-        }
-
-        for clef in self.clef_change.values_mut() {
-            children.push(clef);
-        }
-
-        children
-    }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
 }
 
-impl Layoutable for Chord {
-    fn measure(&mut self, available: &XY) {
+impl Chord {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         for note in self.notes.iter_mut() {
-            note.measure(available);
+            note.measure(available, params);
         }
 
         if let Some(stem) = self.stem.as_mut() {
-            stem.measure(available);
+            stem.measure(available, params);
         }
 
         for clef in self.clef_change.values_mut() {
-            clef.measure(available);
+            clef.measure(available, params);
         }
-    }
-
-    /// here, origin is the origin of the part measure.
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("Use arrange_ctx instead")
     }
 }
 
 /// Rearranges accidentals in-place from top to bottom, moving each accidental
 /// left by the exact minimal amount to nest into cutouts of accidentals above it.
-/// AI generated.
 pub fn rearrange_accidentals(accidentals: &mut Vec<&mut Accidental>) {
     if accidentals.is_empty() {
         return;

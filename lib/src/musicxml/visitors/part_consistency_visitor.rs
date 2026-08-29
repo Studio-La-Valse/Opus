@@ -1,8 +1,8 @@
+use crate::musicxml::validate::ValidationCtx;
+use crate::musicxml::validation_issue::{Severity, ValidationIssue};
+use crate::musicxml::visitor::Visitor;
 use crate::score::part_list::builder::{PartGroupAction, PartListBuilder};
 use crate::score::part_list::display::format_part_list_tree;
-use crate::xml::validate::ValidationCtx;
-use crate::xml::validation_issue::{Severity, ValidationIssue};
-use crate::xml::visitor::Visitor;
 use roxmltree::Node;
 use std::collections::BTreeMap;
 

@@ -6,16 +6,16 @@ pub trait RebeamStrategy {
 }
 
 pub struct OnlyWhenRequiredRebeamStrategy {
-    pub imp: Box<dyn RebeamStrategy>,
+    pub inner: Box<dyn RebeamStrategy>,
 }
 
 impl RebeamStrategy for OnlyWhenRequiredRebeamStrategy {
     fn rebeam(&self, chords: &mut [&mut Chord]) {
-        if !_requires_rebeam(chords) {
+        if !requires_rebeam(chords) {
             return;
         }
 
-        self.imp.rebeam(chords);
+        self.inner.rebeam(chords);
     }
 }
 
@@ -69,7 +69,7 @@ impl RebeamStrategy for SimpleRebeamStrategy {
     }
 }
 
-fn _requires_rebeam(chords: &[&mut Chord]) -> bool {
+fn requires_rebeam(chords: &[&mut Chord]) -> bool {
     for chord in chords {
         if let Some(stem) = &chord.stem {
             let expected_beams = stem.duration.beam_count();

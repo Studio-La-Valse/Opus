@@ -1,13 +1,9 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout::Layout;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::accidental::Accidental;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::notehead::Notehead;
@@ -92,31 +88,24 @@ impl Note {
     }
 }
 
-impl ScoreElement for Note {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+impl Note {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
 
-        if let Some(accidental) = &mut self.accidental {
-            children.push(accidental);
-        }
-
-        children
-    }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
 }
 
-impl Layoutable for Note {
-    fn measure(&mut self, _available: &XY) {
+impl Note {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;
@@ -125,12 +114,7 @@ impl Layoutable for Note {
         self.width = bbox.width();
 
         if let Some(accidental) = &mut self.accidental {
-            accidental.measure(_available);
+            accidental.measure(available, params);
         }
-    }
-
-    /// here, origin is the origin of the part measure. Get the dy from the staff ctx.
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("Use arrange_ctx instead")
     }
 }

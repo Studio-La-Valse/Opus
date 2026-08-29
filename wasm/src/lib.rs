@@ -1,32 +1,19 @@
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
 use lib::drawable::drawable_element::{DrawableElement, compute_bounds, scale_elem};
-use lib::drawable::layoutable::Layoutable;
 use lib::geometry::color::Color;
-use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
-use lib::score::layout::Layout;
-use lib::score::layout_ctx::LayoutCtx;
+use lib::score::engrave::{arrange_score, walk_document};
 use lib::score::page_orientation::PageOrientation;
-use lib::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
+use lib::score::score_defaults::ScoreDefaults;
 use lib::score::user_layout::UserLayout;
-use lib::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
-use lib::score::visual::render_pass::{BaseRenderer, DebugRenderer};
 use lib::score::visual::score::Score;
-use lib::score::visual::score_element::ScoreElement;
 use lib::smufl::smufl_font::SmuflFont;
-use lib::xml::visitor::{DefaultVisitor, Visitor};
-use lib::xml::visitors::content_visitor::ContentVisitor;
-use lib::xml::visitors::layout_ctx_visitor::LayoutContextVisitor;
-use lib::xml::visitors::layout_visitor::LayoutVisitor;
-use lib::xml::visitors::setup_visitor::SetupVisitor;
-use lib::xml::walker::Walker;
-use lib::xml::walker_ctx::WalkerCtx;
 use roxmltree::{Document, ParsingOptions};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
@@ -40,7 +27,7 @@ fn init() {
 /// returns; reused by every subsequent [`render`] call for that handle until
 /// [`free_score`] drops it.
 struct ScoreCache {
-    layout: Layout,
+    layout: ScoreDefaults,
     score: Score,
     font: SmuflFont,
 }
@@ -121,7 +108,7 @@ impl RenderOutput {
     }
 }
 
-/// Parses `musicxml` and builds the [`Layout`]/[`Score`]/[`SmuflFont`] triple,
+/// Parses `musicxml` and builds the [`ScoreDefaults`]/[`Score`]/[`SmuflFont`] triple,
 /// none of which depend on [`UserLayout`]. Caches the result under a new
 /// handle so subsequent [`render`] calls for that handle can re-layout and
 /// re-render without re-parsing or re-walking the document. Call
@@ -137,47 +124,19 @@ pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Re
     let document = Document::parse_with_options(musicxml, options)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-    // Only used to satisfy `WalkerCtx::new` during the two walk passes below;
-    // no visitor reads it, since it doesn't affect the document's structure.
+    // Only used to satisfy `WalkerCtx::new` during the walk passes; no visitor
+    // reads it, since it doesn't affect the document's structure. Every
+    // `render` call re-arranges the walked score for its real `UserLayout`.
     let user_layout = UserLayout::default();
     let app_defaults: AppDefaults = Default::default();
 
-    let mut layout_ctx = LayoutCtx::default();
-    let mut layout = Layout::default();
-    let mut score = Score::default();
-
-    let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
-        .uses(SetupVisitor {})
-        .uses(LayoutVisitor {
-            encountered: HashSet::new(),
-        });
-
-    let mut ctx = WalkerCtx::new(
-        &user_layout,
-        &mut layout,
-        &app_defaults,
-        &mut layout_ctx,
-        &mut score,
+    let (score, layout) = walk_document(
+        &document,
         &font,
-    );
-    Walker::new(visitor).walk(&document, &mut ctx);
-
-    let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
-        .uses(ContentVisitor {
-            clef_change: HashMap::new(),
-        });
-
-    let mut ctx = WalkerCtx::new(
         &user_layout,
-        &mut layout,
         &app_defaults,
-        &mut layout_ctx,
-        &mut score,
-        &font,
+        &mut |_stage| {},
     );
-    Walker::new(visitor).walk(&document, &mut ctx);
 
     let handle = NEXT_HANDLE.with_borrow_mut(|next| {
         let handle = *next;
@@ -234,17 +193,17 @@ pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 /// A PDF download would be a sibling `#[wasm_bindgen] pub fn render_pdf(handle:
 /// u32, debug: bool, /* same layout args */) -> Result<Vec<u8>, JsValue>`
 /// returning the bytes (wasm-bindgen marshals `Vec<u8>` to a `Uint8Array`).
-/// Body: run the same layout steps as below, then instead of
-/// `compositor.walk(..)` + `FlatBufferCanvas` do what
-/// `cli/src/commands/render.rs` does for `OutputFormat::Pdf` --
-/// `compositor.walk_pages(&cache.score, &fonts)`, one
+/// Body: call [`lib::score::engrave::arrange_score`] on the cached score just
+/// like [`render`] does, then instead of `compositor.walk(..)` +
+/// `FlatBufferCanvas` do what `cli/src/commands/render.rs` does for
+/// `OutputFormat::Pdf` -- `compositor.walk_pages(&cache.score, &fonts)`, one
 /// `lib::drawable::canvas::pdf::PdfPageCanvas` per page, then
 /// `lib::drawable::canvas::pdf::write_pdf(&pages, &font_set)`. The missing
-/// pieces are the actual font programs the
-/// [`lib::drawable::canvas::pdf::FontSet`] embeds: there's no system font
-/// database in the browser, so bundle them with
-/// `include_bytes!("../../assets/.../Bravura.otf")` (plus a text font) or
-/// thread the bytes through `load_score` and stash them in the cache next to
+/// piece is the font programs the [`lib::drawable::canvas::pdf::FontSet`]
+/// embeds: there's no system font database in the browser. See the
+/// `FontSource` seam note in [`lib::drawable::canvas::pdf`] for the shape --
+/// in short, bundle Bravura (plus a text face) via `include_bytes!` or thread
+/// the bytes through `load_score` and stash them in the cache next to
 /// `SmuflFont`.
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen]
@@ -293,50 +252,21 @@ pub fn render(
             JsValue::from_str("no score loaded for this handle; call load_score first")
         })?;
 
-        cache
-            .score
-            .apply_layout(&cache.layout, &user_layout, &app_defaults);
-
-        let strat_impl = Box::new(SimpleRebeamStrategy {});
-        let strategy = Box::new(OnlyWhenRequiredRebeamStrategy { imp: strat_impl });
-        cache.score.rebeam(strategy.as_ref());
-
-        cache.score.measure(&XY::INFINITE);
-
-        let orientation = user_layout
-            .page_orientation
-            .unwrap_or(app_defaults.page_orientation);
-        let layout_engine: Box<dyn LayoutEngine> = match orientation {
-            PageOrientation::Horizontal => Box::new(HorizontalPageLayout {
-                gutter_even: user_layout
-                    .horizontal_gutter_even
-                    .unwrap_or(app_defaults.horizontal_gutter_even),
-                gutter_uneven: user_layout
-                    .horizontal_gutter_uneven
-                    .unwrap_or(app_defaults.horizontal_gutter_uneven),
-            }),
-            PageOrientation::Vertical => Box::new(VerticalPageLayout {
-                gutter: user_layout
-                    .vertical_gutter
-                    .unwrap_or(app_defaults.vertical_gutter),
-            }),
-        };
-        layout_engine.arrange_pages(&mut cache.score, &XY::ZERO);
+        arrange_score(
+            &mut cache.score,
+            &cache.layout,
+            &user_layout,
+            &app_defaults,
+            &mut |_stage| {},
+        );
 
         let fonts = RenderFonts::create(&cache.font, title_font, lyric_font);
 
-        let pass = BaseRenderer {};
-        let compositor = RenderCompositor {
-            pass: Box::new(pass),
-        };
-        let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&cache.score, &fonts);
+        let mut elements: Vec<DrawableElement<'_>> =
+            RenderCompositor::base().walk(&cache.score, &fonts);
 
         if debug {
-            let pass = DebugRenderer {};
-            let compositor = RenderCompositor {
-                pass: Box::new(pass),
-            };
-            elements.extend(compositor.walk(&cache.score, &fonts));
+            elements.extend(RenderCompositor::debug().walk(&cache.score, &fonts));
         }
 
         let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);

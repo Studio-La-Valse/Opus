@@ -2,12 +2,20 @@ use crate::{
     drawable::drawable_element::DrawableElement,
     geometry::xy::XY,
     score::{
-        layout_ctx::Visibility,
         visual::{
-            chord::Chord, part::Part, part_group::PartGroup, part_measure::PartMeasure,
-            render_fonts::RenderFonts, render_pass::RenderPass, score::Score, section::Section,
-            staff::Staff, system::System,
+            chord::Chord,
+            page::Page,
+            part::Part,
+            part_group::PartGroup,
+            part_measure::PartMeasure,
+            render_fonts::RenderFonts,
+            render_pass::{BaseRenderer, DebugRenderer, RenderPass},
+            score::Score,
+            section::Section,
+            staff::Staff,
+            system::System,
         },
+        walk_cursor::Visibility,
     },
 };
 
@@ -31,16 +39,28 @@ pub struct RenderedPage<'a> {
 }
 
 impl RenderCompositor {
+    pub fn new(pass: Box<dyn RenderPass>) -> Self {
+        Self { pass }
+    }
+
+    /// Compositor for the normal score render (staves, glyphs, stems, beams).
+    pub fn base() -> Self {
+        Self::new(Box::new(BaseRenderer {}))
+    }
+
+    /// Compositor for the debug overlay (bounding boxes, anchors, guides).
+    pub fn debug() -> Self {
+        Self::new(Box::new(DebugRenderer {}))
+    }
+
+    /// Every drawable element for the whole score, concatenated into one stream
+    /// in page order. A flattened [`walk_pages`](Self::walk_pages).
     pub fn walk<'a>(&self, score: &Score, fonts: &RenderFonts<'a>) -> Vec<DrawableElement<'a>> {
         let mut out: Vec<DrawableElement<'a>> =
             Vec::with_capacity(Self::estimate_element_count(score));
 
-        for page in score.pages.values() {
-            self.pass.render_page(page, fonts, &mut out);
-
-            for system in page.systems.values() {
-                self.walk_system(system, fonts, &mut out);
-            }
+        for page in self.walk_pages(score, fonts) {
+            out.extend(page.elements);
         }
 
         out
@@ -55,7 +75,8 @@ impl RenderCompositor {
             .pages
             .values()
             .map(|page| {
-                let mut elements: Vec<DrawableElement<'a>> = Vec::new();
+                let mut elements: Vec<DrawableElement<'a>> =
+                    Vec::with_capacity(Self::estimate_page(page));
                 self.pass.render_page(page, fonts, &mut elements);
 
                 for system in page.systems.values() {
@@ -255,17 +276,15 @@ impl RenderCompositor {
     /// cost stays proportional to the score's structural size rather than to
     /// per-note rendering work (no glyph lookups, no element construction).
     fn estimate_element_count(score: &Score) -> usize {
-        score
-            .pages
+        score.pages.values().map(Self::estimate_page).sum()
+    }
+
+    fn estimate_page(page: &Page) -> usize {
+        1 + page
+            .systems
             .values()
-            .map(|page| {
-                1 + page
-                    .systems
-                    .values()
-                    .map(Self::estimate_system)
-                    .sum::<usize>()
-            })
-            .sum()
+            .map(Self::estimate_system)
+            .sum::<usize>()
     }
 
     fn estimate_system(system: &System) -> usize {

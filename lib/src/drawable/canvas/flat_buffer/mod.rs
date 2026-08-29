@@ -179,10 +179,10 @@ fn font_style_flags(weight: FontWeight, style: FontStyle) -> u32 {
 }
 
 fn push_color(out: &mut Vec<f32>, color: Color) {
-    out.push(color.r as f32);
-    out.push(color.g as f32);
-    out.push(color.b as f32);
-    out.push(color.a);
+    out.push(color.r() as f32);
+    out.push(color.g() as f32);
+    out.push(color.b() as f32);
+    out.push(color.a());
 }
 
 fn horizontal_align_tag(align: HorizontalAlign) -> f32 {

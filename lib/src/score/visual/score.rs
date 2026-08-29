@@ -1,13 +1,16 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::visual::brace::Brace;
+use crate::score::visual::bracket::Bracket;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::page::Page;
+use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system::System;
 use crate::score::visual::system_measure::SystemMeasure;
+use crate::smufl::smufl_font::SmuflFont;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -16,8 +19,33 @@ pub struct Score {
 }
 
 impl Score {
-    pub fn get_page_or_insert(&mut self, page_number: u32) -> &mut Page {
+    pub fn page_or_insert(&mut self, page_number: u32) -> &mut Page {
         self.pages.entry(page_number).or_default()
+    }
+
+    /// Walks page -> system -> section -> part group -> part, creating every
+    /// level on the way down. Section brackets and part-group / part braces are
+    /// built from `font`. Both the layout and the content walk pass need the
+    /// same part to exist before they can populate its measure, so they share
+    /// this descent.
+    pub fn locate_or_create_part(
+        &mut self,
+        font: &SmuflFont,
+        page_number: u32,
+        system_index: u32,
+        section_number: u32,
+        part_group_number: u32,
+        part_id: &str,
+    ) -> &mut Part {
+        let system = self
+            .page_or_insert(page_number)
+            .system_or_insert(system_index);
+        let section = system.section_or_insert(section_number, || {
+            Bracket::new(font.bracket_top(), font.bracket_bottom())
+        });
+        let part_group =
+            section.part_group_or_insert(part_group_number, || Brace::new(font.brace(None)));
+        part_group.part_or_insert(part_id.to_string(), || Brace::new(font.brace(None)))
     }
 
     pub fn locate_system_mut(&mut self, system_idx: &u32) -> Option<&mut System> {
@@ -75,32 +103,13 @@ impl Score {
             page.rebeam(strategy);
         }
     }
-}
 
-impl ScoreElement for Score {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-
+    /// Sizes every page. Page *placement* is a separate pass -- see
+    /// [`LayoutEngine::arrange_pages`](crate::score::visual::layout_engine::LayoutEngine::arrange_pages),
+    /// which is why `Score` has no `arrange`.
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         for page in self.pages.values_mut() {
-            result.push(page);
+            page.measure(available, params);
         }
-
-        result
-    }
-}
-
-impl Layoutable for Score {
-    fn measure(&mut self, available: &XY) {
-        for page in self.pages.values_mut() {
-            page.measure(available);
-        }
-    }
-
-    fn arrange(&mut self, _origin: &XY) {
-        todo!(
-            "Score::arrange is superseded by LayoutEngine::arrange_pages — construct a \
-             HorizontalPageLayout/VerticalPageLayout and call arrange_pages(&mut score, origin) \
-             instead of Layoutable::arrange on Score directly"
-        );
     }
 }

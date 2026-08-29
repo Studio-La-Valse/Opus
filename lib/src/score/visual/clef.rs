@@ -1,11 +1,7 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
-use crate::score::layout::Layout;
-use crate::score::user_layout::UserLayout;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::clef::Clef as SmuflClef;
 
@@ -21,6 +17,10 @@ pub struct Clef {
 }
 
 impl Clef {
+    /// Scale factor applied to courtesy / mid-measure clef changes relative to
+    /// the staff scale.
+    pub const COURTESY_SCALE: f32 = 0.8;
+
     pub fn new(clef: crate::smufl::glyphs::clef::Clef) -> Clef {
         let mut result = Clef {
             xy: Default::default(),
@@ -63,13 +63,14 @@ impl Clef {
     }
 }
 
-impl ScoreElement for Clef {
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
+impl Clef {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
+
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
@@ -77,7 +78,9 @@ impl ScoreElement for Clef {
 }
 
 impl Layoutable for Clef {
-    fn measure(&mut self, _available: &XY) {
+    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         self.measure_size();
     }
 

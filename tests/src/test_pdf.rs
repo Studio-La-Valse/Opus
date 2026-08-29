@@ -15,7 +15,6 @@ mod tests {
     use lib::geometry::xy::XY;
     use lib::score::visual::render_compositor::RenderCompositor;
     use lib::score::visual::render_fonts::RenderFonts;
-    use lib::score::visual::render_pass::BaseRenderer;
     use lib::score::visual::score::Score;
     use lib::smufl::smufl_font::SmuflFont;
     use ttf_parser::Face;
@@ -245,21 +244,19 @@ mod tests {
 
         let mut score = Score::default();
         {
-            let page = score.get_page_or_insert(1);
+            let page = score.page_or_insert(1);
             page.xy = XY { x: 0.0, y: 0.0 };
             page.width = 1360.0;
             page.height = 1760.0;
         }
         {
-            let page = score.get_page_or_insert(2);
+            let page = score.page_or_insert(2);
             page.xy = XY { x: 1400.0, y: 0.0 };
             page.width = 1360.0;
             page.height = 1760.0;
         }
 
-        let compositor = RenderCompositor {
-            pass: Box::new(BaseRenderer {}),
-        };
+        let compositor = RenderCompositor::base();
 
         let fonts = RenderFonts::music_only(&font);
         let pages = compositor.walk_pages(&score, &fonts);

@@ -1,4 +1,9 @@
-﻿use roxmltree::Node;
+﻿//! Generic `roxmltree` conveniences: parsing values out of nodes and a few
+//! node-navigation helpers. Nothing here is MusicXML-specific -- it is the one
+//! part of this module that could be hoisted to a shared `xml` util if another
+//! consumer ever needs it.
+
+use roxmltree::Node;
 use std::str::FromStr;
 
 /// Extension trait for parsing values out of string slices and XML nodes.
@@ -46,7 +51,7 @@ pub trait NodeUtils<'a, 'input> {
 
 impl<'a, 'input> NodeUtils<'a, 'input> for Node<'a, 'input>
 where
-    'a: 'input, // <--- Add this bound here
+    'a: 'input,
 {
     fn req_attribute(&self, name: &str) -> &'input str {
         match self.attribute(name) {

@@ -1,11 +1,7 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
-use crate::score::layout::Layout;
-use crate::score::user_layout::UserLayout;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::flag::Flag as SmuflFlag;
 
@@ -68,13 +64,14 @@ impl Flag {
     }
 }
 
-impl ScoreElement for Flag {
-    fn _apply_layout(
-        &mut self,
-        _layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
+impl Flag {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
+
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
@@ -82,7 +79,9 @@ impl ScoreElement for Flag {
 }
 
 impl Layoutable for Flag {
-    fn measure(&mut self, _available: &XY) {
+    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         self.measure_size();
     }
 

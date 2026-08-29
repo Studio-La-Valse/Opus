@@ -1,14 +1,10 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout::Layout;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::flag::Flag;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use std::collections::BTreeMap;
 
 #[derive(Default, Eq, PartialEq, Copy, Clone, Debug)]
@@ -175,26 +171,17 @@ impl Stem {
     }
 }
 
-impl ScoreElement for Stem {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+impl Stem {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            score_defaults,
+            user_layout,
+            app_defaults,
+        } = params;
 
-        if let Some(flag) = self.flag.as_mut() {
-            children.push(flag);
-        }
-
-        children
-    }
-
-    fn _apply_layout(
-        &mut self,
-        layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.thickness = user_layout
             .stem_thickness
-            .or(layout.appearance.stem_thickness)
+            .or(score_defaults.appearance.stem_thickness)
             .unwrap_or(app_defaults.stem_thickness);
         self.color = user_layout
             .foreground_color
@@ -203,9 +190,11 @@ impl ScoreElement for Stem {
 }
 
 impl Layoutable for Stem {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         if let Some(flag) = self.flag.as_mut() {
-            flag.measure(available);
+            flag.measure(available, params);
         }
     }
 

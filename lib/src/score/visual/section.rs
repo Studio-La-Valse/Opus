@@ -1,13 +1,12 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::brace::Brace;
 use crate::score::visual::bracket::Bracket;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::section_measure::SectionMeasure;
 use crate::score::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
@@ -112,38 +111,14 @@ impl Section {
         self.part_groups.len() > 1 && self.visible_staves() > 0
     }
 }
-
-impl ScoreElement for Section {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let shows_bracket = self.shows_bracket();
-
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-
-        for staff in self.part_groups.values_mut() {
-            result.push(staff);
-        }
-
-        for measure in self.measures.values_mut() {
-            result.push(measure);
-        }
-
-        if shows_bracket {
-            let bracket: &mut Bracket = &mut self.bracket;
-            result.push(bracket);
-        }
-
-        result
-    }
-}
-
 impl Layoutable for Section {
-    fn measure(&mut self, _: &XY) {
+    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
         for pg in self.part_groups.values_mut() {
             let available = XY::INFINITE;
-            pg.measure(&available);
+            pg.measure(&available, params);
             self.height += pg.height;
         }
 
@@ -155,7 +130,7 @@ impl Layoutable for Section {
                 x: f32::INFINITY,
                 y: staves_height,
             };
-            measure.measure(&available);
+            measure.measure(&available, params);
             self.width += measure.width;
         }
 
@@ -164,7 +139,7 @@ impl Layoutable for Section {
                 x: self.width,
                 y: staves_height,
             };
-            self.bracket.measure(&avail);
+            self.bracket.measure(&avail, params);
         }
     }
 
@@ -172,20 +147,20 @@ impl Layoutable for Section {
         self.xy = *origin;
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let mut _origin = self.xy.mv(0., first_visible_staff_distance);
+        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance);
 
         for measure in self.measures.values_mut() {
-            measure.arrange(&_origin);
-            _origin = _origin.mv(measure.width, 0.);
+            measure.arrange(&measure_origin);
+            measure_origin = measure_origin.mv(measure.width, 0.);
         }
 
-        let mut _origin = self.xy;
+        let mut part_group_origin = self.xy;
         for part_group in self.part_groups.values_mut() {
-            part_group.arrange(&_origin);
-            _origin = _origin.mv(0., part_group.height);
+            part_group.arrange(&part_group_origin);
+            part_group_origin = part_group_origin.mv(0., part_group.height);
         }
 
-        let _origin = self.xy.mv(-10., first_visible_staff_distance);
-        self.bracket.arrange(&_origin);
+        let bracket_origin = self.xy.mv(-10., first_visible_staff_distance);
+        self.bracket.arrange(&bracket_origin);
     }
 }

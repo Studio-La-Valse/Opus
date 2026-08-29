@@ -81,7 +81,7 @@ pub struct MeasureInfo {
 }
 
 #[derive(Clone)]
-pub struct LayoutCtx {
+pub struct WalkCursor {
     pub part_id: String,
     pub part_hidden_specified: Visibility,
     pub page: PageInfo,
@@ -104,7 +104,7 @@ pub struct LayoutCtx {
     pub grace: bool,
 }
 
-impl LayoutCtx {
+impl WalkCursor {
     pub fn reset(&mut self) {
         self.system.index = 0;
 
@@ -145,9 +145,9 @@ impl LayoutCtx {
     }
 }
 
-impl Default for LayoutCtx {
+impl Default for WalkCursor {
     fn default() -> Self {
-        LayoutCtx {
+        WalkCursor {
             part_id: "".to_string(),
             part_hidden_specified: Visibility::Unset,
             page: PageInfo { page_number: 1 },
@@ -203,7 +203,7 @@ pub enum PositionError {
     Overflow,
 }
 
-impl LayoutCtx {
+impl WalkCursor {
     pub fn begin_measure(&mut self) {
         self.position = 0;
     }

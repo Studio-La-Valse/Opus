@@ -26,6 +26,17 @@
 //! Sourcing the bytes -- a bundled asset, a system font database -- is the
 //! caller's job; this module only consumes what it's handed.
 //!
+//! ## `FontSource` seam (not yet built)
+//!
+//! The CLI builds its [`FontSet`] from `fontdb` + the installed system fonts.
+//! The wasm target has no system font database, so a browser-side PDF export
+//! would need the font programs bundled (`include_bytes!` of Bravura plus a
+//! text face) or threaded through `load_score` and stashed in the score cache.
+//! The clean shape is a `trait FontSource { fn resolve(&self, family: &str) ->
+//! Option<&[u8]> }` with a `SystemFontSource` (CLI) and a `BundledFontSource`
+//! (wasm) implementation, handed to whatever builds the [`FontSet`]. Until a
+//! wasm `render_pdf` actually exists this stays a note rather than a trait.
+//!
 //! # Coordinate system
 //!
 //! Score coordinates are MusicXML tenths, x-right / y-down, with every page
@@ -213,7 +224,7 @@ impl Canvas for PdfPageCanvas<'_> {
     }
 
     fn draw_line(&mut self, l: &Line) {
-        self.set_stroke_alpha(l.stroke_color.a);
+        self.set_stroke_alpha(l.stroke_color.a());
         set_stroke_rgb(&mut self.content, l.stroke_color);
         self.content.set_line_width(l.stroke_width);
         self.content.move_to(l.start.x, l.start.y);
@@ -224,10 +235,10 @@ impl Canvas for PdfPageCanvas<'_> {
     fn draw_rect(&mut self, r: &Rect) {
         let stroke = stroke_of(r.stroke_color, r.stroke_width);
 
-        self.set_fill_alpha(r.color.a);
+        self.set_fill_alpha(r.color.a());
         set_fill_rgb(&mut self.content, r.color);
         if let Some((color, width)) = stroke {
-            self.set_stroke_alpha(color.a);
+            self.set_stroke_alpha(color.a());
             set_stroke_rgb(&mut self.content, color);
             self.content.set_line_width(width);
         }
@@ -275,7 +286,7 @@ impl Canvas for PdfPageCanvas<'_> {
             VerticalAlign::Middle => t.xy.y + (ascent + descent) / 2.0,
         };
 
-        self.set_fill_alpha(t.color.a);
+        self.set_fill_alpha(t.color.a());
         set_fill_rgb(&mut self.content, t.color);
         self.content.begin_text();
         self.content
@@ -292,10 +303,10 @@ impl Canvas for PdfPageCanvas<'_> {
         };
         let stroke = stroke_of(p.stroke_color, p.stroke_width);
 
-        self.set_fill_alpha(p.color.a);
+        self.set_fill_alpha(p.color.a());
         set_fill_rgb(&mut self.content, p.color);
         if let Some((color, width)) = stroke {
-            self.set_stroke_alpha(color.a);
+            self.set_stroke_alpha(color.a());
             set_stroke_rgb(&mut self.content, color);
             self.content.set_line_width(width);
         }
@@ -343,9 +354,9 @@ fn set_stroke_rgb(content: &mut Content, color: Color) {
 
 fn rgb_unit(color: Color) -> [f32; 3] {
     [
-        color.r as f32 / 255.0,
-        color.g as f32 / 255.0,
-        color.b as f32 / 255.0,
+        color.r() as f32 / 255.0,
+        color.g() as f32 / 255.0,
+        color.b() as f32 / 255.0,
     ]
 }
 

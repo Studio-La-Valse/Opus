@@ -41,7 +41,6 @@ impl BoundingBox {
     }
 
     /// Returns the overlapping rectangle (intersection) of two bounding boxes, if any.
-    /// AI generated.
     pub fn intersection(&self, other: &BoundingBox) -> Option<BoundingBox> {
         if !self.intersects(other) {
             return None;
@@ -68,7 +67,6 @@ impl BoundingBox {
     ///
     /// Includes a tiny `EPSILON` tolerance to prevent floating-point inaccuracies
     /// from failing a true boundary match.
-    /// AI generated.
     pub fn contains_box(&self, other: &BoundingBox) -> bool {
         other.x_min() >= self.x_min() - f32::EPSILON
             && other.x_max() <= self.x_max() + f32::EPSILON

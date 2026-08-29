@@ -1,8 +1,7 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::accidental::Accidental as SmuflAccidental;
 
@@ -84,7 +83,6 @@ impl Accidental {
     }
 
     /// Calculates the exact minimal leftward shift needed for `self` to clear `other`.
-    /// AI generated.
     pub fn required_left_shift(&self, other: &Accidental) -> f32 {
         let box_a = self.world_bbox();
         let box_b = other.world_bbox();
@@ -149,17 +147,14 @@ impl Accidental {
     }
 }
 
-impl ScoreElement for Accidental {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        vec![]
-    }
+impl Accidental {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
 
-    fn _apply_layout(
-        &mut self,
-        _layout: &crate::score::layout::Layout,
-        user_layout: &crate::score::user_layout::UserLayout,
-        app_defaults: &crate::score::app_defaults::AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
@@ -167,7 +162,9 @@ impl ScoreElement for Accidental {
 }
 
 impl Layoutable for Accidental {
-    fn measure(&mut self, _available: &XY) {
+    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         let glyph = &self.glyph;
         let bbox = self.glyph_bbox(&glyph.bbox);
 

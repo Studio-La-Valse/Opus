@@ -1,23 +1,39 @@
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
-use crate::score::layout::Layout;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::chord::Chord;
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::Note;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::stem::{BeamType, Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
+
+/// Ledger-line length as a multiple of the default staff space size.
+const LEDGER_WIDTH_SPACES: f32 = 1.875;
+
+/// Staff-line index of the top staff line; notes with a lower index sit above the
+/// staff and need ledger lines.
+const LEDGER_ABOVE_STAFF_LINE: i32 = 0;
+
+/// Staff-line index of the bottom staff line; notes with a higher index sit below
+/// the staff and need ledger lines.
+const LEDGER_BELOW_STAFF_LINE: i32 = 9;
+
+/// Maximum vertical span a beam is allowed to slant before it is clamped.
+const MAX_BEAM_SLANT_DY: f32 = 20.;
+
+/// Which side of the staff a note (and therefore its ledger lines) sits on.
+enum LedgerSide {
+    Above,
+    Below,
+}
 
 #[derive(Default)]
 pub struct PartMeasure {
@@ -84,88 +100,73 @@ impl PartMeasure {
     fn arrange_ledgers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.ledgers.clear();
 
-        for chord in iter_chords(&mut self.chords) {
+        for chord in self.chords.values().flatten() {
             for (idx, staff_ctx) in staff_ctx.iter() {
-                let staff_scale = staff_ctx.scaling;
-                let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scale;
-
+                let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling;
                 let key = |n: &&Note| OrderedFloat(n.xy.y);
 
-                let highest_note = chord
+                if let Some(note) = chord
                     .notes
                     .iter()
                     .filter(|n| n.staff == *idx)
-                    .min_by_key(key);
-
-                if let Some(highest_note) = highest_note
-                    && highest_note.staff_line < 0
+                    .min_by_key(key)
+                    && note.staff_line < LEDGER_ABOVE_STAFF_LINE
                 {
-                    let middle = highest_note.xy.mv(highest_note.width / 2., 0.);
-                    let bottom = middle.mv(0., 0.);
-
-                    let left = bottom.mv(self.ledger_width / -2., 0.);
-                    let right = bottom.mv(self.ledger_width / 2., 0.);
-
-                    let mut dy = 0.;
-
-                    for line in highest_note.staff_line..-1 {
-                        if line % 2 != 0 {
-                            dy += each_line;
-                            continue;
-                        }
-
-                        let _line: Line = Line {
-                            start: left.mv(0., dy),
-                            end: right.mv(0., dy),
-                            stroke_width: self.ledger_thickness,
-                            stroke_color: self.color,
-                        };
-
-                        self.ledgers.push(_line);
-
-                        dy += each_line;
-                    }
+                    let lines = self.ledger_lines(note, LedgerSide::Above, each_line);
+                    self.ledgers.extend(lines);
                 }
 
-                let lowest_note = chord
+                if let Some(note) = chord
                     .notes
                     .iter()
                     .filter(|n| n.staff == *idx)
-                    .max_by_key(key);
-                if let Some(lowest_note) = lowest_note
-                    && lowest_note.staff_line > 9
+                    .max_by_key(key)
+                    && note.staff_line > LEDGER_BELOW_STAFF_LINE
                 {
-                    let middle = lowest_note.xy.mv(lowest_note.width / 2., 0.);
-                    let top = middle.mv(0., 0.);
-
-                    let left = top.mv(self.ledger_width / -2., 0.);
-                    let right = top.mv(self.ledger_width / 2., 0.);
-
-                    let mut dy = 0.;
-                    let mut line = lowest_note.staff_line;
-
-                    while line >= 10 {
-                        if line % 2 != 0 {
-                            dy -= each_line;
-                            line -= 1;
-                            continue;
-                        }
-
-                        let _line: Line = Line {
-                            start: left.mv(0., dy),
-                            end: right.mv(0., dy),
-                            stroke_width: self.ledger_thickness,
-                            stroke_color: self.color,
-                        };
-
-                        self.ledgers.push(_line);
-
-                        dy -= each_line;
-                        line -= 1;
-                    }
+                    let lines = self.ledger_lines(note, LedgerSide::Below, each_line);
+                    self.ledgers.extend(lines);
                 }
             }
         }
+    }
+
+    /// The ledger lines for a single note that sits `side` of its staff: one
+    /// short horizontal line on every even staff-line index between the note and
+    /// the staff edge, stepping `each_line` back towards the staff each line.
+    fn ledger_lines(&self, note: &Note, side: LedgerSide, each_line: f32) -> Vec<Line> {
+        let anchor = note.xy.mv(note.width / 2., 0.);
+        let left = anchor.mv(self.ledger_width / -2., 0.);
+        let right = anchor.mv(self.ledger_width / 2., 0.);
+
+        // Staff-line indices from the note inward to the staff edge, plus the
+        // per-line dy step (towards the staff, so away from the note).
+        let (lines, step): (Vec<i32>, f32) = match side {
+            LedgerSide::Above => (
+                (note.staff_line..=LEDGER_ABOVE_STAFF_LINE - 1).collect(),
+                each_line,
+            ),
+            LedgerSide::Below => (
+                (LEDGER_BELOW_STAFF_LINE + 1..=note.staff_line)
+                    .rev()
+                    .collect(),
+                -each_line,
+            ),
+        };
+
+        let mut out = Vec::new();
+        let mut dy = 0.;
+        for line in lines {
+            if line % 2 == 0 {
+                out.push(Line {
+                    start: left.mv(0., dy),
+                    end: right.mv(0., dy),
+                    stroke_width: self.ledger_thickness,
+                    stroke_color: self.color,
+                });
+            }
+            dy += step;
+        }
+        out
     }
 
     fn arrange_beams(&mut self, grace: bool) {
@@ -210,24 +211,17 @@ impl PartMeasure {
     }
 }
 
-impl ScoreElement for PartMeasure {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-        for chord in self.chords.values_mut().flatten() {
-            result.push(chord);
-        }
-        result
-    }
+impl PartMeasure {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            score_defaults,
+            user_layout,
+            app_defaults,
+        } = params;
 
-    fn _apply_layout(
-        &mut self,
-        layout: &Layout,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.beam_thickness = user_layout
             .beam_thickness
-            .or(layout.appearance.beam_thickness)
+            .or(score_defaults.appearance.beam_thickness)
             .unwrap_or(app_defaults.beam_thickness);
 
         self.beam_spacing = user_layout
@@ -242,9 +236,9 @@ impl ScoreElement for PartMeasure {
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
 
-        self.ledger_width = 1.875 * Staff::DEFAULT_SPACE_SIZE;
+        self.ledger_width = LEDGER_WIDTH_SPACES * Staff::DEFAULT_SPACE_SIZE;
 
-        self.note_size_grace = layout
+        self.note_size_grace = score_defaults
             .appearance
             .note_size_grace
             .or(user_layout.note_size_grace)
@@ -252,30 +246,16 @@ impl ScoreElement for PartMeasure {
     }
 }
 
-impl Layoutable for PartMeasure {
-    fn measure(&mut self, available: &XY) {
+impl PartMeasure {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self.resolve_layout(params);
+
         self.height = available.y;
 
         for chord in self.chords.values_mut().flatten() {
-            chord.measure(available);
+            chord.measure(available, params);
         }
     }
-
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("Use arrange_ctx instead")
-    }
-}
-
-fn iter_chords(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&Chord> {
-    let mut result: Vec<&Chord> = Vec::new();
-
-    for chords in chord_groups.values() {
-        for chord in chords {
-            result.push(chord);
-        }
-    }
-
-    result
 }
 
 fn collect_voices(
@@ -429,11 +409,10 @@ fn create_ray(
         first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
     );
 
-    let max_dy = 20.;
     let dy = (right.y - left.y).abs();
 
-    if dy > max_dy {
-        let overshoot = dy - max_dy;
+    if dy > MAX_BEAM_SLANT_DY {
+        let overshoot = dy - MAX_BEAM_SLANT_DY;
         let adjust = overshoot / 2.;
 
         if left.y > right.y {

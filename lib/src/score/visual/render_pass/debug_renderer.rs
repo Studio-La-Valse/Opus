@@ -26,10 +26,7 @@ impl RenderPass for DebugRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let stroke_color = Color {
-            a: 1.,
-            ..Color::RED
-        };
+        let stroke_color = Color::RED;
         let stroke_width = 1.;
         let left = Line {
             start: page.xy.mv(page.margins.left, 0.),
@@ -78,24 +75,14 @@ impl RenderPass for DebugRenderer {
             height: bbox.height(),
             color: Color::TRANSPARENT,
             stroke_width: Some(0.25),
-            stroke_color: Some(Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            }),
+            stroke_color: Some(Color::RED),
         };
         out.push(rect.into());
 
         let origin = Line {
             start: clef.xy,
             end: clef.xy.mv(clef.width, 0.),
-            stroke_color: Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            },
+            stroke_color: Color::RED,
             stroke_width: 0.2,
         };
         out.push(origin.into());
@@ -121,24 +108,14 @@ impl RenderPass for DebugRenderer {
                 height: bbox.height(),
                 color: Color::TRANSPARENT,
                 stroke_width: Some(0.25),
-                stroke_color: Some(Color {
-                    a: 1.,
-                    r: 255,
-                    g: 0,
-                    b: 0,
-                }),
+                stroke_color: Some(Color::RED),
             };
             out.push(rect.into());
 
             let origin = Line {
                 start: xy,
                 end: xy.mv(bbox.width(), 0.),
-                stroke_color: Color {
-                    a: 1.,
-                    r: 255,
-                    g: 0,
-                    b: 0,
-                },
+                stroke_color: Color::RED,
                 stroke_width: 0.2,
             };
             out.push(origin.into());
@@ -167,12 +144,7 @@ impl RenderPass for DebugRenderer {
         let origin = Line {
             start: accidental.xy,
             end: accidental.xy.mv(accidental.width, 0.),
-            stroke_color: Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            },
+            stroke_color: Color::RED,
             stroke_width: 0.2,
         };
         out.push(origin.into());
@@ -212,24 +184,14 @@ impl RenderPass for DebugRenderer {
             height: bbox.size.y,
             color: Color::TRANSPARENT,
             stroke_width: Some(0.25),
-            stroke_color: Some(Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            }),
+            stroke_color: Some(Color::RED),
         };
         out.push(rect.into());
 
         let origin = Line {
             start: rest.xy,
             end: rest.xy.mv(rest.width, 0.),
-            stroke_color: Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            },
+            stroke_color: Color::RED,
             stroke_width: 0.2,
         };
         out.push(origin.into());
@@ -257,12 +219,7 @@ impl RenderPass for DebugRenderer {
         let origin = Line {
             start: note.xy,
             end: note.xy.mv(note.width, 0.),
-            stroke_color: Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            },
+            stroke_color: Color::RED,
             stroke_width: 0.2,
         };
         out.push(origin.into());
@@ -322,24 +279,14 @@ impl RenderPass for DebugRenderer {
             height: bbox.height(),
             color: Color::TRANSPARENT,
             stroke_width: Some(0.25),
-            stroke_color: Some(Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            }),
+            stroke_color: Some(Color::RED),
         };
         out.push(rect.into());
 
         let origin = Line {
             start: flag.xy,
             end: flag.xy.mv(flag.width, 0.),
-            stroke_color: Color {
-                a: 1.,
-                r: 255,
-                g: 0,
-                b: 0,
-            },
+            stroke_color: Color::RED,
             stroke_width: 0.2,
         };
         out.push(origin.into());

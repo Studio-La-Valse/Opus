@@ -1,5 +1,5 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
+use crate::score::visual::layoutable::Layoutable;
 use crate::score::visual::score::Score;
 
 pub trait LayoutEngine {

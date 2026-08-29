@@ -1,16 +1,15 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::brace::Brace;
 use crate::score::visual::clef::Clef as DrawableClef;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::score::walk_cursor::Visibility;
 use std::collections::{BTreeMap, HashSet};
 
 pub struct Part {
@@ -195,31 +194,8 @@ impl Part {
         self.visible_staves().len() > 1
     }
 }
-
-impl ScoreElement for Part {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let shows_brace = self.shows_brace();
-
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-
-        for staff in self.staves.values_mut() {
-            result.push(staff);
-        }
-
-        for measure in self.measures.values_mut() {
-            result.push(measure);
-        }
-
-        if shows_brace {
-            result.push(&mut self.brace);
-        }
-
-        result
-    }
-}
-
 impl Layoutable for Part {
-    fn measure(&mut self, _: &XY) {
+    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -230,7 +206,7 @@ impl Layoutable for Part {
         for staff in self.staves.values_mut() {
             let available = &XY::INFINITE;
             // a staff knows its own size (sum of measure widths, staff height)
-            staff.measure(available);
+            staff.measure(available, params);
 
             if staff.hidden {
                 continue;
@@ -245,7 +221,7 @@ impl Layoutable for Part {
                 x: f32::INFINITY,
                 y: self.height,
             };
-            measure.measure(available);
+            measure.measure(available, params);
             self.width += measure.width;
         }
 
@@ -258,7 +234,7 @@ impl Layoutable for Part {
                 x: self.width,
                 y: staves_height,
             };
-            self.brace.measure(&available);
+            self.brace.measure(&available, params);
         }
     }
 

@@ -1,7 +1,6 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::visual::accidental::Accidental;
-use crate::score::visual::score_element::ScoreElement;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 
 #[derive(Default)]
@@ -13,23 +12,11 @@ pub struct KeySignature {
     pub accidentals: Vec<(i32, Accidental)>,
 }
 
-impl KeySignature {}
-
-impl ScoreElement for KeySignature {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
-        for (_, acc) in self.accidentals.iter_mut() {
-            children.push(acc);
-        }
-        children
-    }
-}
-
 impl Layoutable for KeySignature {
-    fn measure(&mut self, _available: &XY) {
+    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         for (_, accidental) in self.accidentals.iter_mut() {
-            accidental.measure(_available);
+            accidental.measure(_available, params);
             self.width += accidental.width;
         }
     }
