@@ -6,6 +6,7 @@ pub mod clef;
 pub mod flag;
 pub mod key_signature;
 pub mod layout_engine;
+pub mod layoutable;
 pub mod note;
 pub mod page;
 pub mod part;

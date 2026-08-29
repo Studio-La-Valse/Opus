@@ -1,4 +1,3 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
@@ -8,6 +7,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::flag::Flag;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::score_element::ScoreElement;
 use std::collections::BTreeMap;
 
@@ -203,9 +203,15 @@ impl ScoreElement for Stem {
 }
 
 impl Layoutable for Stem {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         if let Some(flag) = self.flag.as_mut() {
-            flag.measure(available);
+            flag.measure(available, params);
         }
     }
 

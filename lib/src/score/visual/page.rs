@@ -1,4 +1,3 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
@@ -7,6 +6,7 @@ use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::PageMargins;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::score_element::ScoreElement;
@@ -120,9 +120,15 @@ impl ScoreElement for Page {
 }
 
 impl Layoutable for Page {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         for system in self.systems.values_mut() {
-            system.measure(available);
+            system.measure(available, params);
         }
     }
 

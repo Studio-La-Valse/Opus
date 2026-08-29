@@ -1,4 +1,3 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
@@ -7,6 +6,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::accidental::Accidental;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
@@ -116,7 +116,13 @@ impl ScoreElement for Note {
 }
 
 impl Note {
-    pub fn measure(&mut self, available: &XY) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;
@@ -125,7 +131,7 @@ impl Note {
         self.width = bbox.width();
 
         if let Some(accidental) = &mut self.accidental {
-            accidental.measure(available);
+            accidental.measure(available, params);
         }
     }
 }

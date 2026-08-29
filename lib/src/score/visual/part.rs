@@ -1,10 +1,10 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::brace::Brace;
 use crate::score::visual::clef::Clef as DrawableClef;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
@@ -219,7 +219,7 @@ impl ScoreElement for Part {
 }
 
 impl Layoutable for Part {
-    fn measure(&mut self, _: &XY) {
+    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -230,7 +230,7 @@ impl Layoutable for Part {
         for staff in self.staves.values_mut() {
             let available = &XY::INFINITE;
             // a staff knows its own size (sum of measure widths, staff height)
-            staff.measure(available);
+            staff.measure(available, params);
 
             if staff.hidden {
                 continue;
@@ -245,7 +245,7 @@ impl Layoutable for Part {
                 x: f32::INFINITY,
                 y: self.height,
             };
-            measure.measure(available);
+            measure.measure(available, params);
             self.width += measure.width;
         }
 
@@ -258,7 +258,7 @@ impl Layoutable for Part {
                 x: self.width,
                 y: staves_height,
             };
-            self.brace.measure(&available);
+            self.brace.measure(&available, params);
         }
     }
 

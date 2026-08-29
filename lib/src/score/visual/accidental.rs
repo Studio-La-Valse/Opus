@@ -1,7 +1,7 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::accidental::Accidental as SmuflAccidental;
@@ -166,7 +166,13 @@ impl ScoreElement for Accidental {
 }
 
 impl Layoutable for Accidental {
-    fn measure(&mut self, _available: &XY) {
+    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         let glyph = &self.glyph;
         let bbox = self.glyph_bbox(&glyph.bbox);
 

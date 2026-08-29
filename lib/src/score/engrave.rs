@@ -30,8 +30,8 @@ use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeam
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
 
@@ -50,11 +50,10 @@ pub enum Stage {
     FirstPass(Duration),
     /// Second document walk: note / rest / clef content.
     SecondPass(Duration),
-    /// Resolving [`UserLayout`] and [`AppDefaults`] onto the score.
-    ApplyLayout(Duration),
     /// Re-deriving beam groups.
     Rebeam(Duration),
-    /// Measuring every element and arranging the pages.
+    /// Resolving each element's appearance from the layout params, measuring
+    /// every element and arranging the pages.
     LayoutPass(Duration),
 }
 
@@ -134,20 +133,17 @@ pub fn walk_document(
 /// every element and arranges the pages. Callable on its own to re-lay-out a
 /// cached score for a new [`UserLayout`] without re-walking the document.
 ///
-/// Emits [`Stage::ApplyLayout`], [`Stage::Rebeam`] and [`Stage::LayoutPass`].
+/// Emits [`Stage::Rebeam`] and [`Stage::LayoutPass`]. Layout resolution is no
+/// longer its own pass -- each element resolves its appearance from the layout
+/// params at the top of its `measure`, so it is folded into `LayoutPass`.
 pub fn arrange_score(
     score: &mut Score,
-    layout: &ScoreDefaults,
+    score_defaults: &ScoreDefaults,
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
 ) {
     let mut time = Instant::now();
-
-    score.apply_layout(layout, user_layout, app_defaults);
-
-    progress(Stage::ApplyLayout(time.elapsed()));
-    time = Instant::now();
 
     let strategy = OnlyWhenRequiredRebeamStrategy {
         inner: Box::new(SimpleRebeamStrategy {}),
@@ -157,7 +153,12 @@ pub fn arrange_score(
     progress(Stage::Rebeam(time.elapsed()));
     time = Instant::now();
 
-    score.measure(&XY::INFINITE);
+    let params = LayoutParams {
+        score_defaults,
+        user_layout,
+        app_defaults,
+    };
+    score.measure(&XY::INFINITE, params);
     page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);
 
     progress(Stage::LayoutPass(time.elapsed()));

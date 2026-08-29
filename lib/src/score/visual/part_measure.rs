@@ -10,6 +10,7 @@ use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::chord::Chord;
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::Note;
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
@@ -257,11 +258,17 @@ impl ScoreElement for PartMeasure {
 }
 
 impl PartMeasure {
-    pub fn measure(&mut self, available: &XY) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         self.height = available.y;
 
         for chord in self.chords.values_mut().flatten() {
-            chord.measure(available);
+            chord.measure(available, params);
         }
     }
 }

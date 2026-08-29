@@ -1,9 +1,9 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::score_element::ScoreElement;
 
 #[derive(Default)]
@@ -37,7 +37,13 @@ impl ScoreElement for SectionMeasure {
 }
 
 impl Layoutable for SectionMeasure {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         self.height = available.y;
     }
 

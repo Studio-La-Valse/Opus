@@ -1,10 +1,10 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::number::Number;
@@ -88,7 +88,13 @@ impl ScoreElement for TimeSignature {
 }
 
 impl Layoutable for TimeSignature {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         self.height = available.y;
         self.measure_width();
     }

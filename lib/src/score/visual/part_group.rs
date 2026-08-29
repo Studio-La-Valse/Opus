@@ -1,8 +1,8 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::brace::Brace;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
 use crate::score::visual::part_measure::PartMeasure;
@@ -157,7 +157,7 @@ impl ScoreElement for PartGroup {
 }
 
 impl Layoutable for PartGroup {
-    fn measure(&mut self, _: &XY) {
+    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -165,7 +165,7 @@ impl Layoutable for PartGroup {
 
         for part in self.parts.values_mut() {
             let available = XY::INFINITE;
-            part.measure(&available);
+            part.measure(&available, params);
             self.height += part.height;
         }
 
@@ -177,7 +177,7 @@ impl Layoutable for PartGroup {
                 x: f32::INFINITY,
                 y: self.height,
             };
-            measure.measure(&available);
+            measure.measure(&available, params);
             self.width += measure.width;
         }
 
@@ -186,7 +186,7 @@ impl Layoutable for PartGroup {
                 x: f32::INFINITY,
                 y: staves_height,
             };
-            self.brace.measure(&available);
+            self.brace.measure(&available, params);
         }
     }
 

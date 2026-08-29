@@ -1,7 +1,7 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::key_signature::KeySignature;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::rest::Rest;
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
@@ -164,25 +164,29 @@ impl ScoreElement for StaffMeasure {
 }
 
 impl Layoutable for StaffMeasure {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         self.height = available.y;
 
-        if let Some(ref mut time_signature) = self.time_signature_start {
-            time_signature.measure(available);
+        if let Some(ref mut clef) = self.clef_start {
+            clef.measure(available, params);
         }
 
-        self.key_signature_start.measure(available);
+        if let Some(ref mut time_signature) = self.time_signature_start {
+            time_signature.measure(available, params);
+        }
+
+        self.key_signature_start.measure(available, params);
 
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
-            prepare_time_signature.measure(available);
+            prepare_time_signature.measure(available, params);
         }
 
         if let Some(ref mut clef) = self.clef_end {
-            clef.measure(available);
+            clef.measure(available, params);
         }
 
         for rest in self.rests.iter_mut() {
-            rest.measure(available);
+            rest.measure(available, params);
         }
     }
 

@@ -162,7 +162,6 @@ pub fn run(args: RenderArgs) {
                 "Second read pass: walking doc tree for content: {}ms",
                 d.as_millis()
             ),
-            Stage::ApplyLayout(d) => println!("Applying user layout: {}ms", d.as_millis()),
             Stage::Rebeam(d) => println!("Rebeaming: {}ms", d.as_millis()),
             Stage::LayoutPass(d) => println!("Layout pass: {}ms", d.as_millis()),
         },

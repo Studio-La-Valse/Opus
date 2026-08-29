@@ -1,5 +1,5 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::score_element::ScoreElement;
 
 #[derive(Default)]
@@ -14,7 +14,7 @@ impl PartGroupMeasure {}
 impl ScoreElement for PartGroupMeasure {}
 
 impl Layoutable for PartGroupMeasure {
-    fn measure(&mut self, available: &XY) {
+    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
     }
 

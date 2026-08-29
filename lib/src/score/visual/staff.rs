@@ -1,9 +1,9 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
@@ -116,7 +116,13 @@ impl ScoreElement for Staff {
 }
 
 impl Layoutable for Staff {
-    fn measure(&mut self, _available: &XY) {
+    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         self.height = self.height();
         self.width = 0.;
 
@@ -129,7 +135,7 @@ impl Layoutable for Staff {
                 x: f32::INFINITY,
                 y: self.height,
             };
-            measure.measure(available);
+            measure.measure(available, params);
             self.width += measure.width;
         }
     }

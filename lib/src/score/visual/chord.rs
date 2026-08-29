@@ -1,4 +1,3 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
@@ -7,6 +6,7 @@ use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::accidental::Accidental;
 use crate::score::visual::clef::Clef;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::Note;
 use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
@@ -168,17 +168,23 @@ impl ScoreElement for Chord {
 }
 
 impl Chord {
-    pub fn measure(&mut self, available: &XY) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         for note in self.notes.iter_mut() {
-            note.measure(available);
+            note.measure(available, params);
         }
 
         if let Some(stem) = self.stem.as_mut() {
-            stem.measure(available);
+            stem.measure(available, params);
         }
 
         for clef in self.clef_change.values_mut() {
-            clef.measure(available);
+            clef.measure(available, params);
         }
     }
 }

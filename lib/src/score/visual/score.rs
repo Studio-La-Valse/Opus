@@ -1,9 +1,9 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::brace::Brace;
 use crate::score::visual::bracket::Bracket;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
@@ -108,9 +108,9 @@ impl Score {
     /// Sizes every page. Page *placement* is a separate pass -- see
     /// [`LayoutEngine::arrange_pages`](crate::score::visual::layout_engine::LayoutEngine::arrange_pages),
     /// which is why `Score` has no `arrange`.
-    pub fn measure(&mut self, available: &XY) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         for page in self.pages.values_mut() {
-            page.measure(available);
+            page.measure(available, params);
         }
     }
 }

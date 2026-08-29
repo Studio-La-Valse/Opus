@@ -1,4 +1,3 @@
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
@@ -7,6 +6,7 @@ use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::bracket::Bracket;
+use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::score_element::ScoreElement;
@@ -243,7 +243,13 @@ impl ScoreElement for System {
 }
 
 impl Layoutable for System {
-    fn measure(&mut self, _: &XY) {
+    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
+        self._apply_layout(
+            params.score_defaults,
+            params.user_layout,
+            params.app_defaults,
+        );
+
         self.width = 0.;
         self.height = 0.;
 
@@ -253,7 +259,7 @@ impl Layoutable for System {
 
         for section in self.sections.values_mut() {
             let available = XY::INFINITE;
-            section.measure(&available);
+            section.measure(&available, params);
             self.height += section.height;
         }
 
@@ -262,7 +268,7 @@ impl Layoutable for System {
                 x: f32::INFINITY,
                 y: self.height,
             };
-            measure.measure(&available);
+            measure.measure(&available, params);
             self.width += measure.width;
         }
     }
