@@ -18,7 +18,6 @@ pub mod render_fonts;
 pub mod render_pass;
 pub mod rest;
 pub mod score;
-pub mod score_element;
 pub mod section;
 pub mod section_measure;
 pub mod staff;

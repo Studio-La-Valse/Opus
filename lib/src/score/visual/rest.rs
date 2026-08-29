@@ -1,13 +1,9 @@
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::score_defaults::ScoreDefaults;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
@@ -121,23 +117,14 @@ impl Rest {
     }
 }
 
-impl ScoreElement for Rest {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+impl Rest {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
 
-        if let Some(clef) = self.clef_change.as_mut() {
-            children.push(clef)
-        }
-
-        children
-    }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &ScoreDefaults,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
@@ -146,11 +133,7 @@ impl ScoreElement for Rest {
 
 impl Rest {
     pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self._apply_layout(
-            params.score_defaults,
-            params.user_layout,
-            params.app_defaults,
-        );
+        self.resolve_layout(params);
 
         self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 

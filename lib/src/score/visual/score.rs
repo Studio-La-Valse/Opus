@@ -7,7 +7,6 @@ use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system::System;
 use crate::score::visual::system_measure::SystemMeasure;
@@ -112,17 +111,5 @@ impl Score {
         for page in self.pages.values_mut() {
             page.measure(available, params);
         }
-    }
-}
-
-impl ScoreElement for Score {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-
-        for page in self.pages.values_mut() {
-            result.push(page);
-        }
-
-        result
     }
 }

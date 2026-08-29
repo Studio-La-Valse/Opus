@@ -1,15 +1,11 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::score_defaults::ScoreDefaults;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::bracket::Bracket;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::section::Section;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_measure::StaffMeasure;
@@ -205,50 +201,33 @@ impl System {
     }
 }
 
-impl ScoreElement for System {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+impl System {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            score_defaults,
+            user_layout,
+            app_defaults,
+        } = params;
 
-        for staff in self.sections.values_mut() {
-            result.push(staff);
-        }
-
-        for measure in self.measures.values_mut() {
-            result.push(measure);
-        }
-
-        result
-    }
-
-    fn _apply_layout(
-        &mut self,
-        layout: &ScoreDefaults,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
         self.line_width = user_layout
             .light_barline
-            .or(layout.appearance.light_barline)
+            .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.staff_line_thickness);
 
         self.staff_line_width = user_layout
             .staff
-            .or(layout.appearance.staff)
+            .or(score_defaults.appearance.staff)
             .unwrap_or(app_defaults.staff_line_thickness);
     }
 }
 
 impl Layoutable for System {
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
-        self._apply_layout(
-            params.score_defaults,
-            params.user_layout,
-            params.app_defaults,
-        );
+        self.resolve_layout(params);
 
         self.width = 0.;
         self.height = 0.;

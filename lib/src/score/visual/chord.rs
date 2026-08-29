@@ -1,14 +1,10 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::score_defaults::ScoreDefaults;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::accidental::Accidental;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::Note;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::stem::{Stem, UpDown};
@@ -136,31 +132,14 @@ impl Chord {
     }
 }
 
-impl ScoreElement for Chord {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut children: Vec<&mut dyn ScoreElement> = Vec::new();
+impl Chord {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
 
-        for note in self.notes.iter_mut() {
-            children.push(note);
-        }
-
-        if let Some(stem) = self.stem.as_mut() {
-            children.push(stem);
-        }
-
-        for clef in self.clef_change.values_mut() {
-            children.push(clef);
-        }
-
-        children
-    }
-
-    fn _apply_layout(
-        &mut self,
-        _layout: &ScoreDefaults,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
@@ -169,11 +148,7 @@ impl ScoreElement for Chord {
 
 impl Chord {
     pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self._apply_layout(
-            params.score_defaults,
-            params.user_layout,
-            params.app_defaults,
-        );
+        self.resolve_layout(params);
 
         for note in self.notes.iter_mut() {
             note.measure(available, params);

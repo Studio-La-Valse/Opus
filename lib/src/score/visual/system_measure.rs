@@ -1,10 +1,6 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
-use crate::score::score_defaults::ScoreDefaults;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
-use crate::score::visual::score_element::ScoreElement;
 
 pub struct SystemMeasure {
     pub xy: XY,
@@ -34,13 +30,14 @@ impl SystemMeasure {
     }
 }
 
-impl ScoreElement for SystemMeasure {
-    fn _apply_layout(
-        &mut self,
-        _layout: &ScoreDefaults,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
+impl SystemMeasure {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            ..
+        } = params;
+
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
@@ -49,11 +46,7 @@ impl ScoreElement for SystemMeasure {
 
 impl Layoutable for SystemMeasure {
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self._apply_layout(
-            params.score_defaults,
-            params.user_layout,
-            params.app_defaults,
-        );
+        self.resolve_layout(params);
 
         self.height = available.y;
     }

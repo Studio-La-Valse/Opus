@@ -6,7 +6,6 @@ use crate::score::visual::brace::Brace;
 use crate::score::visual::clef::Clef as DrawableClef;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::staff_measure::StaffMeasure;
@@ -195,29 +194,6 @@ impl Part {
         self.visible_staves().len() > 1
     }
 }
-
-impl ScoreElement for Part {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let shows_brace = self.shows_brace();
-
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-
-        for staff in self.staves.values_mut() {
-            result.push(staff);
-        }
-
-        for measure in self.measures.values_mut() {
-            result.push(measure);
-        }
-
-        if shows_brace {
-            result.push(&mut self.brace);
-        }
-
-        result
-    }
-}
-
 impl Layoutable for Part {
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;

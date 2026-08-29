@@ -1,15 +1,11 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::PageMargins;
-use crate::score::score_defaults::ScoreDefaults;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system::System;
 use crate::score::visual::system_measure::SystemMeasure;
@@ -92,26 +88,17 @@ impl Page {
     }
 }
 
-impl ScoreElement for Page {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
+impl Page {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            score_defaults,
+            user_layout,
+            app_defaults,
+        } = params;
 
-        for staff in self.systems.values_mut() {
-            result.push(staff);
-        }
-
-        result
-    }
-
-    fn _apply_layout(
-        &mut self,
-        layout: &ScoreDefaults,
-        user_layout: &UserLayout,
-        app_defaults: &AppDefaults,
-    ) {
-        self.margins = layout.get_margins(self.number);
-        self.width = layout.defaults.page_width;
-        self.height = layout.defaults.page_height;
+        self.margins = score_defaults.get_margins(self.number);
+        self.width = score_defaults.defaults.page_width;
+        self.height = score_defaults.defaults.page_height;
         self.color = user_layout.page_color.unwrap_or(app_defaults.page_color);
         self.foreground = user_layout
             .foreground_color
@@ -121,11 +108,7 @@ impl ScoreElement for Page {
 
 impl Layoutable for Page {
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self._apply_layout(
-            params.score_defaults,
-            params.user_layout,
-            params.app_defaults,
-        );
+        self.resolve_layout(params);
 
         for system in self.systems.values_mut() {
             system.measure(available, params);

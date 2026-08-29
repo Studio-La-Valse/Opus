@@ -7,7 +7,6 @@ use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::part_measure::PartMeasure;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::section_measure::SectionMeasure;
 use crate::score::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
@@ -112,30 +111,6 @@ impl Section {
         self.part_groups.len() > 1 && self.visible_staves() > 0
     }
 }
-
-impl ScoreElement for Section {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let shows_bracket = self.shows_bracket();
-
-        let mut result: Vec<&mut dyn ScoreElement> = Vec::new();
-
-        for staff in self.part_groups.values_mut() {
-            result.push(staff);
-        }
-
-        for measure in self.measures.values_mut() {
-            result.push(measure);
-        }
-
-        if shows_bracket {
-            let bracket: &mut Bracket = &mut self.bracket;
-            result.push(bracket);
-        }
-
-        result
-    }
-}
-
 impl Layoutable for Section {
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;

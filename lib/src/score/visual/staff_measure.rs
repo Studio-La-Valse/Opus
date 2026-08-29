@@ -3,7 +3,6 @@ use crate::score::visual::clef::Clef;
 use crate::score::visual::key_signature::KeySignature;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::rest::Rest;
-use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::time_signature::TimeSignature;
@@ -131,38 +130,6 @@ impl StaffMeasure {
         }
     }
 }
-
-impl ScoreElement for StaffMeasure {
-    fn children(&mut self) -> Vec<&mut dyn ScoreElement> {
-        let mut res: Vec<&mut dyn ScoreElement> = Vec::new();
-
-        if let Some(ref mut clef) = self.clef_start {
-            res.push(clef);
-        }
-
-        if let Some(ref mut key_signature) = self.time_signature_start {
-            res.push(key_signature);
-        }
-
-        let key_sig: &mut dyn ScoreElement = &mut self.key_signature_start;
-        res.push(key_sig);
-
-        if let Some(ref mut prepare_time_signature) = self.time_signature_end {
-            res.push(prepare_time_signature);
-        }
-
-        if let Some(ref mut clef) = self.clef_end {
-            res.push(clef);
-        }
-
-        for rest in self.rests.iter_mut() {
-            res.push(rest);
-        }
-
-        res
-    }
-}
-
 impl Layoutable for StaffMeasure {
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         self.height = available.y;
