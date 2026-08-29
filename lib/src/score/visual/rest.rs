@@ -144,21 +144,17 @@ impl ScoreElement for Rest {
     }
 }
 
-impl Layoutable for Rest {
-    fn measure(&mut self, _available: &XY) {
+impl Rest {
+    pub fn measure(&mut self, available: &XY) {
         self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;
         let bbox = self.scale_box(&glyph.bbox);
 
         if let Some(clef) = self.clef_change.as_mut() {
-            clef.measure(_available);
+            clef.measure(available);
         }
 
         self.width = bbox.width();
-    }
-
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("use arrange_ctx instead")
     }
 }

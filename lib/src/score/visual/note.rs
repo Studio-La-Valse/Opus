@@ -115,8 +115,8 @@ impl ScoreElement for Note {
     }
 }
 
-impl Layoutable for Note {
-    fn measure(&mut self, _available: &XY) {
+impl Note {
+    pub fn measure(&mut self, available: &XY) {
         self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;
@@ -125,12 +125,7 @@ impl Layoutable for Note {
         self.width = bbox.width();
 
         if let Some(accidental) = &mut self.accidental {
-            accidental.measure(_available);
+            accidental.measure(available);
         }
-    }
-
-    /// here, origin is the origin of the part measure. Get the dy from the staff ctx.
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("Use arrange_ctx instead")
     }
 }

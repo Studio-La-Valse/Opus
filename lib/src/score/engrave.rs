@@ -16,7 +16,6 @@ use std::time::{Duration, Instant};
 
 use roxmltree::Document;
 
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
 use crate::musicxml::visitors::content_visitor::ContentVisitor;

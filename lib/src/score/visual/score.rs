@@ -104,6 +104,15 @@ impl Score {
             page.rebeam(strategy);
         }
     }
+
+    /// Sizes every page. Page *placement* is a separate pass -- see
+    /// [`LayoutEngine::arrange_pages`](crate::score::visual::layout_engine::LayoutEngine::arrange_pages),
+    /// which is why `Score` has no `arrange`.
+    pub fn measure(&mut self, available: &XY) {
+        for page in self.pages.values_mut() {
+            page.measure(available);
+        }
+    }
 }
 
 impl ScoreElement for Score {
@@ -115,21 +124,5 @@ impl ScoreElement for Score {
         }
 
         result
-    }
-}
-
-impl Layoutable for Score {
-    fn measure(&mut self, available: &XY) {
-        for page in self.pages.values_mut() {
-            page.measure(available);
-        }
-    }
-
-    fn arrange(&mut self, _origin: &XY) {
-        todo!(
-            "Score::arrange is superseded by LayoutEngine::arrange_pages — construct a \
-             HorizontalPageLayout/VerticalPageLayout and call arrange_pages(&mut score, origin) \
-             instead of Layoutable::arrange on Score directly"
-        );
     }
 }

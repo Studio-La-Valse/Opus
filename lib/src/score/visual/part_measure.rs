@@ -1,6 +1,5 @@
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
-use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
@@ -257,17 +256,13 @@ impl ScoreElement for PartMeasure {
     }
 }
 
-impl Layoutable for PartMeasure {
-    fn measure(&mut self, available: &XY) {
+impl PartMeasure {
+    pub fn measure(&mut self, available: &XY) {
         self.height = available.y;
 
         for chord in self.chords.values_mut().flatten() {
             chord.measure(available);
         }
-    }
-
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("Use arrange_ctx instead")
     }
 }
 

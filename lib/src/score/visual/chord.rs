@@ -167,8 +167,8 @@ impl ScoreElement for Chord {
     }
 }
 
-impl Layoutable for Chord {
-    fn measure(&mut self, available: &XY) {
+impl Chord {
+    pub fn measure(&mut self, available: &XY) {
         for note in self.notes.iter_mut() {
             note.measure(available);
         }
@@ -180,11 +180,6 @@ impl Layoutable for Chord {
         for clef in self.clef_change.values_mut() {
             clef.measure(available);
         }
-    }
-
-    /// here, origin is the origin of the part measure.
-    fn arrange(&mut self, _origin: &XY) {
-        todo!("Use arrange_ctx instead")
     }
 }
 
