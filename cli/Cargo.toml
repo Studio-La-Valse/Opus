@@ -8,3 +8,4 @@ roxmltree = { workspace = true }
 lib = { path="../lib" }
 clap = { version = "4.6.1", features = ["derive"] }
 ttf-parser = "0.25.1"
+fontdb = "0.23"

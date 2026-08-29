@@ -1,20 +1,30 @@
 //! A [`Canvas`] that renders one page of [`DrawableElement`]s into a PDF content
 //! stream, plus [`write_pdf`] which stitches the per-page streams into a single
-//! multi-page PDF file with the music font embedded once.
+//! multi-page PDF file with every font it uses embedded once.
 //!
 //! # Why this canvas is shaped differently from the SVG / flat-buffer ones
 //!
 //! SVG and the flat buffer each describe a single drawing surface, so they
 //! implement [`Canvas`] once and [`CanvasPainter`](super::CanvasPainter) drives
 //! them over the whole score at once. A PDF is inherently multi-page and shares
-//! one embedded font across every page, so the flow is:
+//! one set of embedded fonts across every page, so the flow is:
 //!
 //! 1. [`RenderCompositor::walk_pages`](crate::score::visual::render_compositor::RenderCompositor::walk_pages)
 //!    hands you one [`RenderedPage`](crate::score::visual::render_compositor::RenderedPage)
 //!    per physical page (elements still in global tenths).
 //! 2. For each page, run `CanvasPainter::new(PdfPageCanvas::new(..)).paint(..)`
 //!    to get a [`PdfPage`] (a media box + a content stream).
-//! 3. Pass the whole `Vec<PdfPage>` and the raw font bytes to [`write_pdf`].
+//! 3. Pass the whole `Vec<PdfPage>` and the [`FontSet`] to [`write_pdf`].
+//!
+//! # Fonts
+//!
+//! A `Text` element names a [`FontSpec`] (family + weight + style). The canvas
+//! is constructed with a [`FontSet`] -- the fonts the caller has made available,
+//! each carrying a parsed [`Face`] (for measuring advances / vertical metrics)
+//! and the raw program bytes [`write_pdf`] subsets and embeds. A `Text` whose
+//! `FontSpec` isn't in the set falls back to [`FontSet`]'s default entry.
+//! Sourcing the bytes -- a bundled asset, a system font database -- is the
+//! caller's job; this module only consumes what it's handed.
 //!
 //! # Coordinate system
 //!
@@ -26,23 +36,12 @@
 //! `draw_*` method can then emit raw score coordinates with no per-element math.
 //! Text additionally carries a y-flip in its text matrix so glyphs come out
 //! upright after the CTM flips the page.
-//!
-//! # Adding a wasm PDF export later
-//!
-//! `wasm/src/lib.rs` currently exposes `render` -> flat buffer. A PDF export
-//! would mirror it: take the cached `Score` + `SmuflFont`, call
-//! `compositor.walk_pages(&score, &font)`, build a `PdfPage` per entry exactly
-//! as `cli/src/commands/render.rs` does, then return `write_pdf(&pages,
-//! font_bytes)` as a `Vec<u8>` (wasm-bindgen marshals it to a `Uint8Array` the
-//! browser can offer as a download). The font bytes need to reach wasm too --
-//! either bundled at build time with `include_bytes!` or passed through
-//! `load_score` alongside the existing metadata JSON.
 
 mod document;
 
 pub use document::{PdfPage, write_pdf};
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use pdf_writer::{Content, Name, Str};
 use ttf_parser::{Face, GlyphId};
@@ -51,12 +50,69 @@ use crate::drawable::canvas::Canvas;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
-use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+use crate::drawable::elements::text::{
+    FontSpec, FontStyle, FontWeight, HorizontalAlign, Text, VerticalAlign,
+};
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 
-/// Resource name the embedded music font is registered under in every page.
-pub(crate) const FONT_NAME: Name<'static> = Name(b"F0");
+/// One embeddable font: a parsed face for measurement plus the raw program
+/// bytes [`write_pdf`] subsets and embeds.
+pub struct EmbeddedFont<'f> {
+    /// Family name, matched against a [`FontSpec::family`].
+    pub family: String,
+    pub weight: FontWeight,
+    pub style: FontStyle,
+    /// PDF `BaseFont` / PostScript name used in the font dictionaries.
+    pub base_font: String,
+    pub face: Face<'f>,
+    /// The full OpenType/sfnt program.
+    pub program: &'f [u8],
+}
+
+/// The fonts a [`PdfPageCanvas`] may draw text in. A [`FontSpec`] that matches
+/// no entry falls back to `default`.
+pub struct FontSet<'f> {
+    fonts: Vec<EmbeddedFont<'f>>,
+    default: usize,
+}
+
+impl<'f> FontSet<'f> {
+    /// `fonts` must be non-empty; `default` indexes the fallback entry.
+    pub fn new(fonts: Vec<EmbeddedFont<'f>>, default: usize) -> Self {
+        assert!(
+            default < fonts.len(),
+            "FontSet default index {default} out of range for {} fonts",
+            fonts.len()
+        );
+        Self { fonts, default }
+    }
+
+    /// A single-font set -- the common case where the only text is music
+    /// glyphs, all in one font.
+    pub fn single(font: EmbeddedFont<'f>) -> Self {
+        Self::new(vec![font], 0)
+    }
+
+    /// Index of the entry `spec` selects, or the default entry's index.
+    pub fn resolve(&self, spec: FontSpec<'_>) -> usize {
+        self.fonts
+            .iter()
+            .position(|f| {
+                f.family == spec.family && f.weight == spec.weight && f.style == spec.style
+            })
+            .unwrap_or(self.default)
+    }
+
+    pub(crate) fn get(&self, index: usize) -> &EmbeddedFont<'f> {
+        &self.fonts[index]
+    }
+}
+
+/// PDF resource name a font is registered under on every page (`/F0`, `/F1`, ...).
+pub(crate) fn font_resource_name(index: usize) -> String {
+    format!("F{index}")
+}
 
 /// A [`Canvas`] that renders a single page into a PDF content stream.
 ///
@@ -65,7 +121,7 @@ pub(crate) const FONT_NAME: Name<'static> = Name(b"F0");
 /// produces for [`write_pdf`].
 pub struct PdfPageCanvas<'f> {
     content: Content,
-    face: &'f Face<'f>,
+    fonts: &'f FontSet<'f>,
 
     /// Points per tenth: the MusicXML `scaling` ratio times 72/25.4.
     pt_per_tenth: f32,
@@ -75,7 +131,8 @@ pub struct PdfPageCanvas<'f> {
     page_height_pt: f32,
     page_width_pt: f32,
 
-    used_glyphs: BTreeSet<u16>,
+    /// Glyph ids referenced, keyed by the [`FontSet`] index that drew them.
+    used_glyphs: BTreeMap<usize, BTreeSet<u16>>,
     /// Distinct fill / stroke alphas seen, in permille, so [`write_pdf`] can
     /// emit a matching `ExtGState` for each (see [`gs_fill_name`] /
     /// [`gs_stroke_name`]).
@@ -89,17 +146,22 @@ impl<'f> PdfPageCanvas<'f> {
     ///   tenths, straight from
     ///   [`RenderedPage`](crate::score::visual::render_compositor::RenderedPage).
     /// * `pt_per_tenth` -- `scaling_millimeters / scaling_tenths * 72.0 / 25.4`.
-    /// * `face` -- the same music font [`write_pdf`] will embed; used here only
-    ///   to measure glyph advances and vertical metrics for text alignment.
-    pub fn new(origin: XY, size_tenths: (f32, f32), pt_per_tenth: f32, face: &'f Face<'f>) -> Self {
+    /// * `fonts` -- the same [`FontSet`] [`write_pdf`] will embed; used here to
+    ///   measure glyph advances and vertical metrics for text alignment.
+    pub fn new(
+        origin: XY,
+        size_tenths: (f32, f32),
+        pt_per_tenth: f32,
+        fonts: &'f FontSet<'f>,
+    ) -> Self {
         Self {
             content: Content::new(),
-            face,
+            fonts,
             pt_per_tenth,
             origin,
             page_width_pt: size_tenths.0 * pt_per_tenth,
             page_height_pt: size_tenths.1 * pt_per_tenth,
-            used_glyphs: BTreeSet::new(),
+            used_glyphs: BTreeMap::new(),
             used_alphas: BTreeSet::new(),
             current_fill_alpha: 1.0,
             current_stroke_alpha: 1.0,
@@ -179,17 +241,19 @@ impl Canvas for PdfPageCanvas<'_> {
     }
 
     fn draw_text(&mut self, t: &Text<'_>) {
-        let units_per_em = f32::from(self.face.units_per_em());
+        let font_index = self.fonts.resolve(t.font);
+        let face = &self.fonts.get(font_index).face;
+
+        let units_per_em = f32::from(face.units_per_em());
         let glyph_scale = t.font_size / units_per_em;
 
         let mut gid_bytes: Vec<u8> = Vec::with_capacity(t.text.len() * 2);
         let mut advance = 0.0_f32;
         for ch in t.text.chars() {
-            let gid = self.face.glyph_index(ch).map_or(0, |g| g.0);
-            self.used_glyphs.insert(gid);
+            let gid = face.glyph_index(ch).map_or(0, |g| g.0);
+            self.used_glyphs.entry(font_index).or_default().insert(gid);
             gid_bytes.extend_from_slice(&gid.to_be_bytes());
-            advance +=
-                f32::from(self.face.glyph_hor_advance(GlyphId(gid)).unwrap_or(0)) * glyph_scale;
+            advance += f32::from(face.glyph_hor_advance(GlyphId(gid)).unwrap_or(0)) * glyph_scale;
         }
 
         let tx = match t.horizontal_alignment {
@@ -203,8 +267,8 @@ impl Canvas for PdfPageCanvas<'_> {
         // hhea metrics; for a single SMuFL glyph the per-glyph bounding box
         // (`face.glyph_bounding_box`) would track the SVG `dominant-baseline`
         // rendering more closely -- revisit once text is checked against SVG.
-        let ascent = f32::from(self.face.ascender()) * glyph_scale;
-        let descent = f32::from(self.face.descender()) * glyph_scale; // negative
+        let ascent = f32::from(face.ascender()) * glyph_scale;
+        let descent = f32::from(face.descender()) * glyph_scale; // negative
         let ty = match t.vertical_alignment {
             VerticalAlign::Bottom => t.xy.y,
             VerticalAlign::Top => t.xy.y + ascent,
@@ -214,7 +278,8 @@ impl Canvas for PdfPageCanvas<'_> {
         self.set_fill_alpha(t.color.a);
         set_fill_rgb(&mut self.content, t.color);
         self.content.begin_text();
-        self.content.set_font(FONT_NAME, t.font_size);
+        self.content
+            .set_font(Name(font_resource_name(font_index).as_bytes()), t.font_size);
         // Counter-flip against the CTM's y-flip so glyphs render upright.
         self.content.set_text_matrix([1.0, 0.0, 0.0, -1.0, tx, ty]);
         self.content.show(Str(&gid_bytes));

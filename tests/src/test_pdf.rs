@@ -3,19 +3,34 @@ mod tests {
     use std::fs::{read, read_to_string};
 
     use lib::drawable::canvas::CanvasPainter;
-    use lib::drawable::canvas::pdf::{PdfPage, PdfPageCanvas, write_pdf};
+    use lib::drawable::canvas::pdf::{EmbeddedFont, FontSet, PdfPage, PdfPageCanvas, write_pdf};
     use lib::drawable::drawable_element::DrawableElement;
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
-    use lib::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+    use lib::drawable::elements::text::{
+        FontSpec, FontStyle, FontWeight, HorizontalAlign, Text, VerticalAlign,
+    };
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
     use lib::score::visual::render_compositor::RenderCompositor;
+    use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::BaseRenderer;
     use lib::score::visual::score::Score;
     use lib::smufl::smufl_font::SmuflFont;
     use ttf_parser::Face;
+
+    /// A single-font [`FontSet`] over the bundled Bravura, borrowing `bytes`.
+    fn bravura_font_set(bytes: &[u8]) -> FontSet<'_> {
+        FontSet::single(EmbeddedFont {
+            family: "Bravura".to_string(),
+            weight: FontWeight::Normal,
+            style: FontStyle::Normal,
+            base_font: "Bravura".to_string(),
+            face: Face::parse(bytes, 0).expect("Bravura.otf parses"),
+            program: bytes,
+        })
+    }
 
     const BRAVURA_OTF: &str = "assets/smufl/bravura-bravura-1.392/redist/otf/Bravura.otf";
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
@@ -42,8 +57,8 @@ mod tests {
     /// 0.45 pt/tenth scale and a page pinned at the origin, and hands back the
     /// content stream as a lossy string for operator assertions.
     fn paint_page(font_bytes: &[u8], elements: &[DrawableElement<'_>]) -> (PdfPage, String) {
-        let face = Face::parse(font_bytes, 0).expect("Bravura.otf parses");
-        let canvas = PdfPageCanvas::new(XY::ZERO, (100.0, 200.0), 0.45, &face);
+        let fonts = bravura_font_set(font_bytes);
+        let canvas = PdfPageCanvas::new(XY::ZERO, (100.0, 200.0), 0.45, &fonts);
         let page = CanvasPainter::new(canvas).paint(elements);
         let content = String::from_utf8_lossy(&page.content).into_owned();
         (page, content)
@@ -164,13 +179,12 @@ mod tests {
         let face = Face::parse(&font_bytes, 0).unwrap();
         let expected_gid = face.glyph_index(G_CLEF).expect("Bravura has gClef").0;
 
-        let font_family = String::new(); // Text.font is unused by the PDF canvas
         let elements: Vec<DrawableElement<'_>> = vec![
             Text {
                 text: "\u{E050}",
                 color: Color::BLACK,
                 font_size: 40.0,
-                font: &font_family,
+                font: FontSpec::plain("Bravura"),
                 xy: XY { x: 12.0, y: 34.0 },
                 vertical_alignment: VerticalAlign::Bottom,
                 horizontal_alignment: HorizontalAlign::Left,
@@ -189,7 +203,7 @@ mod tests {
         assert!(content.contains("Tj"), "show: {content:?}");
         assert!(content.contains("ET"), "end_text: {content:?}");
         assert!(
-            page.used_glyphs.contains(&expected_gid),
+            page.used_glyphs[&0].contains(&expected_gid),
             "expected glyph {expected_gid} in {:?}",
             page.used_glyphs
         );
@@ -204,13 +218,12 @@ mod tests {
         let font_size = 40.0_f32;
         let expected_x = 100.0 - (advance * font_size / face.units_per_em() as f32) / 2.0;
 
-        let font_family = String::new();
         let elements: Vec<DrawableElement<'_>> = vec![
             Text {
                 text: "\u{E050}",
                 color: Color::BLACK,
                 font_size,
-                font: &font_family,
+                font: FontSpec::plain("Bravura"),
                 xy: XY { x: 100.0, y: 50.0 },
                 vertical_alignment: VerticalAlign::Bottom,
                 horizontal_alignment: HorizontalAlign::Center,
@@ -248,7 +261,8 @@ mod tests {
             pass: Box::new(BaseRenderer {}),
         };
 
-        let pages = compositor.walk_pages(&score, &font);
+        let fonts = RenderFonts::music_only(&font);
+        let pages = compositor.walk_pages(&score, &fonts);
         assert_eq!(pages.len(), 2);
         assert_eq!((pages[0].origin.x, pages[0].origin.y), (0.0, 0.0));
         assert_eq!((pages[1].origin.x, pages[1].origin.y), (1400.0, 0.0));
@@ -257,27 +271,42 @@ mod tests {
         assert_eq!(pages[0].elements.len(), 1);
         assert_eq!(pages[1].elements.len(), 1);
 
-        let flat = compositor.walk(&score, &font);
+        let flat = compositor.walk(&score, &fonts);
         assert_eq!(flat.len(), 2);
     }
 
     #[test]
     fn write_pdf_produces_a_loadable_multi_page_document() {
         let font_bytes = fixture_bytes(BRAVURA_OTF);
-        let face = Face::parse(&font_bytes, 0).unwrap();
+        let fonts = bravura_font_set(&font_bytes);
 
         let make_page = |origin: XY| {
-            let rect: DrawableElement<'_> = Rect {
-                xy: origin,
-                width: 100.0,
-                height: 200.0,
-                color: Color::WHITE,
-                stroke_color: Some(Color::BLACK),
-                stroke_width: Some(1.0),
-            }
-            .into();
-            let canvas = PdfPageCanvas::new(origin, (100.0, 200.0), 0.45, &face);
-            CanvasPainter::new(canvas).paint(std::slice::from_ref(&rect))
+            let elements: Vec<DrawableElement<'_>> = vec![
+                Rect {
+                    xy: origin,
+                    width: 100.0,
+                    height: 200.0,
+                    color: Color::WHITE,
+                    stroke_color: Some(Color::BLACK),
+                    stroke_width: Some(1.0),
+                }
+                .into(),
+                Text {
+                    text: "\u{E050}",
+                    color: Color::BLACK,
+                    font_size: 40.0,
+                    font: FontSpec::plain("Bravura"),
+                    xy: XY {
+                        x: origin.x + 10.0,
+                        y: origin.y + 40.0,
+                    },
+                    vertical_alignment: VerticalAlign::Bottom,
+                    horizontal_alignment: HorizontalAlign::Left,
+                }
+                .into(),
+            ];
+            let canvas = PdfPageCanvas::new(origin, (100.0, 200.0), 0.45, &fonts);
+            CanvasPainter::new(canvas).paint(&elements)
         };
 
         let pages = vec![
@@ -285,7 +314,7 @@ mod tests {
             make_page(XY { x: 120.0, y: 0.0 }),
         ];
 
-        let bytes = write_pdf(&pages, &font_bytes);
+        let bytes = write_pdf(&pages, &fonts);
         let text = String::from_utf8_lossy(&bytes);
 
         assert!(bytes.starts_with(b"%PDF-"), "PDF header missing");
@@ -321,12 +350,15 @@ mod tests {
     #[test]
     fn write_pdf_of_no_pages_is_still_a_valid_pdf() {
         let font_bytes = fixture_bytes(BRAVURA_OTF);
-        let bytes = write_pdf(&[], &font_bytes);
+        let fonts = bravura_font_set(&font_bytes);
+        let bytes = write_pdf(&[], &fonts);
         let text = String::from_utf8_lossy(&bytes);
 
         assert!(bytes.starts_with(b"%PDF-"));
         assert!(text.trim_end().ends_with("%%EOF"));
         assert!(text.contains("/Count 0"), "empty page tree");
         assert!(!text.contains("/Type /Page\n"), "no page objects");
+        // Nothing drew text, so no font is embedded.
+        assert!(!text.contains("/FontFile3"), "no font when no text");
     }
 }

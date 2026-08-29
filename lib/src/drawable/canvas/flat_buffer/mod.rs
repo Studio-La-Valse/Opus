@@ -2,36 +2,52 @@ use crate::drawable::canvas::Canvas;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
-use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+use crate::drawable::elements::text::{
+    FontStyle, FontWeight, HorizontalAlign, Text, VerticalAlign,
+};
 use crate::geometry::color::Color;
 
 /// Tags identifying each record in [`FlatBuffer::geometry`]. Keep in sync with the
-/// decoder in `web/main.js`.
+/// decoder in `web/music-xml.js`.
 pub const TAG_LINE: f32 = 0.0;
 pub const TAG_RECT: f32 = 1.0;
 pub const TAG_TEXT: f32 = 2.0;
 pub const TAG_POLYGON: f32 = 3.0;
 
-/// Separates entries in [`FlatBuffer::text_blob`]. Text elements never contain this
-/// control character in practice (SMuFL glyphs are single codepoints).
+/// Separates entries in [`FlatBuffer::text_blob`] and [`FlatBuffer::font_blob`].
+/// Neither text elements nor font-family names contain this control character in
+/// practice (SMuFL glyphs are single codepoints; family names are plain text).
 pub const TEXT_DELIMITER: char = '\u{1F}';
 
+/// `FontWeight::Bold` bit in a [`FlatBuffer::font_styles`] entry.
+pub const FONT_STYLE_BOLD: u32 = 1;
+/// `FontStyle::Italic` bit in a [`FlatBuffer::font_styles`] entry.
+pub const FONT_STYLE_ITALIC: u32 = 2;
+
 /// A canvas-ready encoding of a render pass: a flat, tagged numeric stream
-/// (`geometry`) plus the text content of every `Text` record, in the order
-/// encountered, joined by [`TEXT_DELIMITER`] (`text_blob`).
+/// (`geometry`) plus the text content of every `Text` record (`text_blob`) and
+/// the distinct fonts they use (`font_blob` / `font_styles`), each in the order
+/// first encountered and joined by [`TEXT_DELIMITER`].
 ///
 /// Record layout per tag (all fields are `f32`, colors are `r, g, b, a`,
 /// `strokeWidth < 0` means "no stroke"):
 ///
 /// - `TAG_LINE`:    `x1, y1, x2, y2, r, g, b, a, strokeWidth`
 /// - `TAG_RECT`:    `x, y, w, h, r, g, b, a, strokeWidth, sr, sg, sb, sa`
-/// - `TAG_TEXT`:    `x, y, fontSize, r, g, b, a, hAlign, vAlign` (text pulled
-///   from `text_blob` in order; `hAlign`/`vAlign` are `0/1/2`)
+/// - `TAG_TEXT`:    `x, y, fontSize, r, g, b, a, hAlign, vAlign, fontIndex`
+///   (text pulled from `text_blob` in order; `hAlign`/`vAlign` are `0/1/2`;
+///   `fontIndex` selects an entry in `font_blob` / `font_styles`)
 /// - `TAG_POLYGON`: `nPts, r, g, b, a, strokeWidth, sr, sg, sb, sa, x0, y0, x1, y1, ...`
 pub struct FlatBuffer {
     pub bounds: (f32, f32, f32, f32), // min_x, min_y, width, height
     pub geometry: Vec<f32>,
     pub text_blob: String,
+    /// The distinct font families every `TAG_TEXT` record's `fontIndex` points
+    /// into, `TEXT_DELIMITER`-joined.
+    pub font_blob: String,
+    /// Parallel to `font_blob`: each entry is [`FONT_STYLE_BOLD`] /
+    /// [`FONT_STYLE_ITALIC`] bit-or'd together (as an `f32`).
+    pub font_styles: Vec<f32>,
 }
 
 /// A [`Canvas`] that encodes elements into a [`FlatBuffer`].
@@ -41,11 +57,26 @@ pub struct FlatBufferCanvas {
     geometry: Vec<f32>,
     text_blob: String,
     has_text: bool,
+    /// `(family, style-flags)` for every distinct font seen, in first-seen order.
+    fonts: Vec<(String, u32)>,
 }
 
 impl FlatBufferCanvas {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Index of `(family, flags)` in [`Self::fonts`], appending it if new.
+    fn font_index(&mut self, family: &str, flags: u32) -> f32 {
+        let idx = self
+            .fonts
+            .iter()
+            .position(|(f, s)| f == family && *s == flags)
+            .unwrap_or_else(|| {
+                self.fonts.push((family.to_string(), flags));
+                self.fonts.len() - 1
+            });
+        idx as f32
     }
 }
 
@@ -82,6 +113,9 @@ impl Canvas for FlatBufferCanvas {
     }
 
     fn draw_text(&mut self, t: &Text<'_>) {
+        let flags = font_style_flags(t.font.weight, t.font.style);
+        let font_index = self.font_index(t.font.family, flags);
+
         self.geometry.push(TAG_TEXT);
         self.geometry.push(t.xy.x);
         self.geometry.push(t.xy.y);
@@ -90,6 +124,7 @@ impl Canvas for FlatBufferCanvas {
         self.geometry
             .push(horizontal_align_tag(t.horizontal_alignment));
         self.geometry.push(vertical_align_tag(t.vertical_alignment));
+        self.geometry.push(font_index);
 
         if self.has_text {
             self.text_blob.push(TEXT_DELIMITER);
@@ -114,12 +149,33 @@ impl Canvas for FlatBufferCanvas {
     }
 
     fn finish(self) -> FlatBuffer {
+        let font_blob = self
+            .fonts
+            .iter()
+            .map(|(family, _)| family.as_str())
+            .collect::<Vec<_>>()
+            .join(&TEXT_DELIMITER.to_string());
+        let font_styles = self.fonts.iter().map(|(_, flags)| *flags as f32).collect();
+
         FlatBuffer {
             bounds: self.bounds,
             geometry: self.geometry,
             text_blob: self.text_blob,
+            font_blob,
+            font_styles,
         }
     }
+}
+
+fn font_style_flags(weight: FontWeight, style: FontStyle) -> u32 {
+    let mut flags = 0;
+    if weight == FontWeight::Bold {
+        flags |= FONT_STYLE_BOLD;
+    }
+    if style == FontStyle::Italic {
+        flags |= FONT_STYLE_ITALIC;
+    }
+    flags
 }
 
 fn push_color(out: &mut Vec<f32>, color: Color) {

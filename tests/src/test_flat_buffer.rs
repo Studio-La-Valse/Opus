@@ -8,7 +8,7 @@ mod tests {
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
-    use lib::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+    use lib::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
 
@@ -64,7 +64,7 @@ mod tests {
                 text: "a",
                 color: Color::BLACK,
                 font_size: 12.0,
-                font: "Bravura",
+                font: FontSpec::plain("Bravura"),
                 xy: XY { x: 5.0, y: 6.0 },
                 vertical_alignment: VerticalAlign::Middle,
                 horizontal_alignment: HorizontalAlign::Center,
@@ -74,7 +74,7 @@ mod tests {
                 text: "bb",
                 color: Color::BLACK,
                 font_size: 12.0,
-                font: "Bravura",
+                font: FontSpec::plain("Bravura"),
                 xy: XY { x: 7.0, y: 8.0 },
                 vertical_alignment: VerticalAlign::Top,
                 horizontal_alignment: HorizontalAlign::Left,
@@ -87,13 +87,71 @@ mod tests {
         assert_eq!(
             flat.geometry,
             vec![
-                TAG_TEXT, 5.0, 6.0, 12.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, // "a": center/middle
-                TAG_TEXT, 7.0, 8.0, 12.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // "bb": left/top
+                // trailing 0.0 on each record is the font index into `font_blob`
+                TAG_TEXT, 5.0, 6.0, 12.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0,
+                0.0, // "a": center/middle
+                TAG_TEXT, 7.0, 8.0, 12.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, // "bb": left/top
             ]
         );
         assert_eq!(
             flat.text_blob,
             format!("a{}bb", lib::drawable::canvas::flat_buffer::TEXT_DELIMITER)
+        );
+        // Both records use the one font, so a single deduped entry.
+        assert_eq!(flat.font_blob, "Bravura");
+        assert_eq!(flat.font_styles, vec![0.0]);
+    }
+
+    #[test]
+    fn distinct_fonts_are_pooled_and_indexed() {
+        use lib::drawable::canvas::flat_buffer::{
+            FONT_STYLE_BOLD, FONT_STYLE_ITALIC, TEXT_DELIMITER,
+        };
+        use lib::drawable::elements::text::{FontStyle, FontWeight};
+
+        let bravura = FontSpec::plain("Bravura");
+        let title_bold = FontSpec {
+            family: "serif",
+            weight: FontWeight::Bold,
+            style: FontStyle::Normal,
+        };
+        let lyric_italic = FontSpec {
+            family: "serif",
+            weight: FontWeight::Normal,
+            style: FontStyle::Italic,
+        };
+
+        let text = |font| {
+            DrawableElement::from(Text {
+                text: "x",
+                color: Color::BLACK,
+                font_size: 10.0,
+                font,
+                xy: XY { x: 0.0, y: 0.0 },
+                vertical_alignment: VerticalAlign::Top,
+                horizontal_alignment: HorizontalAlign::Left,
+            })
+        };
+        // bravura, then title, then lyric, then title again (should reuse idx 1).
+        let elements = vec![
+            text(bravura),
+            text(title_bold),
+            text(lyric_italic),
+            text(title_bold),
+        ];
+
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
+
+        // Every record is 11 f32s; the last is the font index.
+        let indices: Vec<f32> = flat.geometry.chunks(11).map(|r| r[10]).collect();
+        assert_eq!(indices, vec![0.0, 1.0, 2.0, 1.0]);
+        assert_eq!(
+            flat.font_blob,
+            format!("Bravura{d}serif{d}serif", d = TEXT_DELIMITER)
+        );
+        assert_eq!(
+            flat.font_styles,
+            vec![0.0, FONT_STYLE_BOLD as f32, FONT_STYLE_ITALIC as f32,]
         );
     }
 

@@ -17,6 +17,12 @@ pub struct AppDefaults {
 
     pub note_size_grace: f32,
     pub note_size_cue: f32,
+
+    /// Default font family for titles / work-level text. A generic CSS family so
+    /// both a browser and a system font database can resolve it.
+    pub title_font: String,
+    /// Default font family for lyrics.
+    pub lyric_font: String,
 }
 
 impl Default for AppDefaults {
@@ -36,6 +42,8 @@ impl Default for AppDefaults {
             barline_heavy: 5.,
             note_size_grace: 0.66,
             note_size_cue: 0.66,
+            title_font: "serif".to_string(),
+            lyric_font: "serif".to_string(),
         }
     }
 }

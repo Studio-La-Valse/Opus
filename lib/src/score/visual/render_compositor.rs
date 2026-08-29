@@ -5,10 +5,10 @@ use crate::{
         layout_ctx::Visibility,
         visual::{
             chord::Chord, part::Part, part_group::PartGroup, part_measure::PartMeasure,
-            render_pass::RenderPass, score::Score, section::Section, staff::Staff, system::System,
+            render_fonts::RenderFonts, render_pass::RenderPass, score::Score, section::Section,
+            staff::Staff, system::System,
         },
     },
-    smufl::smufl_font::SmuflFont,
 };
 
 pub struct RenderCompositor {
@@ -31,15 +31,15 @@ pub struct RenderedPage<'a> {
 }
 
 impl RenderCompositor {
-    pub fn walk<'a>(&self, score: &Score, font: &'a SmuflFont) -> Vec<DrawableElement<'a>> {
+    pub fn walk<'a>(&self, score: &Score, fonts: &RenderFonts<'a>) -> Vec<DrawableElement<'a>> {
         let mut out: Vec<DrawableElement<'a>> =
             Vec::with_capacity(Self::estimate_element_count(score));
 
         for page in score.pages.values() {
-            self.pass.render_page(page, font, &mut out);
+            self.pass.render_page(page, fonts, &mut out);
 
             for system in page.systems.values() {
-                self.walk_system(system, font, &mut out);
+                self.walk_system(system, fonts, &mut out);
             }
         }
 
@@ -50,16 +50,16 @@ impl RenderCompositor {
     /// [`RenderedPage`] instead of concatenating every page into one stream.
     /// Used by per-page sinks such as the PDF writer, which needs one content
     /// stream and media box per physical page.
-    pub fn walk_pages<'a>(&self, score: &Score, font: &'a SmuflFont) -> Vec<RenderedPage<'a>> {
+    pub fn walk_pages<'a>(&self, score: &Score, fonts: &RenderFonts<'a>) -> Vec<RenderedPage<'a>> {
         score
             .pages
             .values()
             .map(|page| {
                 let mut elements: Vec<DrawableElement<'a>> = Vec::new();
-                self.pass.render_page(page, font, &mut elements);
+                self.pass.render_page(page, fonts, &mut elements);
 
                 for system in page.systems.values() {
-                    self.walk_system(system, font, &mut elements);
+                    self.walk_system(system, fonts, &mut elements);
                 }
 
                 RenderedPage {
@@ -75,55 +75,55 @@ impl RenderCompositor {
     fn walk_system<'a>(
         &self,
         system: &System,
-        font: &'a SmuflFont,
+        fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        self.pass.render_system(system, font, out);
+        self.pass.render_system(system, fonts, out);
 
         for measure in system.measures.values() {
-            self.pass.render_system_measure(measure, font, out);
+            self.pass.render_system_measure(measure, fonts, out);
         }
 
         for section in system.sections.values() {
-            self.walk_section(section, font, out);
+            self.walk_section(section, fonts, out);
         }
     }
 
     fn walk_section<'a>(
         &self,
         section: &Section,
-        font: &'a SmuflFont,
+        fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        self.pass.render_section(section, font, out);
+        self.pass.render_section(section, fonts, out);
 
         if section.shows_bracket() {
-            self.pass.render_bracket(&section.bracket, font, out);
+            self.pass.render_bracket(&section.bracket, fonts, out);
         }
 
         for measure in section.measures.values() {
-            self.pass.render_section_measure(measure, font, out);
+            self.pass.render_section_measure(measure, fonts, out);
         }
 
         for group in section.part_groups.values() {
-            self.walk_part_group(group, font, out);
+            self.walk_part_group(group, fonts, out);
         }
     }
 
     fn walk_part_group<'a>(
         &self,
         group: &PartGroup,
-        font: &'a SmuflFont,
+        fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        self.pass.render_part_group(group, font, out);
+        self.pass.render_part_group(group, fonts, out);
 
         if group.shows_brace() {
-            self.pass.render_brace(&group.brace, font, out);
+            self.pass.render_brace(&group.brace, fonts, out);
         }
 
         for measure in group.measures.values() {
-            self.pass.render_part_group_measure(measure, font, out);
+            self.pass.render_part_group_measure(measure, fonts, out);
         }
 
         for part in group.parts.values() {
@@ -131,15 +131,20 @@ impl RenderCompositor {
                 continue;
             }
 
-            self.walk_part(part, font, out);
+            self.walk_part(part, fonts, out);
         }
     }
 
-    fn walk_part<'a>(&self, part: &Part, font: &'a SmuflFont, out: &mut Vec<DrawableElement<'a>>) {
-        self.pass.render_part(part, font, out);
+    fn walk_part<'a>(
+        &self,
+        part: &Part,
+        fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        self.pass.render_part(part, fonts, out);
 
         if part.shows_brace() {
-            self.pass.render_brace(&part.brace, font, out);
+            self.pass.render_brace(&part.brace, fonts, out);
         }
 
         for staff in part.staves.values() {
@@ -147,53 +152,53 @@ impl RenderCompositor {
                 continue;
             }
 
-            self.walk_staff(staff, font, out);
+            self.walk_staff(staff, fonts, out);
         }
 
         for measure in part.measures.values() {
-            self.walk_part_measure(measure, font, out);
+            self.walk_part_measure(measure, fonts, out);
         }
     }
 
     fn walk_staff<'a>(
         &self,
         staff: &Staff,
-        font: &'a SmuflFont,
+        fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        self.pass.render_staff(staff, font, out);
+        self.pass.render_staff(staff, fonts, out);
 
         for measure in staff.measures.values() {
-            self.pass.render_staff_measure(measure, font, out);
+            self.pass.render_staff_measure(measure, fonts, out);
 
             if let Some(ref clef) = measure.clef_start {
-                self.pass.render_clef(clef, font, out);
+                self.pass.render_clef(clef, fonts, out);
             }
 
             if let Some(ref time_signature) = measure.time_signature_start {
-                self.pass.render_time_signature(time_signature, font, out);
+                self.pass.render_time_signature(time_signature, fonts, out);
             }
 
             self.pass
-                .render_key_signature(&measure.key_signature_start, font, out);
+                .render_key_signature(&measure.key_signature_start, fonts, out);
 
             for (_, accidental) in measure.key_signature_start.accidentals.iter() {
-                self.pass.render_accidental(accidental, font, out);
+                self.pass.render_accidental(accidental, fonts, out);
             }
 
             if let Some(ref time_signature) = measure.time_signature_end {
-                self.pass.render_time_signature(time_signature, font, out);
+                self.pass.render_time_signature(time_signature, fonts, out);
             }
 
             if let Some(ref clef) = measure.clef_end {
-                self.pass.render_clef(clef, font, out);
+                self.pass.render_clef(clef, fonts, out);
             }
 
             for rest in measure.rests.iter() {
-                self.pass.render_rest(rest, font, out);
+                self.pass.render_rest(rest, fonts, out);
 
                 if let Some(ref clef) = rest.clef_change {
-                    self.pass.render_clef(clef, font, out);
+                    self.pass.render_clef(clef, fonts, out);
                 }
             }
         }
@@ -202,14 +207,14 @@ impl RenderCompositor {
     fn walk_part_measure<'a>(
         &self,
         measure: &PartMeasure,
-        font: &'a SmuflFont,
+        fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        self.pass.render_part_measure(measure, font, out);
+        self.pass.render_part_measure(measure, fonts, out);
 
         for chords in measure.chords.values() {
             for chord in chords.iter() {
-                self.walk_chord(chord, font, out);
+                self.walk_chord(chord, fonts, out);
             }
         }
     }
@@ -217,29 +222,29 @@ impl RenderCompositor {
     fn walk_chord<'a>(
         &self,
         chord: &Chord,
-        font: &'a SmuflFont,
+        fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        self.pass.render_chord(chord, font, out);
+        self.pass.render_chord(chord, fonts, out);
 
         for note in chord.notes.iter() {
-            self.pass.render_note(note, font, out);
+            self.pass.render_note(note, fonts, out);
 
             if let Some(ref accidental) = note.accidental {
-                self.pass.render_accidental(accidental, font, out);
+                self.pass.render_accidental(accidental, fonts, out);
             }
         }
 
         if let Some(ref stem) = chord.stem {
-            self.pass.render_stem(stem, font, out);
+            self.pass.render_stem(stem, fonts, out);
 
             if let Some(ref flag) = stem.flag {
-                self.pass.render_flag(flag, font, out);
+                self.pass.render_flag(flag, fonts, out);
             }
         }
 
         for clef_change in chord.clef_change.values() {
-            self.pass.render_clef(clef_change, font, out);
+            self.pass.render_clef(clef_change, fonts, out);
         }
     }
 

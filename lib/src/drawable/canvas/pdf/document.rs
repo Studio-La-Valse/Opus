@@ -1,39 +1,44 @@
 //! Assembles the per-page content streams from [`PdfPageCanvas`](super::PdfPageCanvas)
-//! into one PDF file, with the music font embedded a single time as a Type0 /
-//! CIDFontType0 composite font (Identity encoding, CID == GID).
+//! into one PDF file, embedding every font the pages actually used a single time
+//! as a Type0 / CIDFontType0 composite font (Identity encoding, CID == GID).
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use pdf_writer::types::{CidFontType, FontFlags, SystemInfo};
 use pdf_writer::{Finish, Name, Pdf, Rect, Ref, Str};
 use ttf_parser::{Face, GlyphId};
 
-use super::{FONT_NAME, gs_fill_name, gs_stroke_name};
+use super::{EmbeddedFont, FontSet, font_resource_name, gs_fill_name, gs_stroke_name};
 
 /// One rendered page: a media box `[x0, y0, x1, y1]` in points and a finished
-/// PDF content stream, plus the glyph ids and alpha values it referenced so
-/// [`write_pdf`] can emit matching font-width and `ExtGState` resources.
+/// PDF content stream, plus the glyph ids (keyed by [`FontSet`] index) and alpha
+/// values it referenced so [`write_pdf`] can emit matching font-width and
+/// `ExtGState` resources.
 pub struct PdfPage {
     pub media_box: [f32; 4],
     pub content: Vec<u8>,
-    pub used_glyphs: BTreeSet<u16>,
+    pub used_glyphs: BTreeMap<usize, BTreeSet<u16>>,
     pub used_alphas: BTreeSet<u16>,
 }
 
-/// Serialises `pages` into a single PDF, embedding `font_otf` (the raw bytes of
-/// the same OpenType music font the pages were measured against) once.
-///
-/// Panics if `font_otf` is not parseable OpenType -- it is a build asset, so a
-/// failure here is a packaging bug, matching `SmuflFont::load`'s `expect`.
-pub fn write_pdf(pages: &[PdfPage], font_otf: &[u8]) -> Vec<u8> {
-    let face = Face::parse(font_otf, 0).expect("embed font: not valid OpenType data");
-    let units_per_em = f32::from(face.units_per_em());
-    let to_pdf_glyph_space = 1000.0 / units_per_em;
+/// PDF object ids for one embedded font.
+struct FontRefs {
+    type0: Ref,
+    cid: Ref,
+    descriptor: Ref,
+    font_file: Ref,
+}
 
-    let used_glyphs: BTreeSet<u16> = pages
-        .iter()
-        .flat_map(|p| p.used_glyphs.iter().copied())
-        .collect();
+/// Serialises `pages` into a single PDF, embedding every font in `fonts` that
+/// the pages referenced (subset to the glyph ids they used).
+pub fn write_pdf(pages: &[PdfPage], fonts: &FontSet<'_>) -> Vec<u8> {
+    // Glyph ids used per font index, unioned across every page.
+    let mut used_glyphs: BTreeMap<usize, BTreeSet<u16>> = BTreeMap::new();
+    for page in pages {
+        for (&font_index, gids) in &page.used_glyphs {
+            used_glyphs.entry(font_index).or_default().extend(gids);
+        }
+    }
     let used_alphas: BTreeSet<u16> = pages
         .iter()
         .flat_map(|p| p.used_alphas.iter().copied())
@@ -42,10 +47,21 @@ pub fn write_pdf(pages: &[PdfPage], font_otf: &[u8]) -> Vec<u8> {
     let mut alloc = Ref::new(1);
     let catalog_id = alloc.bump();
     let page_tree_id = alloc.bump();
-    let type0_font_id = alloc.bump();
-    let cid_font_id = alloc.bump();
-    let descriptor_id = alloc.bump();
-    let font_file_id = alloc.bump();
+
+    let font_refs: BTreeMap<usize, FontRefs> = used_glyphs
+        .keys()
+        .map(|&font_index| {
+            (
+                font_index,
+                FontRefs {
+                    type0: alloc.bump(),
+                    cid: alloc.bump(),
+                    descriptor: alloc.bump(),
+                    font_file: alloc.bump(),
+                },
+            )
+        })
+        .collect();
 
     // One ExtGState object per distinct alpha, for fill and for stroke.
     let alpha_states: Vec<(u16, Ref, Ref)> = used_alphas
@@ -72,7 +88,12 @@ pub fn write_pdf(pages: &[PdfPage], font_otf: &[u8]) -> Vec<u8> {
             .contents(content_ids[i]);
 
         let mut resources = writer.resources();
-        resources.fonts().pair(FONT_NAME, type0_font_id);
+        {
+            let mut font_dict = resources.fonts();
+            for (&font_index, refs) in &font_refs {
+                font_dict.pair(Name(font_resource_name(font_index).as_bytes()), refs.type0);
+            }
+        }
         {
             let mut ext = resources.ext_g_states();
             for &(permille, fill_id, stroke_id) in &alpha_states {
@@ -92,52 +113,46 @@ pub fn write_pdf(pages: &[PdfPage], font_otf: &[u8]) -> Vec<u8> {
         pdf.ext_graphics(stroke_id).stroking_alpha(alpha);
     }
 
-    write_font(
-        &mut pdf,
-        &face,
-        &used_glyphs,
-        to_pdf_glyph_space,
-        font_otf,
-        type0_font_id,
-        cid_font_id,
-        descriptor_id,
-        font_file_id,
-    );
+    for (&font_index, refs) in &font_refs {
+        write_font(
+            &mut pdf,
+            fonts.get(font_index),
+            &used_glyphs[&font_index],
+            refs,
+        );
+    }
 
     pdf.finish()
 }
 
-#[allow(clippy::too_many_arguments)]
 fn write_font(
     pdf: &mut Pdf,
-    face: &Face,
+    font: &EmbeddedFont<'_>,
     used_glyphs: &BTreeSet<u16>,
-    to_pdf_glyph_space: f32,
-    font_otf: &[u8],
-    type0_font_id: Ref,
-    cid_font_id: Ref,
-    descriptor_id: Ref,
-    font_file_id: Ref,
+    refs: &FontRefs,
 ) {
-    let base_font = Name(b"Bravura");
+    let face: &Face = &font.face;
+    let to_pdf_glyph_space = 1000.0 / f32::from(face.units_per_em());
+
+    let base_font = Name(font.base_font.as_bytes());
     let system_info = SystemInfo {
         registry: Str(b"Adobe"),
         ordering: Str(b"Identity"),
         supplement: 0,
     };
 
-    pdf.type0_font(type0_font_id)
+    pdf.type0_font(refs.type0)
         .base_font(base_font)
         .encoding_predefined(Name(b"Identity-H"))
-        .descendant_font(cid_font_id);
+        .descendant_font(refs.cid);
 
     {
-        let mut cid_font = pdf.cid_font(cid_font_id);
+        let mut cid_font = pdf.cid_font(refs.cid);
         cid_font
             .subtype(CidFontType::Type0)
             .base_font(base_font)
             .system_info(system_info)
-            .font_descriptor(descriptor_id)
+            .font_descriptor(refs.descriptor)
             .cid_to_gid_map_predefined(Name(b"Identity"))
             .default_width(0.0);
 
@@ -150,7 +165,11 @@ fn write_font(
 
     let bbox = face.global_bounding_box();
     let scale = |v: i16| f32::from(v) * to_pdf_glyph_space;
-    pdf.font_descriptor(descriptor_id)
+    // TODO: `SYMBOLIC` is right for the SMuFL music font (custom glyph repertoire,
+    // no standard encoding). A real text font embedded here should instead be
+    // flagged `NON_SYMBOLIC` (plus `SERIF` / `ITALIC` as applicable) -- revisit
+    // when the first non-music font is actually added to a `FontSet`.
+    pdf.font_descriptor(refs.descriptor)
         .name(base_font)
         .flags(FontFlags::SYMBOLIC)
         .bbox(Rect::new(
@@ -164,10 +183,10 @@ fn write_font(
         .descent(scale(face.descender()))
         .cap_height(scale(face.ascender()))
         .stem_v(80.0)
-        .font_file3(font_file_id);
+        .font_file3(refs.font_file);
 
     // OpenType/CFF font program. `/Subtype /OpenType` is what tells the reader
     // the stream is a full sfnt wrapper rather than bare CFF.
-    let mut stream = pdf.stream(font_file_id, font_otf);
+    let mut stream = pdf.stream(refs.font_file, font.program);
     stream.pair(Name(b"Subtype"), Name(b"OpenType"));
 }

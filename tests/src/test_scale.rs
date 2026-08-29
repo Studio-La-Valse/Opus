@@ -4,7 +4,7 @@ mod tests {
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
-    use lib::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+    use lib::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
 
@@ -74,7 +74,7 @@ mod tests {
             text: "a",
             color: Color::BLACK,
             font_size: 12.0,
-            font: "Bravura",
+            font: FontSpec::plain("Bravura"),
             xy: XY { x: 4.0, y: 8.0 },
             vertical_alignment: VerticalAlign::Middle,
             horizontal_alignment: HorizontalAlign::Center,
@@ -128,7 +128,7 @@ mod tests {
                 text: "a",
                 color: Color::BLACK,
                 font_size: 4.0,
-                font: "Bravura",
+                font: FontSpec::plain("Bravura"),
                 xy: XY { x: 2.0, y: 2.0 },
                 vertical_alignment: VerticalAlign::Top,
                 horizontal_alignment: HorizontalAlign::Left,

@@ -7,7 +7,7 @@ pub enum DrawableElement<'a> {
     Line(Line),
     Rect(Rect),
     Text(Text<'a>),
-    Polygon(Box<Polygon>),
+    Polygon(Polygon),
 }
 
 impl<'a> From<Line> for DrawableElement<'a> {
@@ -30,7 +30,7 @@ impl<'a> From<Text<'a>> for DrawableElement<'a> {
 
 impl<'a> From<Polygon> for DrawableElement<'a> {
     fn from(p: Polygon) -> Self {
-        DrawableElement::Polygon(Box::new(p))
+        DrawableElement::Polygon(p)
     }
 }
 

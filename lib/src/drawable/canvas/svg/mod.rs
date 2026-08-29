@@ -63,12 +63,14 @@ impl Canvas for SvgCanvas {
 
     fn draw_text(&mut self, t: &Text<'_>) {
         self.out.push_str(&format!(
-            r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" text-anchor="{ha}" dominant-baseline="{va}">{content}</text>"#,
+            r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" font-weight="{fw}" font-style="{fst}" text-anchor="{ha}" dominant-baseline="{va}">{content}</text>"#,
             x = t.xy.x,
             y = t.xy.y,
             fill = t.color.to_hex(),
             fs = t.font_size,
-            ff = t.font,
+            ff = xml_escape(t.font.family),
+            fw = t.font.weight.to_css(),
+            fst = t.font.style.to_css(),
             ha = t.horizontal_alignment.to_svg(),
             va = t.vertical_alignment.to_svg(),
             content = xml_escape(t.text),

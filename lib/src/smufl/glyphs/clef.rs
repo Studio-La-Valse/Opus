@@ -1,4 +1,4 @@
-use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
+use crate::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
@@ -19,7 +19,7 @@ impl SmuflGlyph for Clef {
             vertical_alignment: VerticalAlign::Bottom,
             horizontal_alignment: HorizontalAlign::Left,
             font_size: (Staff::DEFAULT_SPACE_SIZE * scale) * Staff::SPACES as f32,
-            font: &font.meta.font,
+            font: FontSpec::plain(&font.meta.font),
             text: font.glyph_str(self.codepoint),
             xy,
             color,
