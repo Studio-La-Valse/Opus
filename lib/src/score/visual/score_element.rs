@@ -1,5 +1,5 @@
 ﻿use crate::score::app_defaults::AppDefaults;
-use crate::score::layout::Layout;
+use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 
 pub trait ScoreElement {
@@ -10,7 +10,7 @@ pub trait ScoreElement {
     /// do not override.
     fn apply_layout(
         &mut self,
-        layout: &Layout,
+        layout: &ScoreDefaults,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {
@@ -24,7 +24,7 @@ pub trait ScoreElement {
     /// do override.
     fn _apply_layout(
         &mut self,
-        _layout: &Layout,
+        _layout: &ScoreDefaults,
         _user_layout: &UserLayout,
         _app_defaults: &AppDefaults,
     ) {

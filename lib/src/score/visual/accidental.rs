@@ -155,7 +155,7 @@ impl ScoreElement for Accidental {
 
     fn _apply_layout(
         &mut self,
-        _layout: &crate::score::layout::Layout,
+        _layout: &crate::score::score_defaults::ScoreDefaults,
         user_layout: &crate::score::user_layout::UserLayout,
         app_defaults: &crate::score::app_defaults::AppDefaults,
     ) {

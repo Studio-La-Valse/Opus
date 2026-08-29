@@ -1,6 +1,6 @@
 /// Tracks `<part-group>` start/stop nesting while walking a `<part-list>`,
 /// assigning each `<score-part>` its section/part-group indices. This is the
-/// exact state machine used to populate `Layout::sections` -- shared so a
+/// exact state machine used to populate `ScoreDefaults::sections` -- shared so a
 /// lighter-weight walk (e.g. validation, which only wants counts) can never
 /// disagree with what render actually assigns.
 #[derive(Default)]

@@ -5,38 +5,38 @@ use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::core::clef::Clef;
 use crate::score::core::key::Key;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout_ctx::Visibility;
+use crate::score::walk_cursor::Visibility;
 use roxmltree::Node;
 
-pub struct LayoutContextVisitor {}
+pub struct WalkCursorVisitor {}
 
-impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
+impl<'a> Visitor<WalkerCtx<'a>> for WalkCursorVisitor {
     fn enter(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        ctx.layout_ctx.reset();
+        ctx.cursor.reset();
     }
 
     fn enter_part(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        ctx.layout_ctx.reset();
+        ctx.cursor.reset();
 
-        ctx.layout_ctx.part_id = _node.attribute("id").unwrap().to_string()
+        ctx.cursor.part_id = _node.attribute("id").unwrap().to_string()
     }
 
     fn enter_measure(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         // we explicitly ignore the specified measure number because it may be either 0 or 1 based.
-        ctx.layout_ctx.measure.number += 1;
-        ctx.layout_ctx.measure.width = node.attribute("width").and_then(|s| s.parse::<f32>().ok());
+        ctx.cursor.measure.number += 1;
+        ctx.cursor.measure.width = node.attribute("width").and_then(|s| s.parse::<f32>().ok());
 
-        ctx.layout_ctx.system.margin_left = None;
-        ctx.layout_ctx.system.margin_right = None;
-        ctx.layout_ctx.system.distance = None;
-        ctx.layout_ctx.system.distance_top = None;
+        ctx.cursor.system.margin_left = None;
+        ctx.cursor.system.margin_right = None;
+        ctx.cursor.system.distance = None;
+        ctx.cursor.system.distance_top = None;
 
         // Reset clef changes and assign the currently tracked clefs to position 0 (the beginning of the measure).
-        ctx.layout_ctx.staff.clef_changes.clear();
+        ctx.cursor.staff.clef_changes.clear();
         // setting the currently tracked clefs to the implicit clef changes at the start of the measure
         // required t correctly track clef across position.
-        for (staff_idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
-            ctx.layout_ctx
+        for (staff_idx, clef) in ctx.cursor.staff.active_clef.iter() {
+            ctx.cursor
                 .staff
                 .clef_changes
                 .entry(*staff_idx)
@@ -44,38 +44,38 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
                 .insert(0, *clef);
         }
 
-        ctx.layout_ctx.begin_measure();
+        ctx.cursor.begin_measure();
 
         // These 2 values are set in print. Not every measure has print, so default to false.
-        ctx.layout_ctx.new_page = false;
-        ctx.layout_ctx.new_system = false;
+        ctx.cursor.new_page = false;
+        ctx.cursor.new_system = false;
     }
 
     fn enter_print(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         // new-page / new-system
-        ctx.layout_ctx.new_page = element
+        ctx.cursor.new_page = element
             .attribute("new-page")
             .map(|v| v == "yes")
             .unwrap_or(false);
 
-        ctx.layout_ctx.new_system = ctx.layout_ctx.new_page
+        ctx.cursor.new_system = ctx.cursor.new_page
             || element
                 .attribute("new-system")
                 .map(|v| v == "yes")
                 .unwrap_or(false)
-            || ctx.layout_ctx.measure.number == 1;
+            || ctx.cursor.measure.number == 1;
 
-        if ctx.layout_ctx.new_page {
-            ctx.layout_ctx.page.page_number += 1;
+        if ctx.cursor.new_page {
+            ctx.cursor.page.page_number += 1;
         }
 
-        if ctx.layout_ctx.new_system {
-            ctx.layout_ctx.system.index += 1;
+        if ctx.cursor.new_system {
+            ctx.cursor.system.index += 1;
 
             // clear the opening clefs for the staves, set the opening to the current clefs.
-            ctx.layout_ctx.staff.opening_clef.clear();
-            for (idx, clef) in ctx.layout_ctx.staff.active_clef.iter() {
-                ctx.layout_ctx.staff.opening_clef.insert(*idx, *clef);
+            ctx.cursor.staff.opening_clef.clear();
+            for (idx, clef) in ctx.cursor.staff.active_clef.iter() {
+                ctx.cursor.staff.opening_clef.insert(*idx, *clef);
             }
         }
 
@@ -98,11 +98,11 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
                     .and_then(|s| s.parse::<f32>().ok());
 
                 if let Some(v) = left_margin {
-                    ctx.layout_ctx.system.margin_left = Some(v);
+                    ctx.cursor.system.margin_left = Some(v);
                 }
 
                 if let Some(v) = right_margin {
-                    ctx.layout_ctx.system.margin_right = Some(v);
+                    ctx.cursor.system.margin_right = Some(v);
                 }
             }
 
@@ -113,7 +113,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
                 .and_then(|s| s.parse::<f32>().ok());
 
             if let Some(v) = system_distance {
-                ctx.layout_ctx.system.distance = Some(v);
+                ctx.cursor.system.distance = Some(v);
             }
 
             let system_distance_top = system_layout
@@ -123,12 +123,12 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
                 .and_then(|s| s.parse::<f32>().ok());
 
             if let Some(v) = system_distance_top {
-                ctx.layout_ctx.system.distance_top = Some(v);
+                ctx.cursor.system.distance_top = Some(v);
             }
         }
 
         // staff layout
-        ctx.layout_ctx.staff.distances.clear();
+        ctx.cursor.staff.distances.clear();
         for staff_layout in element
             .children()
             .filter(|n| n.has_tag_name("staff-layout"))
@@ -137,7 +137,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
 
             let staff_number: u32 = staff_layout.req_attribute("number").req_parse();
 
-            ctx.layout_ctx
+            ctx.cursor
                 .staff
                 .distances
                 .insert(staff_number.into(), staff_distance);
@@ -147,18 +147,18 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
     fn enter_attributes(&mut self, element: &Node, ctx: &mut WalkerCtx) {
         for node in element.children() {
             if node.has_tag_name("divisions") {
-                ctx.layout_ctx.set_divisions(node.req_parse());
+                ctx.cursor.set_divisions(node.req_parse());
             }
 
             if node.has_tag_name("time") {
                 for node in node.children() {
                     if node.has_tag_name("beats") {
-                        ctx.layout_ctx.set_beats(node.req_parse());
+                        ctx.cursor.set_beats(node.req_parse());
                     }
 
                     if node.has_tag_name("beat-type") {
                         let beat_type: u32 = node.req_parse();
-                        ctx.layout_ctx.set_beat_type(beat_type.into());
+                        ctx.cursor.set_beat_type(beat_type.into());
                     }
                 }
             }
@@ -171,7 +171,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
             .map(|s| s.parse::<u32>().unwrap())
             .unwrap_or(1)
             .into();
-        ctx.layout_ctx.staff.number = staff;
+        ctx.cursor.staff.number = staff;
 
         let sign_node = element.req_child("sign");
         let sign = sign_node.req_text();
@@ -179,11 +179,11 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
 
         let clef = Clef::from_mxml(sign, line).unwrap();
         // always track the active clef.
-        ctx.layout_ctx.staff.active_clef.insert(staff, clef);
+        ctx.cursor.staff.active_clef.insert(staff, clef);
 
         // every clef encounter is registered as a clef change.
-        let position = ctx.layout_ctx.position;
-        ctx.layout_ctx
+        let position = ctx.cursor.position;
+        ctx.cursor
             .staff
             .clef_changes
             .entry(staff)
@@ -194,8 +194,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
         // note how we use the measure number because the first time a print appears,
         // there is no new_system information available. We increment the measure number every time
         // we enter a measure, which is initialized at 0, so the first measure will always be number 1.
-        if ctx.layout_ctx.measure.number == 1 && ctx.layout_ctx.position == 0 {
-            ctx.layout_ctx.staff.opening_clef.insert(staff, clef);
+        if ctx.cursor.measure.number == 1 && ctx.cursor.position == 0 {
+            ctx.cursor.staff.opening_clef.insert(staff, clef);
         }
     }
 
@@ -211,22 +211,22 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
         if is_hidden {
             if let Some(num) = number {
                 // if a stuff number is specified, hide the staff.
-                ctx.layout_ctx.staff.explicitly_hidden.insert(num);
-                ctx.layout_ctx.staff.explicitly_shown.remove(&num);
+                ctx.cursor.staff.explicitly_hidden.insert(num);
+                ctx.cursor.staff.explicitly_shown.remove(&num);
             } else {
                 // if not specified, hide the entire part.
-                ctx.layout_ctx.part_hidden_specified = Visibility::Hidden;
+                ctx.cursor.part_hidden_specified = Visibility::Hidden;
             }
         }
 
         let restore = print_object == "yes";
         if restore {
             // if any staff is printed, set part visibility to shown.
-            ctx.layout_ctx.part_hidden_specified = Visibility::Shown;
+            ctx.cursor.part_hidden_specified = Visibility::Shown;
 
             if let Some(num) = number {
-                ctx.layout_ctx.staff.explicitly_hidden.remove(&num);
-                ctx.layout_ctx.staff.explicitly_shown.insert(num);
+                ctx.cursor.staff.explicitly_hidden.remove(&num);
+                ctx.cursor.staff.explicitly_shown.insert(num);
             }
         }
 
@@ -234,8 +234,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
         if let Some(staff_size) = element.get_child("staff-size") {
             let mut v: f32 = staff_size.req_parse();
             v /= 100.;
-            ctx.layout_ctx.staff.staff_scaling.insert(number, v);
-            ctx.layout_ctx.staff.content_scaling.insert(number, v);
+            ctx.cursor.staff.staff_scaling.insert(number, v);
+            ctx.cursor.staff.content_scaling.insert(number, v);
 
             if let Some(scaling) = staff_size
                 .attribute("scaling")
@@ -245,7 +245,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
                 })
                 .map(|s| s / 100.)
             {
-                ctx.layout_ctx.staff.content_scaling.insert(number, scaling);
+                ctx.cursor.staff.content_scaling.insert(number, scaling);
             }
         }
     }
@@ -255,19 +255,19 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
         let mode = node.req_child("mode").req_text();
 
         let key: Key = (fifths, mode).try_into().unwrap();
-        ctx.layout_ctx.key = key;
+        ctx.cursor.key = key;
     }
 
     fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let duration: u32 = node.req_child("duration").req_parse();
-        ctx.layout_ctx
+        ctx.cursor
             .apply_backup(duration)
             .expect("backup duration exceeds current position");
     }
 
     fn enter_forward(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let duration: u32 = node.req_child("duration").req_parse();
-        ctx.layout_ctx
+        ctx.cursor
             .apply_forward(duration)
             .expect("forward duration overflowed position");
     }
@@ -282,19 +282,19 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
             element.req_child("duration").req_parse()
         };
 
-        ctx.layout_ctx
+        ctx.cursor
             .enter_note(duration, is_chord, is_grace)
             .expect("chord note duration exceeds current position");
 
         for node in element.children() {
             if node.has_tag_name("voice") {
                 let voice: u32 = node.req_parse();
-                ctx.layout_ctx.voice = voice.into()
+                ctx.cursor.voice = voice.into()
             }
 
             if node.has_tag_name("staff") {
                 let staff: u32 = node.req_parse();
-                ctx.layout_ctx.staff.number = staff.into();
+                ctx.cursor.staff.number = staff.into();
             }
         }
     }
@@ -303,7 +303,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutContextVisitor {
         // We move the position forwards the duration of the note, even it is a chord.
         // When we enter a chord note, the position is moved backwards, so that
         // the position is correct upstream (a subsequent callback).
-        ctx.layout_ctx
+        ctx.cursor
             .exit_note()
             .expect("note duration overflowed position");
     }

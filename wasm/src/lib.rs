@@ -4,8 +4,8 @@ use lib::drawable::drawable_element::{DrawableElement, compute_bounds, scale_ele
 use lib::geometry::color::Color;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::engrave::{arrange_score, walk_document};
-use lib::score::layout::Layout;
 use lib::score::page_orientation::PageOrientation;
+use lib::score::score_defaults::ScoreDefaults;
 use lib::score::user_layout::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
@@ -27,7 +27,7 @@ fn init() {
 /// returns; reused by every subsequent [`render`] call for that handle until
 /// [`free_score`] drops it.
 struct ScoreCache {
-    layout: Layout,
+    layout: ScoreDefaults,
     score: Score,
     font: SmuflFont,
 }
@@ -108,7 +108,7 @@ impl RenderOutput {
     }
 }
 
-/// Parses `musicxml` and builds the [`Layout`]/[`Score`]/[`SmuflFont`] triple,
+/// Parses `musicxml` and builds the [`ScoreDefaults`]/[`Score`]/[`SmuflFont`] triple,
 /// none of which depend on [`UserLayout`]. Caches the result under a new
 /// handle so subsequent [`render`] calls for that handle can re-layout and
 /// re-render without re-parsing or re-walking the document. Call

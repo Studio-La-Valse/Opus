@@ -2,8 +2,8 @@ use crate::musicxml::utils::NodeUtils;
 use crate::musicxml::utils::ReqParse;
 use crate::musicxml::visitor::Visitor;
 use crate::musicxml::walker_ctx::WalkerCtx;
-use crate::score::layout::PageMargins;
 use crate::score::part_list::builder::{PartGroupAction, PartListBuilder};
+use crate::score::score_defaults::PageMargins;
 use roxmltree::Node;
 
 pub struct SetupVisitor {}
@@ -102,7 +102,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
 
     fn enter_part(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         // Ensure part is registered in part list
-        let part_id = ctx.layout_ctx.part_id.clone();
+        let part_id = ctx.cursor.part_id.clone();
         ctx.layout.ensure_part(&part_id);
     }
 }

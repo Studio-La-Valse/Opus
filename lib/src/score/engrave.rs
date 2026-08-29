@@ -3,7 +3,7 @@
 //!
 //! [`engrave`] runs the whole sequence. It is split into two reusable halves:
 //! [`walk_document`] (the two document walks that build the [`Score`] and
-//! [`Layout`], independent of [`UserLayout`]) and [`arrange_score`] (resolve the
+//! [`ScoreDefaults`], independent of [`UserLayout`]) and [`arrange_score`] (resolve the
 //! user layout, rebeam, measure and arrange the pages). The wasm bindings keep
 //! these apart on purpose -- `load_score` walks once and caches the result, then
 //! every `render` re-runs only [`arrange_score`].
@@ -20,27 +20,27 @@ use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
 use crate::musicxml::visitors::content_visitor::ContentVisitor;
-use crate::musicxml::visitors::layout_ctx_visitor::LayoutContextVisitor;
 use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
 use crate::musicxml::visitors::setup_visitor::SetupVisitor;
+use crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor;
 use crate::musicxml::walker::Walker;
 use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::app_defaults::AppDefaults;
-use crate::score::layout::Layout;
-use crate::score::layout_ctx::LayoutCtx;
 use crate::score::page_orientation::PageOrientation;
 use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
+use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use crate::score::visual::score::Score;
 use crate::score::visual::score_element::ScoreElement;
+use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
 
-/// A fully laid-out score together with the [`Layout`] it was engraved against.
+/// A fully laid-out score together with the [`ScoreDefaults`] it was engraved against.
 /// PDF output needs `layout.defaults` for its tenths-to-points scaling.
 pub struct EngravedScore {
     pub score: Score,
-    pub layout: Layout,
+    pub layout: ScoreDefaults,
 }
 
 /// A boundary the pipeline has just crossed, carrying the wall-clock time spent
@@ -74,7 +74,7 @@ pub fn engrave(
     EngravedScore { score, layout }
 }
 
-/// The two document walks that build the [`Score`] and [`Layout`]. Nothing here
+/// The two document walks that build the [`Score`] and [`ScoreDefaults`]. Nothing here
 /// depends on [`UserLayout`] beyond satisfying `WalkerCtx::new`, so the result
 /// can be cached and re-arranged for different user layouts.
 ///
@@ -85,15 +85,15 @@ pub fn walk_document(
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
-) -> (Score, Layout) {
-    let mut layout_ctx = LayoutCtx::default();
-    let mut layout = Layout::default();
+) -> (Score, ScoreDefaults) {
+    let mut cursor = WalkCursor::default();
+    let mut layout = ScoreDefaults::default();
     let mut score = Score::default();
 
     let mut time = Instant::now();
 
     let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
+        .uses(WalkCursorVisitor {})
         .uses(SetupVisitor {})
         .uses(LayoutVisitor {
             encountered: HashSet::new(),
@@ -102,7 +102,7 @@ pub fn walk_document(
         user_layout,
         &mut layout,
         app_defaults,
-        &mut layout_ctx,
+        &mut cursor,
         &mut score,
         font,
     );
@@ -112,7 +112,7 @@ pub fn walk_document(
     time = Instant::now();
 
     let visitor = DefaultVisitor {}
-        .uses(LayoutContextVisitor {})
+        .uses(WalkCursorVisitor {})
         .uses(ContentVisitor {
             clef_change: HashMap::new(),
         });
@@ -120,7 +120,7 @@ pub fn walk_document(
         user_layout,
         &mut layout,
         app_defaults,
-        &mut layout_ctx,
+        &mut cursor,
         &mut score,
         font,
     );
@@ -138,7 +138,7 @@ pub fn walk_document(
 /// Emits [`Stage::ApplyLayout`], [`Stage::Rebeam`] and [`Stage::LayoutPass`].
 pub fn arrange_score(
     score: &mut Score,
-    layout: &Layout,
+    layout: &ScoreDefaults,
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),

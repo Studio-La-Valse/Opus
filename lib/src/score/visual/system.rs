@@ -3,9 +3,8 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout::Layout;
-use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::bracket::Bracket;
 use crate::score::visual::part::Part;
@@ -15,6 +14,7 @@ use crate::score::visual::section::Section;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system_measure::SystemMeasure;
+use crate::score::walk_cursor::Visibility;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -222,7 +222,7 @@ impl ScoreElement for System {
 
     fn _apply_layout(
         &mut self,
-        layout: &Layout,
+        layout: &ScoreDefaults,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {

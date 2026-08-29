@@ -3,9 +3,9 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout::Layout;
-use crate::score::layout::PageMargins;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::score_defaults::PageMargins;
+use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
@@ -105,7 +105,7 @@ impl ScoreElement for Page {
 
     fn _apply_layout(
         &mut self,
-        layout: &Layout,
+        layout: &ScoreDefaults,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {

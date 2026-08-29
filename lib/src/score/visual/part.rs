@@ -2,7 +2,6 @@ use crate::drawable::layoutable::Layoutable;
 use crate::geometry::xy::XY;
 use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout_ctx::Visibility;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::brace::Brace;
 use crate::score::visual::clef::Clef as DrawableClef;
@@ -11,6 +10,7 @@ use crate::score::visual::score_element::ScoreElement;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::score::walk_cursor::Visibility;
 use std::collections::{BTreeMap, HashSet};
 
 pub struct Part {

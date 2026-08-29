@@ -2,7 +2,6 @@ use crate::{
     drawable::drawable_element::DrawableElement,
     geometry::xy::XY,
     score::{
-        layout_ctx::Visibility,
         visual::{
             chord::Chord,
             page::Page,
@@ -16,6 +15,7 @@ use crate::{
             staff::Staff,
             system::System,
         },
+        walk_cursor::Visibility,
     },
 };
 

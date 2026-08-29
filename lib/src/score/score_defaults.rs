@@ -1,7 +1,7 @@
 ﻿use crate::score::part_list::tree::PartListNode;
 
 /// A `<score-part>`'s section/part-group assignment, returned by
-/// `Layout::lookup` for a given part id.
+/// `ScoreDefaults::lookup` for a given part id.
 #[derive(Default, Clone, Copy)]
 pub struct ScorePart {
     pub section: u32,
@@ -58,7 +58,7 @@ pub struct Appearance {
 }
 
 #[derive(Clone)]
-pub struct Layout {
+pub struct ScoreDefaults {
     pub work_title: String,
 
     pub defaults: Defaults,
@@ -78,7 +78,7 @@ pub struct Layout {
     pub part_list: Vec<PartListNode>,
 }
 
-impl Layout {
+impl ScoreDefaults {
     pub fn get_margins(&self, page_number: u32) -> PageMargins {
         let is_even = page_number.is_multiple_of(2);
 
@@ -145,9 +145,9 @@ impl Layout {
     }
 }
 
-impl Default for Layout {
-    fn default() -> Layout {
-        Layout {
+impl Default for ScoreDefaults {
+    fn default() -> ScoreDefaults {
+        ScoreDefaults {
             work_title: Default::default(),
             defaults: Default::default(),
             appearance: Default::default(),

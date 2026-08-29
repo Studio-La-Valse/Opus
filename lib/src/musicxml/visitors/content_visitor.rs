@@ -31,17 +31,17 @@ pub struct ContentVisitor {
 
 impl ContentVisitor {
     fn handle_rest(&mut self, node: &Node, rest_node: &Node, ctx: &mut WalkerCtx) {
-        let staff_idx = ctx.layout_ctx.staff.number;
-        let measure_number = ctx.layout_ctx.measure.number;
-        let part_id = ctx.layout_ctx.part_id.as_str();
+        let staff_idx = ctx.cursor.staff.number;
+        let measure_number = ctx.cursor.measure.number;
+        let part_id = ctx.cursor.part_id.as_str();
         let mut scale = *ctx
-            .layout_ctx
+            .cursor
             .staff
             .content_scaling
             .get(&staff_idx)
             .unwrap_or(&1.0);
 
-        let is_grace = ctx.layout_ctx.grace;
+        let is_grace = ctx.cursor.grace;
         if is_grace {
             scale *= ctx
                 .layout
@@ -98,20 +98,20 @@ impl ContentVisitor {
             None => return,
         };
 
-        let system_index = ctx.layout_ctx.system.index;
-        let staff_idx = ctx.layout_ctx.staff.number;
-        let measure_number = ctx.layout_ctx.measure.number;
-        let position = ctx.layout_ctx.position;
-        let voice = ctx.layout_ctx.voice;
-        let part_id = ctx.layout_ctx.part_id.as_str();
+        let system_index = ctx.cursor.system.index;
+        let staff_idx = ctx.cursor.staff.number;
+        let measure_number = ctx.cursor.measure.number;
+        let position = ctx.cursor.position;
+        let voice = ctx.cursor.voice;
+        let part_id = ctx.cursor.part_id.as_str();
         let mut scale = *ctx
-            .layout_ctx
+            .cursor
             .staff
             .content_scaling
             .get(&staff_idx)
             .unwrap_or(&1.0);
 
-        let is_grace = ctx.layout_ctx.grace;
+        let is_grace = ctx.cursor.grace;
         if is_grace {
             scale *= ctx
                 .layout
@@ -131,7 +131,7 @@ impl ContentVisitor {
         };
 
         // Determine Notehead & Visual Position
-        let clef = ctx.layout_ctx.staff.active_clef(&staff_idx, &position);
+        let clef = ctx.cursor.staff.active_clef(&staff_idx, &position);
         let staff_line = clef.line_index_at_pitch(&pitch);
 
         let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
@@ -156,7 +156,7 @@ impl ContentVisitor {
         }
 
         let chord = chords.last_mut().expect("Chord entry should exist");
-        chord.grace = ctx.layout_ctx.grace;
+        chord.grace = ctx.cursor.grace;
 
         // Parse Stem & Beams
         if let Some(stem_node) = node.children().find(|n| n.tag_name().name() == "stem") {
@@ -253,11 +253,11 @@ impl ContentVisitor {
 impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
     fn enter_attributes(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         if node.has_child("time") {
-            let page_number = &ctx.layout_ctx.page.page_number;
-            let system_index = &ctx.layout_ctx.system.index;
-            let measure_number = ctx.layout_ctx.measure.number;
+            let page_number = &ctx.cursor.page.page_number;
+            let system_index = &ctx.cursor.system.index;
+            let measure_number = ctx.cursor.measure.number;
 
-            let part_id = &ctx.layout_ctx.part_id.clone();
+            let part_id = &ctx.cursor.part_id.clone();
             let assignment = ctx.layout.lookup(part_id).unwrap();
             let section_number = &assignment.section;
             let part_group_number = &assignment.part_group;
@@ -270,8 +270,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
 
             for staff_measure in part.staff_measures_mut(&measure_number) {
                 let time_signature = TimeSignatureCore {
-                    time: ctx.layout_ctx.beats,
-                    base: ctx.layout_ctx.beat_type,
+                    time: ctx.cursor.beats,
+                    base: ctx.cursor.beat_type,
                 };
                 let (num, denom) = ctx.font.time_signature(time_signature);
                 let visual = VisualTimeSignature::new(num, denom);
@@ -279,7 +279,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
             }
 
             // this measure is the first measure in a system, in the previous measure, prepare the change.
-            let is_new_system = ctx.layout_ctx.new_system;
+            let is_new_system = ctx.cursor.new_system;
             if measure_number > 1 && is_new_system {
                 let prev_measure_number = measure_number - 1;
                 for staff_measure in ctx
@@ -287,8 +287,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
                     .locate_staff_measures_mut(part_id, prev_measure_number)
                 {
                     let time_signature = TimeSignatureCore {
-                        time: ctx.layout_ctx.beats,
-                        base: ctx.layout_ctx.beat_type,
+                        time: ctx.cursor.beats,
+                        base: ctx.cursor.beat_type,
                     };
                     let (num, denom) = ctx.font.time_signature(time_signature);
                     let visual = VisualTimeSignature::new(num, denom);
@@ -299,17 +299,17 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
     }
 
     fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        let staff_idx: StaffIdx = ctx.layout_ctx.staff.number;
-        let clef = ctx.layout_ctx.staff.active_clef.get(&staff_idx).unwrap();
+        let staff_idx: StaffIdx = ctx.cursor.staff.number;
+        let clef = ctx.cursor.staff.active_clef.get(&staff_idx).unwrap();
         let visual_clef = Clef::new(ctx.font.clef(clef));
 
-        if ctx.layout_ctx.position > 0 {
+        if ctx.cursor.position > 0 {
             // Mid-measure: Anchor to a chord or rest
             self.clef_change.insert(staff_idx, visual_clef);
         } else {
             // Anchor to previous measure bar
-            let measure_number = ctx.layout_ctx.measure.number;
-            let part_id = ctx.layout_ctx.part_id.as_str();
+            let measure_number = ctx.cursor.measure.number;
+            let part_id = ctx.cursor.part_id.as_str();
 
             if measure_number > 1
                 && let Some(previous_measure) = ctx.visual_score.locate_staff_measure_mut(
@@ -324,18 +324,18 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
     }
 
     fn enter_key(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        if ctx.layout_ctx.new_system {
+        if ctx.cursor.new_system {
             // handled in exit_measure() for new systems
             return;
         }
 
-        let page_number = ctx.layout_ctx.page.page_number;
-        let system_index = ctx.layout_ctx.system.index;
-        let part_id = ctx.layout_ctx.part_id.as_str();
-        let measure_number = ctx.layout_ctx.measure.number;
+        let page_number = ctx.cursor.page.page_number;
+        let system_index = ctx.cursor.system.index;
+        let part_id = ctx.cursor.part_id.as_str();
+        let measure_number = ctx.cursor.measure.number;
 
         // Extract copyable/borrowable fields up front
-        let key = ctx.layout_ctx.key;
+        let key = ctx.cursor.key;
 
         let page = ctx.visual_score.pages.get_mut(&page_number).unwrap();
         let system = page.systems.get_mut(&system_index).unwrap();
@@ -345,7 +345,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
             part,
             measure_number,
             key,
-            &ctx.layout_ctx.staff.active_clef,
+            &ctx.cursor.staff.active_clef,
             ctx.font,
         );
     }
@@ -361,11 +361,11 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
     }
 
     fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
-        let page_number = ctx.layout_ctx.page.page_number;
-        let system_index = ctx.layout_ctx.system.index;
-        let measure_number = ctx.layout_ctx.measure.number;
+        let page_number = ctx.cursor.page.page_number;
+        let system_index = ctx.cursor.system.index;
+        let measure_number = ctx.cursor.measure.number;
 
-        let part_id = ctx.layout_ctx.part_id.clone();
+        let part_id = ctx.cursor.part_id.clone();
         let assignment = ctx.layout.lookup(&part_id).unwrap();
         let section_number = assignment.section;
         let part_group_number = assignment.part_group;
@@ -382,19 +382,19 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
 
         // set_opening_clef must run after the layout pass' consolidate_measure_width(),
         // because all measures must exist in each staff
-        part.set_opening_clef(&ctx.layout_ctx.staff.opening_clef, |c| {
+        part.set_opening_clef(&ctx.cursor.staff.opening_clef, |c| {
             let smufl_clef = ctx.font.clef(&c);
             Clef::new(smufl_clef)
         });
 
-        if ctx.layout_ctx.new_system {
-            let key = ctx.layout_ctx.key;
+        if ctx.cursor.new_system {
+            let key = ctx.cursor.key;
 
             self.populate_key_signature(
                 part,
                 measure_number,
                 key,
-                &ctx.layout_ctx.staff.active_clef,
+                &ctx.cursor.staff.active_clef,
                 ctx.font,
             );
         }

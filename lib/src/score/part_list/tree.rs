@@ -1,6 +1,6 @@
 /// An ordered node in a `<part-list>`'s structure, preserving the exact
-/// document order things appeared in. Stored directly as `Layout::part_list`;
-/// `Layout::lookup` searches it for a part's section/part-group assignment.
+/// document order things appeared in. Stored directly as `ScoreDefaults::part_list`;
+/// `ScoreDefaults::lookup` searches it for a part's section/part-group assignment.
 #[derive(Clone)]
 pub enum PartListNode {
     Part {

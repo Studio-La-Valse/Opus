@@ -18,27 +18,27 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
     }
 
     fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        self.encountered.insert(ctx.layout_ctx.staff.number);
+        self.encountered.insert(ctx.cursor.staff.number);
     }
 
     fn enter_backup(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        self.encountered.insert(ctx.layout_ctx.staff.number);
+        self.encountered.insert(ctx.cursor.staff.number);
     }
 
     fn enter_forward(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        self.encountered.insert(ctx.layout_ctx.staff.number);
+        self.encountered.insert(ctx.cursor.staff.number);
     }
 
     fn enter_note(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        self.encountered.insert(ctx.layout_ctx.staff.number);
+        self.encountered.insert(ctx.cursor.staff.number);
     }
 
     fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
-        let page_number = ctx.layout_ctx.page.page_number;
-        let system_index = ctx.layout_ctx.system.index;
-        let measure_number = ctx.layout_ctx.measure.number;
+        let page_number = ctx.cursor.page.page_number;
+        let system_index = ctx.cursor.system.index;
+        let measure_number = ctx.cursor.measure.number;
 
-        let part_id = ctx.layout_ctx.part_id.clone();
+        let part_id = ctx.cursor.part_id.clone();
         let assignment = ctx.layout.lookup(&part_id).unwrap();
         let section_number = assignment.section;
         let part_group_number = assignment.part_group;
@@ -48,16 +48,16 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
             .visual_score
             .page_or_insert(page_number)
             .system_or_insert(system_index);
-        system.m_left = ctx.layout_ctx.system.margin_left.unwrap_or(system.m_left);
-        system.m_right = ctx.layout_ctx.system.margin_right.unwrap_or(system.m_right);
-        system.distance = ctx.layout_ctx.system.distance.unwrap_or(system.distance);
-        system.top = ctx.layout_ctx.system.distance_top.unwrap_or(system.top);
+        system.m_left = ctx.cursor.system.margin_left.unwrap_or(system.m_left);
+        system.m_right = ctx.cursor.system.margin_right.unwrap_or(system.m_right);
+        system.distance = ctx.cursor.system.distance.unwrap_or(system.distance);
+        system.top = ctx.cursor.system.distance_top.unwrap_or(system.top);
 
         let system_measure = system
             .measures
             .entry(measure_number)
             .or_insert_with(|| SystemMeasure::new(measure_number));
-        system_measure.init_width(ctx.layout_ctx.measure.width);
+        system_measure.init_width(ctx.cursor.measure.width);
 
         // get or create section -> part group -> part below the system
         let part = ctx.visual_score.locate_or_create_part(
@@ -71,20 +71,20 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
         part.measures
             .entry(measure_number)
             .or_insert_with(|| PartMeasure::new(part_id.clone(), measure_number));
-        part.set_visibility(ctx.layout_ctx.part_hidden_specified);
+        part.set_visibility(ctx.cursor.part_hidden_specified);
         part.ensure_staves(&self.encountered);
-        part.hide_staves(&ctx.layout_ctx.staff.explicitly_hidden);
-        part.show_staves(&ctx.layout_ctx.staff.explicitly_shown);
-        part.set_distances(&ctx.layout_ctx.staff.distances, &ctx.layout.staff_distance);
+        part.hide_staves(&ctx.cursor.staff.explicitly_hidden);
+        part.show_staves(&ctx.cursor.staff.explicitly_shown);
+        part.set_distances(&ctx.cursor.staff.distances, &ctx.layout.staff_distance);
 
         // Now that all staves are ensure, consolidate the measure width,
         // so every measure from system to staff has the same calculated width.
         let system = ctx.visual_score.locate_system_mut(&system_index).unwrap();
-        system.consolidate_measure_width(ctx.layout_ctx.measure.number);
+        system.consolidate_measure_width(ctx.cursor.measure.number);
 
         // Now that all measures are ensured, we can apply the scale,
         // because scale is passed to staff measures.
         let part = system.locate_part_mut(&part_id).unwrap();
-        part.set_staff_scale(&ctx.layout_ctx.staff.staff_scaling);
+        part.set_staff_scale(&ctx.cursor.staff.staff_scaling);
     }
 }

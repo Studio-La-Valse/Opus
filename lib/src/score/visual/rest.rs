@@ -4,7 +4,7 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::layout::Layout;
+use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::score_element::ScoreElement;
@@ -134,7 +134,7 @@ impl ScoreElement for Rest {
 
     fn _apply_layout(
         &mut self,
-        _layout: &Layout,
+        _layout: &ScoreDefaults,
         user_layout: &UserLayout,
         app_defaults: &AppDefaults,
     ) {

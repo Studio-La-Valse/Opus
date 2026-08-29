@@ -2,7 +2,7 @@ use crate::drawable::layoutable::Layoutable;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
-use crate::score::layout::Layout;
+use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::score_element::ScoreElement;
 use crate::smufl::glyphs::brace::Brace as SmuflBrace;
@@ -33,7 +33,7 @@ impl Brace {
 impl ScoreElement for Brace {
     fn _apply_layout(
         &mut self,
-        _layout: &Layout,
+        _layout: &ScoreDefaults,
         _user_layout: &UserLayout,
         _app_defaults: &AppDefaults,
     ) {
