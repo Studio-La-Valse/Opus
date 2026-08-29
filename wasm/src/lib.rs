@@ -211,6 +211,22 @@ pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 /// only to decide whether the result needs scaling down to stay within
 /// [`MAX_CANVAS_PIXELS`]; the caller still multiplies the returned bounds by
 /// it as usual when sizing the canvas backing store.
+///
+/// # Adding a `render_pdf` export
+///
+/// A PDF download would be a sibling `#[wasm_bindgen] pub fn render_pdf(handle:
+/// u32, debug: bool, /* same layout args */) -> Result<Vec<u8>, JsValue>`
+/// returning the bytes (wasm-bindgen marshals `Vec<u8>` to a `Uint8Array`).
+/// Body: run the same layout steps as below, then instead of
+/// `compositor.walk(..)` + `FlatBufferCanvas` do what
+/// `cli/src/commands/render.rs` does for `OutputFormat::Pdf` --
+/// `compositor.walk_pages(&cache.score, &cache.font)`, one
+/// `lib::drawable::canvas::pdf::PdfPageCanvas` per page, then
+/// `lib::drawable::canvas::pdf::write_pdf(&pages, font_otf)`. The one missing
+/// piece is the raw font bytes: either bundle them with
+/// `include_bytes!("../../assets/.../Bravura.otf")` or thread an extra
+/// `font_otf: &[u8]` argument through `load_score` and stash it in the cache
+/// next to `SmuflFont`.
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen]
 pub fn render(

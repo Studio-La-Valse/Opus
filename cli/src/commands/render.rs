@@ -1,6 +1,7 @@
 use crate::commands::print_issues;
 use clap::Args;
 use lib::drawable::canvas::CanvasPainter;
+use lib::drawable::canvas::pdf::{PdfPage, PdfPageCanvas, write_pdf};
 use lib::drawable::canvas::svg::SvgCanvas;
 use lib::drawable::drawable_element::DrawableElement;
 use lib::drawable::layoutable::Layoutable;
@@ -33,6 +34,16 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::fs::read_to_string;
 use std::time::Instant;
+use ttf_parser::Face;
+
+/// Concrete output the `render` command should produce. There is deliberately
+/// no default and no inference from the `--out` file extension: the caller must
+/// say `--format svg` or `--format pdf` explicitly.
+#[derive(Clone, Copy, Debug, clap::ValueEnum)]
+pub enum OutputFormat {
+    Svg,
+    Pdf,
+}
 
 #[derive(Args, Debug)]
 pub struct RenderArgs {
@@ -42,11 +53,20 @@ pub struct RenderArgs {
     #[arg(long)]
     out: String,
 
+    /// Output format. Required, no default -- pass `svg` or `pdf`.
+    #[arg(long, value_enum)]
+    format: OutputFormat,
+
     #[arg(long)]
     meta: String,
 
     #[arg(long)]
     glyphs: String,
+
+    /// Path to the SMuFL music font (e.g. `Bravura.otf`). Required for
+    /// `--format pdf`, where it is embedded into the document; unused for SVG.
+    #[arg(long)]
+    font: Option<String>,
 
     #[arg(long, short, action)]
     debug: bool,
@@ -73,8 +93,10 @@ pub struct RenderArgs {
 pub fn run(args: RenderArgs) {
     let file = args.file;
     let out = args.out;
+    let format = args.format;
     let meta = args.meta;
     let glyph_names = args.glyphs;
+    let font_path = args.font;
     let debug = args.debug;
     let page_color = args.page_color;
     let foreground_color = args.foreground_color;
@@ -218,30 +240,83 @@ pub fn run(args: RenderArgs) {
     println!("Layout pass: {}ms", time.elapsed().as_millis());
     time = Instant::now();
 
-    let pass = BaseRenderer {};
-    let compositor = RenderCompositor {
-        pass: Box::new(pass),
+    let base = RenderCompositor {
+        pass: Box::new(BaseRenderer {}),
     };
-    let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&visual, &font);
 
-    println!("First render pass: {}ms", time.elapsed().as_millis());
-    time = Instant::now();
+    match format {
+        OutputFormat::Svg => {
+            let mut elements: Vec<DrawableElement<'_>> = base.walk(&visual, &font);
 
-    if debug {
-        let pass = DebugRenderer {};
-        let compositor = RenderCompositor {
-            pass: Box::new(pass),
-        };
-        elements.extend(compositor.walk(&visual, &font));
+            println!("First render pass: {}ms", time.elapsed().as_millis());
+            time = Instant::now();
 
-        println!("Second render pass: {}ms", time.elapsed().as_millis());
-        time = Instant::now();
+            if debug {
+                let debug_pass = RenderCompositor {
+                    pass: Box::new(DebugRenderer {}),
+                };
+                elements.extend(debug_pass.walk(&visual, &font));
+
+                println!("Second render pass: {}ms", time.elapsed().as_millis());
+                time = Instant::now();
+            }
+
+            let svg = CanvasPainter::new(SvgCanvas::new()).paint(&elements);
+            fs::write(&out, svg).unwrap();
+
+            println!("Write to svg: {}ms", time.elapsed().as_millis());
+        }
+
+        OutputFormat::Pdf => {
+            let font_path =
+                font_path.expect("--format pdf requires --font <path to the SMuFL music font>");
+            let font_bytes = fs::read(&font_path)
+                .unwrap_or_else(|err| panic!("Failed to read font '{font_path}': {err}"));
+            let face = Face::parse(&font_bytes, 0)
+                .unwrap_or_else(|err| panic!("Font '{font_path}' is not valid OpenType: {err}"));
+
+            // MusicXML tenths -> PDF points: the score's mm-per-tenth scaling
+            // times 72 points per inch over 25.4 mm per inch.
+            let pt_per_tenth =
+                layout.defaults.scaling_millimeters / layout.defaults.scaling_tenths * 72.0 / 25.4;
+
+            let mut pages = base.walk_pages(&visual, &font);
+
+            println!("First render pass: {}ms", time.elapsed().as_millis());
+            time = Instant::now();
+
+            if debug {
+                let debug_pass = RenderCompositor {
+                    pass: Box::new(DebugRenderer {}),
+                };
+                for (page, debug_page) in
+                    pages.iter_mut().zip(debug_pass.walk_pages(&visual, &font))
+                {
+                    page.elements.extend(debug_page.elements);
+                }
+
+                println!("Second render pass: {}ms", time.elapsed().as_millis());
+                time = Instant::now();
+            }
+
+            let pdf_pages: Vec<PdfPage> = pages
+                .iter()
+                .map(|page| {
+                    let canvas = PdfPageCanvas::new(
+                        page.origin,
+                        (page.width, page.height),
+                        pt_per_tenth,
+                        &face,
+                    );
+                    CanvasPainter::new(canvas).paint(&page.elements)
+                })
+                .collect();
+
+            fs::write(&out, write_pdf(&pdf_pages, &font_bytes)).unwrap();
+
+            println!("Write to pdf: {}ms", time.elapsed().as_millis());
+        }
     }
-
-    let svg = CanvasPainter::new(SvgCanvas::new()).paint(&elements);
-    fs::write(out.clone(), svg).unwrap();
-
-    println!("Write to svg: {}ms", time.elapsed().as_millis());
 
     println!("Written to: {}", out)
 }

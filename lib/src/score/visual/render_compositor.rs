@@ -1,5 +1,6 @@
 use crate::{
     drawable::drawable_element::DrawableElement,
+    geometry::xy::XY,
     score::{
         layout_ctx::Visibility,
         visual::{
@@ -12,6 +13,21 @@ use crate::{
 
 pub struct RenderCompositor {
     pub pass: Box<dyn RenderPass>,
+}
+
+/// One page's slice of [`RenderCompositor::walk_pages`] output: the page's
+/// drawable elements together with where the page sits and how large it is.
+///
+/// Every value here -- `origin`, `width`, `height`, and the coordinates inside
+/// `elements` -- is in MusicXML tenths and in the score's global coordinate
+/// space (the same coordinates [`RenderCompositor::walk`] produces). A sink that
+/// emits one physical page at a time (PDF) must therefore translate `elements`
+/// by `-origin` to bring the page back to its own origin.
+pub struct RenderedPage<'a> {
+    pub origin: XY,
+    pub width: f32,
+    pub height: f32,
+    pub elements: Vec<DrawableElement<'a>>,
 }
 
 impl RenderCompositor {
@@ -28,6 +44,32 @@ impl RenderCompositor {
         }
 
         out
+    }
+
+    /// Like [`walk`](Self::walk), but keeps each page's elements in their own
+    /// [`RenderedPage`] instead of concatenating every page into one stream.
+    /// Used by per-page sinks such as the PDF writer, which needs one content
+    /// stream and media box per physical page.
+    pub fn walk_pages<'a>(&self, score: &Score, font: &'a SmuflFont) -> Vec<RenderedPage<'a>> {
+        score
+            .pages
+            .values()
+            .map(|page| {
+                let mut elements: Vec<DrawableElement<'a>> = Vec::new();
+                self.pass.render_page(page, font, &mut elements);
+
+                for system in page.systems.values() {
+                    self.walk_system(system, font, &mut elements);
+                }
+
+                RenderedPage {
+                    origin: page.xy,
+                    width: page.width,
+                    height: page.height,
+                    elements,
+                }
+            })
+            .collect()
     }
 
     fn walk_system<'a>(

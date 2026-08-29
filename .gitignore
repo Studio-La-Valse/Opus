@@ -9,7 +9,8 @@ target
 # Debug-run output (see .vscode/launch.json's --out arg) - regenerated on
 # every run, never a source of truth. The other assets/xmltest/*.musicxml
 # files are real fixtures and stay tracked.
-/assets/xmltest/test.svg
+/assets/xmltest/*.svg
+/assets/xmltest/*.pdf
 
 # Staged npm package output (scripts/stage-package.sh) - regenerated from
 # wasm/pkg, assets/smufl, and web/, never a source of truth.

@@ -1,4 +1,5 @@
 pub mod flat_buffer;
+pub mod pdf;
 pub mod svg;
 
 use crate::drawable::drawable_element::{DrawableElement, compute_bounds};
