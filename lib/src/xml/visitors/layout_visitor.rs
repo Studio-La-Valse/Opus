@@ -1,6 +1,4 @@
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::visual::brace::Brace;
-use crate::score::visual::bracket::Bracket;
 use crate::xml::visitor::Visitor;
 use crate::xml::walker_ctx::WalkerCtx;
 
@@ -45,11 +43,11 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
         let section_number = assignment.section;
         let part_group_number = assignment.part_group;
 
-        // get or create the page
-        let page = ctx.visual_score.page_or_insert(page_number);
-
-        // get or create the system on the page
-        let system = page.system_or_insert(system_index);
+        // get or create the system on the page, applying this measure's system layout
+        let system = ctx
+            .visual_score
+            .page_or_insert(page_number)
+            .system_or_insert(system_index);
         system.m_left = ctx.layout_ctx.system.margin_left.unwrap_or(system.m_left);
         system.m_right = ctx.layout_ctx.system.margin_right.unwrap_or(system.m_right);
         system.distance = ctx.layout_ctx.system.distance.unwrap_or(system.distance);
@@ -61,21 +59,15 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
             .or_insert_with(|| SystemMeasure::new(measure_number));
         system_measure.init_width(ctx.layout_ctx.measure.width);
 
-        // get or create the section in this system.
-        let section = system.section_or_insert(section_number, || {
-            let bracket_top = ctx.font.bracket_top();
-            let bracket_bottom = ctx.font.bracket_bottom();
-            Bracket::new(bracket_top, bracket_bottom)
-        });
-
-        // get or create the part group in this section.
-        let part_group = section.part_group_or_insert(part_group_number, || {
-            let smufl_brace = ctx.font.brace(None);
-            Brace::new(smufl_brace)
-        });
-
-        // get or create the part in this part group.
-        let part = part_group.part_or_insert(part_id.clone(), || Brace::new(ctx.font.brace(None)));
+        // get or create section -> part group -> part below the system
+        let part = ctx.visual_score.locate_or_create_part(
+            ctx.font,
+            page_number,
+            system_index,
+            section_number,
+            part_group_number,
+            &part_id,
+        );
         part.measures
             .entry(measure_number)
             .or_insert_with(|| PartMeasure::new(part_id.clone(), measure_number));
@@ -87,6 +79,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
 
         // Now that all staves are ensure, consolidate the measure width,
         // so every measure from system to staff has the same calculated width.
+        let system = ctx.visual_score.locate_system_mut(&system_index).unwrap();
         system.consolidate_measure_width(ctx.layout_ctx.measure.number);
 
         // Now that all measures are ensured, we can apply the scale,

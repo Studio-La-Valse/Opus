@@ -16,8 +16,6 @@ use crate::score::core::accidental::Accidental as AccidentalCore;
 use crate::score::core::key::Key;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::score::visual::accidental::Accidental as DrawableAccidental;
-use crate::score::visual::brace::Brace;
-use crate::score::visual::bracket::Bracket;
 use crate::score::visual::flag::Flag as DrawableFlag;
 use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
 use crate::xml::utils::ReqParse;
@@ -372,28 +370,18 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
         let section_number = assignment.section;
         let part_group_number = assignment.part_group;
 
-        // get or create the page
-        let page = ctx.visual_score.page_or_insert(page_number);
+        // get or create page -> system -> section -> part group -> part
+        let part = ctx.visual_score.locate_or_create_part(
+            ctx.font,
+            page_number,
+            system_index,
+            section_number,
+            part_group_number,
+            &part_id,
+        );
 
-        // get or create the system on the page
-        let system = page.system_or_insert(system_index);
-
-        // get or create the section in this system.
-        let section = system.section_or_insert(section_number, || {
-            let bracket_top = ctx.font.bracket_top();
-            let bracket_bottom = ctx.font.bracket_bottom();
-            Bracket::new(bracket_top, bracket_bottom)
-        });
-
-        // get or create the part group in this section.
-        let part_group = section.part_group_or_insert(part_group_number, || {
-            let smufl_brace = ctx.font.brace(None);
-            Brace::new(smufl_brace)
-        });
-
-        // This function must be called after consolidate_measure_width(),
+        // set_opening_clef must run after the layout pass' consolidate_measure_width(),
         // because all measures must exist in each staff
-        let part = part_group.part_or_insert(part_id.clone(), || Brace::new(ctx.font.brace(None)));
         part.set_opening_clef(&ctx.layout_ctx.staff.opening_clef, |c| {
             let smufl_clef = ctx.font.clef(&c);
             Clef::new(smufl_clef)

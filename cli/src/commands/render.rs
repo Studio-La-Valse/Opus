@@ -13,7 +13,6 @@ use lib::score::page_orientation::PageOrientation;
 use lib::score::user_layout::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
-use lib::score::visual::render_pass::{BaseRenderer, DebugRenderer};
 use lib::score::visual::score::Score;
 use lib::smufl::smufl_font::SmuflFont;
 use lib::xml::validate::ValidationCtx;
@@ -201,18 +200,10 @@ fn write_svg(
 
     let fonts = RenderFonts::create(font, title_font, lyric_font);
 
-    let mut elements: Vec<DrawableElement<'_>> = RenderCompositor {
-        pass: Box::new(BaseRenderer {}),
-    }
-    .walk(score, &fonts);
+    let mut elements: Vec<DrawableElement<'_>> = RenderCompositor::base().walk(score, &fonts);
 
     if debug {
-        elements.extend(
-            RenderCompositor {
-                pass: Box::new(DebugRenderer {}),
-            }
-            .walk(score, &fonts),
-        );
+        elements.extend(RenderCompositor::debug().walk(score, &fonts));
     }
 
     println!("Render pass: {}ms", time.elapsed().as_millis());
@@ -273,16 +264,10 @@ fn write_pdf(
 
     let mut time = Instant::now();
 
-    let mut pages = RenderCompositor {
-        pass: Box::new(BaseRenderer {}),
-    }
-    .walk_pages(score, &fonts);
+    let mut pages = RenderCompositor::base().walk_pages(score, &fonts);
 
     if debug {
-        let overlay = RenderCompositor {
-            pass: Box::new(DebugRenderer {}),
-        }
-        .walk_pages(score, &fonts);
+        let overlay = RenderCompositor::debug().walk_pages(score, &fonts);
         for (page, debug_page) in pages.iter_mut().zip(overlay) {
             page.elements.extend(debug_page.elements);
         }

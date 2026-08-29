@@ -33,6 +33,12 @@ const LEDGER_BELOW_STAFF_LINE: i32 = 9;
 /// Maximum vertical span a beam is allowed to slant before it is clamped.
 const MAX_BEAM_SLANT_DY: f32 = 20.;
 
+/// Which side of the staff a note (and therefore its ledger lines) sits on.
+enum LedgerSide {
+    Above,
+    Below,
+}
+
 #[derive(Default)]
 pub struct PartMeasure {
     pub part_id: String,
@@ -98,82 +104,73 @@ impl PartMeasure {
     fn arrange_ledgers(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.ledgers.clear();
 
-        for chord in iter_chords(&mut self.chords) {
+        for chord in self.chords.values().flatten() {
             for (idx, staff_ctx) in staff_ctx.iter() {
-                let staff_scale = staff_ctx.scaling;
-                let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scale;
-
+                let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling;
                 let key = |n: &&Note| OrderedFloat(n.xy.y);
 
-                let highest_note = chord
+                if let Some(note) = chord
                     .notes
                     .iter()
                     .filter(|n| n.staff == *idx)
-                    .min_by_key(key);
-
-                if let Some(highest_note) = highest_note
-                    && highest_note.staff_line < LEDGER_ABOVE_STAFF_LINE
+                    .min_by_key(key)
+                    && note.staff_line < LEDGER_ABOVE_STAFF_LINE
                 {
-                    let middle = highest_note.xy.mv(highest_note.width / 2., 0.);
-
-                    let left = middle.mv(self.ledger_width / -2., 0.);
-                    let right = middle.mv(self.ledger_width / 2., 0.);
-
-                    let mut dy = 0.;
-
-                    for line in highest_note.staff_line..-1 {
-                        if line % 2 != 0 {
-                            dy += each_line;
-                            continue;
-                        }
-
-                        self.ledgers.push(Line {
-                            start: left.mv(0., dy),
-                            end: right.mv(0., dy),
-                            stroke_width: self.ledger_thickness,
-                            stroke_color: self.color,
-                        });
-
-                        dy += each_line;
-                    }
+                    let lines = self.ledger_lines(note, LedgerSide::Above, each_line);
+                    self.ledgers.extend(lines);
                 }
 
-                let lowest_note = chord
+                if let Some(note) = chord
                     .notes
                     .iter()
                     .filter(|n| n.staff == *idx)
-                    .max_by_key(key);
-                if let Some(lowest_note) = lowest_note
-                    && lowest_note.staff_line > LEDGER_BELOW_STAFF_LINE
+                    .max_by_key(key)
+                    && note.staff_line > LEDGER_BELOW_STAFF_LINE
                 {
-                    let middle = lowest_note.xy.mv(lowest_note.width / 2., 0.);
-
-                    let left = middle.mv(self.ledger_width / -2., 0.);
-                    let right = middle.mv(self.ledger_width / 2., 0.);
-
-                    let mut dy = 0.;
-                    let mut line = lowest_note.staff_line;
-
-                    while line > LEDGER_BELOW_STAFF_LINE {
-                        if line % 2 != 0 {
-                            dy -= each_line;
-                            line -= 1;
-                            continue;
-                        }
-
-                        self.ledgers.push(Line {
-                            start: left.mv(0., dy),
-                            end: right.mv(0., dy),
-                            stroke_width: self.ledger_thickness,
-                            stroke_color: self.color,
-                        });
-
-                        dy -= each_line;
-                        line -= 1;
-                    }
+                    let lines = self.ledger_lines(note, LedgerSide::Below, each_line);
+                    self.ledgers.extend(lines);
                 }
             }
         }
+    }
+
+    /// The ledger lines for a single note that sits `side` of its staff: one
+    /// short horizontal line on every even staff-line index between the note and
+    /// the staff edge, stepping `each_line` back towards the staff each line.
+    fn ledger_lines(&self, note: &Note, side: LedgerSide, each_line: f32) -> Vec<Line> {
+        let anchor = note.xy.mv(note.width / 2., 0.);
+        let left = anchor.mv(self.ledger_width / -2., 0.);
+        let right = anchor.mv(self.ledger_width / 2., 0.);
+
+        // Staff-line indices from the note inward to the staff edge, plus the
+        // per-line dy step (towards the staff, so away from the note).
+        let (lines, step): (Vec<i32>, f32) = match side {
+            LedgerSide::Above => (
+                (note.staff_line..=LEDGER_ABOVE_STAFF_LINE - 1).collect(),
+                each_line,
+            ),
+            LedgerSide::Below => (
+                (LEDGER_BELOW_STAFF_LINE + 1..=note.staff_line)
+                    .rev()
+                    .collect(),
+                -each_line,
+            ),
+        };
+
+        let mut out = Vec::new();
+        let mut dy = 0.;
+        for line in lines {
+            if line % 2 == 0 {
+                out.push(Line {
+                    start: left.mv(0., dy),
+                    end: right.mv(0., dy),
+                    stroke_width: self.ledger_thickness,
+                    stroke_color: self.color,
+                });
+            }
+            dy += step;
+        }
+        out
     }
 
     fn arrange_beams(&mut self, grace: bool) {
@@ -272,18 +269,6 @@ impl Layoutable for PartMeasure {
     fn arrange(&mut self, _origin: &XY) {
         todo!("Use arrange_ctx instead")
     }
-}
-
-fn iter_chords(chord_groups: &mut BTreeMap<Voice, Vec<Chord>>) -> Vec<&Chord> {
-    let mut result: Vec<&Chord> = Vec::new();
-
-    for chords in chord_groups.values() {
-        for chord in chords {
-            result.push(chord);
-        }
-    }
-
-    result
 }
 
 fn collect_voices(

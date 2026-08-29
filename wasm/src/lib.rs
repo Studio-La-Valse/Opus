@@ -9,7 +9,6 @@ use lib::score::page_orientation::PageOrientation;
 use lib::score::user_layout::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
-use lib::score::visual::render_pass::{BaseRenderer, DebugRenderer};
 use lib::score::visual::score::Score;
 use lib::smufl::smufl_font::SmuflFont;
 use roxmltree::{Document, ParsingOptions};
@@ -263,18 +262,11 @@ pub fn render(
 
         let fonts = RenderFonts::create(&cache.font, title_font, lyric_font);
 
-        let pass = BaseRenderer {};
-        let compositor = RenderCompositor {
-            pass: Box::new(pass),
-        };
-        let mut elements: Vec<DrawableElement<'_>> = compositor.walk(&cache.score, &fonts);
+        let mut elements: Vec<DrawableElement<'_>> =
+            RenderCompositor::base().walk(&cache.score, &fonts);
 
         if debug {
-            let pass = DebugRenderer {};
-            let compositor = RenderCompositor {
-                pass: Box::new(pass),
-            };
-            elements.extend(compositor.walk(&cache.score, &fonts));
+            elements.extend(RenderCompositor::debug().walk(&cache.score, &fonts));
         }
 
         let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);

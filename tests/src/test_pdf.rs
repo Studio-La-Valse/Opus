@@ -15,7 +15,6 @@ mod tests {
     use lib::geometry::xy::XY;
     use lib::score::visual::render_compositor::RenderCompositor;
     use lib::score::visual::render_fonts::RenderFonts;
-    use lib::score::visual::render_pass::BaseRenderer;
     use lib::score::visual::score::Score;
     use lib::smufl::smufl_font::SmuflFont;
     use ttf_parser::Face;
@@ -257,9 +256,7 @@ mod tests {
             page.height = 1760.0;
         }
 
-        let compositor = RenderCompositor {
-            pass: Box::new(BaseRenderer {}),
-        };
+        let compositor = RenderCompositor::base();
 
         let fonts = RenderFonts::music_only(&font);
         let pages = compositor.walk_pages(&score, &fonts);
