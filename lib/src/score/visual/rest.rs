@@ -3,6 +3,7 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::clef::Clef;
+use crate::score::visual::dot::Dot;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
@@ -25,6 +26,11 @@ pub struct Rest {
 
     pub glyph: SmuflRest,
 
+    pub dots: Vec<Dot>,
+    /// Resolved centre-to-centre dot step (and rest-edge-to-first-dot gap), in
+    /// world units; see [`AppDefaults::dot_spacing`](crate::score::app_defaults::AppDefaults).
+    pub dot_spacing: f32,
+
     pub clef_change: Option<Clef>,
 }
 
@@ -40,6 +46,7 @@ impl Rest {
         staff: StaffIdx,
         staff_line: i32,
         scale: f32,
+        dots: u8,
     ) -> Self {
         Rest {
             glyph,
@@ -50,6 +57,9 @@ impl Rest {
             staff,
             staff_line,
             scale,
+
+            dots: (0..dots).map(|_| Dot::new(scale)).collect(),
+            dot_spacing: 0.,
 
             xy: XY::default(),
             width: f32::default(),
@@ -65,6 +75,24 @@ impl Rest {
     pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
         self.arrange_glyph(origin, staff_ctx);
         self.arrange_clef_changes(origin, staff_ctx);
+        self.arrange_dots(staff_ctx);
+    }
+
+    /// Rests carry no stem, so a dot landing on a staff line is nudged up (the
+    /// default direction per engraving convention).
+    fn arrange_dots(&mut self, staff_ctx: &StaffCtx) {
+        let on_staff_line = self.staff_line.rem_euclid(2) == 0;
+        let dy = if on_staff_line {
+            -(Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling
+        } else {
+            0.
+        };
+
+        let base = self.xy.mv(self.width, dy);
+        for (i, dot) in self.dots.iter_mut().enumerate() {
+            let center = base.mv((i as f32 + 1.) * self.dot_spacing, 0.);
+            dot.arrange(&center);
+        }
     }
 
     fn arrange_glyph(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
@@ -128,6 +156,7 @@ impl Rest {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+        self.dot_spacing = user_layout.dot_spacing.unwrap_or(app_defaults.dot_spacing);
     }
 }
 
@@ -142,6 +171,10 @@ impl Rest {
 
         if let Some(clef) = self.clef_change.as_mut() {
             clef.measure(available, params);
+        }
+
+        for dot in &mut self.dots {
+            dot.measure(available, params);
         }
 
         self.width = bbox.width();

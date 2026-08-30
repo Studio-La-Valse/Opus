@@ -21,4 +21,8 @@ pub struct UserLayout {
 
     pub note_size_grace: Option<f32>,
     pub note_size_cue: Option<f32>,
+
+    pub dot_radius: Option<f32>,
+    pub dot_spacing: Option<f32>,
+    pub dot_color: Option<Color>,
 }

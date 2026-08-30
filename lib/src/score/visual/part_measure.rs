@@ -15,9 +15,6 @@ use crate::score::visual::stem::{BeamType, Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
 
-/// Ledger-line length as a multiple of the default staff space size.
-const LEDGER_WIDTH_SPACES: f32 = 1.875;
-
 /// Staff-line index of the top staff line; notes with a lower index sit above the
 /// staff and need ledger lines.
 const LEDGER_ABOVE_STAFF_LINE: i32 = 0;
@@ -137,9 +134,10 @@ impl PartMeasure {
     /// short horizontal line on every even staff-line index between the note and
     /// the staff edge, stepping `each_line` back towards the staff each line.
     fn ledger_lines(&self, note: &Note, side: LedgerSide, each_line: f32) -> Vec<Line> {
+        let ledger_width = note.width + 5.;
         let anchor = note.xy.mv(note.width / 2., 0.);
-        let left = anchor.mv(self.ledger_width / -2., 0.);
-        let right = anchor.mv(self.ledger_width / 2., 0.);
+        let left = anchor.mv(ledger_width / -2., 0.);
+        let right = anchor.mv(ledger_width / 2., 0.);
 
         // Staff-line indices from the note inward to the staff edge, plus the
         // per-line dy step (towards the staff, so away from the note).
@@ -238,8 +236,6 @@ impl PartMeasure {
         self.ledger_thickness = user_layout
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
-
-        self.ledger_width = LEDGER_WIDTH_SPACES * Staff::DEFAULT_SPACE_SIZE;
 
         self.note_size_grace = score_defaults
             .appearance

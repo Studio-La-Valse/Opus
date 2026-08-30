@@ -3,6 +3,7 @@ pub mod brace;
 pub mod bracket;
 pub mod chord;
 pub mod clef;
+pub mod dot;
 pub mod flag;
 pub mod key_signature;
 pub mod layout_engine;

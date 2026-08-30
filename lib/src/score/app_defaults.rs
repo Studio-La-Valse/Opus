@@ -18,6 +18,13 @@ pub struct AppDefaults {
     pub note_size_grace: f32,
     pub note_size_cue: f32,
 
+    /// Augmentation-dot radius, in tenths.
+    pub dot_radius: f32,
+    /// Augmentation-dot spacing, in tenths: both the gap from the notehead /
+    /// rest right edge to the first dot's centre and the centre-to-centre step
+    /// between successive dots.
+    pub dot_spacing: f32,
+
     /// Default font family for titles / work-level text. A generic CSS family so
     /// both a browser and a system font database can resolve it.
     pub title_font: String,
@@ -42,6 +49,8 @@ impl Default for AppDefaults {
             barline_heavy: 5.,
             note_size_grace: 0.66,
             note_size_cue: 0.66,
+            dot_radius: 2.,
+            dot_spacing: 5.,
             title_font: "serif".to_string(),
             lyric_font: "serif".to_string(),
         }

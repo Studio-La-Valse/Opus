@@ -1,11 +1,11 @@
 use crate::drawable::drawable_element::DrawableElement;
-use crate::drawable::elements::{line::Line, rect::Rect};
+use crate::drawable::elements::{circle::Circle, line::Line, rect::Rect};
 use crate::geometry::xy::XY;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::render_pass::RenderPass;
 use crate::score::visual::{
-    accidental::Accidental, brace::Brace, bracket::Bracket, clef::Clef, flag::Flag, note::Note,
-    page::Page, part_measure::PartMeasure, rest::Rest, section_measure::SectionMeasure,
+    accidental::Accidental, brace::Brace, bracket::Bracket, clef::Clef, dot::Dot, flag::Flag,
+    note::Note, page::Page, part_measure::PartMeasure, rest::Rest, section_measure::SectionMeasure,
     staff::Staff, stem::Stem, system::System, time_signature::TimeSignature,
 };
 use crate::smufl::smufl_glyph::SmuflGlyph;
@@ -247,6 +247,23 @@ impl RenderPass for BaseRenderer {
         let glyph = &note.glyph;
         let text = glyph.as_text(fonts.smufl, note.color, note.xy, note.scale);
         out.push(text.into());
+    }
+
+    fn render_dot<'a>(
+        &self,
+        dot: &Dot,
+        _fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let circle: DrawableElement = Circle {
+            xy: dot.xy,
+            radius: dot.radius,
+            color: dot.color,
+            stroke_color: None,
+            stroke_width: None,
+        }
+        .into();
+        out.push(circle);
     }
 
     fn render_stem<'a>(

@@ -28,7 +28,7 @@ impl Layoutable for KeySignature {
         for (line, acc) in self.accidentals.iter_mut() {
             let dy = Staff::DEFAULT_SPACE_SIZE / 2. * (*line as f32);
             let y = self.xy.y + dy;
-            let xy = XY { x, y };
+            let xy = XY { x, y }.mv(acc.width, 0.);
             acc.arrange(&xy);
 
             x += acc.width + 2.

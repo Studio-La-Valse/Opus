@@ -64,11 +64,14 @@ impl StaffMeasure {
         }
     }
     fn arrange_key_signature_start(&mut self) {
-        let mut pos = self.xy.mv(5., 0.);
+        let mut pos = self.xy;
 
         if let Some(clef) = &self.clef_start {
-            pos = pos.mv(clef.width + 15., 0.);
+            // Take the right side of the clef if it exists.
+            pos.x = clef.xy.x + clef.width;
         }
+
+        pos = pos.mv(3., 0.);
 
         self.key_signature_start.arrange(&pos);
     }

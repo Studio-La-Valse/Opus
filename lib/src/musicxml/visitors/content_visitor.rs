@@ -57,6 +57,8 @@ impl ContentVisitor {
 
         let is_measure = rest_node.attribute("measure") == Some("yes");
 
+        let dots: u8 = node.get_children("dot").len().try_into().unwrap();
+
         let mut rest = if is_measure {
             let glyph = ctx.font.rest(BaseDuration::Whole.rest_glyph());
             Rest::new(
@@ -66,6 +68,7 @@ impl ContentVisitor {
                 staff_idx,
                 Rest::CENTER_STAFF_LINE,
                 scale,
+                dots,
             )
         } else {
             let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
@@ -78,6 +81,7 @@ impl ContentVisitor {
                 staff_idx,
                 Rest::CENTER_STAFF_LINE,
                 scale,
+                dots,
             )
         };
 
@@ -137,7 +141,8 @@ impl ContentVisitor {
         let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
         let notehead = dur.notehead_glyph();
         let glyph = ctx.font.notehead(notehead);
-        let mut note = Note::new(glyph, default_x, staff_idx, staff_line, scale);
+        let dots: u8 = node.get_children("dot").len().try_into().unwrap();
+        let mut note = Note::new(glyph, default_x, staff_idx, staff_line, scale, dots);
 
         // Locate Measure & Voice Chords
         let system = ctx

@@ -6,6 +6,7 @@ use crate::score::visual::render_pass::RenderPass;
 use crate::score::visual::{
     accidental::Accidental,
     clef::Clef,
+    dot::Dot,
     flag::Flag,
     note::Note,
     page::Page,
@@ -67,7 +68,7 @@ impl RenderPass for DebugRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let bbox = clef.scale_box(&clef.clef.bbox);
+        let bbox = clef.scaled_box();
 
         let rect = Rect {
             xy: bbox.xy,
@@ -292,6 +293,26 @@ impl RenderPass for DebugRenderer {
         out.push(origin.into());
 
         out.push(display_xy(&flag.stem_anchor_world(), &1., &Color::GREEN).into());
+    }
+
+    fn render_dot<'a>(
+        &self,
+        dot: &Dot,
+        _fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let rect = Rect {
+            xy: XY {
+                x: dot.xy.x - dot.radius,
+                y: dot.xy.y - dot.radius,
+            },
+            width: dot.radius * 2.,
+            height: dot.radius * 2.,
+            color: Color::TRANSPARENT,
+            stroke_width: Some(0.2),
+            stroke_color: Some(Color::RED),
+        };
+        out.push(rect.into());
     }
 }
 

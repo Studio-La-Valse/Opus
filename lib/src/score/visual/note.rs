@@ -3,6 +3,7 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::accidental::Accidental;
+use crate::score::visual::dot::Dot;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
@@ -21,6 +22,11 @@ pub struct Note {
 
     pub color: Color,
 
+    pub dots: Vec<Dot>,
+    /// Resolved centre-to-centre dot step (and notehead-edge-to-first-dot gap),
+    /// in world units; see [`AppDefaults::dot_spacing`](crate::score::app_defaults::AppDefaults).
+    pub dot_spacing: f32,
+
     pub glyph: Notehead,
     pub accidental: Option<Accidental>,
 }
@@ -32,6 +38,7 @@ impl Note {
         staff: StaffIdx,
         staff_line: i32,
         scale: f32,
+        dots: u8,
     ) -> Self {
         Note {
             glyph,
@@ -40,6 +47,9 @@ impl Note {
             default_x,
             staff,
             staff_line,
+
+            dots: (0..dots).map(|_| Dot::new(scale)).collect(),
+            dot_spacing: 0.,
 
             scale,
 
@@ -99,6 +109,7 @@ impl Note {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+        self.dot_spacing = user_layout.dot_spacing.unwrap_or(app_defaults.dot_spacing);
     }
 }
 
@@ -115,6 +126,10 @@ impl Note {
 
         if let Some(accidental) = &mut self.accidental {
             accidental.measure(available, params);
+        }
+
+        for dot in &mut self.dots {
+            dot.measure(available, params);
         }
     }
 }
