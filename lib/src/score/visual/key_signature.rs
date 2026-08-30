@@ -23,7 +23,7 @@ impl Layoutable for KeySignature {
         }
 
         if self.accidentals.len() > 1 {
-            self.width += (self.accidentals.len() - 1) as f32 * ACCIDENTAL_SPACING; 
+            self.width += (self.accidentals.len() - 1) as f32 * ACCIDENTAL_SPACING;
         }
     }
 

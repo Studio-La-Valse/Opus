@@ -84,9 +84,10 @@ impl StaffMeasure {
             time_signature.rescale(self.scale);
 
             // ignore self.xy, take key signature xy + key signature width.
-            let mut pos = self.key_signature_start.xy
+            let mut pos = self
+                .key_signature_start
+                .xy
                 .mv(self.key_signature_start.width, 0.);
-
 
             let dx: f32 = ELEMENT_PADDING * self.scale;
             pos = pos.mv(dx, 0.);
