@@ -1,3 +1,4 @@
+use crate::drawable::drawable_element::Scale;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use serde::Serialize;
@@ -104,11 +105,11 @@ pub struct Text<'a> {
     pub horizontal_alignment: HorizontalAlign,
 }
 
-impl<'a> Text<'a> {
-    pub fn scale(&self, scale: f32) -> Text<'a> {
+impl<'a> Scale for Text<'a> {
+    fn scale(&self, factor: f32, pivot: XY) -> Text<'a> {
         Text {
-            xy: self.xy.scale(scale),
-            font_size: self.font_size * scale,
+            xy: self.xy.scale_about(factor, pivot),
+            font_size: self.font_size * factor,
             ..self.clone()
         }
     }

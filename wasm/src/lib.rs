@@ -1,7 +1,8 @@
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
-use lib::drawable::drawable_element::{DrawableElement, compute_bounds, scale_elem};
+use lib::drawable::drawable_element::{DrawableElement, Scale, compute_bounds};
 use lib::geometry::color::Color;
+use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::engrave::{arrange_score, walk_document};
 use lib::score::page_orientation::PageOrientation;
@@ -282,7 +283,7 @@ pub fn render(
         let elements: Vec<DrawableElement<'_>> = if render_scale < 1.0 {
             elements
                 .iter()
-                .map(|el| scale_elem(el, render_scale))
+                .map(|el| el.scale(render_scale, XY::ZERO))
                 .collect()
         } else {
             elements

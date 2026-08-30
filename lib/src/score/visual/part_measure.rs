@@ -15,9 +15,6 @@ use crate::score::visual::stem::{BeamType, Stem, UpDown};
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
 
-/// Ledger-line length as a multiple of the default staff space size.
-const LEDGER_WIDTH_SPACES: f32 = 1.875;
-
 /// Staff-line index of the top staff line; notes with a lower index sit above the
 /// staff and need ledger lines.
 const LEDGER_ABOVE_STAFF_LINE: i32 = 0;
@@ -28,6 +25,9 @@ const LEDGER_BELOW_STAFF_LINE: i32 = 9;
 
 /// Maximum vertical span a beam is allowed to slant before it is clamped.
 const MAX_BEAM_SLANT_DY: f32 = 20.;
+
+/// The length of a hook beam. TODO: infer from available space between two stems and clam to a max length.
+const HOOK_LENGTH: f32 = 7.5;
 
 /// Which side of the staff a note (and therefore its ledger lines) sits on.
 enum LedgerSide {
@@ -134,9 +134,10 @@ impl PartMeasure {
     /// short horizontal line on every even staff-line index between the note and
     /// the staff edge, stepping `each_line` back towards the staff each line.
     fn ledger_lines(&self, note: &Note, side: LedgerSide, each_line: f32) -> Vec<Line> {
+        let ledger_width = note.width + 5.;
         let anchor = note.xy.mv(note.width / 2., 0.);
-        let left = anchor.mv(self.ledger_width / -2., 0.);
-        let right = anchor.mv(self.ledger_width / 2., 0.);
+        let left = anchor.mv(ledger_width / -2., 0.);
+        let right = anchor.mv(ledger_width / 2., 0.);
 
         // Staff-line indices from the note inward to the staff edge, plus the
         // per-line dy step (towards the staff, so away from the note).
@@ -235,8 +236,6 @@ impl PartMeasure {
         self.ledger_thickness = user_layout
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
-
-        self.ledger_width = LEDGER_WIDTH_SPACES * Staff::DEFAULT_SPACE_SIZE;
 
         self.note_size_grace = score_defaults
             .appearance
@@ -454,18 +453,23 @@ fn create_beams(
         };
 
         for (beam_idx, left_beam) in left_stem.beams.iter() {
+            let offset = create_offset(direction, beam_idx, beam_thickness, beam_spacing);
+            let offset_ray = ray.mv(0., offset);
+            let dx = (-left_stem.thickness * left_stem.scale) / 2.;
+            let left_point = Ray {
+                origin: left_stem.xy.mv(dx, 0.),
+                dir: XY { x: 0., y: 1. },
+            }
+            .intersect(offset_ray)
+            .unwrap();
+
+            let dy: f32 = match direction {
+                UpDown::Up => -beam_thickness,
+                UpDown::Down => *beam_thickness,
+            };
+
             match left_beam {
                 BeamType::Start => {
-                    let offset = create_offset(direction, beam_idx, beam_thickness, beam_spacing);
-                    let offset_ray = ray.mv(0., offset);
-                    let dx = (-left_stem.thickness * left_stem.scale) / 2.;
-                    let left_point = Ray {
-                        origin: left_stem.xy.mv(dx, 0.),
-                        dir: XY { x: 0., y: 1. },
-                    }
-                    .intersect(offset_ray)
-                    .unwrap();
-
                     let mut right_point: Option<XY> = None;
 
                     for right_chord in chords.iter().take(len).skip(i + 1) {
@@ -493,10 +497,6 @@ fn create_beams(
                         }
                     }
 
-                    let dy: f32 = match direction {
-                        UpDown::Up => -beam_thickness,
-                        UpDown::Down => *beam_thickness,
-                    };
                     beams.push(
                         Line {
                             start: left_point,
@@ -504,9 +504,39 @@ fn create_beams(
                             stroke_color: *color,
                             stroke_width: *beam_thickness,
                         }
-                        .extrude(&XY { x: 0., y: dy })
+                        .extrude(XY { x: 0., y: dy })
                         .mv(0., dy / -2.),
                     )
+                }
+                BeamType::HookStart => {
+                    let right_point = left_point.mv(HOOK_LENGTH, 0.);
+                    let vert_ray = Ray::from_dir(right_point, XY { x: 0., y: -1. });
+                    let right_pt = offset_ray.intersect(vert_ray).unwrap();
+                    let poly = Line {
+                        start: left_point,
+                        end: right_pt,
+                        stroke_color: *color,
+                        stroke_width: *beam_thickness,
+                    }
+                    .extrude(XY { x: 0., y: dy })
+                    .mv(0., dy / -2.);
+
+                    beams.push(poly);
+                }
+                BeamType::HookEnd => {
+                    let right_point = left_point.mv(-HOOK_LENGTH, 0.);
+                    let vert_ray = Ray::from_dir(right_point, XY { x: 0., y: -1. });
+                    let right_pt = vert_ray.intersect(offset_ray).unwrap();
+                    let poly = Line {
+                        start: left_point,
+                        end: right_pt,
+                        stroke_color: *color,
+                        stroke_width: *beam_thickness,
+                    }
+                    .extrude(XY { x: 0., y: dy })
+                    .mv(0., dy / -2.);
+
+                    beams.push(poly);
                 }
                 _ => continue,
             }

@@ -3,6 +3,7 @@ mod tests {
     use lib::drawable::canvas::svg::SvgCanvas;
     use lib::drawable::canvas::{Canvas, CanvasPainter};
     use lib::drawable::drawable_element::DrawableElement;
+    use lib::drawable::elements::circle::Circle;
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
@@ -29,6 +30,10 @@ mod tests {
 
         fn draw_rect(&mut self, _rect: &Rect) {
             self.calls.push("rect".to_string());
+        }
+
+        fn draw_circle(&mut self, _circle: &Circle) {
+            self.calls.push("circle".to_string());
         }
 
         fn draw_text(&mut self, _text: &Text<'_>) {
@@ -61,6 +66,14 @@ mod tests {
                 color: Color::WHITE,
                 stroke_color: Some(Color::BLACK),
                 stroke_width: Some(0.5),
+            }
+            .into(),
+            Circle {
+                xy: XY { x: 5.0, y: 2.0 },
+                radius: 1.5,
+                color: Color::WHITE,
+                stroke_color: Some(Color::BLACK),
+                stroke_width: Some(0.25),
             }
             .into(),
             Text {
@@ -97,6 +110,7 @@ mod tests {
                 "begin(0.0, 0.0, 10.0, 5.0)",
                 "line",
                 "rect",
+                "circle",
                 "text",
                 "polygon",
                 "finish",
@@ -125,6 +139,9 @@ mod tests {
         ));
         assert!(svg.contains(
             r##"<rect x="1" y="1" width="8" height="2" fill="#FFFFFFFF" stroke="#000000FF" stroke-width="0.5" />"##
+        ));
+        assert!(svg.contains(
+            r##"<circle cx="5" cy="2" r="1.5" fill="#FFFFFFFF" stroke="#000000FF" stroke-width="0.25" />"##
         ));
         assert!(svg.contains(r#"font-family="Bravura" font-weight="normal" font-style="normal""#));
         assert!(svg.contains(">a &amp; b</text>"));

@@ -1,13 +1,22 @@
+use crate::drawable::elements::circle::Circle;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
 use crate::drawable::elements::text::Text;
+use crate::geometry::xy::XY;
 
 pub enum DrawableElement<'a> {
     Line(Line),
     Rect(Rect),
+    Circle(Circle),
     Text(Text<'a>),
     Polygon(Polygon),
+}
+
+/// Scales a drawable by `factor` about a `pivot` point, which stays fixed.
+/// Implemented by every element and by [`DrawableElement`] itself.
+pub trait Scale {
+    fn scale(&self, factor: f32, pivot: XY) -> Self;
 }
 
 impl<'a> From<Line> for DrawableElement<'a> {
@@ -19,6 +28,12 @@ impl<'a> From<Line> for DrawableElement<'a> {
 impl<'a> From<Rect> for DrawableElement<'a> {
     fn from(r: Rect) -> Self {
         DrawableElement::Rect(r)
+    }
+}
+
+impl<'a> From<Circle> for DrawableElement<'a> {
+    fn from(c: Circle) -> Self {
+        DrawableElement::Circle(c)
     }
 }
 
@@ -34,12 +49,15 @@ impl<'a> From<Polygon> for DrawableElement<'a> {
     }
 }
 
-pub fn scale_elem<'a>(element: &DrawableElement<'a>, scale: f32) -> DrawableElement<'a> {
-    match element {
-        DrawableElement::Line(l) => l.scale(scale).into(),
-        DrawableElement::Rect(r) => r.scale(scale).into(),
-        DrawableElement::Text(t) => t.scale(scale).into(),
-        DrawableElement::Polygon(p) => p.scale(scale).into(),
+impl<'a> Scale for DrawableElement<'a> {
+    fn scale(&self, factor: f32, pivot: XY) -> DrawableElement<'a> {
+        match self {
+            DrawableElement::Line(l) => l.scale(factor, pivot).into(),
+            DrawableElement::Rect(r) => r.scale(factor, pivot).into(),
+            DrawableElement::Circle(c) => c.scale(factor, pivot).into(),
+            DrawableElement::Text(t) => t.scale(factor, pivot).into(),
+            DrawableElement::Polygon(p) => p.scale(factor, pivot).into(),
+        }
     }
 }
 
@@ -64,6 +82,12 @@ pub fn compute_bounds(elements: &[DrawableElement<'_>]) -> (f32, f32, f32, f32) 
                 min_y = min_y.min(r.xy.y);
                 max_x = max_x.max(r.xy.x + r.width);
                 max_y = max_y.max(r.xy.y + r.height);
+            }
+            DrawableElement::Circle(c) => {
+                min_x = min_x.min(c.xy.x - c.radius);
+                min_y = min_y.min(c.xy.y - c.radius);
+                max_x = max_x.max(c.xy.x + c.radius);
+                max_y = max_y.max(c.xy.y + c.radius);
             }
             DrawableElement::Text(t) => {
                 min_x = min_x.min(t.xy.x);

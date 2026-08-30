@@ -22,7 +22,7 @@ impl Clef {
     pub const COURTESY_SCALE: f32 = 0.8;
 
     pub fn new(clef: crate::smufl::glyphs::clef::Clef) -> Clef {
-        let mut result = Clef {
+        Clef {
             xy: Default::default(),
             color: Color::BLACK,
             scale: 1.,
@@ -31,11 +31,7 @@ impl Clef {
             height: 0.,
 
             clef,
-        };
-
-        result.measure_size();
-
-        result
+        }
     }
 
     /// Scales a (smufl-like-) normalized bounding box to current position and scale.
@@ -46,6 +42,11 @@ impl Clef {
         };
 
         scaled.mv(self.xy.x, self.xy.y)
+    }
+
+    /// Bounding box scaled to world pixels.
+    pub fn scaled_box(&self) -> BoundingBox {
+        self.scale_box(&self.clef.bbox)
     }
 
     fn measure_size(&mut self) {

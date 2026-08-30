@@ -10,17 +10,17 @@ pub struct XY {
 impl XY {
     pub const ZERO: XY = XY { x: 0.0, y: 0.0 };
 
+    pub const INFINITE: XY = XY {
+        x: f32::INFINITY,
+        y: f32::INFINITY,
+    };
+
     pub fn middle(left: &XY, right: &XY) -> XY {
         XY {
             x: (left.x + right.x) / 2.,
             y: (left.y + right.y) / 2.,
         }
     }
-
-    pub const INFINITE: XY = XY {
-        x: f32::INFINITY,
-        y: f32::INFINITY,
-    };
 
     pub fn mv(&self, x: f32, y: f32) -> XY {
         XY {
@@ -34,6 +34,11 @@ impl XY {
             x: self.x * scale,
             y: self.y * scale,
         }
+    }
+
+    /// Scales the point by `factor` about `pivot`, leaving `pivot` fixed.
+    pub fn scale_about(&self, factor: f32, pivot: XY) -> XY {
+        pivot + (*self - pivot).scale(factor)
     }
 
     pub fn length(&self) -> f32 {

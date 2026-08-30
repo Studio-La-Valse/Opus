@@ -172,6 +172,7 @@ impl Layoutable for Accidental {
         self.height = bbox.height();
     }
 
+    /// Provided origin is the right origin of the accidental.
     fn arrange(&mut self, origin: &XY) {
         self.xy = origin.mv(-self.width, 0.);
     }

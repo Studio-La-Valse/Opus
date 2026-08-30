@@ -3,6 +3,7 @@ pub mod pdf;
 pub mod svg;
 
 use crate::drawable::drawable_element::{DrawableElement, compute_bounds};
+use crate::drawable::elements::circle::Circle;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -23,6 +24,7 @@ pub trait Canvas {
 
     fn draw_line(&mut self, line: &Line);
     fn draw_rect(&mut self, rect: &Rect);
+    fn draw_circle(&mut self, circle: &Circle);
     fn draw_text(&mut self, text: &Text<'_>);
     fn draw_polygon(&mut self, polygon: &Polygon);
 
@@ -46,6 +48,7 @@ impl<C: Canvas> CanvasPainter<C> {
             match el {
                 DrawableElement::Line(l) => self.canvas.draw_line(l),
                 DrawableElement::Rect(r) => self.canvas.draw_rect(r),
+                DrawableElement::Circle(c) => self.canvas.draw_circle(c),
                 DrawableElement::Text(t) => self.canvas.draw_text(t),
                 DrawableElement::Polygon(p) => self.canvas.draw_polygon(p),
             }

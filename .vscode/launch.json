@@ -14,7 +14,7 @@
                 "--format", "svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug",
+                // "--debug",
                 "--page-color", "#112233",
                 "--foreground-color", "#d9d5cc"
             ],
@@ -36,7 +36,7 @@
                 "--format", "svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                //"--debug",
+                "--debug",
                 //"--page-color", "#112233",
                 //"--foreground-color", "#44556677"
             ],
@@ -48,12 +48,12 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug (Vertical Orientation Sample)",
+            "name": "Debug (Beethoven Sample)",
             "preLaunchTask": "rust: cargo build",
             "program": "${workspaceRoot}/target/debug/cli",
             "args": [
                 "render",
-                "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
+                "--file", "assets/xmlsamples/BeetAnGeSample.musicxml",
                 "--out", "assets/xmltest/test.svg",
                 "--format", "svg",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",

@@ -218,6 +218,10 @@ impl RenderCompositor {
             for rest in measure.rests.iter() {
                 self.pass.render_rest(rest, fonts, out);
 
+                for dot in rest.dots.iter() {
+                    self.pass.render_dot(dot, fonts, out);
+                }
+
                 if let Some(ref clef) = rest.clef_change {
                     self.pass.render_clef(clef, fonts, out);
                 }
@@ -253,6 +257,10 @@ impl RenderCompositor {
 
             if let Some(ref accidental) = note.accidental {
                 self.pass.render_accidental(accidental, fonts, out);
+            }
+
+            for dot in note.dots.iter() {
+                self.pass.render_dot(dot, fonts, out);
             }
         }
 

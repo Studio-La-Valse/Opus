@@ -7,6 +7,9 @@ use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::time_signature::TimeSignature;
 
+/// Element (Clef, time signature, key signature) spacing
+const ELEMENT_PADDING: f32 = 5.;
+
 pub struct StaffMeasure {
     pub xy: XY,
     pub width: f32,
@@ -59,16 +62,20 @@ impl StaffMeasure {
             clef.rescale(self.scale);
 
             let dy: f32 = clef.clef.line as f32 * line_space;
-            let dx = 10. * self.scale;
+            let dx = ELEMENT_PADDING * self.scale;
             clef.arrange(&self.xy.mv(dx, dy));
         }
     }
     fn arrange_key_signature_start(&mut self) {
-        let mut pos = self.xy.mv(5., 0.);
+        let mut pos = self.xy;
 
         if let Some(clef) = &self.clef_start {
-            pos = pos.mv(clef.width + 15., 0.);
+            // Take the right side of the clef if it exists.
+            pos.x = clef.xy.x + clef.width;
         }
+
+        let dx = ELEMENT_PADDING * self.scale;
+        pos = pos.mv(dx, 0.);
 
         self.key_signature_start.arrange(&pos);
     }
@@ -76,13 +83,14 @@ impl StaffMeasure {
         if let Some(ref mut time_signature) = self.time_signature_start {
             time_signature.rescale(self.scale);
 
-            let mut pos = self.xy.mv(5., 0.);
+            // ignore self.xy, take key signature xy + key signature width.
+            let mut pos = self
+                .key_signature_start
+                .xy
+                .mv(self.key_signature_start.width, 0.);
 
-            if let Some(clef) = &self.clef_start {
-                pos = pos.mv(clef.width + 10., 0.);
-            }
-
-            pos = pos.mv(self.key_signature_start.width + 5., 0.);
+            let dx: f32 = ELEMENT_PADDING * self.scale;
+            pos = pos.mv(dx, 0.);
 
             time_signature.arrange(&pos);
         }

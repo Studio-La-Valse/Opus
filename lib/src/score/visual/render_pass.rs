@@ -7,11 +7,12 @@ pub use debug_renderer::DebugRenderer;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::{
-    accidental::Accidental, brace::Brace, bracket::Bracket, chord::Chord, clef::Clef, flag::Flag,
-    key_signature::KeySignature, note::Note, page::Page, part::Part, part_group::PartGroup,
-    part_group_measure::PartGroupMeasure, part_measure::PartMeasure, rest::Rest, section::Section,
-    section_measure::SectionMeasure, staff::Staff, staff_measure::StaffMeasure, stem::Stem,
-    system::System, system_measure::SystemMeasure, time_signature::TimeSignature,
+    accidental::Accidental, brace::Brace, bracket::Bracket, chord::Chord, clef::Clef, dot::Dot,
+    flag::Flag, key_signature::KeySignature, note::Note, page::Page, part::Part,
+    part_group::PartGroup, part_group_measure::PartGroupMeasure, part_measure::PartMeasure,
+    rest::Rest, section::Section, section_measure::SectionMeasure, staff::Staff,
+    staff_measure::StaffMeasure, stem::Stem, system::System, system_measure::SystemMeasure,
+    time_signature::TimeSignature,
 };
 
 pub trait RenderPass {
@@ -186,6 +187,14 @@ pub trait RenderPass {
     fn render_flag<'a>(
         &self,
         _flag: &Flag,
+        _fonts: &RenderFonts<'a>,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
+
+    fn render_dot<'a>(
+        &self,
+        _dot: &Dot,
         _fonts: &RenderFonts<'a>,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {

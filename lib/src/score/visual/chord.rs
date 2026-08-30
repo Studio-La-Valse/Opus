@@ -36,6 +36,7 @@ impl Chord {
 
         self.arrange_notes(staff_ctx);
         self.arrange_stem(staff_ctx);
+        self.arrange_dots(staff_ctx);
         self.arrange_clef_changes(staff_ctx);
 
         // rearrange the accidentals so that they don't overlap.
@@ -102,6 +103,50 @@ impl Chord {
             stem.length = length;
 
             stem.arrange_flag();
+        }
+    }
+
+    /// Places the augmentation dots of every note in the chord. Dots of all
+    /// notes align to one x column (just right of the widest notehead), and a
+    /// dot that would land on a staff line is nudged half a space in the
+    /// chord's stem direction - up if the stem points up, down if it points
+    /// down, up by default when the chord has no stem.
+    fn arrange_dots(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+        let dir_sign = match &self.stem {
+            Some(stem) => match stem.direction {
+                UpDown::Up => -1.,
+                UpDown::Down => 1.,
+            },
+            None => -1.,
+        };
+
+        let column_x = self
+            .notes
+            .iter()
+            .map(|note| note.xy.x + note.width)
+            .fold(f32::MIN, f32::max);
+
+        for note in self.notes.iter_mut() {
+            if note.dots.is_empty() {
+                continue;
+            }
+
+            let ctx = staff_ctx.get(&note.staff).unwrap();
+            let on_staff_line = note.staff_line.rem_euclid(2) == 0;
+            let dy = if on_staff_line {
+                dir_sign * (Staff::DEFAULT_SPACE_SIZE / 2.) * ctx.scaling
+            } else {
+                0.
+            };
+
+            let base = XY {
+                x: column_x,
+                y: note.xy.y + dy,
+            };
+            for (i, dot) in note.dots.iter_mut().enumerate() {
+                let center = base.mv((i as f32 + 1.) * note.dot_spacing, 0.);
+                dot.arrange(&center);
+            }
         }
     }
 

@@ -1,3 +1,4 @@
+use crate::drawable::drawable_element::Scale;
 use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
@@ -11,17 +12,19 @@ pub struct Line {
     pub stroke_width: f32,
 }
 
-impl Line {
-    pub fn scale(&self, scale: f32) -> Line {
+impl Scale for Line {
+    fn scale(&self, factor: f32, pivot: XY) -> Line {
         Line {
-            start: self.start.scale(scale),
-            end: self.end.scale(scale),
-            stroke_width: self.stroke_width * scale,
+            start: self.start.scale_about(factor, pivot),
+            end: self.end.scale_about(factor, pivot),
+            stroke_width: self.stroke_width * factor,
             ..*self
         }
     }
+}
 
-    pub fn extrude(&self, dir: &XY) -> Polygon {
+impl Line {
+    pub fn extrude(&self, dir: XY) -> Polygon {
         Polygon {
             pts: vec![
                 self.start,
