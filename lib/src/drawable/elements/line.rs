@@ -21,7 +21,7 @@ impl Line {
         }
     }
 
-    pub fn extrude(&self, dir: &XY) -> Polygon {
+    pub fn extrude(&self, dir: XY) -> Polygon {
         Polygon {
             pts: vec![
                 self.start,
