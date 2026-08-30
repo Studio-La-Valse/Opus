@@ -1,4 +1,5 @@
 use crate::drawable::canvas::Canvas;
+use crate::drawable::elements::circle::Circle;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -13,6 +14,7 @@ pub const TAG_LINE: f32 = 0.0;
 pub const TAG_RECT: f32 = 1.0;
 pub const TAG_TEXT: f32 = 2.0;
 pub const TAG_POLYGON: f32 = 3.0;
+pub const TAG_CIRCLE: f32 = 4.0;
 
 /// Separates entries in [`FlatBuffer::text_blob`] and [`FlatBuffer::font_blob`].
 /// Neither text elements nor font-family names contain this control character in
@@ -38,6 +40,7 @@ pub const FONT_STYLE_ITALIC: u32 = 2;
 ///   (text pulled from `text_blob` in order; `hAlign`/`vAlign` are `0/1/2`;
 ///   `fontIndex` selects an entry in `font_blob` / `font_styles`)
 /// - `TAG_POLYGON`: `nPts, r, g, b, a, strokeWidth, sr, sg, sb, sa, x0, y0, x1, y1, ...`
+/// - `TAG_CIRCLE`:  `cx, cy, radius, r, g, b, a, strokeWidth, sr, sg, sb, sa`
 pub struct FlatBuffer {
     pub bounds: (f32, f32, f32, f32), // min_x, min_y, width, height
     pub geometry: Vec<f32>,
@@ -109,6 +112,19 @@ impl Canvas for FlatBufferCanvas {
         push_color(
             &mut self.geometry,
             r.stroke_color.unwrap_or(Color::TRANSPARENT),
+        );
+    }
+
+    fn draw_circle(&mut self, c: &Circle) {
+        self.geometry.push(TAG_CIRCLE);
+        self.geometry.push(c.xy.x);
+        self.geometry.push(c.xy.y);
+        self.geometry.push(c.radius);
+        push_color(&mut self.geometry, c.color);
+        self.geometry.push(c.stroke_width.unwrap_or(-1.0));
+        push_color(
+            &mut self.geometry,
+            c.stroke_color.unwrap_or(Color::TRANSPARENT),
         );
     }
 

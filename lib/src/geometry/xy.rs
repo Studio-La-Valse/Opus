@@ -36,6 +36,11 @@ impl XY {
         }
     }
 
+    /// Scales the point by `factor` about `pivot`, leaving `pivot` fixed.
+    pub fn scale_about(&self, factor: f32, pivot: XY) -> XY {
+        pivot + (*self - pivot).scale(factor)
+    }
+
     pub fn length(&self) -> f32 {
         self.x.hypot(self.y)
     }

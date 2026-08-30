@@ -1,4 +1,5 @@
-﻿use crate::geometry::color::Color;
+﻿use crate::drawable::drawable_element::Scale;
+use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use serde::Serialize;
 
@@ -17,11 +18,17 @@ impl Polygon {
             ..self.clone()
         }
     }
+}
 
-    pub fn scale(&self, scale: f32) -> Polygon {
+impl Scale for Polygon {
+    fn scale(&self, factor: f32, pivot: XY) -> Polygon {
         Polygon {
-            pts: self.pts.iter().map(|pt| pt.scale(scale)).collect(),
-            stroke_width: self.stroke_width.map(|v| v * scale),
+            pts: self
+                .pts
+                .iter()
+                .map(|pt| pt.scale_about(factor, pivot))
+                .collect(),
+            stroke_width: self.stroke_width.map(|v| v * factor),
             ..self.clone()
         }
     }

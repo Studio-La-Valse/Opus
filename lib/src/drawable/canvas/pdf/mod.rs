@@ -58,6 +58,7 @@ use pdf_writer::{Content, Name, Str};
 use ttf_parser::{Face, GlyphId};
 
 use crate::drawable::canvas::Canvas;
+use crate::drawable::elements::circle::Circle;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -244,6 +245,38 @@ impl Canvas for PdfPageCanvas<'_> {
         }
 
         self.content.rect(r.xy.x, r.xy.y, r.width, r.height);
+        if stroke.is_some() {
+            self.content.fill_nonzero_and_stroke();
+        } else {
+            self.content.fill_nonzero();
+        }
+    }
+
+    fn draw_circle(&mut self, c: &Circle) {
+        let stroke = stroke_of(c.stroke_color, c.stroke_width);
+
+        self.set_fill_alpha(c.color.a());
+        set_fill_rgb(&mut self.content, c.color);
+        if let Some((color, width)) = stroke {
+            self.set_stroke_alpha(color.a());
+            set_stroke_rgb(&mut self.content, color);
+            self.content.set_line_width(width);
+        }
+
+        // Four cubic Bézier quadrants; `k` is the standard circle-approximation
+        // control-point offset (4/3 * tan(pi/8)).
+        let (cx, cy, r) = (c.xy.x, c.xy.y, c.radius);
+        let k = 0.552_284_8 * r;
+        self.content.move_to(cx + r, cy);
+        self.content
+            .cubic_to(cx + r, cy + k, cx + k, cy + r, cx, cy + r);
+        self.content
+            .cubic_to(cx - k, cy + r, cx - r, cy + k, cx - r, cy);
+        self.content
+            .cubic_to(cx - r, cy - k, cx - k, cy - r, cx, cy - r);
+        self.content
+            .cubic_to(cx + k, cy - r, cx + r, cy - k, cx + r, cy);
+        self.content.close_path();
         if stroke.is_some() {
             self.content.fill_nonzero_and_stroke();
         } else {

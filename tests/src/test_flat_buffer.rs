@@ -2,9 +2,10 @@
 mod tests {
     use lib::drawable::canvas::CanvasPainter;
     use lib::drawable::canvas::flat_buffer::{
-        FlatBufferCanvas, TAG_LINE, TAG_POLYGON, TAG_RECT, TAG_TEXT,
+        FlatBufferCanvas, TAG_CIRCLE, TAG_LINE, TAG_POLYGON, TAG_RECT, TAG_TEXT,
     };
     use lib::drawable::drawable_element::DrawableElement;
+    use lib::drawable::elements::circle::Circle;
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
@@ -53,6 +54,38 @@ mod tests {
             flat.geometry,
             vec![
                 TAG_RECT, 0.0, 0.0, 10.0, 20.0, 255.0, 255.0, 255.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0,
+            ]
+        );
+    }
+
+    #[test]
+    fn circle_record_layout_with_and_without_stroke() {
+        let elements: Vec<DrawableElement<'_>> = vec![
+            Circle {
+                xy: XY { x: 3.0, y: 4.0 },
+                radius: 5.0,
+                color: Color::WHITE,
+                stroke_color: None,
+                stroke_width: None,
+            }
+            .into(),
+            Circle {
+                xy: XY { x: 1.0, y: 2.0 },
+                radius: 6.0,
+                color: Color::WHITE,
+                stroke_color: Some(Color::RED),
+                stroke_width: Some(0.5),
+            }
+            .into(),
+        ];
+
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
+
+        assert_eq!(
+            flat.geometry,
+            vec![
+                TAG_CIRCLE, 3.0, 4.0, 5.0, 255.0, 255.0, 255.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0,
+                TAG_CIRCLE, 1.0, 2.0, 6.0, 255.0, 255.0, 255.0, 1.0, 0.5, 255.0, 0.0, 0.0, 1.0,
             ]
         );
     }

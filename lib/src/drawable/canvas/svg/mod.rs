@@ -1,4 +1,5 @@
 use crate::drawable::canvas::Canvas;
+use crate::drawable::elements::circle::Circle;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -57,6 +58,19 @@ impl Canvas for SvgCanvas {
             y = r.xy.y,
             w = r.width,
             h = r.height,
+        ));
+        self.out.push_str("\r\n");
+    }
+
+    fn draw_circle(&mut self, c: &Circle) {
+        self.out.push_str(&format!(
+            r#"<circle cx="{cx}" cy="{cy}" r="{r}" fill="{}" stroke="{}" stroke-width="{}" />"#,
+            c.color.to_hex(),
+            c.stroke_color.map_or("none".to_string(), |s| s.to_hex()),
+            c.stroke_width.unwrap_or(0.0),
+            cx = c.xy.x,
+            cy = c.xy.y,
+            r = c.radius,
         ));
         self.out.push_str("\r\n");
     }

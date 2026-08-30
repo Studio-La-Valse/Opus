@@ -16,6 +16,7 @@ const TAG_LINE = 0;
 const TAG_RECT = 1;
 const TAG_TEXT = 2;
 const TAG_POLYGON = 3;
+const TAG_CIRCLE = 4;
 const TEXT_DELIMITER = "";
 const H_ALIGN = ["left", "center", "right"];
 const V_ALIGN = ["hanging", "middle", "alphabetic"];
@@ -486,6 +487,32 @@ export class MusicXmlElement extends HTMLElement {
             this._setStrokeStyle(sr, sg, sb, sa);
             this._setLineWidth(strokeWidth);
             ctx.strokeRect(x, y, w, h);
+          }
+          break;
+        }
+
+        case TAG_CIRCLE: {
+          const x = geometry[i++];
+          const y = geometry[i++];
+          const radius = geometry[i++];
+          const r = geometry[i++];
+          const g = geometry[i++];
+          const b = geometry[i++];
+          const a = geometry[i++];
+          const strokeWidth = geometry[i++];
+          const sr = geometry[i++];
+          const sg = geometry[i++];
+          const sb = geometry[i++];
+          const sa = geometry[i++];
+
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, 2 * Math.PI);
+          this._setFillStyle(r, g, b, a);
+          ctx.fill();
+          if (strokeWidth >= 0) {
+            this._setStrokeStyle(sr, sg, sb, sa);
+            this._setLineWidth(strokeWidth);
+            ctx.stroke();
           }
           break;
         }

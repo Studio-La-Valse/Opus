@@ -5,6 +5,7 @@ mod tests {
     use lib::drawable::canvas::CanvasPainter;
     use lib::drawable::canvas::pdf::{EmbeddedFont, FontSet, PdfPage, PdfPageCanvas, write_pdf};
     use lib::drawable::drawable_element::DrawableElement;
+    use lib::drawable::elements::circle::Circle;
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
@@ -168,6 +169,34 @@ mod tests {
         assert!(content.contains("0 0 m"), "first point: {content:?}");
         assert!(content.contains("4 0 l"), "second point: {content:?}");
         assert!(content.contains("2 3 l"), "third point: {content:?}");
+        assert!(content.lines().any(|l| l == "h"), "close_path: {content:?}");
+        assert!(content.trim_end().ends_with('f'), "fill op: {content:?}");
+    }
+
+    #[test]
+    fn circle_becomes_a_closed_bezier_path() {
+        let font_bytes = fixture_bytes(BRAVURA_OTF);
+        let elements: Vec<DrawableElement<'_>> = vec![
+            Circle {
+                xy: XY { x: 10.0, y: 10.0 },
+                radius: 4.0,
+                color: Color::GREEN,
+                stroke_color: None,
+                stroke_width: None,
+            }
+            .into(),
+        ];
+
+        let (_, content) = paint_page(&font_bytes, &elements);
+
+        assert!(
+            content.contains("14 10 m"),
+            "start at right edge: {content:?}"
+        );
+        assert!(
+            content.lines().any(|l| l.ends_with(" c")),
+            "cubic segments: {content:?}"
+        );
         assert!(content.lines().any(|l| l == "h"), "close_path: {content:?}");
         assert!(content.trim_end().ends_with('f'), "fill op: {content:?}");
     }
