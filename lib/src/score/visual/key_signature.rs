@@ -3,6 +3,8 @@ use crate::score::visual::accidental::Accidental;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::staff::Staff;
 
+const ACCIDENTAL_SPACING: f32 = 3.;
+
 #[derive(Default)]
 pub struct KeySignature {
     pub xy: XY,
@@ -19,6 +21,10 @@ impl Layoutable for KeySignature {
             accidental.measure(_available, params);
             self.width += accidental.width;
         }
+
+        if self.accidentals.len() > 1 {
+            self.width += (self.accidentals.len() - 1) as f32 * ACCIDENTAL_SPACING; 
+        }
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -31,7 +37,7 @@ impl Layoutable for KeySignature {
             let xy = XY { x, y }.mv(acc.width, 0.);
             acc.arrange(&xy);
 
-            x += acc.width + 2.
+            x += acc.width + ACCIDENTAL_SPACING;
         }
     }
 }
