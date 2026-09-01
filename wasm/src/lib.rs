@@ -196,8 +196,8 @@ pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 /// returning the bytes (wasm-bindgen marshals `Vec<u8>` to a `Uint8Array`).
 /// Body: call [`lib::score::engrave::arrange_score`] on the cached score just
 /// like [`render`] does, then instead of `compositor.walk(..)` +
-/// `FlatBufferCanvas` do what `cli/src/commands/render.rs` does for
-/// `OutputFormat::Pdf` -- `compositor.walk_pages(&cache.score, &fonts)`, one
+/// `FlatBufferCanvas` do what `cli/src/commands/render.rs` does for the
+/// `render pdf` subcommand -- `compositor.walk_pages(&cache.score, &fonts)`, one
 /// `lib::drawable::canvas::pdf::PdfPageCanvas` per page, then
 /// `lib::drawable::canvas::pdf::write_pdf(&pages, &font_set)`. The missing
 /// piece is the font programs the [`lib::drawable::canvas::pdf::FontSet`]
