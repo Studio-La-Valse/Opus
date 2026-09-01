@@ -26,13 +26,24 @@ use std::fs::read_to_string;
 use std::time::Instant;
 use ttf_parser::Face;
 
-/// Concrete output the `render` command should produce. There is deliberately
-/// no default and no inference from the `--out` file extension: the caller must
-/// say `--format svg` or `--format pdf` explicitly.
-#[derive(Clone, Copy, Debug, clap::ValueEnum)]
+/// Concrete output the `render` command should produce. Selected by the
+/// `render svg` / `render pdf` subcommand rather than by a flag; there is
+/// deliberately no default and no inference from the `--out` file extension.
+#[derive(Clone, Copy, Debug)]
 pub enum OutputFormat {
     Svg,
     Pdf,
+}
+
+/// Output format for `opus render`, chosen as a subcommand: `render svg` or
+/// `render pdf`. Both take an identical option set.
+#[derive(clap::Subcommand, Debug)]
+pub enum RenderCommand {
+    /// Render to a single SVG document.
+    Svg(RenderArgs),
+    /// Render to a multi-page PDF, one physical page per laid-out page, with
+    /// every font it draws text in embedded once.
+    Pdf(RenderArgs),
 }
 
 #[derive(Args, Debug)]
@@ -43,10 +54,6 @@ pub struct RenderArgs {
     #[arg(long)]
     out: String,
 
-    /// Output format. Required, no default -- pass `svg` or `pdf`.
-    #[arg(long, value_enum)]
-    format: OutputFormat,
-
     #[arg(long)]
     meta: String,
 
@@ -54,13 +61,13 @@ pub struct RenderArgs {
     glyphs: String,
 
     /// Font family for titles / work-level text. Defaults to the app default
-    /// (`serif`). For `--format pdf` this family is resolved against the
-    /// installed system fonts and embedded.
+    /// (`serif`). For `render pdf` this family is resolved against the installed
+    /// system fonts and embedded.
     #[arg(long)]
     title_font: Option<String>,
 
     /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
-    /// and embedded like `--title-font` for `--format pdf`.
+    /// and embedded like `--title-font` for `render pdf`.
     #[arg(long)]
     lyric_font: Option<String>,
 
@@ -86,11 +93,15 @@ pub struct RenderArgs {
     vertical_gutter: Option<f32>,
 }
 
-pub fn run(args: RenderArgs) {
+pub fn run(command: RenderCommand) {
+    let (args, format) = match command {
+        RenderCommand::Svg(args) => (args, OutputFormat::Svg),
+        RenderCommand::Pdf(args) => (args, OutputFormat::Pdf),
+    };
+
     let RenderArgs {
         file,
         out,
-        format,
         meta,
         glyphs: glyph_names,
         title_font,
