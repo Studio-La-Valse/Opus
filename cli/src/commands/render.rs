@@ -1,5 +1,5 @@
 use crate::commands::print_issues;
-use clap::Args;
+use clap::{Args, Subcommand};
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::pdf::{self, EmbeddedFont, FontSet, PdfPage, PdfPageCanvas};
 use lib::drawable::canvas::svg::SvgCanvas;
@@ -25,26 +25,6 @@ use std::fs;
 use std::fs::read_to_string;
 use std::time::Instant;
 use ttf_parser::Face;
-
-/// Concrete output the `render` command should produce. Selected by the
-/// `render svg` / `render pdf` subcommand rather than by a flag; there is
-/// deliberately no default and no inference from the `--out` file extension.
-#[derive(Clone, Copy, Debug)]
-pub enum OutputFormat {
-    Svg,
-    Pdf,
-}
-
-/// Output format for `opus render`, chosen as a subcommand: `render svg` or
-/// `render pdf`. Both take an identical option set.
-#[derive(clap::Subcommand, Debug)]
-pub enum RenderCommand {
-    /// Render to a single SVG document.
-    Svg(RenderArgs),
-    /// Render to a multi-page PDF, one physical page per laid-out page, with
-    /// every font it draws text in embedded once.
-    Pdf(RenderArgs),
-}
 
 #[derive(Args, Debug)]
 pub struct RenderArgs {
@@ -93,10 +73,26 @@ pub struct RenderArgs {
     vertical_gutter: Option<f32>,
 }
 
-pub fn run(command: RenderCommand) {
-    let (args, format) = match command {
-        RenderCommand::Svg(args) => (args, OutputFormat::Svg),
-        RenderCommand::Pdf(args) => (args, OutputFormat::Pdf),
+/// Output format for `opus render`, chosen as a subcommand: `render svg` or
+/// `render pdf`. There is deliberately no default and no inference from the
+/// `--out` file extension.
+///
+/// Each variant carries its own [`RenderArgs`] rather than sharing one set via
+/// `#[command(flatten)]` so that svg-only or pdf-only options can be added later
+/// without disturbing the other subcommand.
+#[derive(Subcommand, Debug)]
+pub enum RenderCommand {
+    /// Render to a single SVG document.
+    Svg(RenderArgs),
+    /// Render to a multi-page PDF, one physical page per laid-out page, with
+    /// every font it draws text in embedded once.
+    Pdf(RenderArgs),
+}
+
+pub fn run(format: RenderCommand) {
+    let (args, pdf) = match format {
+        RenderCommand::Svg(args) => (args, false),
+        RenderCommand::Pdf(args) => (args, true),
     };
 
     let RenderArgs {
@@ -181,9 +177,8 @@ pub fn run(command: RenderCommand) {
     let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
     let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);
 
-    match format {
-        OutputFormat::Svg => write_svg(&visual, &font, title_font, lyric_font, debug, &out),
-        OutputFormat::Pdf => write_pdf(
+    if pdf {
+        write_pdf(
             &visual,
             &font,
             title_font,
@@ -191,7 +186,9 @@ pub fn run(command: RenderCommand) {
             debug,
             &layout.defaults,
             &out,
-        ),
+        );
+    } else {
+        write_svg(&visual, &font, title_font, lyric_font, debug, &out);
     }
 
     println!("Written to: {}", out)
