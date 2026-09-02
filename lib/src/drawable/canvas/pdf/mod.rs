@@ -1,20 +1,29 @@
-//! A [`Canvas`] that renders one page of [`DrawableElement`]s into a PDF content
-//! stream, plus [`write_pdf`] which stitches the per-page streams into a single
-//! multi-page PDF file with every font it uses embedded once.
+//! A [`Canvas`] that renders one page of
+//! [`DrawableElement`](crate::drawable::drawable_element::DrawableElement)s into
+//! a PDF content stream, plus [`write_pdf`] which stitches the per-page streams
+//! into a single multi-page PDF file with every font it uses embedded once.
 //!
 //! # Why this canvas is shaped differently from the SVG / flat-buffer ones
 //!
-//! SVG and the flat buffer each describe a single drawing surface, so they
-//! implement [`Canvas`] once and [`CanvasPainter`](super::CanvasPainter) drives
-//! them over the whole score at once. A PDF is inherently multi-page and shares
-//! one set of embedded fonts across every page, so the flow is:
+//! Every sink is now fed one
+//! [`RenderedPage`](crate::score::visual::render_compositor::RenderedPage) at a
+//! time from
+//! [`RenderCompositor::walk_pages`](crate::score::visual::render_compositor::RenderCompositor::walk_pages).
+//! The SVG writer builds an independent document per page and the flat buffer
+//! streams every page into one blob (with a page table), so both implement
+//! [`Canvas`] once and let [`CanvasPainter`](super::CanvasPainter) drive them.
+//! A PDF differs in two ways that this module owns rather than the painter:
+//! each page is its own drawing surface (own media box + content stream), and
+//! one set of embedded fonts is subset across *all* pages and written once. So
+//! the flow is:
 //!
 //! 1. [`RenderCompositor::walk_pages`](crate::score::visual::render_compositor::RenderCompositor::walk_pages)
 //!    hands you one [`RenderedPage`](crate::score::visual::render_compositor::RenderedPage)
 //!    per physical page (elements still in global tenths).
 //! 2. For each page, run `CanvasPainter::new(PdfPageCanvas::new(..)).paint(..)`
 //!    to get a [`PdfPage`] (a media box + a content stream).
-//! 3. Pass the whole `Vec<PdfPage>` and the [`FontSet`] to [`write_pdf`].
+//! 3. Pass the whole `Vec<PdfPage>` and the [`FontSet`] to [`write_pdf`], which
+//!    unions the per-page glyph sets and embeds each font once.
 //!
 //! # Fonts
 //!

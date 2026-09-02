@@ -115,6 +115,88 @@ mod tests {
         );
     }
 
+    /// `render` exposes a page table parallel to `geometry`: 5 f32s per page,
+    /// `[start_index, origin_x, origin_y, width, height]`. The start indices
+    /// must be non-decreasing and land within `geometry`, the first must be 0,
+    /// and the budget down-scaling must shrink the page rectangles alongside
+    /// the geometry so the table stays consistent with the scaled stream.
+    #[test]
+    fn render_page_table_tracks_the_geometry_and_scales_with_it() {
+        let musicxml = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
+        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
+        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
+
+        let handle =
+            load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
+
+        let render_at = |device_pixel_ratio: f32| {
+            render(
+                handle,
+                false,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                device_pixel_ratio,
+            )
+            .expect("render failed")
+        };
+
+        let mut unscaled = render_at(1.0);
+        let geometry_len = unscaled.geometry().len();
+        let page_table = unscaled.page_table();
+
+        assert_eq!(page_table.len() % 5, 0, "5 f32s per page");
+        assert!(
+            page_table.len() >= 10,
+            "the ActorPrelude sample lays out onto multiple pages, got {} page(s)",
+            page_table.len() / 5,
+        );
+        assert_eq!(page_table[0], 0.0, "first page starts at geometry index 0");
+
+        let mut prev_start = 0.0_f32;
+        for record in page_table.chunks(5) {
+            let start = record[0];
+            assert!(
+                start >= prev_start,
+                "page start indices must be non-decreasing, got {start} after {prev_start}",
+            );
+            assert!(
+                start as usize <= geometry_len,
+                "page start {start} must index into a {geometry_len}-long geometry",
+            );
+            assert!(
+                record[3] > 0.0 && record[4] > 0.0,
+                "page rectangle must be non-empty, got {}x{}",
+                record[3],
+                record[4],
+            );
+            prev_start = start;
+        }
+
+        let mut scaled = render_at(1000.0);
+        let scaled_table = scaled.page_table();
+        assert_eq!(
+            scaled_table.len(),
+            page_table.len(),
+            "scaling must not change the page count",
+        );
+        for (unscaled_rec, scaled_rec) in page_table.chunks(5).zip(scaled_table.chunks(5)) {
+            assert!(
+                scaled_rec[3] < unscaled_rec[3] && scaled_rec[4] < unscaled_rec[4],
+                "budget scaling must shrink each page rectangle: {}x{} -> {}x{}",
+                unscaled_rec[3],
+                unscaled_rec[4],
+                scaled_rec[3],
+                scaled_rec[4],
+            );
+        }
+    }
+
     /// Two scores loaded concurrently (e.g. two `<music-xml>` elements on one
     /// page sharing this wasm instance) must stay independent: loading the
     /// second must not evict or corrupt the first's cache, and each handle's

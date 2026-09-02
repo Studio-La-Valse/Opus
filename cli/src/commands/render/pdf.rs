@@ -2,26 +2,25 @@ use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::pdf::{self, EmbeddedFont, FontSet, PdfPage, PdfPageCanvas};
 use lib::drawable::elements::text::{FontStyle, FontWeight};
 use lib::score::score_defaults::Defaults;
-use lib::score::visual::render_compositor::RenderCompositor;
+use lib::score::visual::render_compositor::RenderedPage;
 use lib::score::visual::render_fonts::RenderFonts;
-use lib::score::visual::score::Score;
-use lib::smufl::smufl_font::SmuflFont;
-use std::fs;
 use std::time::Instant;
 use ttf_parser::Face;
 
-/// Renders `score` to a multi-page PDF -- one physical page per laid-out page --
-/// with every font it draws text in embedded once, and writes it to `out`.
+use super::paths::OutputTarget;
+
+/// Renders the already-walked `pages` to a single multi-page PDF (`<stem>.pdf`)
+/// under `target`'s directory, with every font it draws text in embedded once.
+///
+/// Font sourcing is PDF-specific: the families named in `fonts` are resolved
+/// against the installed system fonts and their programs subset/embedded, so
+/// this writer owns a `fontdb` lookup the other formats don't need.
 pub(super) fn write(
-    score: &Score,
-    font: &SmuflFont,
-    title_font: &str,
-    lyric_font: &str,
-    debug: bool,
+    pages: &[RenderedPage<'_>],
+    fonts: &RenderFonts<'_>,
     defaults: &Defaults,
-    out: &str,
+    target: &OutputTarget,
 ) {
-    let fonts = RenderFonts::create(font, title_font, lyric_font);
     let music_family = fonts.music.family;
     let title_family = fonts.title.family;
     let lyric_family = fonts.lyric.family;
@@ -57,19 +56,7 @@ pub(super) fn write(
     // points per inch over 25.4 mm per inch.
     let pt_per_tenth = defaults.scaling_millimeters / defaults.scaling_tenths * 72.0 / 25.4;
 
-    let mut time = Instant::now();
-
-    let mut pages = RenderCompositor::base().walk_pages(score, &fonts);
-
-    if debug {
-        let overlay = RenderCompositor::debug().walk_pages(score, &fonts);
-        for (page, debug_page) in pages.iter_mut().zip(overlay) {
-            page.elements.extend(debug_page.elements);
-        }
-    }
-
-    println!("Render pass: {}ms", time.elapsed().as_millis());
-    time = Instant::now();
+    let time = Instant::now();
 
     let pdf_pages: Vec<PdfPage> = pages
         .iter()
@@ -84,9 +71,11 @@ pub(super) fn write(
         })
         .collect();
 
-    fs::write(out, pdf::write_pdf(&pdf_pages, &font_set)).unwrap();
+    let path = target.single("pdf");
+    target.write(&path, pdf::write_pdf(&pdf_pages, &font_set));
 
     println!("Write to pdf: {}ms", time.elapsed().as_millis());
+    println!("Written to: {}", path.display());
 }
 
 /// Copies out the raw bytes of the installed font matching `family` at regular

@@ -1,37 +1,25 @@
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::svg::SvgCanvas;
-use lib::drawable::drawable_element::DrawableElement;
-use lib::score::visual::render_compositor::RenderCompositor;
-use lib::score::visual::render_fonts::RenderFonts;
-use lib::score::visual::score::Score;
-use lib::smufl::smufl_font::SmuflFont;
-use std::fs;
+use lib::score::visual::render_compositor::RenderedPage;
 use std::time::Instant;
 
-/// Renders `score` to a single SVG document and writes it to `out`.
-pub(super) fn write(
-    score: &Score,
-    font: &SmuflFont,
-    title_font: &str,
-    lyric_font: &str,
-    debug: bool,
-    out: &str,
-) {
-    let mut time = Instant::now();
+use super::paths::OutputTarget;
 
-    let fonts = RenderFonts::create(font, title_font, lyric_font);
+/// Renders each page to its own SVG document (`<stem>-p{n}.svg`) under
+/// `target`'s directory. Each file is sized to its page rectangle, with a
+/// `viewBox` origin that carries the page's global offset so elements keep
+/// their global coordinates.
+pub(super) fn write(pages: &[RenderedPage<'_>], target: &OutputTarget) {
+    let time = Instant::now();
 
-    let mut elements: Vec<DrawableElement<'_>> = RenderCompositor::base().walk(score, &fonts);
+    for page in pages {
+        let canvas = SvgCanvas::new((page.origin.x, page.origin.y, page.width, page.height));
+        let svg = CanvasPainter::new(canvas).paint(&page.elements);
 
-    if debug {
-        elements.extend(RenderCompositor::debug().walk(score, &fonts));
+        let path = target.page(page.number, "svg");
+        target.write(&path, svg);
+        println!("Written to: {}", path.display());
     }
-
-    println!("Render pass: {}ms", time.elapsed().as_millis());
-    time = Instant::now();
-
-    let svg = CanvasPainter::new(SvgCanvas::new()).paint(&elements);
-    fs::write(out, svg).unwrap();
 
     println!("Write to svg: {}ms", time.elapsed().as_millis());
 }

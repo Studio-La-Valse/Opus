@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 lib = { path="../lib" }
 wasm = { path="../wasm" }
+cli = { path="../cli" }
 
 [dev-dependencies]
 ttf-parser = "0.25.1"

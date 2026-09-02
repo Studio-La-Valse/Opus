@@ -10,11 +10,16 @@ use lib::score::app_defaults::AppDefaults;
 use lib::score::engrave::{EngravedScore, Stage, engrave};
 use lib::score::page_orientation::PageOrientation;
 use lib::score::user_layout::UserLayout;
+use lib::score::visual::render_compositor::RenderCompositor;
+use lib::score::visual::render_fonts::RenderFonts;
 use lib::smufl::smufl_font::SmuflFont;
 use roxmltree::{Document, ParsingOptions};
 use std::fs::read_to_string;
 use std::time::Instant;
 
+use self::paths::OutputTarget;
+
+pub mod paths;
 mod pdf;
 mod svg;
 
@@ -23,8 +28,18 @@ pub struct RenderArgs {
     #[arg(long)]
     file: String,
 
+    /// Output directory for the rendered file(s). Created if it doesn't exist.
+    /// When omitted, output is written next to `--file`. Filenames reuse the
+    /// input file's stem: `render pdf` writes `<stem>.pdf`; `render svg` writes
+    /// one file per page, `<stem>-p1.svg`, `<stem>-p2.svg`, ...
     #[arg(long)]
-    out: String,
+    out: Option<String>,
+
+    /// Replace output files that already exist. Without this, `render` panics
+    /// rather than overwrite a file (guarding against a stray `--out` or the
+    /// write-beside-the-input default clobbering something unrelated).
+    #[arg(long, action)]
+    overwrite: bool,
 
     #[arg(long)]
     meta: String,
@@ -66,23 +81,28 @@ pub struct RenderArgs {
 }
 
 /// Output format for `opus render`, chosen as a subcommand: `render svg` or
-/// `render pdf`. There is deliberately no default and no inference from the
-/// `--out` file extension.
+/// `render pdf`. There is deliberately no default and no inference from any
+/// file extension.
+///
+/// Both formats are driven the same way -- engrave once, walk the score into
+/// per-page [`RenderedPage`](lib::score::visual::render_compositor::RenderedPage)s,
+/// then hand those to the format writer. They differ only in output shape: SVG
+/// emits one self-contained file per page, PDF a single multi-page document.
 ///
 /// Each variant carries its own [`RenderArgs`] rather than sharing one set via
 /// `#[command(flatten)]` so that svg-only or pdf-only options can be added later
 /// without disturbing the other subcommand.
 #[derive(Subcommand, Debug)]
 pub enum RenderCommand {
-    /// Render to a single SVG document.
+    /// Render to SVG, one file per laid-out page (`<stem>-p1.svg`, ...).
     Svg(RenderArgs),
-    /// Render to a multi-page PDF, one physical page per laid-out page, with
-    /// every font it draws text in embedded once.
+    /// Render to a single multi-page PDF, one physical page per laid-out page,
+    /// with every font it draws text in embedded once.
     Pdf(RenderArgs),
 }
 
 pub fn run(format: RenderCommand) {
-    let (args, pdf) = match format {
+    let (args, is_pdf) = match format {
         RenderCommand::Svg(args) => (args, false),
         RenderCommand::Pdf(args) => (args, true),
     };
@@ -90,6 +110,7 @@ pub fn run(format: RenderCommand) {
     let RenderArgs {
         file,
         out,
+        overwrite,
         meta,
         glyphs: glyph_names,
         title_font,
@@ -169,19 +190,29 @@ pub fn run(format: RenderCommand) {
     let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
     let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);
 
-    if pdf {
-        pdf::write(
-            &visual,
-            &font,
-            title_font,
-            lyric_font,
-            debug,
-            &layout.defaults,
-            &out,
-        );
-    } else {
-        svg::write(&visual, &font, title_font, lyric_font, debug, &out);
+    let time = Instant::now();
+
+    // One walk feeds every format: the score's pages, each carrying its
+    // elements in global tenths. `fonts` must outlive `pages`, which borrows
+    // glyph data from it.
+    let fonts = RenderFonts::create(&font, title_font, lyric_font);
+    let mut pages = RenderCompositor::base().walk_pages(&visual, &fonts);
+    if debug {
+        for (page, overlay) in pages
+            .iter_mut()
+            .zip(RenderCompositor::debug().walk_pages(&visual, &fonts))
+        {
+            page.elements.extend(overlay.elements);
+        }
     }
 
-    println!("Written to: {}", out)
+    println!("Render pass: {}ms", time.elapsed().as_millis());
+
+    let target = OutputTarget::resolve(out.as_deref(), &file, overwrite);
+
+    if is_pdf {
+        pdf::write(&pages, &fonts, &layout.defaults, &target);
+    } else {
+        svg::write(&pages, &target);
+    }
 }

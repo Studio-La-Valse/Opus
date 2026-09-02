@@ -28,10 +28,16 @@ pub struct RenderCompositor {
 ///
 /// Every value here -- `origin`, `width`, `height`, and the coordinates inside
 /// `elements` -- is in MusicXML tenths and in the score's global coordinate
-/// space (the same coordinates [`RenderCompositor::walk`] produces). A sink that
-/// emits one physical page at a time (PDF) must therefore translate `elements`
-/// by `-origin` to bring the page back to its own origin.
+/// space: each page is placed at its own global offset and the elements carry
+/// absolute coordinates, not page-local ones. A sink that emits one physical
+/// page at a time (PDF) must therefore translate `elements` by `-origin` to
+/// bring the page back to its own origin.
 pub struct RenderedPage<'a> {
+    /// 1-based position of this page in the walk, for page-numbered output
+    /// (filenames, the flat-buffer page table). Independent of
+    /// [`Page::number`](crate::score::visual::page::Page), which the layout
+    /// pipeline does not currently populate.
+    pub number: u32,
     pub origin: XY,
     pub width: f32,
     pub height: f32,
@@ -53,28 +59,17 @@ impl RenderCompositor {
         Self::new(Box::new(DebugRenderer {}))
     }
 
-    /// Every drawable element for the whole score, concatenated into one stream
-    /// in page order. A flattened [`walk_pages`](Self::walk_pages).
-    pub fn walk<'a>(&self, score: &Score, fonts: &RenderFonts<'a>) -> Vec<DrawableElement<'a>> {
-        let mut out: Vec<DrawableElement<'a>> =
-            Vec::with_capacity(Self::estimate_element_count(score));
-
-        for page in self.walk_pages(score, fonts) {
-            out.extend(page.elements);
-        }
-
-        out
-    }
-
-    /// Like [`walk`](Self::walk), but keeps each page's elements in their own
-    /// [`RenderedPage`] instead of concatenating every page into one stream.
-    /// Used by per-page sinks such as the PDF writer, which needs one content
-    /// stream and media box per physical page.
+    /// Every drawable element for the score, one [`RenderedPage`] per laid-out
+    /// page, in page order. The single compositor entry point: sinks that want
+    /// one continuous stream (SVG per file, the flat buffer) concatenate the
+    /// pages themselves; sinks that emit one surface per page (PDF) drive each
+    /// [`RenderedPage`] separately.
     pub fn walk_pages<'a>(&self, score: &Score, fonts: &RenderFonts<'a>) -> Vec<RenderedPage<'a>> {
         score
             .pages
             .values()
-            .map(|page| {
+            .enumerate()
+            .map(|(index, page)| {
                 let mut elements: Vec<DrawableElement<'a>> =
                     Vec::with_capacity(Self::estimate_page(page));
                 self.pass.render_page(page, fonts, &mut elements);
@@ -84,6 +79,7 @@ impl RenderCompositor {
                 }
 
                 RenderedPage {
+                    number: index as u32 + 1,
                     origin: page.xy,
                     width: page.width,
                     height: page.height,
@@ -278,15 +274,12 @@ impl RenderCompositor {
     }
 
     /// Cheap, pass-agnostic upper-bound-ish estimate of how many `DrawableElement`s
-    /// this walk will produce, used only to size `out` up front so it doesn't have
-    /// to repeatedly reallocate/copy itself as it grows. Only sums `BTreeMap`/`Vec`
-    /// lengths (all O(1)) while descending the same structure `walk` visits, so its
-    /// cost stays proportional to the score's structural size rather than to
-    /// per-note rendering work (no glyph lookups, no element construction).
-    fn estimate_element_count(score: &Score) -> usize {
-        score.pages.values().map(Self::estimate_page).sum()
-    }
-
+    /// one page's walk will produce, used only to size the page's element `Vec` up
+    /// front so it doesn't have to repeatedly reallocate/copy itself as it grows.
+    /// Only sums `BTreeMap`/`Vec` lengths (all O(1)) while descending the same
+    /// structure `walk_pages` visits, so its cost stays proportional to the
+    /// page's structural size rather than to per-note rendering work (no glyph
+    /// lookups, no element construction).
     fn estimate_page(page: &Page) -> usize {
         1 + page
             .systems

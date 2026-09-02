@@ -9,7 +9,8 @@ use crate::drawable::elements::text::{
 use crate::geometry::color::Color;
 
 /// Tags identifying each record in [`FlatBuffer::geometry`]. Keep in sync with the
-/// decoder in `web/music-xml.js`.
+/// decoder in `web/music-xml.js` (the tag constants, and [`FlatBuffer::page_table`]'s
+/// layout).
 pub const TAG_LINE: f32 = 0.0;
 pub const TAG_RECT: f32 = 1.0;
 pub const TAG_TEXT: f32 = 2.0;
@@ -44,6 +45,15 @@ pub const FONT_STYLE_ITALIC: u32 = 2;
 pub struct FlatBuffer {
     pub bounds: (f32, f32, f32, f32), // min_x, min_y, width, height
     pub geometry: Vec<f32>,
+    /// Parallel page table, 5 `f32`s per page:
+    /// `[geometry_start_index, origin_x, origin_y, width, height]`. Page `i`'s
+    /// records span `geometry[page_table[5i] .. page_table[5(i+1)]]`, with the
+    /// last page running to `geometry.len()`. Empty when the buffer was built
+    /// via [`CanvasPainter::paint`](crate::drawable::canvas::CanvasPainter::paint)
+    /// rather than
+    /// [`paint_pages`](crate::drawable::canvas::CanvasPainter::paint_pages).
+    /// Coordinates are in the same space as `geometry`.
+    pub page_table: Vec<f32>,
     pub text_blob: String,
     /// The distinct font families every `TAG_TEXT` record's `fontIndex` points
     /// into, `TEXT_DELIMITER`-joined.
@@ -58,6 +68,9 @@ pub struct FlatBuffer {
 pub struct FlatBufferCanvas {
     bounds: (f32, f32, f32, f32),
     geometry: Vec<f32>,
+    /// See [`FlatBuffer::page_table`]. Grows by one 5-`f32` record per
+    /// [`Canvas::begin_page`] call; stays empty for a non-paged paint.
+    page_table: Vec<f32>,
     text_blob: String,
     has_text: bool,
     /// `(family, style-flags)` for every distinct font seen, in first-seen order.
@@ -89,6 +102,16 @@ impl Canvas for FlatBufferCanvas {
     fn begin(&mut self, bounds: (f32, f32, f32, f32)) {
         let (min_x, min_y, max_x, max_y) = bounds;
         self.bounds = (min_x, min_y, max_x - min_x, max_y - min_y);
+    }
+
+    fn begin_page(&mut self, origin_x: f32, origin_y: f32, width: f32, height: f32) {
+        self.page_table.extend_from_slice(&[
+            self.geometry.len() as f32,
+            origin_x,
+            origin_y,
+            width,
+            height,
+        ]);
     }
 
     fn draw_line(&mut self, l: &Line) {
@@ -176,6 +199,7 @@ impl Canvas for FlatBufferCanvas {
         FlatBuffer {
             bounds: self.bounds,
             geometry: self.geometry,
+            page_table: self.page_table,
             text_blob: self.text_blob,
             font_blob,
             font_styles,
