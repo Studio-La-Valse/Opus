@@ -1,6 +1,7 @@
-//! A [`Canvas`] that renders one page of [`DrawableElement`]s into a PDF content
-//! stream, plus [`write_pdf`] which stitches the per-page streams into a single
-//! multi-page PDF file with every font it uses embedded once.
+//! A [`Canvas`] that renders one page of
+//! [`DrawableElement`](crate::drawable::drawable_element::DrawableElement)s into
+//! a PDF content stream, plus [`write_pdf`] which stitches the per-page streams
+//! into a single multi-page PDF file with every font it uses embedded once.
 //!
 //! # Why this canvas is shaped differently from the SVG / flat-buffer ones
 //!

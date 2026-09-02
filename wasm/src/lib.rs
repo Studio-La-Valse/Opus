@@ -1,6 +1,6 @@
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
-use lib::drawable::drawable_element::{DrawableElement, Scale, compute_bounds_refs};
+use lib::drawable::drawable_element::{Scale, compute_bounds};
 use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
@@ -289,11 +289,7 @@ pub fn render(
             }
         }
 
-        let (min_x, min_y, max_x, max_y) = {
-            let all: Vec<&DrawableElement<'_>> =
-                pages.iter().flat_map(|p| p.elements.iter()).collect();
-            compute_bounds_refs(&all)
-        };
+        let (min_x, min_y, max_x, max_y) = compute_bounds(pages.iter().flat_map(|p| &p.elements));
         let physical_width = (max_x - min_x) * device_pixel_ratio;
         let physical_height = (max_y - min_y) * device_pixel_ratio;
         let render_scale = if physical_width > 0.0 && physical_height > 0.0 {

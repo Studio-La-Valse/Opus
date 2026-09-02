@@ -108,18 +108,16 @@ fn accumulate_bounds(el: &DrawableElement<'_>, bounds: &mut Bounds) {
     }
 }
 
-pub fn compute_bounds(elements: &[DrawableElement<'_>]) -> (f32, f32, f32, f32) {
-    let mut bounds = EMPTY_BOUNDS;
-    for el in elements {
-        accumulate_bounds(el, &mut bounds);
-    }
-    bounds
-}
-
-/// Like [`compute_bounds`], but over a slice of borrowed elements -- for callers
-/// that hold their elements split across several owners (e.g. one `Vec` per
-/// page) and don't want to concatenate them just to measure.
-pub fn compute_bounds_refs(elements: &[&DrawableElement<'_>]) -> (f32, f32, f32, f32) {
+/// `(min_x, min_y, max_x, max_y)` over every element yielded. An empty iterator
+/// yields the inverted sentinel `(f32::MAX, f32::MAX, f32::MIN, f32::MIN)`.
+///
+/// Takes any iterator of element references, so a caller whose elements are
+/// split across several owners (e.g. one `Vec` per page) can pass
+/// `pages.iter().flat_map(|p| &p.elements)` without concatenating first;
+/// `&[DrawableElement]` and `&Vec<DrawableElement>` also coerce directly.
+pub fn compute_bounds<'a>(
+    elements: impl IntoIterator<Item = &'a DrawableElement<'a>>,
+) -> (f32, f32, f32, f32) {
     let mut bounds = EMPTY_BOUNDS;
     for el in elements {
         accumulate_bounds(el, &mut bounds);

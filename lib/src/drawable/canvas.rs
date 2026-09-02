@@ -2,7 +2,7 @@ pub mod flat_buffer;
 pub mod pdf;
 pub mod svg;
 
-use crate::drawable::drawable_element::{DrawableElement, compute_bounds, compute_bounds_refs};
+use crate::drawable::drawable_element::{DrawableElement, compute_bounds};
 use crate::drawable::elements::circle::Circle;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
@@ -82,8 +82,8 @@ impl<C: Canvas> CanvasPainter<C> {
     /// origin/size passed to [`Canvas::begin_page`] is what lets a sink recover
     /// page boundaries from the otherwise-continuous stream.
     pub fn paint_pages(mut self, pages: &[RenderedPage<'_>]) -> C::Output {
-        let all: Vec<&DrawableElement<'_>> = pages.iter().flat_map(|p| p.elements.iter()).collect();
-        self.canvas.begin(compute_bounds_refs(&all));
+        self.canvas
+            .begin(compute_bounds(pages.iter().flat_map(|p| &p.elements)));
 
         for page in pages {
             self.canvas

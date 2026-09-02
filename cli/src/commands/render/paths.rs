@@ -18,29 +18,12 @@ pub struct OutputTarget {
 }
 
 impl OutputTarget {
-    /// Resolves the target, ensures its directory exists, and records whether
-    /// [`write`](Self::write) may overwrite existing files.
-    pub fn resolve(out: Option<&str>, file: &str, overwrite: bool) -> Self {
-        let mut target = Self::plan(out, file);
-        target.overwrite = overwrite;
-
-        fs::create_dir_all(&target.dir).unwrap_or_else(|err| {
-            panic!(
-                "failed to create output directory '{}': {err}",
-                target.dir.display()
-            )
-        });
-
-        target
-    }
-
-    /// Pure directory + stem resolution, with no filesystem access. Leaves
-    /// `overwrite` at its default of `false`.
+    /// Directory + stem resolution, no filesystem access.
     ///
     /// The directory is `out` when given, otherwise the input file's parent
     /// (or `.` when it has none). The stem is the input file's stem, falling
     /// back to `score` for a path with no usable stem.
-    pub fn plan(out: Option<&str>, file: &str) -> Self {
+    fn new(out: Option<&str>, file: &str, overwrite: bool) -> Self {
         let input = Path::new(file);
         let stem = input
             .file_stem()
@@ -60,8 +43,30 @@ impl OutputTarget {
         Self {
             dir,
             stem,
-            overwrite: false,
+            overwrite,
         }
+    }
+
+    /// Pure name resolution with `overwrite` left off -- for testing the
+    /// derived paths without touching the filesystem. Use
+    /// [`resolve`](Self::resolve) for the real render path.
+    pub fn plan(out: Option<&str>, file: &str) -> Self {
+        Self::new(out, file, false)
+    }
+
+    /// Resolves the target, ensures its directory exists, and records whether
+    /// [`write`](Self::write) may overwrite existing files.
+    pub fn resolve(out: Option<&str>, file: &str, overwrite: bool) -> Self {
+        let target = Self::new(out, file, overwrite);
+
+        fs::create_dir_all(&target.dir).unwrap_or_else(|err| {
+            panic!(
+                "failed to create output directory '{}': {err}",
+                target.dir.display()
+            )
+        });
+
+        target
     }
 
     /// `<dir>/<stem>.<ext>` -- for a format that emits a single file (PDF).
