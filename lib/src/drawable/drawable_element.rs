@@ -61,50 +61,68 @@ impl<'a> Scale for DrawableElement<'a> {
     }
 }
 
-pub fn compute_bounds(elements: &[DrawableElement<'_>]) -> (f32, f32, f32, f32) {
-    let mut min_x = f32::MAX;
-    let mut min_y = f32::MAX;
-    let mut max_x = f32::MIN;
-    let mut max_y = f32::MIN;
+/// Bounds accumulator: `(min_x, min_y, max_x, max_y)`, seeded so the first
+/// element widens it from nothing.
+type Bounds = (f32, f32, f32, f32);
 
-    for el in elements {
-        match el {
-            DrawableElement::Line(l) => {
-                for p in [l.start, l.end] {
-                    min_x = min_x.min(p.x);
-                    min_y = min_y.min(p.y);
-                    max_x = max_x.max(p.x);
-                    max_y = max_y.max(p.y);
-                }
+const EMPTY_BOUNDS: Bounds = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+
+fn accumulate_bounds(el: &DrawableElement<'_>, bounds: &mut Bounds) {
+    let (min_x, min_y, max_x, max_y) = bounds;
+
+    match el {
+        DrawableElement::Line(l) => {
+            for p in [l.start, l.end] {
+                *min_x = min_x.min(p.x);
+                *min_y = min_y.min(p.y);
+                *max_x = max_x.max(p.x);
+                *max_y = max_y.max(p.y);
             }
-            DrawableElement::Rect(r) => {
-                min_x = min_x.min(r.xy.x);
-                min_y = min_y.min(r.xy.y);
-                max_x = max_x.max(r.xy.x + r.width);
-                max_y = max_y.max(r.xy.y + r.height);
-            }
-            DrawableElement::Circle(c) => {
-                min_x = min_x.min(c.xy.x - c.radius);
-                min_y = min_y.min(c.xy.y - c.radius);
-                max_x = max_x.max(c.xy.x + c.radius);
-                max_y = max_y.max(c.xy.y + c.radius);
-            }
-            DrawableElement::Text(t) => {
-                min_x = min_x.min(t.xy.x);
-                min_y = min_y.min(t.xy.y);
-                max_x = max_x.max(t.xy.x);
-                max_y = max_y.max(t.xy.y);
-            }
-            DrawableElement::Polygon(p) => {
-                for xy in &p.pts {
-                    min_x = min_x.min(xy.x);
-                    min_y = min_y.min(xy.y);
-                    max_x = max_x.max(xy.x);
-                    max_y = max_y.max(xy.y);
-                }
+        }
+        DrawableElement::Rect(r) => {
+            *min_x = min_x.min(r.xy.x);
+            *min_y = min_y.min(r.xy.y);
+            *max_x = max_x.max(r.xy.x + r.width);
+            *max_y = max_y.max(r.xy.y + r.height);
+        }
+        DrawableElement::Circle(c) => {
+            *min_x = min_x.min(c.xy.x - c.radius);
+            *min_y = min_y.min(c.xy.y - c.radius);
+            *max_x = max_x.max(c.xy.x + c.radius);
+            *max_y = max_y.max(c.xy.y + c.radius);
+        }
+        DrawableElement::Text(t) => {
+            *min_x = min_x.min(t.xy.x);
+            *min_y = min_y.min(t.xy.y);
+            *max_x = max_x.max(t.xy.x);
+            *max_y = max_y.max(t.xy.y);
+        }
+        DrawableElement::Polygon(p) => {
+            for xy in &p.pts {
+                *min_x = min_x.min(xy.x);
+                *min_y = min_y.min(xy.y);
+                *max_x = max_x.max(xy.x);
+                *max_y = max_y.max(xy.y);
             }
         }
     }
+}
 
-    (min_x, min_y, max_x, max_y)
+pub fn compute_bounds(elements: &[DrawableElement<'_>]) -> (f32, f32, f32, f32) {
+    let mut bounds = EMPTY_BOUNDS;
+    for el in elements {
+        accumulate_bounds(el, &mut bounds);
+    }
+    bounds
+}
+
+/// Like [`compute_bounds`], but over a slice of borrowed elements -- for callers
+/// that hold their elements split across several owners (e.g. one `Vec` per
+/// page) and don't want to concatenate them just to measure.
+pub fn compute_bounds_refs(elements: &[&DrawableElement<'_>]) -> (f32, f32, f32, f32) {
+    let mut bounds = EMPTY_BOUNDS;
+    for el in elements {
+        accumulate_bounds(el, &mut bounds);
+    }
+    bounds
 }

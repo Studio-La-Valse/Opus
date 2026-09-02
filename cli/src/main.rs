@@ -1,8 +1,6 @@
-mod commands;
-
 use clap::{Parser, Subcommand};
-use commands::render::{self, RenderCommand};
-use commands::validate::{self, ValidateArgs};
+use cli::commands::render::{self, RenderCommand};
+use cli::commands::validate::{self, ValidateArgs};
 
 /// Engrave and validate MusicXML scores.
 #[derive(Parser, Debug)]

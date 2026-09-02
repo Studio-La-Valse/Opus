@@ -268,7 +268,7 @@ mod tests {
     }
 
     #[test]
-    fn walk_pages_keeps_one_bundle_per_page_while_walk_flattens() {
+    fn walk_pages_keeps_one_bundle_per_page() {
         let font = smufl_font();
 
         let mut score = Score::default();
@@ -290,15 +290,13 @@ mod tests {
         let fonts = RenderFonts::music_only(&font);
         let pages = compositor.walk_pages(&score, &fonts);
         assert_eq!(pages.len(), 2);
+        assert_eq!((pages[0].number, pages[1].number), (1, 2));
         assert_eq!((pages[0].origin.x, pages[0].origin.y), (0.0, 0.0));
         assert_eq!((pages[1].origin.x, pages[1].origin.y), (1400.0, 0.0));
         assert_eq!(pages[0].width, 1360.0);
         // BaseRenderer::render_page emits exactly the page background rect.
         assert_eq!(pages[0].elements.len(), 1);
         assert_eq!(pages[1].elements.len(), 1);
-
-        let flat = compositor.walk(&score, &fonts);
-        assert_eq!(flat.len(), 2);
     }
 
     #[test]

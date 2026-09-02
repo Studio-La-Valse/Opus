@@ -1,6 +1,6 @@
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
-use lib::drawable::drawable_element::{DrawableElement, Scale, compute_bounds};
+use lib::drawable::drawable_element::{DrawableElement, Scale, compute_bounds_refs};
 use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
@@ -53,6 +53,14 @@ pub struct RenderOutput {
     bounds_width: f32,
     bounds_height: f32,
     geometry: Vec<f32>,
+    /// Parallel page table: 5 f32s per page --
+    /// `[geometry_start_index, origin_x, origin_y, width, height]`. Page `i`'s
+    /// records span `geometry[page_table[5i] .. page_table[5(i+1)]]` (the last
+    /// page runs to `geometry.len()`). Coordinates are in the same space as
+    /// `geometry` (global tenths, already `render_scale`-adjusted). JS may use
+    /// this to slice the stream per page; the current single-canvas renderer
+    /// ignores it.
+    page_table: Vec<f32>,
     text_blob: String,
     font_blob: String,
     font_styles: Vec<f32>,
@@ -87,6 +95,12 @@ impl RenderOutput {
     #[wasm_bindgen(getter)]
     pub fn geometry(&mut self) -> Vec<f32> {
         std::mem::take(&mut self.geometry)
+    }
+
+    /// The page table (see the field docs). Empty for a zero-page score.
+    #[wasm_bindgen(getter)]
+    pub fn page_table(&mut self) -> Vec<f32> {
+        std::mem::take(&mut self.page_table)
     }
 
     #[wasm_bindgen(getter)]
@@ -195,10 +209,10 @@ pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 /// u32, debug: bool, /* same layout args */) -> Result<Vec<u8>, JsValue>`
 /// returning the bytes (wasm-bindgen marshals `Vec<u8>` to a `Uint8Array`).
 /// Body: call [`lib::score::engrave::arrange_score`] on the cached score just
-/// like [`render`] does, then instead of `compositor.walk(..)` +
-/// `FlatBufferCanvas` do what `cli/src/commands/render.rs` does for the
-/// `render pdf` subcommand -- `compositor.walk_pages(&cache.score, &fonts)`, one
-/// `lib::drawable::canvas::pdf::PdfPageCanvas` per page, then
+/// like [`render`] does, then instead of driving a `FlatBufferCanvas` over the
+/// walked pages do what `cli/src/commands/render/pdf.rs` does -- one
+/// `lib::drawable::canvas::pdf::PdfPageCanvas` per page from
+/// `compositor.walk_pages(&cache.score, &fonts)`, then
 /// `lib::drawable::canvas::pdf::write_pdf(&pages, &font_set)`. The missing
 /// piece is the font programs the [`lib::drawable::canvas::pdf::FontSet`]
 /// embeds: there's no system font database in the browser. See the
@@ -263,14 +277,23 @@ pub fn render(
 
         let fonts = RenderFonts::create(&cache.font, title_font, lyric_font);
 
-        let mut elements: Vec<DrawableElement<'_>> =
-            RenderCompositor::base().walk(&cache.score, &fonts);
-
+        // One page-preserving walk; the flat buffer concatenates the pages into
+        // its single stream but records each page's boundary in `page_table`.
+        let mut pages = RenderCompositor::base().walk_pages(&cache.score, &fonts);
         if debug {
-            elements.extend(RenderCompositor::debug().walk(&cache.score, &fonts));
+            for (page, overlay) in pages
+                .iter_mut()
+                .zip(RenderCompositor::debug().walk_pages(&cache.score, &fonts))
+            {
+                page.elements.extend(overlay.elements);
+            }
         }
 
-        let (min_x, min_y, max_x, max_y) = compute_bounds(&elements);
+        let (min_x, min_y, max_x, max_y) = {
+            let all: Vec<&DrawableElement<'_>> =
+                pages.iter().flat_map(|p| p.elements.iter()).collect();
+            compute_bounds_refs(&all)
+        };
         let physical_width = (max_x - min_x) * device_pixel_ratio;
         let physical_height = (max_y - min_y) * device_pixel_ratio;
         let render_scale = if physical_width > 0.0 && physical_height > 0.0 {
@@ -280,22 +303,30 @@ pub fn render(
         } else {
             1.0
         };
-        let elements: Vec<DrawableElement<'_>> = if render_scale < 1.0 {
-            elements
-                .iter()
-                .map(|el| el.scale(render_scale, XY::ZERO))
-                .collect()
-        } else {
-            elements
-        };
 
-        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
+        // Scale each page's elements *and* its origin/size, so the page table
+        // stays consistent with the down-scaled geometry.
+        if render_scale < 1.0 {
+            for page in &mut pages {
+                page.elements = page
+                    .elements
+                    .iter()
+                    .map(|el| el.scale(render_scale, XY::ZERO))
+                    .collect();
+                page.origin = page.origin.scale(render_scale);
+                page.width *= render_scale;
+                page.height *= render_scale;
+            }
+        }
+
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint_pages(&pages);
         Ok(RenderOutput {
             bounds_min_x: flat.bounds.0,
             bounds_min_y: flat.bounds.1,
             bounds_width: flat.bounds.2,
             bounds_height: flat.bounds.3,
             geometry: flat.geometry,
+            page_table: flat.page_table,
             text_blob: flat.text_blob,
             font_blob: flat.font_blob,
             font_styles: flat.font_styles,

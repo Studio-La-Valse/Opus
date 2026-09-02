@@ -17,6 +17,11 @@ const TAG_RECT = 1;
 const TAG_TEXT = 2;
 const TAG_POLYGON = 3;
 const TAG_CIRCLE = 4;
+// `output.page_table` (from wasm) is a parallel table of 5 f32s per page -
+// [geometryStartIndex, originX, originY, width, height] - letting a consumer
+// slice `geometry` per page (page i runs geometry[table[5i] .. table[5(i+1)]],
+// the last page to geometry.length). This single-canvas renderer draws the
+// whole stream at once and ignores it; a per-page-canvas renderer would use it.
 const TEXT_DELIMITER = "";
 const H_ALIGN = ["left", "center", "right"];
 const V_ALIGN = ["hanging", "middle", "alphabetic"];

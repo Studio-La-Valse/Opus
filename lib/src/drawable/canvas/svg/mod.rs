@@ -5,25 +5,33 @@ use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
 use crate::drawable::elements::text::Text;
 
-/// A [`Canvas`] that renders elements into an SVG document string.
-#[derive(Default)]
+/// A [`Canvas`] that renders elements into an SVG document string sized to an
+/// explicit view box -- the page rectangle -- rather than to the elements'
+/// own bounds. This keeps page margins and trailing whitespace in the output
+/// and matches what the PDF canvas does; a non-zero view-box origin carries the
+/// page's global offset natively, so elements are still emitted at their global
+/// coordinates with no per-element translation.
 pub struct SvgCanvas {
+    /// `(origin_x, origin_y, width, height)` -- emitted verbatim as the SVG
+    /// `viewBox` / `width` / `height`.
+    view_box: (f32, f32, f32, f32),
     out: String,
 }
 
 impl SvgCanvas {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(view_box: (f32, f32, f32, f32)) -> Self {
+        Self {
+            view_box,
+            out: String::new(),
+        }
     }
 }
 
 impl Canvas for SvgCanvas {
     type Output = String;
 
-    fn begin(&mut self, bounds: (f32, f32, f32, f32)) {
-        let (min_x, min_y, max_x, max_y) = bounds;
-        let width = max_x - min_x;
-        let height = max_y - min_y;
+    fn begin(&mut self, _bounds: (f32, f32, f32, f32)) {
+        let (min_x, min_y, width, height) = self.view_box;
 
         self.out.push_str(&format!(
             r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{min_x} {min_y} {w} {h}" width="{w}" height="{h}">"#,

@@ -10,6 +10,7 @@ mod tests {
     use lib::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
+    use lib::score::visual::render_compositor::RenderedPage;
 
     /// A `Canvas` that just records the sequence of lifecycle calls it receives.
     #[derive(Default)]
@@ -22,6 +23,12 @@ mod tests {
 
         fn begin(&mut self, bounds: (f32, f32, f32, f32)) {
             self.calls.push(format!("begin{bounds:?}"));
+        }
+
+        fn begin_page(&mut self, origin_x: f32, origin_y: f32, width: f32, height: f32) {
+            self.calls.push(format!(
+                "begin_page({origin_x}, {origin_y}, {width}, {height})"
+            ));
         }
 
         fn draw_line(&mut self, _line: &Line) {
@@ -131,7 +138,7 @@ mod tests {
 
     #[test]
     fn svg_canvas_emits_a_document_for_every_shape() {
-        let svg = CanvasPainter::new(SvgCanvas::new()).paint(&one_of_each());
+        let svg = CanvasPainter::new(SvgCanvas::new((0.0, 0.0, 10.0, 5.0))).paint(&one_of_each());
 
         assert!(svg.starts_with(r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 5""#));
         assert!(svg.contains(
@@ -149,5 +156,58 @@ mod tests {
             r##"<polygon points="0,0 4,0 2,5" fill="#00FF00FF" stroke="none" stroke-width="0" />"##
         ));
         assert!(svg.ends_with("</svg>"));
+    }
+
+    #[test]
+    fn svg_canvas_emits_its_view_box_verbatim_ignoring_element_bounds() {
+        // Elements sit inside a small box near the origin; the canvas is told
+        // the page is a large, offset rectangle. The header must reflect the
+        // page, not the elements.
+        let svg =
+            CanvasPainter::new(SvgCanvas::new((1400.0, 0.0, 1360.0, 1760.0))).paint(&one_of_each());
+
+        assert!(svg.starts_with(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="1400 0 1360 1760" width="1360" height="1760">"#
+        ));
+        // Elements keep their global coordinates -- no translation to page-local.
+        assert!(svg.contains(r#"x1="0" y1="0" x2="10" y2="4""#));
+    }
+
+    #[test]
+    fn paint_pages_brackets_each_page_between_begin_and_finish() {
+        let page = |number, origin: XY| RenderedPage {
+            number,
+            origin,
+            width: 100.0,
+            height: 50.0,
+            elements: vec![
+                Line {
+                    start: origin,
+                    end: origin.mv(10.0, 4.0),
+                    stroke_color: Color::BLACK,
+                    stroke_width: 1.0,
+                }
+                .into(),
+            ],
+        };
+        let pages = [
+            page(1, XY { x: 0.0, y: 0.0 }),
+            page(2, XY { x: 200.0, y: 0.0 }),
+        ];
+
+        let calls = CanvasPainter::new(RecordingCanvas::default()).paint_pages(&pages);
+
+        assert_eq!(
+            calls,
+            vec![
+                // begin's bounds span every page's elements.
+                "begin(0.0, 0.0, 210.0, 4.0)",
+                "begin_page(0, 0, 100, 50)",
+                "line",
+                "begin_page(200, 0, 100, 50)",
+                "line",
+                "finish",
+            ]
+        );
     }
 }

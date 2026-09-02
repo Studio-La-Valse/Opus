@@ -12,6 +12,7 @@ mod tests {
     use lib::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
+    use lib::score::visual::render_compositor::RenderedPage;
 
     #[test]
     fn line_record_layout() {
@@ -186,6 +187,81 @@ mod tests {
             flat.font_styles,
             vec![0.0, FONT_STYLE_BOLD as f32, FONT_STYLE_ITALIC as f32,]
         );
+    }
+
+    #[test]
+    fn paint_pages_records_a_page_table_parallel_to_the_concatenated_geometry() {
+        let line = |x: f32| {
+            DrawableElement::from(Line {
+                start: XY { x, y: 0.0 },
+                end: XY { x: x + 2.0, y: 0.0 },
+                stroke_color: Color::RED,
+                stroke_width: 0.5,
+            })
+        };
+        let rect = || {
+            DrawableElement::from(Rect {
+                xy: XY { x: 0.0, y: 0.0 },
+                width: 4.0,
+                height: 4.0,
+                color: Color::WHITE,
+                stroke_color: None,
+                stroke_width: None,
+            })
+        };
+
+        let pages = [
+            RenderedPage {
+                number: 1,
+                origin: XY { x: 0.0, y: 0.0 },
+                width: 100.0,
+                height: 50.0,
+                elements: vec![line(0.0)],
+            },
+            RenderedPage {
+                number: 2,
+                origin: XY { x: 100.0, y: 0.0 },
+                width: 100.0,
+                height: 50.0,
+                elements: vec![line(100.0), rect()],
+            },
+        ];
+
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint_pages(&pages);
+
+        // Geometry is the pages' records concatenated in page order: one 10-f32
+        // line for page 0, then a line + a 14-f32 rect for page 1.
+        assert_eq!(flat.geometry.len(), 10 + 10 + 14);
+        assert_eq!(&flat.geometry[..10], &line_record(0.0));
+        assert_eq!(&flat.geometry[10..20], &line_record(100.0));
+
+        // page_table: [start_index, origin_x, origin_y, width, height] per page.
+        // Page 0 starts at 0; page 1 starts after page 0's 10 f32s.
+        assert_eq!(
+            flat.page_table,
+            vec![0.0, 0.0, 0.0, 100.0, 50.0, 10.0, 100.0, 0.0, 100.0, 50.0]
+        );
+    }
+
+    fn line_record(x: f32) -> [f32; 10] {
+        [TAG_LINE, x, 0.0, x + 2.0, 0.0, 255.0, 0.0, 0.0, 1.0, 0.5]
+    }
+
+    #[test]
+    fn paint_leaves_the_page_table_empty() {
+        let elements: Vec<DrawableElement<'_>> = vec![
+            Line {
+                start: XY { x: 0.0, y: 0.0 },
+                end: XY { x: 1.0, y: 1.0 },
+                stroke_color: Color::RED,
+                stroke_width: 1.0,
+            }
+            .into(),
+        ];
+
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint(&elements);
+
+        assert!(flat.page_table.is_empty());
     }
 
     #[test]
