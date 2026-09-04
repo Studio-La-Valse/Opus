@@ -9,7 +9,38 @@ use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::notehead::Notehead;
 
+/// Identifies one [`Note`] within a [`Score`](crate::score::visual::score::Score).
+///
+/// The visual tree is a pure containment hierarchy, so it cannot express a
+/// relation between two notes that sit in different branches of it -- which is
+/// exactly what a tie is. Ids let [`Tie`](crate::score::visual::tie::Tie) name
+/// its two endpoints without needing a pointer into the tree.
+///
+/// Handed out by
+/// [`WalkCursor`](crate::score::walk_cursor::WalkCursor), so that every visitor
+/// in the chain agrees on which note it is looking at. They are assigned during
+/// the cached `walk_document` half of the pipeline, so they stay stable across
+/// the repeated `arrange_score` calls the wasm render path makes. Only
+/// uniqueness is meaningful -- never read anything into the values themselves.
+#[derive(Default, Ord, PartialOrd, Eq, PartialEq, Copy, Clone, Hash, Debug)]
+pub struct NoteId(u32);
+
+impl NoteId {
+    /// The next id in sequence.
+    pub fn next(self) -> Self {
+        NoteId(self.0 + 1)
+    }
+}
+
+impl From<u32> for NoteId {
+    fn from(value: u32) -> Self {
+        NoteId(value)
+    }
+}
+
 pub struct Note {
+    pub id: NoteId,
+
     pub xy: XY,
     pub width: f32,
     pub height: f32,
@@ -33,6 +64,7 @@ pub struct Note {
 
 impl Note {
     pub fn new(
+        id: NoteId,
         glyph: Notehead,
         default_x: f32,
         staff: StaffIdx,
@@ -41,6 +73,7 @@ impl Note {
         dots: u8,
     ) -> Self {
         Note {
+            id,
             glyph,
             accidental: None,
 

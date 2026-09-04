@@ -10,6 +10,7 @@ use crate::score::visual::section::Section;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system_measure::SystemMeasure;
+use crate::score::visual::tie::TieSegment;
 use crate::score::walk_cursor::Visibility;
 use std::collections::BTreeMap;
 
@@ -17,6 +18,15 @@ use std::collections::BTreeMap;
 pub struct System {
     pub sections: BTreeMap<u32, Section>,
     pub measures: BTreeMap<u32, SystemMeasure>,
+
+    /// The tie arcs that fall inside this system, rebuilt from `Score::ties` by
+    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) once
+    /// the pages have been arranged.
+    ///
+    /// A tie broken across a system break contributes one segment here and one
+    /// to the next system; a tie broken across a *page* break is the same case,
+    /// since the two systems are simply on different pages.
+    pub ties: Vec<TieSegment>,
 
     pub xy: XY,
     pub width: f32,

@@ -3,6 +3,7 @@ use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::key::{Key, Mode};
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
+use crate::score::visual::note::NoteId;
 use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
@@ -102,9 +103,31 @@ pub struct WalkCursor {
 
     pub chord: bool,
     pub grace: bool,
+
+    /// Identity of the `<note>` currently being visited, handed out by
+    /// [`WalkCursorVisitor`](crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor)
+    /// on `enter_note`.
+    ///
+    /// Lives here rather than inside one visitor because more than one visitor
+    /// needs it and they must agree: `ContentVisitor` stamps it onto the `Note`
+    /// it builds, and `TieVisitor` uses it to name a tie's endpoints. Private
+    /// counters in each would silently drift apart the moment one visitor's skip
+    /// conditions changed.
+    ///
+    /// Deliberately **not** cleared by [`WalkCursor::reset`], which runs once per
+    /// part -- resetting it there would make ids collide between parts. It just
+    /// counts up for the life of the cursor, across both document walks; only
+    /// uniqueness matters, not the actual values.
+    pub note_id: NoteId,
 }
 
 impl WalkCursor {
+    /// Assigns the next id and makes it current. Called once per `<note>`,
+    /// before any other visitor in the chain sees the element.
+    pub fn advance_note_id(&mut self) {
+        self.note_id = self.note_id.next();
+    }
+
     pub fn reset(&mut self) {
         self.system.index = 0;
 
@@ -188,6 +211,7 @@ impl Default for WalkCursor {
 
             chord: false,
             grace: false,
+            note_id: NoteId::default(),
 
             new_page: true,
             new_system: true,

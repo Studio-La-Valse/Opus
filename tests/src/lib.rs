@@ -6,4 +6,5 @@ mod test_pdf;
 mod test_ray;
 mod test_render_paths;
 mod test_scale;
+mod test_tie;
 mod test_wasm;

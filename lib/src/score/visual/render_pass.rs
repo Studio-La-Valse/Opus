@@ -12,7 +12,7 @@ use crate::score::visual::{
     part_group::PartGroup, part_group_measure::PartGroupMeasure, part_measure::PartMeasure,
     rest::Rest, section::Section, section_measure::SectionMeasure, staff::Staff,
     staff_measure::StaffMeasure, stem::Stem, system::System, system_measure::SystemMeasure,
-    time_signature::TimeSignature,
+    tie::TieSegment, time_signature::TimeSignature,
 };
 
 pub trait RenderPass {
@@ -195,6 +195,14 @@ pub trait RenderPass {
     fn render_dot<'a>(
         &self,
         _dot: &Dot,
+        _fonts: &RenderFonts<'a>,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
+
+    fn render_tie<'a>(
+        &self,
+        _tie: &TieSegment,
         _fonts: &RenderFonts<'a>,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {

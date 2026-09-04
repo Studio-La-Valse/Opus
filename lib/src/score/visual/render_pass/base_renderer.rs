@@ -6,7 +6,7 @@ use crate::score::visual::render_pass::RenderPass;
 use crate::score::visual::{
     accidental::Accidental, brace::Brace, bracket::Bracket, clef::Clef, dot::Dot, flag::Flag,
     note::Note, page::Page, part_measure::PartMeasure, rest::Rest, section_measure::SectionMeasure,
-    staff::Staff, stem::Stem, system::System, time_signature::TimeSignature,
+    staff::Staff, stem::Stem, system::System, tie::TieSegment, time_signature::TimeSignature,
 };
 use crate::smufl::smufl_glyph::SmuflGlyph;
 
@@ -166,6 +166,15 @@ impl RenderPass for BaseRenderer {
             let line: DrawableElement = (*line).into();
             out.push(line);
         }
+    }
+
+    fn render_tie<'a>(
+        &self,
+        tie: &TieSegment,
+        _fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        out.push(tie.shape.clone().into());
     }
 
     fn render_clef<'a>(

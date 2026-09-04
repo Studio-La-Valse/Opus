@@ -10,3 +10,4 @@ cli = { path="../cli" }
 
 [dev-dependencies]
 ttf-parser = "0.25.1"
+roxmltree = { workspace = true }
