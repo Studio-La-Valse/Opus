@@ -104,6 +104,13 @@ impl RenderCompositor {
         for section in system.sections.values() {
             self.walk_section(section, fonts, out);
         }
+
+        // Last, so ties paint on top. Elements are drawn in walk order and the
+        // staff lines a tie crosses come out of `render_staff`, part-way through
+        // the section walk above.
+        for tie in system.ties.iter() {
+            self.pass.render_tie(tie, fonts, out);
+        }
     }
 
     fn walk_section<'a>(
@@ -290,6 +297,7 @@ impl RenderCompositor {
 
     fn estimate_system(system: &System) -> usize {
         1 + system.measures.len() // system line + system measure lines
+            + system.ties.len()
             + system
                 .sections
                 .values()

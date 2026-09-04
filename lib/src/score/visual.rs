@@ -27,4 +27,6 @@ pub mod staff_measure;
 pub mod stem;
 pub mod system;
 pub mod system_measure;
+pub mod tie;
+pub mod tie_arranger;
 pub mod time_signature;

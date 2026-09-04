@@ -30,6 +30,20 @@ pub struct ContentVisitor {
 }
 
 impl ContentVisitor {
+    pub fn new() -> Self {
+        Self {
+            clef_change: HashMap::new(),
+        }
+    }
+}
+
+impl Default for ContentVisitor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ContentVisitor {
     fn handle_rest(&mut self, node: &Node, rest_node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx = ctx.cursor.staff.number;
         let measure_number = ctx.cursor.measure.number;
@@ -142,7 +156,15 @@ impl ContentVisitor {
         let notehead = dur.notehead_glyph();
         let glyph = ctx.font.notehead(notehead);
         let dots: u8 = node.get_children("dot").len().try_into().unwrap();
-        let mut note = Note::new(glyph, default_x, staff_idx, staff_line, scale, dots);
+        let mut note = Note::new(
+            ctx.cursor.note_id,
+            glyph,
+            default_x,
+            staff_idx,
+            staff_line,
+            scale,
+            dots,
+        );
 
         // Locate Measure & Voice Chords
         let system = ctx

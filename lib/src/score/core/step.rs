@@ -1,4 +1,4 @@
-﻿#[derive(Debug)]
+﻿#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Step {
     pub steps_from_c: i32,
     pub alter: i32,

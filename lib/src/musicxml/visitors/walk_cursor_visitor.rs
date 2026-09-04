@@ -273,6 +273,10 @@ impl<'a> Visitor<WalkerCtx<'a>> for WalkCursorVisitor {
     }
 
     fn enter_note(&mut self, element: &Node, ctx: &mut WalkerCtx) {
+        // First thing, so every visitor chained after this one reads the id of
+        // the note it is currently being handed.
+        ctx.cursor.advance_note_id();
+
         let is_chord = element.get_child("chord").is_some();
         let is_grace = element.has_child("grace");
 
