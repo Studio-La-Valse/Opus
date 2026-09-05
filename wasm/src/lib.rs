@@ -221,7 +221,9 @@ impl WasmScore {
         let user_layout = UserLayout::default();
         let app_defaults: AppDefaults = Default::default();
 
-        let (score, defaults) = walk_document(
+        // The walk's log messages are dropped: the browser has nowhere to show
+        // them, and nothing in the render path reads them back.
+        let (score, defaults, _messages) = walk_document(
             &document,
             &font,
             &user_layout,

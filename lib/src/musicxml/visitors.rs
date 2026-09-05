@@ -1,6 +1,6 @@
+pub mod build_logging_visitor;
 pub mod content_visitor;
 pub mod layout_visitor;
-pub mod logging_visitor;
 pub mod part_consistency_visitor;
 pub mod position_visitor;
 pub mod setup_visitor;

@@ -6,11 +6,12 @@ use std::cmp::Reverse;
 /// Builds the part-list tree a score is rendered from, out of a `<part-list>`'s
 /// `<part-group>` start/stop and `<score-part>` elements in document order.
 ///
-/// An element missing an attribute the format requires -- a `<part-group>` with
-/// no `type`, a `<score-part>` with no `id` -- is skipped rather than fatal.
-/// Reporting a document like that is `PartConsistencyVisitor`'s job, which it
-/// does in its own walk; this one's job is to get as much of a usable tree out
-/// of it as the document allows.
+/// This is the render path and nothing else: attributes the format requires are
+/// read with `req_attribute`, which panics on a document that omits them. That
+/// is only safe because `PartConsistencyVisitor` reports every one of those
+/// causes as an error on the validation walk that runs first -- a
+/// `<part-group>` with no `type`, a `<score-part>` with no `id` -- so nothing
+/// reaches here without having been described in plain words already.
 pub fn build_part_list(part_list: &Node) -> Vec<PartListNode> {
     let mut builder = PartListBuilder::default();
     builder.build(part_list);
@@ -72,17 +73,16 @@ impl PartListBuilder {
     fn build(&mut self, node: &Node) {
         for child in node.children().filter(|n| n.is_element()) {
             if child.has_tag("part-group") {
-                match child.attribute("type") {
-                    Some("start") => self.queue_part_group(&child),
-                    Some("stop") => self.close_part_group(),
+                match child.req_attribute("type") {
+                    "start" => self.queue_part_group(&child),
+                    "stop" => self.close_part_group(),
                     _ => {}
                 }
             }
 
-            if child.has_tag("score-part")
-                && let Some(id) = child.attribute("id")
-            {
-                self.push_score_part(id.to_string(), &child);
+            if child.has_tag("score-part") {
+                let id = child.req_attribute("id").to_string();
+                self.push_score_part(id, &child);
             }
         }
     }
