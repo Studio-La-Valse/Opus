@@ -165,6 +165,11 @@ pub fn run(format: RenderCommand) {
     };
     let app_defaults: AppDefaults = Default::default();
 
+    // The pipeline itself does no timing -- `std::time::Instant` is
+    // unimplemented on wasm32, so `lib` stays clock-free and the caller that
+    // wants durations measures the gaps between stage callbacks.
+    let mut stage_time = Instant::now();
+
     let EngravedScore {
         score: visual,
         layout,
@@ -173,17 +178,20 @@ pub fn run(format: RenderCommand) {
         &font,
         &user_layout,
         &app_defaults,
-        &mut |stage| match stage {
-            Stage::FirstPass(d) => println!(
-                "First read pass: walking doc tree for layout: {}ms",
-                d.as_millis()
-            ),
-            Stage::SecondPass(d) => println!(
-                "Second read pass: walking doc tree for content: {}ms",
-                d.as_millis()
-            ),
-            Stage::Rebeam(d) => println!("Rebeaming: {}ms", d.as_millis()),
-            Stage::LayoutPass(d) => println!("Layout pass: {}ms", d.as_millis()),
+        &mut |stage| {
+            let elapsed = stage_time.elapsed().as_millis();
+            stage_time = Instant::now();
+
+            match stage {
+                Stage::FirstPass => {
+                    println!("First read pass: walking doc tree for layout: {elapsed}ms")
+                }
+                Stage::SecondPass => {
+                    println!("Second read pass: walking doc tree for content: {elapsed}ms")
+                }
+                Stage::Rebeam => println!("Rebeaming: {elapsed}ms"),
+                Stage::LayoutPass => println!("Layout pass: {elapsed}ms"),
+            }
         },
     );
 
@@ -196,15 +204,7 @@ pub fn run(format: RenderCommand) {
     // elements in global tenths. `fonts` must outlive `pages`, which borrows
     // glyph data from it.
     let fonts = RenderFonts::create(&font, title_font, lyric_font);
-    let mut pages = RenderCompositor::base().walk_pages(&visual, &fonts);
-    if debug {
-        for (page, overlay) in pages
-            .iter_mut()
-            .zip(RenderCompositor::debug().walk_pages(&visual, &fonts))
-        {
-            page.elements.extend(overlay.elements);
-        }
-    }
+    let pages = RenderCompositor::compose(&visual, &fonts, debug);
 
     println!("Render pass: {}ms", time.elapsed().as_millis());
 

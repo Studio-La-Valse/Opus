@@ -96,10 +96,34 @@ function rgba(r, g, b, a) {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+// Every layout option the wasm `Score.render()` accepts, spelled the way its
+// `layout` object wants it (camelCase, matching a field on Rust's UserLayout).
+// Each one is read from the CSS custom property of the same name in kebab-case:
+// `pageColor` <- `--page-color`. Exposing a new UserLayout knob is a matter of
+// adding its name here; the value's type is worked out at read time, so there
+// is nothing else on this side to keep in step.
+//
+// A name that no UserLayout field matches is silently ignored rather than
+// reported (serde-wasm-bindgen only looks up the fields it expects), so a typo
+// here shows up as an option that quietly does nothing rather than an error -
+// worth a look at assets/web_test after adding one.
+const LAYOUT_OPTIONS = [
+  "pageColor",
+  "foregroundColor",
+  "pageOrientation",
+  "horizontalGutterEven",
+  "horizontalGutterUneven",
+  "verticalGutter",
+];
+
+function cssPropertyFor(option) {
+  return option.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+}
+
 // These are CSS custom properties only (`--page-color`, etc. - via an inline
 // `style="--page-color: ..."`, a class, or a plain stylesheet rule targeting
-// the tag), not HTML attributes - see `_cssVar` / `_cssNumberVar`. `file` and
-// `debug` are the only real HTML attributes this element has.
+// the tag), not HTML attributes - see `_cssVar`. `file` and `debug` are the
+// only real HTML attributes this element has.
 const OBSERVED_ATTRIBUTES = [
   "file",
   "debug",
@@ -146,8 +170,10 @@ export class MusicXmlElement extends HTMLElement {
     this._canvas = shadow.querySelector("canvas");
     this._ctx = this._canvas.getContext("2d");
 
-    this._wasm = undefined;
-    this._handle = undefined;
+    // The wasm `Score` for this element's document, or undefined when nothing
+    // is loaded. Each element owns its own - the wasm module is shared, the
+    // engraved score is not - so there is no handle or registry to track.
+    this._score = undefined;
     this._loadSeq = 0;
     this._renderDebounce = undefined;
     this._connected = false;
@@ -165,7 +191,7 @@ export class MusicXmlElement extends HTMLElement {
     this._connected = false;
     this._loadSeq++; // invalidates any fetch/bootstrap still in flight
     clearTimeout(this._renderDebounce);
-    this._freeHandle();
+    this._freeScore();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -185,7 +211,7 @@ export class MusicXmlElement extends HTMLElement {
     const seq = ++this._loadSeq;
     const fileUrl = this.getAttribute("file");
 
-    this._freeHandle();
+    this._freeScore();
     this._clearCanvas();
 
     if (!fileUrl) {
@@ -206,8 +232,7 @@ export class MusicXmlElement extends HTMLElement {
       const musicxml = await response.text();
       if (seq !== this._loadSeq) return;
 
-      this._wasm = wasm;
-      this._handle = wasm.load_score(musicxml, metaJson, glyphNamesJson);
+      this._score = new wasm.Score(musicxml, metaJson, glyphNamesJson);
       this._setStatus("");
       this._render();
       this.dispatchEvent(new CustomEvent("load"));
@@ -218,11 +243,12 @@ export class MusicXmlElement extends HTMLElement {
     }
   }
 
-  _freeHandle() {
-    if (this._handle !== undefined && this._wasm) {
-      this._wasm.free_score(this._handle);
-    }
-    this._handle = undefined;
+  // Releases the score's wasm memory. Nothing else does: wasm objects are only
+  // finalized on GC, if ever, so an element that goes away without this leaks a
+  // whole engraved score.
+  _freeScore() {
+    this._score?.free();
+    this._score = undefined;
   }
 
   _clearCanvas() {
@@ -243,9 +269,21 @@ export class MusicXmlElement extends HTMLElement {
     return value === "" ? undefined : value;
   }
 
-  _cssNumberVar(name) {
-    const value = this._cssVar(name);
-    return value === undefined ? undefined : Number(value);
+  // The `layout` half of a render's options: every LAYOUT_OPTIONS entry that
+  // this element actually sets, read off its CSS custom property.
+  _layoutOptions() {
+    const layout = {};
+    for (const option of LAYOUT_OPTIONS) {
+      const value = this._cssVar(cssPropertyFor(option));
+      if (value === undefined) continue;
+      // CSS custom properties are always strings, but the Rust side wants a
+      // number for the numeric knobs - so send a number whenever the value is
+      // one. That keeps this loop from having to know which option is which:
+      // "20" parses, "#ffffff" and "horizontal" don't.
+      const asNumber = Number(value);
+      layout[option] = Number.isFinite(asNumber) ? asNumber : value;
+    }
+    return layout;
   }
 
   // Public escape hatch: re-renders using the current attributes/CSS custom
@@ -257,7 +295,7 @@ export class MusicXmlElement extends HTMLElement {
   }
 
   _scheduleRender() {
-    if (this._handle === undefined) return;
+    if (!this._score) return;
     // Coalesces bursts of attribute changes (e.g. a host page driving a
     // color picker's `input` event) into a single render.
     clearTimeout(this._renderDebounce);
@@ -265,23 +303,17 @@ export class MusicXmlElement extends HTMLElement {
   }
 
   _render() {
-    if (this._handle === undefined || !this._wasm) return;
+    if (!this._score) return;
 
     let output;
     try {
-      output = this._wasm.render(
-        this._handle,
-        this.hasAttribute("debug"),
-        this._cssVar("page-color"),
-        this._cssVar("foreground-color"),
-        this._cssVar("page-orientation"),
-        this._cssNumberVar("horizontal-gutter-even"),
-        this._cssNumberVar("horizontal-gutter-uneven"),
-        this._cssNumberVar("vertical-gutter"),
-        this._cssVar("title-font"),
-        this._cssVar("lyric-font"),
-        window.devicePixelRatio || 1,
-      );
+      output = this._score.render({
+        debug: this.hasAttribute("debug"),
+        devicePixelRatio: window.devicePixelRatio || 1,
+        titleFont: this._cssVar("title-font"),
+        lyricFont: this._cssVar("lyric-font"),
+        layout: this._layoutOptions(),
+      });
       this._draw(output);
       this._setStatus("");
     } catch (err) {
@@ -385,8 +417,8 @@ export class MusicXmlElement extends HTMLElement {
     const fontFamilies = fontBlob === "" ? [] : fontBlob.split(TEXT_DELIMITER);
     const fontStyles = output.font_styles;
 
-    // The wasm side already scales elements down (see render()'s
-    // device_pixel_ratio param in wasm/src/lib.rs) so that bounds_width/height
+    // The wasm side already scales elements down (see the devicePixelRatio
+    // option in wasm/src/lib.rs) so that bounds_width/height
     // times dpr stays within its canvas pixel budget - this is a plain,
     // budget-agnostic consumer of whatever bounds it's given.
     const dpr = window.devicePixelRatio || 1;

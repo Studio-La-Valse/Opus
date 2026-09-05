@@ -1,45 +1,30 @@
+//! Browser bindings: one [`Score`] object per MusicXML document.
+//!
+//! There is no handle table and no module-global cache. A document's engraved
+//! state lives in the object the caller constructs, so several `<music-xml>`
+//! elements sharing this one wasm instance are independent by construction, and
+//! wasm-bindgen's generated `free()` / `[Symbol.dispose]()` is the only
+//! lifecycle the JS side has to think about.
+
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
 use lib::drawable::drawable_element::{Scale, compute_bounds};
-use lib::geometry::color::Color;
 use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::engrave::{arrange_score, walk_document};
-use lib::score::page_orientation::PageOrientation;
 use lib::score::score_defaults::ScoreDefaults;
 use lib::score::user_layout::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
-use lib::score::visual::score::Score;
+use lib::score::visual::score;
 use lib::smufl::smufl_font::SmuflFont;
 use roxmltree::{Document, ParsingOptions};
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::str::FromStr;
+use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
 fn init() {
     console_error_panic_hook::set_once();
-}
-
-/// Everything built from a MusicXML document that doesn't depend on
-/// [`UserLayout`]. Built by [`load_score`] and stored under the handle it
-/// returns; reused by every subsequent [`render`] call for that handle until
-/// [`free_score`] drops it.
-struct ScoreCache {
-    layout: ScoreDefaults,
-    score: Score,
-    font: SmuflFont,
-}
-
-// Keyed by handle rather than a single slot so that multiple independent
-// scores (e.g. several `<music-xml>` elements on one page, each backed by
-// this same wasm instance) can be loaded and re-rendered concurrently
-// without one's `load_score` call evicting another's cache.
-thread_local! {
-    static CACHE: RefCell<HashMap<u32, ScoreCache>> = RefCell::new(HashMap::new());
-    static NEXT_HANDLE: RefCell<u32> = const { RefCell::new(1) };
 }
 
 /// Canvas-ready render output. `geometry` is a tagged f32 stream and `text_blob`
@@ -88,10 +73,10 @@ impl RenderOutput {
         self.bounds_height
     }
 
-    // Takes ownership of the buffer instead of cloning it: `draw()` in main.js
-    // reads each property exactly once per RenderOutput before calling
-    // `output.free()`, so there's no reason to pay for a second copy on top of
-    // the copy wasm-bindgen already does when handing the Vec/String to JS.
+    // Takes ownership of the buffer instead of cloning it: `_draw()` in
+    // music-xml.js reads each property exactly once per RenderOutput before
+    // calling `output.free()`, so there's no reason to pay for a second copy on
+    // top of the copy wasm-bindgen already does when handing the Vec/String to JS.
     #[wasm_bindgen(getter)]
     pub fn geometry(&mut self) -> Vec<f32> {
         std::mem::take(&mut self.geometry)
@@ -123,63 +108,48 @@ impl RenderOutput {
     }
 }
 
-/// Parses `musicxml` and builds the [`ScoreDefaults`]/[`Score`]/[`SmuflFont`] triple,
-/// none of which depend on [`UserLayout`]. Caches the result under a new
-/// handle so subsequent [`render`] calls for that handle can re-layout and
-/// re-render without re-parsing or re-walking the document. Call
-/// [`free_score`] with the returned handle once it's no longer needed.
-#[wasm_bindgen]
-pub fn load_score(musicxml: &str, meta_json: &str, glyph_names_json: &str) -> Result<u32, JsValue> {
-    let font = SmuflFont::load(meta_json, glyph_names_json);
-
-    let options = ParsingOptions {
-        allow_dtd: true,
-        ..ParsingOptions::default()
-    };
-    let document = Document::parse_with_options(musicxml, options)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-    // Only used to satisfy `WalkerCtx::new` during the walk passes; no visitor
-    // reads it, since it doesn't affect the document's structure. Every
-    // `render` call re-arranges the walked score for its real `UserLayout`.
-    let user_layout = UserLayout::default();
-    let app_defaults: AppDefaults = Default::default();
-
-    let (score, layout) = walk_document(
-        &document,
-        &font,
-        &user_layout,
-        &app_defaults,
-        &mut |_stage| {},
-    );
-
-    let handle = NEXT_HANDLE.with_borrow_mut(|next| {
-        let handle = *next;
-        *next += 1;
-        handle
-    });
-
-    CACHE.with_borrow_mut(|cache| {
-        cache.insert(
-            handle,
-            ScoreCache {
-                layout,
-                score,
-                font,
-            },
-        );
-    });
-
-    Ok(handle)
+/// Everything [`Score::render`] takes, as one JS object rather than a
+/// positional argument list.
+///
+/// The layout knobs are not enumerated here on purpose: `layout` deserializes
+/// straight into [`UserLayout`], which is the single source of truth for that
+/// option set, so a new knob is exposed to JS by adding the field there and
+/// nothing else. Only the options that aren't part of the layout itself live
+/// at this level.
+///
+/// `deny_unknown_fields` doesn't do much on the browser path -- serde-wasm-bindgen
+/// deserializes a struct by looking up the field names it expects, so a key
+/// this struct doesn't declare is never seen, let alone rejected. It still
+/// holds for any other deserializer (the native tests use serde_json), and it
+/// keeps the intent on record.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct RenderOptions {
+    /// Overlay the debug pass (bounding boxes, anchors, guides).
+    pub debug: bool,
+    /// The browser's `window.devicePixelRatio`, used only to decide whether the
+    /// result needs scaling down to stay within [`MAX_CANVAS_PIXELS`]. Absent,
+    /// non-finite or non-positive values are treated as 1.0.
+    pub device_pixel_ratio: f32,
+    /// Font family for titles / work-level text; falls back to the app default.
+    pub title_font: Option<String>,
+    /// Font family for lyrics; falls back to the app default.
+    pub lyric_font: Option<String>,
+    pub layout: UserLayout,
 }
 
-/// Drops the score cached under `handle` by [`load_score`]. A no-op if the
-/// handle doesn't exist (already freed, or never valid).
-#[wasm_bindgen]
-pub fn free_score(handle: u32) {
-    CACHE.with_borrow_mut(|cache| {
-        cache.remove(&handle);
-    });
+impl Default for RenderOptions {
+    fn default() -> Self {
+        RenderOptions {
+            debug: false,
+            // Not 0.0: an omitted ratio must mean "unscaled", and a zero would
+            // otherwise divide the pixel budget into an infinite render scale.
+            device_pixel_ratio: 1.0,
+            title_font: None,
+            lyric_font: None,
+            layout: UserLayout::default(),
+        }
+    }
 }
 
 /// Upper bound on the canvas's physical pixel count (`width * height` in
@@ -193,101 +163,134 @@ pub fn free_score(handle: u32) {
 /// backs non-canvas consumers (e.g. SVG export) that shouldn't be capped.
 pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 
-/// Applies `UserLayout` to the [`Score`] cached under `handle` by
-/// [`load_score`] and returns the resulting drawable elements. Does no XML
-/// parsing or walking, so it's cheap to call on every layout-only change
-/// (e.g. a page color tweak).
+// Adding a `render_pdf` method
+//
+// A PDF download would be a sibling method on `Score` returning the bytes
+// (wasm-bindgen marshals `Vec<u8>` to a `Uint8Array`). Body: call
+// `lib::score::engrave::arrange_score` on the cached score just like `render`
+// does, then instead of driving a `FlatBufferCanvas` over the composed pages do
+// what `cli/src/commands/render/pdf.rs` does -- one
+// `lib::drawable::canvas::pdf::PdfPageCanvas` per page, then
+// `lib::drawable::canvas::pdf::write_pdf(&pages, &font_set)`. The missing piece
+// is the font programs the `lib::drawable::canvas::pdf::FontSet` embeds:
+// there's no system font database in the browser. See the `FontSource` seam
+// note in `lib::drawable::canvas::pdf` for the shape -- in short, bundle
+// Bravura (plus a text face) via `include_bytes!` or thread the bytes through
+// the constructor and stash them next to `SmuflFont`.
+//
+// (Keep design notes like this one out of `///` doc comments: wasm-bindgen
+// copies doc comments into the generated JSDoc, so a `*/` anywhere inside one
+// closes the comment early and leaves wasm.js syntactically invalid.)
+
+/// One MusicXML document, walked once on construction and re-arrangeable for
+/// any number of different [`RenderOptions`].
 ///
-/// `device_pixel_ratio` (the browser's `window.devicePixelRatio`) is used
-/// only to decide whether the result needs scaling down to stay within
-/// [`MAX_CANVAS_PIXELS`]; the caller still multiplies the returned bounds by
-/// it as usual when sizing the canvas backing store.
-///
-/// # Adding a `render_pdf` export
-///
-/// A PDF download would be a sibling `#[wasm_bindgen] pub fn render_pdf(handle:
-/// u32, debug: bool, /* same layout args */) -> Result<Vec<u8>, JsValue>`
-/// returning the bytes (wasm-bindgen marshals `Vec<u8>` to a `Uint8Array`).
-/// Body: call [`lib::score::engrave::arrange_score`] on the cached score just
-/// like [`render`] does, then instead of driving a `FlatBufferCanvas` over the
-/// walked pages do what `cli/src/commands/render/pdf.rs` does -- one
-/// `lib::drawable::canvas::pdf::PdfPageCanvas` per page from
-/// `compositor.walk_pages(&cache.score, &fonts)`, then
-/// `lib::drawable::canvas::pdf::write_pdf(&pages, &font_set)`. The missing
-/// piece is the font programs the [`lib::drawable::canvas::pdf::FontSet`]
-/// embeds: there's no system font database in the browser. See the
-/// `FontSource` seam note in [`lib::drawable::canvas::pdf`] for the shape --
-/// in short, bundle Bravura (plus a text face) via `include_bytes!` or thread
-/// the bytes through `load_score` and stash them in the cache next to
-/// `SmuflFont`.
-#[allow(clippy::too_many_arguments)]
-#[wasm_bindgen]
-pub fn render(
-    handle: u32,
-    debug: bool,
-    page_color: Option<String>,
-    foreground_color: Option<String>,
-    page_orientation: Option<String>,
-    horizontal_gutter_even: Option<f32>,
-    horizontal_gutter_uneven: Option<f32>,
-    vertical_gutter: Option<f32>,
-    title_font: Option<String>,
-    lyric_font: Option<String>,
-    device_pixel_ratio: f32,
-) -> Result<RenderOutput, JsValue> {
-    let page_color = page_color
-        .map(|s| Color::from_str(&s))
-        .transpose()
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    let foreground_color = foreground_color
-        .map(|s| Color::from_str(&s))
-        .transpose()
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    let page_orientation = page_orientation
-        .map(|s| PageOrientation::from_str(&s))
-        .transpose()
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+/// The split matches [`lib::score::engrave`]'s two halves: the constructor runs
+/// [`walk_document`] (parse + the two visitor passes, none of which depend on
+/// the user layout) and each [`Score::render`] re-runs only [`arrange_score`],
+/// so a layout-only change such as a page-colour tweak never re-parses the XML.
+#[wasm_bindgen(js_name = Score)]
+pub struct WasmScore {
+    defaults: ScoreDefaults,
+    score: score::Score,
+    font: SmuflFont,
+}
 
-    let user_layout = UserLayout {
-        page_color,
-        foreground_color,
-        page_orientation,
-        horizontal_gutter_even,
-        horizontal_gutter_uneven,
-        vertical_gutter,
-        ..Default::default()
-    };
-    let app_defaults: AppDefaults = Default::default();
+#[wasm_bindgen(js_class = Score)]
+impl WasmScore {
+    /// Parses `musicxml` and walks it into a laid-out-on-demand score. The two
+    /// JSON arguments are the SMuFL metadata and glyph-name tables.
+    #[wasm_bindgen(constructor)]
+    pub fn new(
+        musicxml: &str,
+        meta_json: &str,
+        glyph_names_json: &str,
+    ) -> Result<WasmScore, JsValue> {
+        let font = SmuflFont::load(meta_json, glyph_names_json);
 
-    let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
-    let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);
+        let options = ParsingOptions {
+            allow_dtd: true,
+            ..ParsingOptions::default()
+        };
+        let document = Document::parse_with_options(musicxml, options)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-    CACHE.with_borrow_mut(|cache| {
-        let cache = cache.get_mut(&handle).ok_or_else(|| {
-            JsValue::from_str("no score loaded for this handle; call load_score first")
-        })?;
+        // Only used to satisfy `WalkerCtx::new` during the walk passes; no
+        // visitor reads it, since it doesn't affect the document's structure.
+        // Every `render` call re-arranges the walked score for its real layout.
+        let user_layout = UserLayout::default();
+        let app_defaults: AppDefaults = Default::default();
 
-        arrange_score(
-            &mut cache.score,
-            &cache.layout,
+        let (score, defaults) = walk_document(
+            &document,
+            &font,
             &user_layout,
             &app_defaults,
             &mut |_stage| {},
         );
 
-        let fonts = RenderFonts::create(&cache.font, title_font, lyric_font);
+        Ok(WasmScore {
+            defaults,
+            score,
+            font,
+        })
+    }
+
+    /// Lays the score out for `options` and returns the resulting drawable
+    /// elements. Does no XML parsing or walking, so it's cheap to call on every
+    /// layout-only change (e.g. a page colour tweak).
+    ///
+    /// `options` is a plain JS object; see [`RenderOptions`], whose `layout`
+    /// member accepts every field of
+    /// [`UserLayout`](lib::score::user_layout::UserLayout) in camelCase.
+    pub fn render(&mut self, options: JsValue) -> Result<RenderOutput, JsValue> {
+        let options: RenderOptions = if options.is_undefined() || options.is_null() {
+            RenderOptions::default()
+        } else {
+            serde_wasm_bindgen::from_value(options)?
+        };
+
+        Ok(self.render_with(&options))
+    }
+}
+
+impl WasmScore {
+    /// The body of [`WasmScore::render`] once the options have been decoded.
+    /// Separate so Rust callers (the test crate) don't have to go through a
+    /// `JsValue`.
+    pub fn render_with(&mut self, options: &RenderOptions) -> RenderOutput {
+        let app_defaults: AppDefaults = Default::default();
+
+        arrange_score(
+            &mut self.score,
+            &self.defaults,
+            &options.layout,
+            &app_defaults,
+            &mut |_stage| {},
+        );
+
+        let title_font = options
+            .title_font
+            .as_deref()
+            .unwrap_or(&app_defaults.title_font);
+        let lyric_font = options
+            .lyric_font
+            .as_deref()
+            .unwrap_or(&app_defaults.lyric_font);
+        let fonts = RenderFonts::create(&self.font, title_font, lyric_font);
 
         // One page-preserving walk; the flat buffer concatenates the pages into
         // its single stream but records each page's boundary in `page_table`.
-        let mut pages = RenderCompositor::base().walk_pages(&cache.score, &fonts);
-        if debug {
-            for (page, overlay) in pages
-                .iter_mut()
-                .zip(RenderCompositor::debug().walk_pages(&cache.score, &fonts))
-            {
-                page.elements.extend(overlay.elements);
-            }
-        }
+        let mut pages = RenderCompositor::compose(&self.score, &fonts, options.debug);
+
+        // A ratio JS couldn't supply sensibly (absent, NaN, zero) means
+        // "unscaled" rather than an unbounded scale factor.
+        let device_pixel_ratio =
+            if options.device_pixel_ratio.is_finite() && options.device_pixel_ratio > 0.0 {
+                options.device_pixel_ratio
+            } else {
+                1.0
+            };
 
         let (min_x, min_y, max_x, max_y) = compute_bounds(pages.iter().flat_map(|p| &p.elements));
         let physical_width = (max_x - min_x) * device_pixel_ratio;
@@ -316,7 +319,7 @@ pub fn render(
         }
 
         let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint_pages(&pages);
-        Ok(RenderOutput {
+        RenderOutput {
             bounds_min_x: flat.bounds.0,
             bounds_min_y: flat.bounds.1,
             bounds_width: flat.bounds.2,
@@ -326,6 +329,6 @@ pub fn render(
             text_blob: flat.text_blob,
             font_blob: flat.font_blob,
             font_styles: flat.font_styles,
-        })
-    })
+        }
+    }
 }

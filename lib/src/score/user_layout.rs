@@ -1,7 +1,17 @@
 use crate::geometry::color::Color;
 use crate::score::page_orientation::PageOrientation;
+use serde::Deserialize;
 
-#[derive(Copy, Clone, Default)]
+/// Caller-supplied overrides, each falling back to
+/// [`AppDefaults`](crate::score::app_defaults::AppDefaults) when `None`.
+///
+/// This struct is the single source of truth for the layout option set: it
+/// deserializes directly (camelCase, every field optional), so a front end --
+/// the wasm bindings today -- exposes a new knob by nothing more than the field
+/// being added here. Don't mirror it into a parallel options struct somewhere
+/// else; that only creates two lists to keep in step.
+#[derive(Copy, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct UserLayout {
     pub page_color: Option<Color>,
     pub foreground_color: Option<Color>,

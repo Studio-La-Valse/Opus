@@ -1,50 +1,60 @@
 #[cfg(test)]
 mod tests {
     use std::fs::read_to_string;
-    use wasm::{MAX_CANVAS_PIXELS, free_score, load_score, render};
+    use wasm::{MAX_CANVAS_PIXELS, RenderOptions, RenderOutput, WasmScore};
 
     fn fixture(relative_path: &str) -> String {
         read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
             .unwrap_or_else(|e| panic!("failed to read {relative_path}: {e}"))
     }
 
-    /// `render` reruns apply_layout/rebeam/measure/arrange_pages on the same
-    /// cached `Score` every call instead of rebuilding it from scratch. That's
-    /// only safe if those steps are idempotent; this guards the assumption by
-    /// calling `render` twice with identical arguments and requiring identical
-    /// output.
-    #[test]
-    fn render_is_idempotent_across_repeated_calls_with_the_same_layout() {
-        let musicxml = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
+    /// Builds a score from one of the sample documents and the real SMuFL
+    /// metadata, the way the constructor is called from JS.
+    fn score(musicxml_path: &str) -> WasmScore {
+        let musicxml = fixture(musicxml_path);
         let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
         let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
 
-        let handle =
-            load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
+        WasmScore::new(&musicxml, &meta_json, &glyph_names_json).expect("failed to build score")
+    }
 
-        let render_once = || {
-            render(
-                handle,
-                false,
-                Some("#ffffff".to_string()),
-                Some("#000000".to_string()),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                1.0,
-            )
-            .expect("render failed")
+    /// These tests go through `render_with` rather than the `render(JsValue)`
+    /// wrapper: decoding a `JsValue` needs wasm-bindgen's real (non-stub)
+    /// implementation, which panics on a native test target. Everything past
+    /// the decode is the same code either way.
+    fn render_at(score: &mut WasmScore, device_pixel_ratio: f32) -> RenderOutput {
+        score.render_with(&RenderOptions {
+            device_pixel_ratio,
+            ..Default::default()
+        })
+    }
+
+    /// `render` reruns rebeam/measure/arrange_pages on the same cached `Score`
+    /// every call instead of rebuilding it from scratch. That's only safe if
+    /// those steps are idempotent; this guards the assumption by rendering
+    /// twice with identical options and requiring identical output.
+    #[test]
+    fn render_is_idempotent_across_repeated_calls_with_the_same_layout() {
+        let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
+
+        let render_once = |score: &mut WasmScore| {
+            score.render_with(&RenderOptions {
+                // Doubled hashes because the JSON itself contains `"#`, which
+                // would close a single-hash raw string.
+                layout: serde_json::from_str(
+                    r##"{ "pageColor": "#ffffff", "foregroundColor": "#000000" }"##,
+                )
+                .expect("layout options failed to deserialize"),
+                ..Default::default()
+            })
         };
 
         // `geometry()`/`text_blob()` take the buffer out of the RenderOutput
         // (mem::take) rather than clone it, so each must be read exactly once
         // per instance into a local - re-reading the same instance would come
         // back empty.
-        let mut first = render_once();
-        let mut second = render_once();
+        let mut first = render_once(&mut score);
+        let mut second = render_once(&mut score);
         let first_geometry = first.geometry();
         let second_geometry = second.geometry();
         let first_text_blob = first.text_blob();
@@ -65,31 +75,9 @@ mod tests {
     /// cost bounded regardless of how a caller reports its pixel ratio.
     #[test]
     fn render_keeps_the_canvas_backing_store_within_the_pixel_budget() {
-        let musicxml = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
-        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
+        let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
 
-        let handle =
-            load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
-
-        let render_at = |device_pixel_ratio: f32| {
-            render(
-                handle,
-                false,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                device_pixel_ratio,
-            )
-            .expect("render failed")
-        };
-
-        let unscaled = render_at(1.0);
+        let unscaled = render_at(&mut score, 1.0);
         let unscaled_physical_pixels =
             unscaled.bounds_width() as f64 * unscaled.bounds_height() as f64;
         assert!(
@@ -99,7 +87,7 @@ mod tests {
         );
 
         let huge_device_pixel_ratio = 1000.0;
-        let scaled = render_at(huge_device_pixel_ratio);
+        let scaled = render_at(&mut score, huge_device_pixel_ratio);
         let scaled_physical_pixels = (scaled.bounds_width() as f64
             * huge_device_pixel_ratio as f64)
             * (scaled.bounds_height() as f64 * huge_device_pixel_ratio as f64);
@@ -115,6 +103,31 @@ mod tests {
         );
     }
 
+    /// A device pixel ratio JS couldn't supply sensibly - the field left off
+    /// the options object entirely, or a NaN/zero coming out of a bad
+    /// `devicePixelRatio` read - must mean "render unscaled" rather than
+    /// dividing the pixel budget by zero and scaling by infinity.
+    #[test]
+    fn render_treats_an_unusable_device_pixel_ratio_as_one() {
+        let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
+
+        let mut baseline = render_at(&mut score, 1.0);
+        let baseline_geometry = baseline.geometry();
+
+        for ratio in [0.0, -2.0, f32::NAN, f32::INFINITY] {
+            let mut output = render_at(&mut score, ratio);
+            assert_eq!(
+                output.geometry(),
+                baseline_geometry,
+                "device_pixel_ratio {ratio} should render exactly like 1.0",
+            );
+        }
+
+        // The default options object leaves it off altogether.
+        let mut defaulted = score.render_with(&RenderOptions::default());
+        assert_eq!(defaulted.geometry(), baseline_geometry);
+    }
+
     /// `render` exposes a page table parallel to `geometry`: 5 f32s per page,
     /// `[start_index, origin_x, origin_y, width, height]`. The start indices
     /// must be non-decreasing and land within `geometry`, the first must be 0,
@@ -122,31 +135,9 @@ mod tests {
     /// the geometry so the table stays consistent with the scaled stream.
     #[test]
     fn render_page_table_tracks_the_geometry_and_scales_with_it() {
-        let musicxml = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
-        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
+        let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
 
-        let handle =
-            load_score(&musicxml, &meta_json, &glyph_names_json).expect("load_score failed");
-
-        let render_at = |device_pixel_ratio: f32| {
-            render(
-                handle,
-                false,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                device_pixel_ratio,
-            )
-            .expect("render failed")
-        };
-
-        let mut unscaled = render_at(1.0);
+        let mut unscaled = render_at(&mut score, 1.0);
         let geometry_len = unscaled.geometry().len();
         let page_table = unscaled.page_table();
 
@@ -178,7 +169,7 @@ mod tests {
             prev_start = start;
         }
 
-        let mut scaled = render_at(1000.0);
+        let mut scaled = render_at(&mut score, 1000.0);
         let scaled_table = scaled.page_table();
         assert_eq!(
             scaled_table.len(),
@@ -197,65 +188,76 @@ mod tests {
         }
     }
 
-    /// Two scores loaded concurrently (e.g. two `<music-xml>` elements on one
-    /// page sharing this wasm instance) must stay independent: loading the
-    /// second must not evict or corrupt the first's cache, and each handle's
-    /// `render` must keep reflecting only the document it was given.
+    /// Two scores alive at once (e.g. two `<music-xml>` elements on one page
+    /// sharing this wasm instance) must stay independent: each owns its
+    /// engraved state, so building or dropping one can't disturb the other's
+    /// renders. Nothing is shared to get wrong now that there's no registry,
+    /// which is exactly the property worth pinning down.
     #[test]
-    fn two_handles_render_independently_and_do_not_evict_each_other() {
-        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
+    fn two_scores_render_independently() {
+        let mut a = score("assets/xmlsamples/ActorPreludeSample.musicxml");
+        let mut b = score("assets/xmlsamples/BrahWiMeSample.musicxml");
 
-        let musicxml_a = fixture("assets/xmlsamples/ActorPreludeSample.musicxml");
-        let musicxml_b = fixture("assets/xmlsamples/BrahWiMeSample.musicxml");
-
-        let handle_a =
-            load_score(&musicxml_a, &meta_json, &glyph_names_json).expect("load_score a failed");
-        let handle_b =
-            load_score(&musicxml_b, &meta_json, &glyph_names_json).expect("load_score b failed");
-        assert_ne!(
-            handle_a, handle_b,
-            "expected distinct handles per load_score call"
-        );
-
-        let render_handle = |handle: u32| {
-            render(
-                handle, false, None, None, None, None, None, None, None, None, 1.0,
-            )
-            .expect("render failed")
-        };
-
-        let mut a_before = render_handle(handle_a);
-        let mut b = render_handle(handle_b);
-        let mut a_after = render_handle(handle_a);
+        let mut a_before = render_at(&mut a, 1.0);
+        let mut b_output = render_at(&mut b, 1.0);
+        let mut a_after = render_at(&mut a, 1.0);
 
         // Each instance's geometry() is read exactly once into a local -
-        // re-reading the same instance later (e.g. `b` again below) would
-        // come back empty.
+        // re-reading the same instance later would come back empty.
         let a_before_geometry = a_before.geometry();
-        let b_geometry = b.geometry();
+        let b_geometry = b_output.geometry();
         let a_after_geometry = a_after.geometry();
 
         assert_eq!(
             a_before_geometry, a_after_geometry,
-            "loading handle b must not change handle a's rendered geometry"
+            "building and rendering b must not change a's rendered geometry"
         );
         assert_ne!(
             a_after_geometry, b_geometry,
             "two different scores are expected to render different geometry"
         );
 
-        // `render`'s missing-handle error path builds a `JsValue`, which only
-        // wasm-bindgen's real (non-stub) implementation supports - it panics
-        // when exercised on a native (non-wasm32) test target - so this only
-        // checks that freeing one handle leaves the other's cache intact,
-        // not the error path itself.
-        free_score(handle_a);
-        let mut b_again = render_handle(handle_b);
+        drop(a);
+        let mut b_again = render_at(&mut b, 1.0);
         assert_eq!(
             b_again.geometry(),
             b_geometry,
-            "freeing handle a must not affect handle b"
+            "dropping a must not affect b"
         );
+    }
+
+    /// The layout options are deserialized straight into `UserLayout`, so every
+    /// field it gains is exposed to callers for free, spelled in camelCase and
+    /// parsed by the same `FromStr` impls the CLI flags use.
+    ///
+    /// The unknown-name case only bites for a real map deserializer such as
+    /// serde_json: serde-wasm-bindgen's struct deserializer looks up just the
+    /// field names it expects, so through the browser path an unknown key is
+    /// invisible rather than an error. `deny_unknown_fields` is still worth
+    /// having for every other caller.
+    #[test]
+    fn layout_options_deserialize_by_userlayout_field_name() {
+        let layout: lib::score::user_layout::UserLayout = serde_json::from_str(
+            r##"{ "pageColor": "#112233", "pageOrientation": "vertical", "tieHeightRatio": 0.25 }"##,
+        )
+        .expect("valid layout options failed to deserialize");
+
+        assert_eq!(layout.page_color.expect("page_color").to_hex(), "#112233FF");
+        assert_eq!(
+            layout.page_orientation,
+            Some(lib::score::page_orientation::PageOrientation::Vertical),
+        );
+        assert_eq!(layout.tie_height_ratio, Some(0.25));
+        assert_eq!(layout.vertical_gutter, None, "unset options stay None");
+
+        let unknown = serde_json::from_str::<lib::score::user_layout::UserLayout>(
+            r##"{ "pageColour": "#112233" }"##,
+        );
+        assert!(unknown.is_err(), "an unknown option name must be rejected");
+
+        let bad_color = serde_json::from_str::<lib::score::user_layout::UserLayout>(
+            r#"{ "pageColor": "nope" }"#,
+        );
+        assert!(bad_color.is_err(), "an unparseable colour must be rejected");
     }
 }

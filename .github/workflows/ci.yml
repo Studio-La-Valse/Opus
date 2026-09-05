@@ -82,6 +82,11 @@ jobs:
         uses: jetli/wasm-pack-action@v0.4.0
       - name: Build wasm bindings
         run: ./scripts/build-wasm.sh
+      # wasm-bindgen copies Rust doc comments into the generated JSDoc, so a
+      # `*/` inside one closes the comment early and leaves wasm.js
+      # syntactically invalid. Nothing else in CI parses that file.
+      - name: Check generated wasm.js parses
+        run: node --check wasm/pkg/wasm.js
       - name: Stage package
         run: ./scripts/stage-package.sh
       - name: npm pack (dry run, no publish)

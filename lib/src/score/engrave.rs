@@ -5,14 +5,16 @@
 //! [`walk_document`] (the two document walks that build the [`Score`] and
 //! [`ScoreDefaults`], independent of [`UserLayout`]) and [`arrange_score`] (resolve the
 //! user layout, rebeam, measure and arrange the pages). The wasm bindings keep
-//! these apart on purpose -- `load_score` walks once and caches the result, then
-//! every `render` re-runs only [`arrange_score`].
+//! these apart on purpose -- constructing a `Score` walks once and caches the
+//! result, then every `render` on it re-runs only [`arrange_score`].
 //!
-//! The pipeline is presentation-free: it reports progress through a
-//! `progress: &mut dyn FnMut(Stage)` callback and never prints.
+//! The pipeline is presentation-free and platform-free: it reports progress
+//! through a `progress: &mut dyn FnMut(Stage)` callback, never prints, and does
+//! no timing of its own -- a caller that wants durations measures between
+//! callbacks itself. That matters because `std::time::Instant` is unimplemented
+//! on `wasm32-unknown-unknown` and panics on first use.
 
 use std::collections::HashSet;
-use std::time::{Duration, Instant};
 
 use roxmltree::Document;
 
@@ -44,19 +46,20 @@ pub struct EngravedScore {
     pub layout: ScoreDefaults,
 }
 
-/// A boundary the pipeline has just crossed, carrying the wall-clock time spent
-/// in the step that led up to it. Consumers use this for progress reporting
-/// only.
+/// A boundary the pipeline has just crossed, reported as soon as the step that
+/// led up to it finishes. Consumers use this for progress reporting only; one
+/// that wants wall-clock durations times the gaps between callbacks itself (see
+/// `cli::commands::render`).
 pub enum Stage {
     /// First document walk: layout context, part-list setup and staff layout.
-    FirstPass(Duration),
+    FirstPass,
     /// Second document walk: note / rest / clef content.
-    SecondPass(Duration),
+    SecondPass,
     /// Re-deriving beam groups.
-    Rebeam(Duration),
+    Rebeam,
     /// Resolving each element's appearance from the layout params, measuring
     /// every element and arranging the pages.
-    LayoutPass(Duration),
+    LayoutPass,
 }
 
 /// Runs the full engraving sequence on an already-parsed `document`: the two
@@ -90,8 +93,6 @@ pub fn walk_document(
     let mut layout = ScoreDefaults::default();
     let mut score = Score::default();
 
-    let mut time = Instant::now();
-
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
         .uses(SetupVisitor {})
@@ -108,8 +109,7 @@ pub fn walk_document(
     );
     Walker::new(visitor).walk(document, &mut ctx);
 
-    progress(Stage::FirstPass(time.elapsed()));
-    time = Instant::now();
+    progress(Stage::FirstPass);
 
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
@@ -125,7 +125,7 @@ pub fn walk_document(
     );
     Walker::new(visitor).walk(document, &mut ctx);
 
-    progress(Stage::SecondPass(time.elapsed()));
+    progress(Stage::SecondPass);
 
     (score, layout)
 }
@@ -144,15 +144,12 @@ pub fn arrange_score(
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
 ) {
-    let mut time = Instant::now();
-
     let strategy = OnlyWhenRequiredRebeamStrategy {
         inner: Box::new(SimpleRebeamStrategy {}),
     };
     score.rebeam(&strategy);
 
-    progress(Stage::Rebeam(time.elapsed()));
-    time = Instant::now();
+    progress(Stage::Rebeam);
 
     let params = LayoutParams {
         score_defaults,
@@ -167,7 +164,7 @@ pub fn arrange_score(
     // has its final position.
     arrange_ties(score, params);
 
-    progress(Stage::LayoutPass(time.elapsed()));
+    progress(Stage::LayoutPass);
 }
 
 /// Picks the page-layout engine for the effective [`PageOrientation`], resolving
