@@ -1,7 +1,12 @@
+use serde::Deserialize;
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+/// Deserializes from the same `"horizontal"` / `"vertical"` strings [`FromStr`]
+/// accepts, so a CLI flag, a CSS custom property and a JSON option all spell it
+/// the same way.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(try_from = "String")]
 pub enum PageOrientation {
     #[default]
     Horizontal,
@@ -32,5 +37,14 @@ impl FromStr for PageOrientation {
             "vertical" => Ok(PageOrientation::Vertical),
             _ => Err(PageOrientationParseError(s.to_string())),
         }
+    }
+}
+
+/// Backs `#[serde(try_from = "String")]` on [`PageOrientation`].
+impl TryFrom<String> for PageOrientation {
+    type Error = PageOrientationParseError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value.parse()
     }
 }

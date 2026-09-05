@@ -1,10 +1,17 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
 /// An sRGB colour with a separate alpha. The `r`/`g`/`b` channels are 8-bit;
 /// `a` is a `0.0..=1.0` fraction and is clamped into that range on construction.
-#[derive(Debug, Clone, Copy, Serialize, Default)]
+///
+/// Note the two serde impls are deliberately asymmetric: `Serialize` writes the
+/// channels out as a struct (for drawable-element dumps), while `Deserialize`
+/// reads the `#RRGGBB` / `#RRGGBBAA` string form via [`FromStr`], which is what
+/// a caller supplies -- a CSS custom property, a CLI flag. Nothing round-trips
+/// a colour through both.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
+#[serde(try_from = "String")]
 pub struct Color {
     a: f32,
     r: u8,
@@ -130,5 +137,15 @@ impl FromStr for Color {
             )),
             _ => Err(ColorParseError(s.to_string())),
         }
+    }
+}
+
+/// Backs `#[serde(try_from = "String")]` on [`Color`], so a deserialized colour
+/// accepts exactly the same spellings as [`FromStr`] and reports the same error.
+impl TryFrom<String> for Color {
+    type Error = ColorParseError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value.parse()
     }
 }

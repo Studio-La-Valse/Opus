@@ -59,6 +59,30 @@ impl RenderCompositor {
         Self::new(Box::new(DebugRenderer {}))
     }
 
+    /// The whole render in one call: the base pass, plus the debug overlay
+    /// merged into each page when `debug` is set. Every consumer wants exactly
+    /// this, so the base/overlay zip lives here rather than being repeated at
+    /// each call site.
+    ///
+    /// The overlay is appended after a page's base elements, so it draws on top
+    /// of them; `zip` stops at the shorter side, which is a no-op in practice
+    /// because both passes walk the same pages.
+    pub fn compose<'a>(
+        score: &Score,
+        fonts: &RenderFonts<'a>,
+        debug: bool,
+    ) -> Vec<RenderedPage<'a>> {
+        let mut pages = Self::base().walk_pages(score, fonts);
+
+        if debug {
+            for (page, overlay) in pages.iter_mut().zip(Self::debug().walk_pages(score, fonts)) {
+                page.elements.extend(overlay.elements);
+            }
+        }
+
+        pages
+    }
+
     /// Every drawable element for the score, one [`RenderedPage`] per laid-out
     /// page, in page order. The single compositor entry point: sinks that want
     /// one continuous stream (SVG per file, the flat buffer) concatenate the

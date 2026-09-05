@@ -9,5 +9,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 roxmltree = { workspace = true }
 lib = { path = "../lib" }
+serde = { version = "1.0.228", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
 wasm-bindgen = "0.2"
 console_error_panic_hook = "0.1"
