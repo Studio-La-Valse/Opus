@@ -1,8 +1,6 @@
 use crate::musicxml::validate::ValidationCtx;
 use crate::musicxml::validation_issue::{Severity, ValidationIssue};
 use crate::musicxml::visitor::Visitor;
-use crate::score::part_list::builder::{PartGroupAction, PartListBuilder};
-use crate::score::part_list::display::format_part_list_tree;
 use roxmltree::Node;
 use std::collections::BTreeMap;
 
@@ -45,43 +43,57 @@ impl Visitor<ValidationCtx> for PartConsistencyVisitor {
             at,
         });
 
-        // Builds the part-list tree for logging in true document order,
-        // sharing PartListTracker under the hood so section/part-group
-        // indices can never disagree with what SetupVisitor assigns for
-        // render. score_parts (below) stays separate: it's this visitor's
-        // own bookkeeping for the <part>/<score-part> cross-reference rule,
-        // not something the tree needs.
-        let mut builder = PartListBuilder::default();
-        let score_parts = &mut self.score_parts;
+        // Validation walks the <part-list> itself rather than borrowing the
+        // render-side builder: it has to report what that builder is entitled
+        // to panic on, and it cares about things the tree has no room for --
+        // notably whether every <part-group> is closed. The two walks agree
+        // on one thing only, that a part-list's children are flat: a
+        // <part-group> and a <score-part> are siblings, and nesting is
+        // expressed purely by start/stop order.
+        let mut open_groups: u32 = 0;
 
-        builder.build(
-            node,
-            |n| match n.attribute("type") {
-                Some("start") => PartGroupAction::Start,
-                Some("stop") => PartGroupAction::Stop,
-                _ => PartGroupAction::Other,
-            },
-            |n| match n.attribute("id") {
-                Some(id) => {
-                    score_parts.entry(id.to_string()).or_insert(n.range().start);
-                    Some(id.to_string())
+        for child in node.children().filter(|n| n.is_element()) {
+            if child.has_tag_name("part-group") {
+                match child.attribute("type") {
+                    Some("start") => open_groups += 1,
+                    Some("stop") if open_groups == 0 => ctx.issues.push(ValidationIssue {
+                        severity: Severity::Error,
+                        message: "<part-group type=\"stop\"> has no matching start".to_string(),
+                        at: child.range().start,
+                    }),
+                    Some("stop") => open_groups -= 1,
+                    Some(_) => {}
+                    None => ctx.issues.push(ValidationIssue {
+                        severity: Severity::Error,
+                        message: "<part-group> is missing required 'type' attribute".to_string(),
+                        at: child.range().start,
+                    }),
                 }
-                None => {
-                    ctx.issues.push(ValidationIssue {
+            }
+
+            if child.has_tag_name("score-part") {
+                match child.attribute("id") {
+                    Some(id) => {
+                        self.score_parts
+                            .entry(id.to_string())
+                            .or_insert(child.range().start);
+                    }
+                    None => ctx.issues.push(ValidationIssue {
                         severity: Severity::Error,
                         message: "<score-part> is missing required 'id' attribute".to_string(),
-                        at: n.range().start,
-                    });
-                    None
+                        at: child.range().start,
+                    }),
                 }
-            },
-        );
+            }
+        }
 
-        ctx.issues.push(ValidationIssue {
-            severity: Severity::Info,
-            message: format_part_list_tree(&builder.finish()),
-            at,
-        });
+        if open_groups > 0 {
+            ctx.issues.push(ValidationIssue {
+                severity: Severity::Warning,
+                message: format!("<part-list> leaves {open_groups} <part-group>(s) unclosed"),
+                at,
+            });
+        }
     }
 
     fn enter_part(&mut self, node: &Node, ctx: &mut ValidationCtx) {

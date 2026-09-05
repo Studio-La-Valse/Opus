@@ -1,17 +1,23 @@
-use crate::score::part_list::tracker::{PartGroupLevel, PartListTracker};
+use crate::musicxml::utils::NodeUtils;
 use crate::score::part_list::tree::PartListNode;
 use roxmltree::Node;
 use std::cmp::Reverse;
 
-/// What a `<part-group>` element's `type` attribute means to `build()`,
-/// decided by the caller so it can decide separately how to read (or panic
-/// on) that attribute.
-pub enum PartGroupAction {
-    Start,
-    Stop,
-    Other,
+/// Builds the part-list tree a score is rendered from, out of a `<part-list>`'s
+/// `<part-group>` start/stop and `<score-part>` elements in document order.
+///
+/// This is the render path and nothing else: attributes the format requires are
+/// read with `req_attribute`, which panics on a document that omits them.
+/// Validation has its own walk over the same elements (see
+/// `PartConsistencyVisitor`) precisely so it can report such a document instead
+/// of dying on it.
+pub fn build_part_list(part_list: &Node) -> Vec<PartListNode> {
+    let mut builder = PartListBuilder::default();
+    builder.build(part_list);
+    builder.finish()
 }
 
+/// A `<part-group>` that has been opened and is still collecting children.
 struct OpenScope {
     index: u32,
     name: Option<String>,
@@ -39,95 +45,61 @@ impl GroupHeader {
     }
 }
 
-/// Builds a `Vec<PartListNode>` from a `<part-list>`'s `<part-group>`
-/// start/stop and `<score-part>` elements, in document order. Wraps
-/// `PartListTracker` for the section/part-group index assignment, so a
-/// caller's tree can never disagree with what `SetupVisitor` assigns for
-/// render.
+/// The two-level state machine behind [`build_part_list`]: a section (the outer
+/// level, drawn as a bracket) holding part-groups (the inner level, drawn as a
+/// brace). Anything nested deeper than that is flattened, since the visual tree
+/// has nowhere to put it.
+///
+/// `first_order_index`/`second_order_index` are the section/part-group ids each
+/// `<score-part>` is stamped with, and `ScoreDefaults::lookup` reads back out of
+/// the finished tree. A part at the top level consumes a section index of its
+/// own, which is why an ungrouped part between two sections shifts every section
+/// index after it.
 #[derive(Default)]
-pub struct PartListBuilder {
-    tracker: PartListTracker,
+struct PartListBuilder {
     top: Vec<PartListNode>,
     open_section: Option<OpenScope>,
     open_group: Option<OpenScope>,
     pending_starts: Vec<GroupHeader>,
+
+    first_order_index: u32,
+    second_order_index: u32,
 }
 
 impl PartListBuilder {
     /// Walks a `<part-list>`'s children, dispatching `<part-group>` start/stop
-    /// and `<score-part>` elements. `part_group_action`/`score_part_id` are
-    /// the *only* two things that genuinely differ between render and
-    /// validation (whether a missing/malformed attribute panics or is
-    /// reported and skipped) -- everything else about the walk is identical,
-    /// so it lives here once instead of in both visitors.
-    ///
-    /// `score_part_id` returning `None` skips that `<score-part>` (the
-    /// caller is expected to have reported why, if it cares to); render's
-    /// closure can simply never return in that case, since `req_attribute`
-    /// panics before it would.
-    pub fn build(
-        &mut self,
-        node: &Node,
-        mut part_group_action: impl FnMut(&Node) -> PartGroupAction,
-        mut score_part_id: impl FnMut(&Node) -> Option<String>,
-    ) {
+    /// and `<score-part>` elements.
+    fn build(&mut self, node: &Node) {
         for child in node.children().filter(|n| n.is_element()) {
-            if child.has_tag_name("part-group") {
-                match part_group_action(&child) {
-                    PartGroupAction::Start => self.open_part_group_from_node(&child),
-                    PartGroupAction::Stop => self.close_part_group(),
-                    PartGroupAction::Other => {}
+            if child.has_tag("part-group") {
+                match child.req_attribute("type") {
+                    "start" => self.queue_part_group(&child),
+                    "stop" => self.close_part_group(),
+                    _ => {}
                 }
             }
 
-            if child.has_tag_name("score-part")
-                && let Some(id) = score_part_id(&child)
-            {
-                self.push_score_part(id, &child);
+            if child.has_tag("score-part") {
+                self.push_score_part(&child);
             }
-        }
-    }
-
-    /// Call on a `<part-group type="start">`.
-    fn open_part_group(&mut self, name: Option<String>, brace: Option<String>) {
-        match self.tracker.open_part_group() {
-            Some(PartGroupLevel::Section { index }) => {
-                self.open_section = Some(OpenScope {
-                    index,
-                    name,
-                    brace,
-                    children: Vec::new(),
-                });
-            }
-            Some(PartGroupLevel::Group { index, .. }) => {
-                self.open_group = Some(OpenScope {
-                    index,
-                    name,
-                    brace,
-                    children: Vec::new(),
-                });
-            }
-            None => {}
         }
     }
 
     /// Call on a `<part-group type="start">`, reading `<group-name>`/
-    /// `<group-symbol>` directly off the node. This extraction is identical
-    /// (and equally panic-free) whether the caller is render or validation,
-    /// so it lives here instead of being duplicated in both visitors.
+    /// `<group-symbol>` directly off the node.
     ///
     /// The header is only queued: nothing about the level it belongs to is
     /// decided until `flush_pending_starts` sees the whole run of starts.
-    fn open_part_group_from_node(&mut self, node: &Node) {
+    fn queue_part_group(&mut self, node: &Node) {
         let name = node
             .children()
-            .find(|n| n.has_tag_name("group-name"))
+            .find(|n| n.has_tag("group-name"))
             .and_then(|n| n.text())
             .map(|s| s.to_string());
 
         let brace = node
             .children()
-            .find(|n| n.has_tag_name("group-symbol"))
+            .find(|n| n.has_tag("group-symbol"))
             .and_then(|n| n.text())
             .map(|s| s.to_string());
 
@@ -160,12 +132,35 @@ impl PartListBuilder {
         }
     }
 
-    /// Call on a `<part-group type="stop">`.
+    /// Opens one level, ignoring the start entirely once both levels are taken.
+    fn open_part_group(&mut self, name: Option<String>, brace: Option<String>) {
+        if self.open_section.is_none() {
+            self.second_order_index = 0;
+            self.open_section = Some(OpenScope {
+                index: self.first_order_index,
+                name,
+                brace,
+                children: Vec::new(),
+            });
+        } else if self.open_group.is_none() {
+            self.open_group = Some(OpenScope {
+                index: self.second_order_index,
+                name,
+                brace,
+                children: Vec::new(),
+            });
+        }
+    }
+
+    /// Call on a `<part-group type="stop">`. Closes the innermost open level,
+    /// after opening anything still queued so that a start/stop pair with
+    /// nothing between it still produces its (empty) node.
     fn close_part_group(&mut self) {
         self.flush_pending_starts();
-        self.tracker.close_part_group();
 
         if let Some(group) = self.open_group.take() {
+            self.second_order_index += 1;
+
             let node = PartListNode::Group {
                 index: group.index,
                 name: group.name,
@@ -178,6 +173,9 @@ impl PartListBuilder {
                 None => self.top.push(node),
             }
         } else if let Some(section) = self.open_section.take() {
+            self.first_order_index += 1;
+            self.second_order_index = 0;
+
             self.top.push(PartListNode::Section {
                 index: section.index,
                 name: section.name,
@@ -187,56 +185,50 @@ impl PartListBuilder {
         }
     }
 
-    /// Call on a `<score-part>`. Returns its (section, part_group) assignment.
-    fn push_part(&mut self, id: String, name: String, abbr: String) -> (u32, u32) {
+    /// Call on a `<score-part>`, reading `<part-name>`/`<part-abbreviation>`
+    /// off the node and filing it under whichever level is currently open.
+    fn push_score_part(&mut self, node: &Node) {
         self.flush_pending_starts();
 
-        let (section, part_group) = self.tracker.register_score_part();
+        let id = node.req_attribute("id").to_string();
 
-        let node = PartListNode::Part {
-            id,
-            name,
-            abbr,
-            section,
-            part_group,
-        };
-
-        if let Some(group) = &mut self.open_group {
-            group.children.push(node);
-        } else if let Some(section) = &mut self.open_section {
-            section.children.push(node);
-        } else {
-            self.top.push(node);
-        }
-
-        (section, part_group)
-    }
-
-    /// Convenience wrapper over `push_part` that reads `<part-name>`/
-    /// `<part-abbreviation>` directly off a `<score-part>` node. The `id`
-    /// stays a caller-supplied parameter since how it's read (panicking in
-    /// render, graceful in validation) is the one thing that has to differ.
-    fn push_score_part(&mut self, id: String, node: &Node) -> (u32, u32) {
         let name = node
             .children()
-            .find(|n| n.has_tag_name("part-name"))
+            .find(|n| n.has_tag("part-name"))
             .and_then(|n| n.text())
             .unwrap_or("")
             .to_string();
 
         let abbr = node
             .children()
-            .find(|n| n.has_tag_name("part-abbreviation"))
+            .find(|n| n.has_tag("part-abbreviation"))
             .and_then(|n| n.text())
             .map(|s| s.to_string())
             .unwrap_or_else(|| name.clone());
 
-        self.push_part(id, name, abbr)
+        let part = PartListNode::Part {
+            id,
+            name,
+            abbr,
+            section: self.first_order_index,
+            part_group: self.second_order_index,
+        };
+
+        if let Some(group) = &mut self.open_group {
+            group.children.push(part);
+        } else if let Some(section) = &mut self.open_section {
+            section.children.push(part);
+            self.second_order_index += 1;
+        } else {
+            self.top.push(part);
+            self.first_order_index += 1;
+            self.second_order_index = 0;
+        }
     }
 
     /// Finalizes the tree, auto-closing any `<part-group>` that never got a
     /// matching "stop" rather than silently dropping its contents.
-    pub fn finish(mut self) -> Vec<PartListNode> {
+    fn finish(mut self) -> Vec<PartListNode> {
         self.flush_pending_starts();
 
         if self.open_group.is_some() {

@@ -10,6 +10,7 @@ use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
 use lib::drawable::drawable_element::{Scale, compute_bounds};
 use lib::geometry::xy::XY;
+use lib::musicxml::visitor::DefaultVisitor;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::engrave::{arrange_score, walk_document};
 use lib::score::score_defaults::ScoreDefaults;
@@ -221,12 +222,15 @@ impl WasmScore {
         let user_layout = UserLayout::default();
         let app_defaults: AppDefaults = Default::default();
 
+        // No extra first-pass visitor: the browser has nowhere to print a
+        // part-list dump to, so the log visitor is simply never chained here.
         let (score, defaults) = walk_document(
             &document,
             &font,
             &user_layout,
             &app_defaults,
             &mut |_stage| {},
+            DefaultVisitor {},
         );
 
         Ok(WasmScore {

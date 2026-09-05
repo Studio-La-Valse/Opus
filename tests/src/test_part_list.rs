@@ -2,55 +2,54 @@
 mod tests {
     use std::fs::read_to_string;
 
-    use lib::score::part_list::builder::{PartGroupAction, PartListBuilder};
+    use lib::musicxml::validate::ValidationCtx;
+    use lib::musicxml::validation_issue::{Severity, ValidationIssue};
+    use lib::musicxml::visitor::{DefaultVisitor, Visitor};
+    use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
+    use lib::musicxml::visitors::part_list_log_visitor::PartListLogVisitor;
+    use lib::musicxml::walker::Walker;
+    use lib::score::app_defaults::AppDefaults;
+    use lib::score::engrave::walk_document;
+    use lib::score::part_list::builder::build_part_list;
+    use lib::score::part_list::display::format_part_list_tree;
     use lib::score::part_list::tree::PartListNode;
+    use lib::score::user_layout::UserLayout;
+    use lib::smufl::smufl_font::SmuflFont;
 
     const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
+    const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
+    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     fn fixture(relative: &str) -> String {
         read_to_string(format!("{}/../{relative}", env!("CARGO_MANIFEST_DIR")))
             .unwrap_or_else(|e| panic!("failed to read {relative}: {e}"))
     }
 
-    /// Runs the builder over a `<part-list>` element, the graceful way the
-    /// validator does (no panics on missing attributes).
-    fn build(part_list: &roxmltree::Node) -> Vec<PartListNode> {
-        let mut builder = PartListBuilder::default();
-
-        builder.build(
-            part_list,
-            |n| match n.attribute("type") {
-                Some("start") => PartGroupAction::Start,
-                Some("stop") => PartGroupAction::Stop,
-                _ => PartGroupAction::Other,
-            },
-            |n| n.attribute("id").map(|id| id.to_string()),
-        );
-
-        builder.finish()
-    }
-
-    fn build_str(xml: &str) -> Vec<PartListNode> {
-        let doc = roxmltree::Document::parse(xml).expect("failed to parse test part-list");
-        build(&doc.root_element())
-    }
-
-    fn build_actor_prelude() -> Vec<PartListNode> {
-        let xml = fixture(ACTOR_PRELUDE);
-        let doc = roxmltree::Document::parse_with_options(
-            &xml,
+    fn parse(xml: &str) -> roxmltree::Document<'_> {
+        roxmltree::Document::parse_with_options(
+            xml,
             roxmltree::ParsingOptions {
                 allow_dtd: true,
                 ..Default::default()
             },
         )
-        .expect("failed to parse ActorPreludeSample");
+        .expect("failed to parse test document")
+    }
+
+    fn build_str(xml: &str) -> Vec<PartListNode> {
+        let doc = roxmltree::Document::parse(xml).expect("failed to parse test part-list");
+        build_part_list(&doc.root_element())
+    }
+
+    fn build_actor_prelude() -> Vec<PartListNode> {
+        let xml = fixture(ACTOR_PRELUDE);
+        let doc = parse(&xml);
         let part_list = doc
             .descendants()
             .find(|n| n.has_tag_name("part-list"))
             .expect("ActorPreludeSample has no <part-list>");
 
-        build(&part_list)
+        build_part_list(&part_list)
     }
 
     /// (name, brace, children) of a `Section`, panicking if the node is anything else.
@@ -248,5 +247,144 @@ mod tests {
         let (name, brace, _) = group(&percussion[1]);
         assert_eq!(name, Some("Percussion"));
         assert_eq!(brace, Some("brace"));
+    }
+
+    // ------------------------------------------------------------- validation
+
+    /// Runs the validation walk that owns the `<part-group>` balance rules.
+    fn validate(xml: &str) -> Vec<ValidationIssue> {
+        let doc = parse(xml);
+        let mut ctx = ValidationCtx::default();
+        let visitor = DefaultVisitor {}.uses(PartConsistencyVisitor::default());
+
+        Walker::new(visitor).walk(&doc, &mut ctx);
+
+        ctx.issues
+    }
+
+    /// The messages of every issue at `severity`, so a test can assert on the
+    /// rule it cares about without listing the walk's Info chatter.
+    fn messages(issues: &[ValidationIssue], severity: Severity) -> Vec<&str> {
+        issues
+            .iter()
+            .filter(|i| i.severity == severity)
+            .map(|i| i.message.as_str())
+            .collect()
+    }
+
+    /// A minimal score whose `<part-list>` body is `part_list`, with one part so
+    /// the unrelated "score has no <part> elements" rule stays quiet.
+    fn score_with_part_list(part_list: &str) -> String {
+        format!(
+            r#"<score-partwise>
+                <part-list>{part_list}</part-list>
+                <part id="P1"><measure number="1"/></part>
+            </score-partwise>"#
+        )
+    }
+
+    #[test]
+    fn a_stop_without_a_start_is_an_error() {
+        let issues = validate(&score_with_part_list(
+            r#"<score-part id="P1"><part-name>Piano</part-name></score-part>
+               <part-group type="stop"/>"#,
+        ));
+
+        assert_eq!(
+            messages(&issues, Severity::Error),
+            vec!["<part-group type=\"stop\"> has no matching start"]
+        );
+    }
+
+    #[test]
+    fn an_unclosed_group_is_a_warning() {
+        let issues = validate(&score_with_part_list(
+            r#"<part-group type="start"><group-symbol>bracket</group-symbol></part-group>
+               <part-group type="start"><group-symbol>brace</group-symbol></part-group>
+               <score-part id="P1"><part-name>Piano</part-name></score-part>"#,
+        ));
+
+        assert_eq!(
+            messages(&issues, Severity::Warning),
+            vec!["<part-list> leaves 2 <part-group>(s) unclosed"]
+        );
+        assert!(messages(&issues, Severity::Error).is_empty());
+    }
+
+    #[test]
+    fn a_part_group_without_a_type_is_an_error() {
+        let issues = validate(&score_with_part_list(
+            r#"<part-group><group-symbol>bracket</group-symbol></part-group>
+               <score-part id="P1"><part-name>Piano</part-name></score-part>"#,
+        ));
+
+        assert_eq!(
+            messages(&issues, Severity::Error),
+            vec!["<part-group> is missing required 'type' attribute"]
+        );
+    }
+
+    /// The whole point of reading start/stop order instead of `number`:
+    /// ActorPreludeSample's part-groups are perfectly balanced even though its
+    /// numbering is not, so validation must find nothing to complain about.
+    #[test]
+    fn actor_prelude_reports_no_part_group_issues() {
+        let issues = validate(&fixture(ACTOR_PRELUDE));
+
+        assert!(
+            !issues
+                .iter()
+                .any(|i| i.severity != Severity::Info && i.message.contains("part-group")),
+            "unexpected part-group issues: {:?}",
+            issues
+                .iter()
+                .filter(|i| i.severity != Severity::Info)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    /// Validation no longer prints the tree; that moved to the build path.
+    #[test]
+    fn validation_does_not_log_the_tree() {
+        let issues = validate(&fixture(ACTOR_PRELUDE));
+
+        assert!(!issues.iter().any(|i| i.message.contains("├──")));
+    }
+
+    // ---------------------------------------------------------------- logging
+
+    /// Walks ActorPreludeSample with the log visitor chained in, returning
+    /// whatever it wrote to its sink.
+    fn logged_tree(enabled: bool) -> Vec<String> {
+        let musicxml = fixture(ACTOR_PRELUDE);
+        let font = SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES));
+        let document = parse(&musicxml);
+
+        let mut captured: Vec<String> = Vec::new();
+
+        walk_document(
+            &document,
+            &font,
+            &UserLayout::default(),
+            &AppDefaults::default(),
+            &mut |_| {},
+            PartListLogVisitor::new(enabled, |tree| captured.push(tree.to_string())),
+        );
+
+        captured
+    }
+
+    #[test]
+    fn the_log_visitor_reports_the_built_tree() {
+        let captured = logged_tree(true);
+
+        assert_eq!(captured.len(), 1, "the tree is logged exactly once");
+        assert_eq!(captured[0], format_part_list_tree(&build_actor_prelude()));
+        assert!(captured[0].contains("part-group 0 \"Horns in F\" (brace)"));
+    }
+
+    #[test]
+    fn the_log_visitor_stays_silent_when_disabled() {
+        assert!(logged_tree(false).is_empty());
     }
 }

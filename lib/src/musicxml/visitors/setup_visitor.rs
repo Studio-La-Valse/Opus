@@ -2,7 +2,7 @@ use crate::musicxml::utils::NodeUtils;
 use crate::musicxml::utils::ReqParse;
 use crate::musicxml::visitor::Visitor;
 use crate::musicxml::walker_ctx::WalkerCtx;
-use crate::score::part_list::builder::{PartGroupAction, PartListBuilder};
+use crate::score::part_list::builder::build_part_list;
 use crate::score::score_defaults::PageMargins;
 use roxmltree::Node;
 
@@ -85,19 +85,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
     }
 
     fn enter_part_list(&mut self, element: &Node, ctx: &mut WalkerCtx) {
-        let mut builder = PartListBuilder::default();
-
-        builder.build(
-            element,
-            |n| match n.req_attribute("type") {
-                "start" => PartGroupAction::Start,
-                "stop" => PartGroupAction::Stop,
-                _ => PartGroupAction::Other,
-            },
-            |n| Some(n.req_attribute("id").to_string()),
-        );
-
-        ctx.layout.part_list = builder.finish();
+        ctx.layout.part_list = build_part_list(element);
     }
 
     fn enter_part(&mut self, _node: &Node, ctx: &mut WalkerCtx) {

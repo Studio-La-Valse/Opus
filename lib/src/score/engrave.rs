@@ -13,6 +13,13 @@
 //! no timing of its own -- a caller that wants durations measures between
 //! callbacks itself. That matters because `std::time::Instant` is unimplemented
 //! on `wasm32-unknown-unknown` and panics on first use.
+//!
+//! Anything a caller wants to observe about the walk it supplies as `extra`, a
+//! visitor chained after the built-in ones on the first pass. That is how the
+//! CLI gets its `--debug` part-list dump
+//! ([`crate::musicxml::visitors::part_list_log_visitor`]) without `lib` gaining
+//! a print, and how the wasm bindings opt out of it by passing
+//! [`DefaultVisitor`].
 
 use std::collections::HashSet;
 
@@ -64,15 +71,22 @@ pub enum Stage {
 
 /// Runs the full engraving sequence on an already-parsed `document`: the two
 /// walk passes followed by layout resolution, rebeaming, measuring and page
-/// arrangement. `progress` is invoked once at every [`Stage`] boundary.
-pub fn engrave(
+/// arrangement. `progress` is invoked once at every [`Stage`] boundary, and
+/// `extra` is the caller's own first-pass visitor ([`DefaultVisitor`] for a
+/// caller that has none).
+pub fn engrave<V>(
     document: &Document,
     font: &SmuflFont,
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
-) -> EngravedScore {
-    let (mut score, layout) = walk_document(document, font, user_layout, app_defaults, progress);
+    extra: V,
+) -> EngravedScore
+where
+    V: for<'a> Visitor<WalkerCtx<'a>>,
+{
+    let (mut score, layout) =
+        walk_document(document, font, user_layout, app_defaults, progress, extra);
     arrange_score(&mut score, &layout, user_layout, app_defaults, progress);
     EngravedScore { score, layout }
 }
@@ -81,14 +95,20 @@ pub fn engrave(
 /// depends on [`UserLayout`] beyond satisfying `WalkerCtx::new`, so the result
 /// can be cached and re-arranged for different user layouts.
 ///
-/// Emits [`Stage::FirstPass`] and [`Stage::SecondPass`].
-pub fn walk_document(
+/// Emits [`Stage::FirstPass`] and [`Stage::SecondPass`]. `extra` is chained
+/// last on the first pass, so it observes a context the built-in visitors have
+/// already filled in.
+pub fn walk_document<V>(
     document: &Document,
     font: &SmuflFont,
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
-) -> (Score, ScoreDefaults) {
+    extra: V,
+) -> (Score, ScoreDefaults)
+where
+    V: for<'a> Visitor<WalkerCtx<'a>>,
+{
     let mut cursor = WalkCursor::default();
     let mut layout = ScoreDefaults::default();
     let mut score = Score::default();
@@ -98,7 +118,8 @@ pub fn walk_document(
         .uses(SetupVisitor {})
         .uses(LayoutVisitor {
             encountered: HashSet::new(),
-        });
+        })
+        .uses(extra);
     let mut ctx = WalkerCtx::new(
         user_layout,
         &mut layout,
