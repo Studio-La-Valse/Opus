@@ -5,7 +5,6 @@ mod tests {
 
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
-    use lib::musicxml::visitor::DefaultVisitor;
     use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::engrave;
     use lib::score::score_defaults::ScoreDefaults;
@@ -464,7 +463,6 @@ mod tests {
             &UserLayout::default(),
             &AppDefaults::default(),
             &mut |_| {},
-            DefaultVisitor {},
         )
     }
 

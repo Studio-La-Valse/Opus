@@ -26,30 +26,19 @@ impl Visitor<ValidationCtx> for PartConsistencyVisitor {
                 ),
                 at: node.range().start,
             });
-        } else {
-            ctx.issues.push(ValidationIssue {
-                severity: Severity::Info,
-                message: "Now entering score-partwise".to_string(),
-                at: self.root_at,
-            });
         }
     }
 
     fn enter_part_list(&mut self, node: &Node, ctx: &mut ValidationCtx) {
         let at = node.range().start;
-        ctx.issues.push(ValidationIssue {
-            severity: Severity::Info,
-            message: "Collecting parts...".to_string(),
-            at,
-        });
 
         // Validation walks the <part-list> itself rather than borrowing the
-        // render-side builder: it has to report what that builder is entitled
-        // to panic on, and it cares about things the tree has no room for --
-        // notably whether every <part-group> is closed. The two walks agree
-        // on one thing only, that a part-list's children are flat: a
-        // <part-group> and a <score-part> are siblings, and nesting is
-        // expressed purely by start/stop order.
+        // tree the builder produces: it cares about things that tree has no
+        // room for -- notably whether every <part-group> is closed, which the
+        // builder silently repairs. The two walks agree on one thing only,
+        // that a part-list's children are flat: a <part-group> and a
+        // <score-part> are siblings, and nesting is expressed purely by
+        // start/stop order.
         let mut open_groups: u32 = 0;
 
         for child in node.children().filter(|n| n.is_element()) {
@@ -97,15 +86,6 @@ impl Visitor<ValidationCtx> for PartConsistencyVisitor {
     }
 
     fn enter_part(&mut self, node: &Node, ctx: &mut ValidationCtx) {
-        if self.current_part.is_none() {
-            let at = node.range().start;
-            ctx.issues.push(ValidationIssue {
-                severity: Severity::Info,
-                message: "Now traversing parts...".to_string(),
-                at,
-            });
-        }
-
         match node.attribute("id") {
             Some(id) => {
                 self.parts
@@ -142,22 +122,6 @@ impl Visitor<ValidationCtx> for PartConsistencyVisitor {
     }
 
     fn exit(&mut self, ctx: &mut ValidationCtx) {
-        ctx.issues.push(ValidationIssue {
-            severity: Severity::Info,
-            message: "Done, now gracefully exiting score-partwise".to_string(),
-            at: self.root_at,
-        });
-
-        let total_measures: u32 = self.measure_counts.values().sum();
-        ctx.issues.push(ValidationIssue {
-            severity: Severity::Info,
-            message: format!(
-                "Found {} part(s) and {total_measures} measure(s) total",
-                self.parts.len()
-            ),
-            at: self.root_at,
-        });
-
         if self.parts.is_empty() {
             ctx.issues.push(ValidationIssue {
                 severity: Severity::Error,

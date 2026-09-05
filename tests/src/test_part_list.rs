@@ -5,20 +5,14 @@ mod tests {
     use lib::musicxml::validate::ValidationCtx;
     use lib::musicxml::validation_issue::{Severity, ValidationIssue};
     use lib::musicxml::visitor::{DefaultVisitor, Visitor};
+    use lib::musicxml::visitors::logging_visitor::LoggingVisitor;
     use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
-    use lib::musicxml::visitors::part_list_log_visitor::PartListLogVisitor;
     use lib::musicxml::walker::Walker;
-    use lib::score::app_defaults::AppDefaults;
-    use lib::score::engrave::walk_document;
     use lib::score::part_list::builder::build_part_list;
     use lib::score::part_list::display::format_part_list_tree;
     use lib::score::part_list::tree::PartListNode;
-    use lib::score::user_layout::UserLayout;
-    use lib::smufl::smufl_font::SmuflFont;
 
     const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
-    const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     fn fixture(relative: &str) -> String {
         read_to_string(format!("{}/../{relative}", env!("CARGO_MANIFEST_DIR")))
@@ -343,48 +337,104 @@ mod tests {
         );
     }
 
-    /// Validation no longer prints the tree; that moved to the build path.
+    /// The consistency visitor reports defects and narrates nothing: no tree,
+    /// no running commentary, nothing at Info at all. That is the logging
+    /// visitor's job now.
     #[test]
-    fn validation_does_not_log_the_tree() {
+    fn the_consistency_visitor_does_not_narrate() {
         let issues = validate(&fixture(ACTOR_PRELUDE));
 
-        assert!(!issues.iter().any(|i| i.message.contains("├──")));
+        assert!(issues.iter().all(|i| i.severity != Severity::Info));
     }
 
     // ---------------------------------------------------------------- logging
 
-    /// Walks ActorPreludeSample with the log visitor chained in, returning
-    /// whatever it wrote to its sink.
-    fn logged_tree(enabled: bool) -> Vec<String> {
-        let musicxml = fixture(ACTOR_PRELUDE);
-        let font = SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES));
-        let document = parse(&musicxml);
+    /// Runs the logging visitor on its own, so a test sees its narration and
+    /// nothing else.
+    fn log(xml: &str) -> Vec<String> {
+        let doc = parse(xml);
+        let mut ctx = ValidationCtx::default();
+        let visitor = DefaultVisitor {}.uses(LoggingVisitor::default());
 
-        let mut captured: Vec<String> = Vec::new();
+        Walker::new(visitor).walk(&doc, &mut ctx);
 
-        walk_document(
-            &document,
-            &font,
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_| {},
-            PartListLogVisitor::new(enabled, |tree| captured.push(tree.to_string())),
+        assert!(
+            ctx.issues.iter().all(|i| i.severity == Severity::Info),
+            "the logging visitor reports nothing but Info"
         );
 
-        captured
+        ctx.issues.into_iter().map(|i| i.message).collect()
     }
 
     #[test]
-    fn the_log_visitor_reports_the_built_tree() {
-        let captured = logged_tree(true);
+    fn the_logging_visitor_reports_the_built_tree() {
+        let logged = log(&fixture(ACTOR_PRELUDE));
+        let tree = format_part_list_tree(&build_actor_prelude());
 
-        assert_eq!(captured.len(), 1, "the tree is logged exactly once");
-        assert_eq!(captured[0], format_part_list_tree(&build_actor_prelude()));
-        assert!(captured[0].contains("part-group 0 \"Horns in F\" (brace)"));
+        assert_eq!(
+            logged.iter().filter(|m| **m == tree).count(),
+            1,
+            "the tree is logged exactly once, as built"
+        );
+        assert!(tree.contains("part-group 0 \"Horns in F\" (brace)"));
+    }
+
+    /// The tree is reported as reading the part-list finishes, after the
+    /// "Collecting parts..." that announces it and before the parts are walked.
+    #[test]
+    fn the_tree_is_logged_between_collecting_and_traversing() {
+        let logged = log(&fixture(ACTOR_PRELUDE));
+        let position = |needle: &str| {
+            logged
+                .iter()
+                .position(|m| m.starts_with(needle))
+                .unwrap_or_else(|| panic!("never logged: {needle}"))
+        };
+
+        assert!(position("Collecting parts...") < position("score-partwise\n"));
+        assert!(position("score-partwise\n") < position("Now traversing parts..."));
     }
 
     #[test]
-    fn the_log_visitor_stays_silent_when_disabled() {
-        assert!(logged_tree(false).is_empty());
+    fn the_logging_visitor_narrates_the_whole_walk() {
+        let logged = log(&fixture(ACTOR_PRELUDE));
+
+        assert_eq!(
+            logged.first().map(String::as_str),
+            Some("Now entering score-partwise")
+        );
+        assert_eq!(
+            &logged[logged.len() - 2..],
+            &[
+                "Done, now gracefully exiting score-partwise".to_string(),
+                "Found 22 part(s) and 902 measure(s) total".to_string(),
+            ]
+        );
+    }
+
+    /// It narrates whatever it is given, rather than assuming score-partwise.
+    #[test]
+    fn the_logging_visitor_names_the_root_it_actually_found() {
+        let logged = log("<score-timewise><part-list/></score-timewise>");
+
+        assert_eq!(
+            logged.first().map(String::as_str),
+            Some("Now entering score-timewise")
+        );
+        assert!(logged.contains(&"Done, now gracefully exiting score-timewise".to_string()));
+    }
+
+    /// A part-list the builder cannot fully read still logs the tree it could
+    /// get out of it, rather than bringing the walk down.
+    #[test]
+    fn a_malformed_part_list_is_logged_not_fatal() {
+        let logged = log(&score_with_part_list(
+            r#"<part-group><group-symbol>bracket</group-symbol></part-group>
+               <score-part><part-name>No id</part-name></score-part>
+               <score-part id="P1"><part-name>Piano</part-name></score-part>"#,
+        ));
+
+        assert!(logged.iter().any(|m| m.contains("P1 \"Piano\"")));
+        assert!(!logged.iter().any(|m| m.contains("No id")));
     }
 }

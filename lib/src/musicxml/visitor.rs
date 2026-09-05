@@ -58,6 +58,7 @@ define_visitor! {
     },
     ctx: {
         exit_defaults,
+        exit_part_list,
         exit_note,
         exit_measure,
         exit_part,

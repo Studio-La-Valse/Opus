@@ -3,8 +3,8 @@ use clap::{Args, Subcommand};
 use lib::geometry::color::Color;
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
+use lib::musicxml::visitors::logging_visitor::LoggingVisitor;
 use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
-use lib::musicxml::visitors::part_list_log_visitor::PartListLogVisitor;
 use lib::musicxml::visitors::position_visitor::PositionVisitor;
 use lib::musicxml::walker::Walker;
 use lib::score::app_defaults::AppDefaults;
@@ -148,6 +148,7 @@ pub fn run(format: RenderCommand) {
 
     let mut validation_ctx = ValidationCtx::default();
     let visitor = DefaultVisitor {}
+        .uses(LoggingVisitor::default())
         .uses(PartConsistencyVisitor::default())
         .uses(PositionVisitor::default());
     Walker::new(visitor).walk(&document, &mut validation_ctx);
@@ -194,9 +195,6 @@ pub fn run(format: RenderCommand) {
                 Stage::LayoutPass => println!("Layout pass: {elapsed}ms"),
             }
         },
-        // Under `--debug`, dump the part-list tree the walk actually produced.
-        // The visitor formats it; printing is the CLI's business.
-        PartListLogVisitor::new(debug, |tree| println!("{tree}")),
     );
 
     let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
