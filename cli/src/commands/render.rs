@@ -173,6 +173,7 @@ pub fn run(format: RenderCommand) {
     let EngravedScore {
         score: visual,
         layout,
+        messages,
     } = engrave(
         &document,
         &font,
@@ -194,6 +195,13 @@ pub fn run(format: RenderCommand) {
             }
         },
     );
+
+    // Guarded because `print_issues` announces an empty list as "no issues
+    // found", which would read as a validation verdict rather than as the walk
+    // simply having had nothing to say.
+    if !messages.is_empty() {
+        print_issues(&document, &messages);
+    }
 
     let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
     let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);

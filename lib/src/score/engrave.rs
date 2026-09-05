@@ -13,13 +13,19 @@
 //! no timing of its own -- a caller that wants durations measures between
 //! callbacks itself. That matters because `std::time::Instant` is unimplemented
 //! on `wasm32-unknown-unknown` and panics on first use.
+//!
+//! Narrating a walk is not this pipeline's job either: [`BuildLoggingVisitor`]
+//! rides along on the first pass and reports through the context, and
+//! [`walk_document`] hands those messages back for the caller to print or drop.
 
 use std::collections::HashSet;
 
 use roxmltree::Document;
 
 use crate::geometry::xy::XY;
+use crate::musicxml::validation_issue::ValidationIssue;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
+use crate::musicxml::visitors::build_logging_visitor::BuildLoggingVisitor;
 use crate::musicxml::visitors::content_visitor::ContentVisitor;
 use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
 use crate::musicxml::visitors::setup_visitor::SetupVisitor;
@@ -44,6 +50,10 @@ use crate::smufl::smufl_font::SmuflFont;
 pub struct EngravedScore {
     pub score: Score,
     pub layout: ScoreDefaults,
+    /// What the walk had to say for itself, from
+    /// [`crate::musicxml::visitors::build_logging_visitor`]. Informational only;
+    /// a caller is free to print or drop them.
+    pub messages: Vec<ValidationIssue>,
 }
 
 /// A boundary the pipeline has just crossed, reported as soon as the step that
@@ -72,33 +82,43 @@ pub fn engrave(
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
 ) -> EngravedScore {
-    let (mut score, layout) = walk_document(document, font, user_layout, app_defaults, progress);
+    let (mut score, layout, messages) =
+        walk_document(document, font, user_layout, app_defaults, progress);
     arrange_score(&mut score, &layout, user_layout, app_defaults, progress);
-    EngravedScore { score, layout }
+    EngravedScore {
+        score,
+        layout,
+        messages,
+    }
 }
 
 /// The two document walks that build the [`Score`] and [`ScoreDefaults`]. Nothing here
 /// depends on [`UserLayout`] beyond satisfying `WalkerCtx::new`, so the result
 /// can be cached and re-arranged for different user layouts.
 ///
-/// Emits [`Stage::FirstPass`] and [`Stage::SecondPass`].
+/// Emits [`Stage::FirstPass`] and [`Stage::SecondPass`], and returns whatever
+/// [`BuildLoggingVisitor`] had to say about the walk.
 pub fn walk_document(
     document: &Document,
     font: &SmuflFont,
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
-) -> (Score, ScoreDefaults) {
+) -> (Score, ScoreDefaults, Vec<ValidationIssue>) {
     let mut cursor = WalkCursor::default();
     let mut layout = ScoreDefaults::default();
     let mut score = Score::default();
+    let mut messages = Vec::new();
 
+    // The logger is chained last so that what it reports is what the visitors
+    // ahead of it have already produced.
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
         .uses(SetupVisitor {})
         .uses(LayoutVisitor {
             encountered: HashSet::new(),
-        });
+        })
+        .uses(BuildLoggingVisitor::default());
     let mut ctx = WalkerCtx::new(
         user_layout,
         &mut layout,
@@ -106,6 +126,7 @@ pub fn walk_document(
         &mut cursor,
         &mut score,
         font,
+        &mut messages,
     );
     Walker::new(visitor).walk(document, &mut ctx);
 
@@ -122,12 +143,13 @@ pub fn walk_document(
         &mut cursor,
         &mut score,
         font,
+        &mut messages,
     );
     Walker::new(visitor).walk(document, &mut ctx);
 
     progress(Stage::SecondPass);
 
-    (score, layout)
+    (score, layout, messages)
 }
 
 /// Resolves the user layout onto an already-walked `score`, rebeams it, measures

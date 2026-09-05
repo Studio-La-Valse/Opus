@@ -26,7 +26,10 @@ impl<V> Walker<V> {
                     self.visitor.enter_defaults(&child, ctx);
                     self.visitor.exit_defaults(ctx);
                 }
-                "part-list" => self.visitor.enter_part_list(&child, ctx),
+                "part-list" => {
+                    self.visitor.enter_part_list(&child, ctx);
+                    self.visitor.exit_part_list(ctx);
+                }
                 "part" => {
                     self.visitor.enter_part(&child, ctx);
 

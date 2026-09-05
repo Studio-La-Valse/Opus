@@ -2,6 +2,7 @@ mod test_bbox;
 mod test_canvas;
 mod test_clef;
 mod test_flat_buffer;
+mod test_part_list;
 mod test_pdf;
 mod test_ray;
 mod test_render_paths;
