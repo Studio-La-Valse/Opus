@@ -120,14 +120,18 @@ impl Part {
         }
     }
 
-    pub fn set_opening_clef<F: Fn(CoreClef) -> DrawableClef>(
+    /// `f` is handed the staff's line count alongside the clef, because a clef
+    /// that names no pitch is centred on the staff rather than fixed to a line
+    /// of it. The staves already carry the count by this point: it is settled on
+    /// the layout walk, and opening clefs are set on the content one.
+    pub fn set_opening_clef<F: Fn(CoreClef, usize) -> DrawableClef>(
         &mut self,
         clefs: &BTreeMap<StaffIdx, CoreClef>,
         f: F,
     ) {
         for (idx, clef) in clefs {
             let staff = self.staves.entry(*idx).or_default();
-            let drawable = f(*clef);
+            let drawable = f(*clef, staff.lines);
             let measure = staff.measures.values_mut().next().unwrap();
             measure.clef_start = Some(drawable);
         }

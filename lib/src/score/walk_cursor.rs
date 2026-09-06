@@ -5,6 +5,7 @@ use crate::score::core::note_kind::NoteKind;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
 use crate::score::visual::note::NoteId;
+use crate::score::visual::staff::Staff;
 use std::collections::{BTreeMap, HashSet};
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
@@ -57,6 +58,16 @@ pub struct StaffInfo {
 }
 
 impl StaffInfo {
+    /// How many lines the staff is drawn with as the walk stands: what
+    /// `<staff-details><staff-lines>` last said about it, or the five a staff
+    /// has when the document never says.
+    pub fn lines(&self, staff_idx: &StaffIdx) -> usize {
+        self.lines
+            .get(staff_idx)
+            .copied()
+            .unwrap_or(Staff::DEFAULT_LINES)
+    }
+
     pub fn active_clef(&self, staff_idx: &StaffIdx, position: &u32) -> Clef {
         if let Some(clef_changes) = self.clef_changes.get(staff_idx) {
             let mut clef: Option<Clef> = None;

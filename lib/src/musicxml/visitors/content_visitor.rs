@@ -324,7 +324,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
     fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx: StaffIdx = ctx.cursor.staff.number;
         let clef = ctx.cursor.staff.active_clef.get(&staff_idx).unwrap();
-        let visual_clef = Clef::new(ctx.font.clef(clef));
+        let staff_lines = ctx.cursor.staff.lines(&staff_idx);
+        let visual_clef = Clef::new(ctx.font.clef(clef, staff_lines));
 
         if ctx.cursor.position > 0 {
             // Mid-measure: Anchor to a chord or rest
@@ -405,8 +406,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
 
         // set_opening_clef must run after the layout pass' consolidate_measure_width(),
         // because all measures must exist in each staff
-        part.set_opening_clef(&ctx.cursor.staff.opening_clef, |c| {
-            let smufl_clef = ctx.font.clef(&c);
+        part.set_opening_clef(&ctx.cursor.staff.opening_clef, |c, staff_lines| {
+            let smufl_clef = ctx.font.clef(&c, staff_lines);
             Clef::new(smufl_clef)
         });
 

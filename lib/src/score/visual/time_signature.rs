@@ -52,14 +52,20 @@ impl TimeSignature {
         Staff::DEFAULT_SPACE_SIZE * self.scale
     }
 
-    /// The numerator is drawn in the top half of the available height, the
-    /// denominator in the bottom half.
+    /// The numerator sits one space above the middle of the staff, the
+    /// denominator one space below it -- so on the usual five lines they land on
+    /// the second and fourth, the halves each digit is drawn centred in.
+    ///
+    /// Measured from the middle outwards rather than as quarters of the staff's
+    /// height, because a staff of one line is zero tenths tall: quartering that
+    /// puts both halves of the signature in the same place, on top of each
+    /// other.
     fn num_xy(&self) -> XY {
-        self.xy.mv(0., self.height / 4.)
+        self.xy.mv(0., self.height / 2. - self.unit())
     }
 
     fn denom_xy(&self) -> XY {
-        self.xy.mv(0., self.height / 4. * 3.)
+        self.xy.mv(0., self.height / 2. + self.unit())
     }
 
     /// Every digit of the numerator with the position to draw it at, laid out

@@ -24,8 +24,17 @@ pub enum Clef {
 }
 
 impl Clef {
-    /// The line on the staff that denotes the middle alignment of a smufl glyph.
-    pub fn anchor_line(&self) -> i32 {
+    /// The line on the staff that denotes the middle alignment of a smufl glyph,
+    /// in half-spaces down from the top line of a staff of `staff_lines` lines.
+    ///
+    /// A pitched clef names a pitch, and a pitch has one place on the staff
+    /// whatever the staff looks like: the G of a treble clef is the G that
+    /// [`line_index_at_pitch`](Self::line_index_at_pitch) would put a written G4
+    /// on, so those anchors are fixed and ignore `staff_lines`. The two clefs
+    /// that name no pitch have nothing to be fixed to and are centred on the
+    /// staff instead -- which for the usual five lines is the middle line, the
+    /// same 4 as before.
+    pub fn anchor_line(&self, staff_lines: usize) -> i32 {
         match self {
             Self::Treble => 6,
             Self::Soprano => 8,
@@ -34,9 +43,16 @@ impl Clef {
             Self::Tenor => 2,
             Self::Baritone => 0,
             Self::Bass => 2,
-            Self::Percussion => 4,
-            Self::Tab => 4,
+            Self::Percussion | Self::Tab => Self::middle_line(staff_lines),
         }
+    }
+
+    /// The half-space index of the middle of a staff of `staff_lines` lines:
+    /// the middle line itself when there is an odd number of them, the middle
+    /// space when there is an even number, and the single line of a one-line
+    /// staff.
+    fn middle_line(staff_lines: usize) -> i32 {
+        staff_lines.saturating_sub(1) as i32
     }
 
     /// The line on the staff that denotes the location of the middle c.

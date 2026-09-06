@@ -14,7 +14,7 @@
                 "--out", "assets/xmltest", "--overwrite",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                // "--debug",
+                "--debug",
                 "--page-color", "#112233",
                 "--foreground-color", "#d9d5cc"
             ],

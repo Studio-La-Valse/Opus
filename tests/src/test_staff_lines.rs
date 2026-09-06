@@ -19,6 +19,7 @@ mod tests {
     use lib::score::core::staff_idx::StaffIdx;
     use lib::score::engrave::{arrange_score, walk_document};
     use lib::score::user_layout::UserLayout;
+    use lib::score::visual::clef::Clef;
     use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::{BaseRenderer, RenderPass};
     use lib::score::visual::score::Score;
@@ -43,9 +44,19 @@ mod tests {
         })
     }
 
-    /// A one-part, one-measure, one-staff score. `staff_details` goes inside the
-    /// `<attributes>` beside the clef, `notes` after them.
+    /// A one-part, one-measure, one-staff score in treble clef. `staff_details`
+    /// goes inside the `<attributes>` beside the clef, `notes` after them.
     fn score_xml(staff_details: &str, notes: &str) -> String {
+        score_xml_with_clef(
+            "<clef><sign>G</sign><line>2</line></clef>",
+            staff_details,
+            notes,
+        )
+    }
+
+    /// The same, with the `<clef>` spelled out -- a staff that is not five lines
+    /// is usually a staff whose clef names no pitch.
+    fn score_xml_with_clef(clef: &str, staff_details: &str, notes: &str) -> String {
         format!(
             "<score-partwise version=\"4.0\">\
              <part-list><score-part id=\"P1\"><part-name>P</part-name></score-part></part-list>\
@@ -53,7 +64,7 @@ mod tests {
              <attributes><divisions>4</divisions>\
              <key><fifths>0</fifths><mode>major</mode></key>\
              <time><beats>4</beats><beat-type>4</beat-type></time>\
-             <clef><sign>G</sign><line>2</line></clef>{staff_details}</attributes>\
+             {clef}{staff_details}</attributes>\
              {notes}</measure></part></score-partwise>"
         )
     }
@@ -129,6 +140,18 @@ mod tests {
         assert_eq!(staves.len(), 1, "expected a single staff");
 
         staves[0].1
+    }
+
+    /// The clef the one staff of a one-staff score opens with.
+    fn opening_clef(score: &Score) -> &Clef {
+        staff(score)
+            .measures
+            .values()
+            .next()
+            .expect("the staff has no measures")
+            .clef_start
+            .as_ref()
+            .expect("the measure has no opening clef")
     }
 
     fn ledger_count(score: &Score) -> usize {
@@ -269,6 +292,44 @@ mod tests {
         ));
         // Three lines end at what was the middle line, two lines above E4.
         assert_eq!(ledger_count(&three), 2, "E4 hangs two lines below");
+    }
+
+    /// The clef a one-line percussion staff opens with is centred on that line,
+    /// not on the middle line the five-line staff it isn't would have had.
+    #[test]
+    fn a_pitchless_clef_is_centred_on_the_staff_it_opens() {
+        for (lines, expected) in [(5, 4), (1, 0), (3, 2)] {
+            let score = engrave(&score_xml_with_clef(
+                "<clef><sign>percussion</sign></clef>",
+                &format!("<staff-details><staff-lines>{lines}</staff-lines></staff-details>"),
+                &note("C", 5),
+            ));
+
+            assert_eq!(
+                opening_clef(&score).clef.line,
+                expected,
+                "a percussion clef on {lines} lines"
+            );
+        }
+    }
+
+    /// A treble clef names the G it is drawn around, and that G is in the same
+    /// place however many lines the staff has -- the note is placed from the top
+    /// line too.
+    #[test]
+    fn a_pitched_clef_keeps_its_line_whatever_the_staff() {
+        for lines in [5, 1, 3, 6] {
+            let score = engrave(&score_xml(
+                &format!("<staff-details><staff-lines>{lines}</staff-lines></staff-details>"),
+                &note("C", 5),
+            ));
+
+            assert_eq!(
+                opening_clef(&score).clef.line,
+                6,
+                "a treble clef on {lines} lines"
+            );
+        }
     }
 
     /// A staff drawn without any lines has nothing for a ledger line to extend.
