@@ -50,7 +50,7 @@ impl From<&str> for BeamType {
             "begin" => BeamType::Start,
             "continue" => BeamType::Continue,
             "end" => BeamType::End,
-            "hookstart" => BeamType::HookStart,
+            "forward hook" => BeamType::HookStart,
             "backward hook" => BeamType::HookEnd,
             _ => panic!("Unknown beam type: '{}'", value),
         }

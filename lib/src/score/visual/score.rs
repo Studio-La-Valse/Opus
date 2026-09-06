@@ -36,8 +36,14 @@ pub struct Score {
 }
 
 impl Score {
+    /// The page under `page_number`, creating it if it isn't there yet. The
+    /// created page is stamped with its own number, which `Page::resolve_layout`
+    /// needs to pick odd- or even-page margins.
     pub fn page_or_insert(&mut self, page_number: u32) -> &mut Page {
-        self.pages.entry(page_number).or_default()
+        self.pages.entry(page_number).or_insert_with(|| Page {
+            number: page_number,
+            ..Default::default()
+        })
     }
 
     /// Walks page -> system -> section -> part group -> part, creating every

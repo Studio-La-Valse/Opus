@@ -1,12 +1,13 @@
-use crate::commands::print_issues;
+use crate::commands::{print_issues, read_musicxml};
 use clap::Args;
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
+use lib::musicxml::visitors::beam_group_visitor::BeamGroupVisitor;
+use lib::musicxml::visitors::page_layout_visitor::PageLayoutVisitor;
 use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::musicxml::visitors::position_visitor::PositionVisitor;
 use lib::musicxml::walker::Walker;
 use roxmltree::{Document, ParsingOptions};
-use std::fs::read_to_string;
 
 #[derive(Args, Debug)]
 pub struct ValidateArgs {
@@ -16,8 +17,7 @@ pub struct ValidateArgs {
 
 pub fn run(args: ValidateArgs) {
     println!("Reading {}", args.file);
-    let data = read_to_string(&args.file)
-        .unwrap_or_else(|err| panic!("Failed to read '{}': {err}", args.file));
+    let data = read_musicxml(&args.file);
     println!(
         "Read {} successfully ({} lines, {} bytes)",
         args.file,
@@ -36,7 +36,9 @@ pub fn run(args: ValidateArgs) {
 
     let visitor = DefaultVisitor {}
         .uses(PartConsistencyVisitor::default())
-        .uses(PositionVisitor::default());
+        .uses(PositionVisitor::default())
+        .uses(BeamGroupVisitor::default())
+        .uses(PageLayoutVisitor::default());
 
     Walker::new(visitor).walk(&document, &mut ctx);
 

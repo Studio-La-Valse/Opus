@@ -11,6 +11,15 @@ pub enum Clef {
     Baritone,
     Bass,
     Percussion,
+    /// A tablature staff's clef. Like [`Percussion`](Self::Percussion) it fixes
+    /// no pitch: a tab staff positions a note by string and fret
+    /// (`<technical>`), not by where its `<pitch>` lands. The pitch-derived
+    /// methods below therefore answer for it only so that a document carrying a
+    /// tab staff engraves rather than panicking -- the notes on that staff come
+    /// out at treble-ish positions, which is the same limitation percussion
+    /// already has. Real tablature (six lines, fret numbers in place of
+    /// noteheads, `<staff-tuning>`) is a feature of its own.
+    Tab,
 }
 
 impl Clef {
@@ -25,6 +34,7 @@ impl Clef {
             Self::Baritone => 0,
             Self::Bass => 2,
             Self::Percussion => 4,
+            Self::Tab => 4,
         }
     }
 
@@ -39,6 +49,7 @@ impl Clef {
             Self::Baritone => 0,
             Self::Bass => -2,
             Self::Percussion => 4,
+            Self::Tab => 4,
         }
     }
 
@@ -55,6 +66,7 @@ impl Clef {
             },
             "f" => Some(Self::Bass),
             "percussion" => Some(Self::Percussion),
+            "tab" => Some(Self::Tab),
             _ => None,
         }
     }
@@ -72,7 +84,8 @@ impl Clef {
             Self::Tenor => vec![6, 2, 5, 1, 4, 0, 3],
             Self::Baritone => vec![4, 7, 3, 6, 9, 5, 8],
             Self::Bass => vec![2, 5, 1, 4, 7, 3, 6],
-            Self::Percussion => vec![],
+            // Neither carries a key signature at all.
+            Self::Percussion | Self::Tab => vec![],
         }
     }
 
@@ -87,7 +100,7 @@ impl Clef {
             Self::Tenor => vec![3, 0, 4, 1, 5, 2, 6],
             Self::Baritone => vec![1, 5, 2, 6, 3, 7, 4],
             Self::Bass => vec![6, 3, 7, 4, 8, 5, 9],
-            Self::Percussion => vec![],
+            Self::Percussion | Self::Tab => vec![],
         }
     }
 

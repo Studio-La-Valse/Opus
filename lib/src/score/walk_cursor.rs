@@ -1,6 +1,6 @@
 ﻿use crate::score::core::clef::Clef;
 use crate::score::core::duration_base::BaseDuration;
-use crate::score::core::key::{Key, Mode};
+use crate::score::core::key::Key;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
 use crate::score::visual::note::NoteId;
@@ -104,6 +104,15 @@ pub struct WalkCursor {
     pub chord: bool,
     pub grace: bool,
 
+    /// Whether the `<note>` currently being visited carries a `<cue>`.
+    ///
+    /// Sits beside `grace` because it is the same kind of fact -- a property of
+    /// the note the walk is on, wanted by more than one visitor -- even though,
+    /// unlike `grace`, it has no bearing on the position arithmetic. The two are
+    /// mutually exclusive in the format, and a note carrying both is read as a
+    /// grace note.
+    pub cue: bool,
+
     /// Identity of the `<note>` currently being visited, handed out by
     /// [`WalkCursorVisitor`](crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor)
     /// on `enter_note`.
@@ -156,12 +165,10 @@ impl WalkCursor {
         self.beats = 4;
         self.beat_type = 4.into();
         self.voice = 1.into();
-        self.key = Key {
-            fifths: 0,
-            mode: Mode::Major,
-        };
+        self.key = Key::C_MAJOR;
         self.chord = false;
         self.grace = false;
+        self.cue = false;
 
         self.new_page = true;
         self.new_system = true;
@@ -204,13 +211,11 @@ impl Default for WalkCursor {
             beat_type: 4.into(),
             position: 0,
             voice: 1.into(),
-            key: Key {
-                fifths: 0,
-                mode: Mode::Major,
-            },
+            key: Key::C_MAJOR,
 
             chord: false,
             grace: false,
+            cue: false,
             note_id: NoteId::default(),
 
             new_page: true,
@@ -260,16 +265,19 @@ impl WalkCursor {
         Ok(())
     }
 
-    /// Call when entering a `<note>`, after determining whether it's a chord note
-    /// and/or a grace note, and (for non-grace notes) its duration.
+    /// Call when entering a `<note>`, after determining whether it's a chord
+    /// note, a grace note and/or a cue note, and (for non-grace notes) its
+    /// duration.
     pub fn enter_note(
         &mut self,
         duration: u32,
         is_chord: bool,
         is_grace: bool,
+        is_cue: bool,
     ) -> Result<(), PositionError> {
         self.chord = is_chord;
         self.grace = is_grace;
+        self.cue = is_cue;
 
         if is_chord {
             // move the position backwards (by the previous note duration), so that

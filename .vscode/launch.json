@@ -87,6 +87,178 @@
             ]
         },
         {
+            // Carries `<beam number="2">forward hook</beam>`, which used to abort the walk.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Telemann Sample - forward hook beams)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlsamples/Telemann.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // Carries `<stem>none</stem>` on explicitly stemless notes.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Binchois Sample - stemless notes)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlsamples/Binchois.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // Carries a guitar-tablature staff (`<sign>TAB</sign>`, six staff
+            // lines). The clef glyph is right; the staff is still drawn with
+            // five lines and the notes by pitch rather than by fret.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Brooke West Sample - tablature staff)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlsamples/BrookeWestSample.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // A UTF-16 export, decoded from its byte-order mark.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Mozart Chloe Sample - UTF-16)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlsamples/MozaChloSample.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // assets/xmlfixtures holds documents written for this engine, as
+            // opposed to assets/xmlsamples, which are the official MusicXML
+            // sample files and are never edited.
+            //
+            // 17/16, so both halves of the time signature are two glyphs.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: beams - 17/16 time signature)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/beams.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // 4/4, 12/8, 3/16, 15/32 and 1/64 in consecutive measures: one
+            // digit over one, two over one, one over two, two over two, and
+            // the narrowest digit over the widest.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: timesigs - multi-digit time signatures)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/timesigs.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // A beam level opened and never closed, at level 2 in the first
+            // measure and at level 1 in the second. `validate` reports both as
+            // warnings; `render` infers an end and draws them.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: unclosed-beam - unterminated beam levels)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/unclosed-beam.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Validate Fixture: unclosed-beam)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "validate",
+                "--file", "assets/xmlfixtures/unclosed-beam.musicxml"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "Debug (Validate Actor Prelude Sample)",

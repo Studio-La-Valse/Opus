@@ -195,29 +195,16 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        out.push(
-            time_signature
-                .num
-                .as_text(
-                    fonts.smufl,
-                    time_signature.color,
-                    time_signature.num_xy(),
-                    time_signature.scale,
-                )
-                .into(),
-        );
+        // One text per digit: `12` is two glyphs, and the font gives no glyph
+        // for a whole multi-digit number.
+        let digits = time_signature
+            .num_digits()
+            .chain(time_signature.denom_digits());
 
-        out.push(
-            time_signature
-                .denom
-                .as_text(
-                    fonts.smufl,
-                    time_signature.color,
-                    time_signature.denom_xy(),
-                    time_signature.scale,
-                )
-                .into(),
-        );
+        for (digit, xy) in digits {
+            let text = digit.as_text(fonts.smufl, time_signature.color, xy, time_signature.scale);
+            out.push(text.into());
+        }
     }
 
     fn render_accidental<'a>(

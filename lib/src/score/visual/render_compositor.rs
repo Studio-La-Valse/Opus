@@ -34,9 +34,10 @@ pub struct RenderCompositor {
 /// bring the page back to its own origin.
 pub struct RenderedPage<'a> {
     /// 1-based position of this page in the walk, for page-numbered output
-    /// (filenames, the flat-buffer page table). Independent of
-    /// [`Page::number`](crate::score::visual::page::Page), which the layout
-    /// pipeline does not currently populate.
+    /// (filenames, the flat-buffer page table). This is the page's position in
+    /// the walk, not [`Page::number`](crate::score::visual::page::Page): the two
+    /// agree for a document whose pages run 1..n without gaps, which is the only
+    /// shape the cursor produces today, but only this one is guaranteed dense.
     pub number: u32,
     pub origin: XY,
     pub width: f32,

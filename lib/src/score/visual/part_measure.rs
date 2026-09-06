@@ -237,10 +237,11 @@ impl PartMeasure {
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
 
+        // The same chain `ContentVisitor::note_scale` uses, so a grace note's
+        // beams are reduced by exactly what its noteheads were.
         self.note_size_grace = score_defaults
             .appearance
             .note_size_grace
-            .or(user_layout.note_size_grace)
             .unwrap_or(app_defaults.note_size_grace);
     }
 }
@@ -468,82 +469,101 @@ fn create_beams(
                 UpDown::Down => *beam_thickness,
             };
 
-            match left_beam {
-                BeamType::Start => {
-                    let mut right_point: Option<XY> = None;
-
-                    for right_chord in chords.iter().take(len).skip(i + 1) {
-                        let right_stem = match &right_chord.stem {
-                            Some(stem) => stem,
-                            None => continue,
-                        };
-
-                        let right_beam = match right_stem.beams.get(beam_idx) {
-                            Some(beam) => beam,
-                            None => continue,
-                        };
-
-                        if let BeamType::End = right_beam {
-                            let dx = right_stem.thickness * right_stem.scale / 2.;
-                            right_point = Some(
-                                Ray {
-                                    origin: right_stem.xy.mv(dx, 0.),
-                                    dir: XY { x: 0., y: 1. },
-                                }
-                                .intersect(offset_ray)
-                                .unwrap(),
-                            );
-                            break;
+            let right_point = match left_beam {
+                BeamType::Start => match beam_level_ends_at(chords, i, beam_idx) {
+                    Some(right_stem) => {
+                        let dx = right_stem.thickness * right_stem.scale / 2.;
+                        Ray {
+                            origin: right_stem.xy.mv(dx, 0.),
+                            dir: XY { x: 0., y: 1. },
                         }
+                        .intersect(offset_ray)
+                        .unwrap()
                     }
-
-                    beams.push(
-                        Line {
-                            start: left_point,
-                            end: right_point.unwrap(),
-                            stroke_color: *color,
-                            stroke_width: *beam_thickness,
-                        }
-                        .extrude(XY { x: 0., y: dy })
-                        .mv(0., dy / -2.),
-                    )
-                }
-                BeamType::HookStart => {
-                    let right_point = left_point.mv(HOOK_LENGTH, 0.);
-                    let vert_ray = Ray::from_dir(right_point, XY { x: 0., y: -1. });
-                    let right_pt = offset_ray.intersect(vert_ray).unwrap();
-                    let poly = Line {
-                        start: left_point,
-                        end: right_pt,
-                        stroke_color: *color,
-                        stroke_width: *beam_thickness,
-                    }
-                    .extrude(XY { x: 0., y: dy })
-                    .mv(0., dy / -2.);
-
-                    beams.push(poly);
-                }
-                BeamType::HookEnd => {
-                    let right_point = left_point.mv(-HOOK_LENGTH, 0.);
-                    let vert_ray = Ray::from_dir(right_point, XY { x: 0., y: -1. });
-                    let right_pt = vert_ray.intersect(offset_ray).unwrap();
-                    let poly = Line {
-                        start: left_point,
-                        end: right_pt,
-                        stroke_color: *color,
-                        stroke_width: *beam_thickness,
-                    }
-                    .extrude(XY { x: 0., y: dy })
-                    .mv(0., dy / -2.);
-
-                    beams.push(poly);
-                }
+                    // No other stem in the group carries this level, so there
+                    // is nothing to beam *to*. A level spanning one stem is a
+                    // hook, which is what this would have been written as.
+                    None => point_along(left_point, HOOK_LENGTH, &offset_ray),
+                },
+                BeamType::HookStart => point_along(left_point, HOOK_LENGTH, &offset_ray),
+                BeamType::HookEnd => point_along(left_point, -HOOK_LENGTH, &offset_ray),
                 _ => continue,
-            }
+            };
+
+            beams.push(beam_quad(
+                left_point,
+                right_point,
+                beam_thickness,
+                dy,
+                color,
+            ));
         }
     }
 
     beams
+}
+
+/// The stem a beam level opened at `start` runs to, or `None` when no later
+/// stem in the group carries the level at all.
+///
+/// Normally that is the stem declaring [`BeamType::End`] at the level. A
+/// document can open a level and never close it, though -- `<beam number="2">`
+/// running `begin`, `continue`, `continue` with no `end` -- and it survives the
+/// rebeam pass whenever each note still declares as many beams as its duration
+/// warrants, since that pass compares counts rather than types. Validation
+/// reports the defect (see `BeamGroupVisitor`); here the level is taken to run
+/// to the last stem that carries it.
+///
+/// Stopping at the last carrier rather than at the group's last stem matters
+/// when the run is genuinely shorter than the group: a pair of sixteenths
+/// followed by an eighth describes level 2 on the first two notes only, and
+/// extending the secondary beam over the eighth would be wrong in a way the
+/// document gave us the information to avoid.
+fn beam_level_ends_at<'a>(
+    chords: &'a [&mut Chord],
+    start: usize,
+    beam_idx: &u32,
+) -> Option<&'a Stem> {
+    let mut last_carrier = None;
+
+    for chord in chords.iter().skip(start + 1) {
+        let Some(stem) = chord.stem.as_ref() else {
+            continue;
+        };
+        let Some(beam) = stem.beams.get(beam_idx) else {
+            continue;
+        };
+
+        last_carrier = Some(stem);
+
+        if let BeamType::End = beam {
+            return Some(stem);
+        }
+    }
+
+    last_carrier
+}
+
+/// The point `dx` to the side of `from` measured along `ray`, so a horizontal
+/// length lands on the beam's slant rather than level with where it started.
+fn point_along(from: XY, dx: f32, ray: &Ray) -> XY {
+    let vertical = Ray::from_dir(from.mv(dx, 0.), XY { x: 0., y: -1. });
+
+    vertical.intersect(*ray).unwrap()
+}
+
+/// One beam segment as a filled quad: the centre line extruded by `dy` and
+/// pulled back half of it, so the beam straddles the line rather than hanging
+/// off one side.
+fn beam_quad(start: XY, end: XY, thickness: &f32, dy: f32, color: &Color) -> Polygon {
+    Line {
+        start,
+        end,
+        stroke_color: *color,
+        stroke_width: *thickness,
+    }
+    .extrude(XY { x: 0., y: dy })
+    .mv(0., dy / -2.)
 }
 
 fn create_offset(

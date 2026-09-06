@@ -226,7 +226,7 @@ impl System {
         self.line_width = user_layout
             .light_barline
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.staff_line_thickness);
+            .unwrap_or(app_defaults.barline_light);
 
         self.staff_line_width = user_layout
             .staff
@@ -267,7 +267,7 @@ impl Layoutable for System {
 
         let mut _origin = self.xy;
         for measure in self.measures.values_mut() {
-            measure.arrange(origin);
+            measure.arrange(&_origin);
             _origin = _origin.mv(measure.width, 0.);
         }
 

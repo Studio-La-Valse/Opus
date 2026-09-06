@@ -173,7 +173,7 @@ impl Layoutable for PartGroup {
 
         let mut _origin = self.xy;
         for measure in self.measures.values_mut() {
-            measure.arrange(origin);
+            measure.arrange(&_origin);
             _origin = _origin.mv(measure.width, 0.);
         }
 

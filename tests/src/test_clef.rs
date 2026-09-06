@@ -3,6 +3,34 @@ mod tests {
     use lib::score::core::clef::Clef;
     use lib::score::core::pitch::Pitch;
 
+    /// Every `<clef><sign>` MusicXML defines that the engine claims to read.
+    /// `TAB` is here because it used to fall through to `None` and get
+    /// unwrapped.
+    #[test]
+    fn test_clef_signs_parse() {
+        assert_eq!(Clef::from_mxml("G", Some(2)), Some(Clef::Treble));
+        assert_eq!(Clef::from_mxml("F", Some(4)), Some(Clef::Bass));
+        assert_eq!(Clef::from_mxml("C", Some(3)), Some(Clef::Alto));
+        assert_eq!(Clef::from_mxml("percussion", None), Some(Clef::Percussion));
+        assert_eq!(Clef::from_mxml("TAB", Some(5)), Some(Clef::Tab));
+
+        // The sign is case-insensitive, and a `<line>` a C clef can't sit on is
+        // still not a clef.
+        assert_eq!(Clef::from_mxml("tab", None), Some(Clef::Tab));
+        assert_eq!(Clef::from_mxml("C", Some(6)), None);
+        assert_eq!(Clef::from_mxml("jianpu", None), None);
+    }
+
+    /// A tablature staff carries no key signature, the same way a percussion
+    /// staff doesn't.
+    #[test]
+    fn test_pitchless_clefs_have_no_key_signature() {
+        for clef in [Clef::Tab, Clef::Percussion] {
+            assert!(clef.sharp_lines().is_empty(), "{clef:?} laid out sharps");
+            assert!(clef.flat_lines().is_empty(), "{clef:?} laid out flats");
+        }
+    }
+
     #[test]
     fn test_middle_c_returns_base_line() {
         let c4 = Pitch {

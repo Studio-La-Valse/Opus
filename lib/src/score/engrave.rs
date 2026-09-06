@@ -28,6 +28,7 @@ use crate::musicxml::visitor::{DefaultVisitor, Visitor};
 use crate::musicxml::visitors::build_logging_visitor::BuildLoggingVisitor;
 use crate::musicxml::visitors::content_visitor::ContentVisitor;
 use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
+use crate::musicxml::visitors::print_layout_visitor::PrintLayoutVisitor;
 use crate::musicxml::visitors::setup_visitor::SetupVisitor;
 use crate::musicxml::visitors::tie_visitor::TieVisitor;
 use crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor;
@@ -115,6 +116,7 @@ pub fn walk_document(
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
         .uses(SetupVisitor {})
+        .uses(PrintLayoutVisitor {})
         .uses(LayoutVisitor {
             encountered: HashSet::new(),
         })

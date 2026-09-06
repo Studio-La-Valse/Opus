@@ -96,9 +96,10 @@ impl Page {
             app_defaults,
         } = params;
 
-        self.margins = score_defaults.get_margins(self.number);
-        self.width = score_defaults.defaults.page_width;
-        self.height = score_defaults.defaults.page_height;
+        let page = score_defaults.resolve_page(self.number);
+        self.margins = page.margins;
+        self.width = page.width;
+        self.height = page.height;
         self.color = user_layout.page_color.unwrap_or(app_defaults.page_color);
         self.foreground = user_layout
             .foreground_color
