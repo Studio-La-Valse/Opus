@@ -109,6 +109,11 @@ Defects in what is already built, not missing features.
   and `Clef::anchor_line` already takes it, which makes this the remaining
   five-line assumption in the render path. See also the indexing question in
   section 5.
+- **Notes without pitch or default-x value are currently skipped altogether.** These
+  notes have a valid musical purpose. Notes without default-x are difficult to handle
+  without a custom layout engine, so validate and produce warnings when no default-x 
+  attribute for a note is supplied - then we may skip in content visitor after all. 
+  Notes without pitch (purcussive notes) should in fact be handled like any other.
 
 ---
 
