@@ -41,6 +41,11 @@ pub struct StaffInfo {
     pub staff_scaling: BTreeMap<StaffIdx, f32>,
     pub content_scaling: BTreeMap<StaffIdx, f32>,
 
+    /// How many lines each staff is drawn with, from
+    /// `<staff-details><staff-lines>`. A staff missing from the map is a normal
+    /// five-line staff -- see [`Staff::DEFAULT_LINES`](crate::score::visual::staff::Staff).
+    pub lines: BTreeMap<StaffIdx, usize>,
+
     /// Currently active clef, tracked across one part across staves.
     pub active_clef: BTreeMap<StaffIdx, Clef>,
 
@@ -169,6 +174,7 @@ impl WalkCursor {
         self.staff.explicitly_shown.clear();
         self.staff.staff_scaling.clear();
         self.staff.content_scaling.clear();
+        self.staff.lines.clear();
         self.staff.active_clef.clear();
         self.staff.opening_clef.clear();
 
@@ -210,6 +216,7 @@ impl Default for WalkCursor {
                 explicitly_shown: HashSet::new(),
                 staff_scaling: BTreeMap::new(),
                 content_scaling: BTreeMap::new(),
+                lines: BTreeMap::new(),
                 active_clef: BTreeMap::new(),
                 opening_clef: BTreeMap::new(),
                 clef_changes: BTreeMap::new(),

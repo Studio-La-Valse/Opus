@@ -82,9 +82,10 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
         let system = ctx.visual_score.locate_system_mut(&system_index).unwrap();
         system.consolidate_measure_width(ctx.cursor.measure.number);
 
-        // Now that all measures are ensured, we can apply the scale,
-        // because scale is passed to staff measures.
+        // Now that all measures are ensured, we can apply the scale and the
+        // line count, because both are passed on to staff measures.
         let part = system.locate_part_mut(&part_id).unwrap();
         part.set_staff_scale(&ctx.cursor.staff.staff_scaling);
+        part.set_staff_lines(&ctx.cursor.staff.lines);
     }
 }

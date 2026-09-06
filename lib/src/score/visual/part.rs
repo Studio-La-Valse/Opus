@@ -133,6 +133,13 @@ impl Part {
         }
     }
 
+    pub fn set_staff_lines(&mut self, staff_lines: &BTreeMap<StaffIdx, usize>) {
+        for (&idx, &lines) in staff_lines.iter() {
+            let staff = self.staves.entry(idx).or_default();
+            staff.set_lines(lines);
+        }
+    }
+
     pub fn set_staff_scale(&mut self, staff_scales: &BTreeMap<StaffIdx, f32>) {
         for (&idx, staff_scale) in staff_scales.iter() {
             let staff = self.staves.entry(idx).or_default();
@@ -181,6 +188,7 @@ impl Part {
                 hidden: staff.hidden,
                 scaling: staff.scale,
                 distance_from_top: distance_travelled,
+                lines: staff.lines,
             };
             res.insert(*idx, meta);
 

@@ -221,6 +221,30 @@
             ]
         },
         {
+            // Staves of one, five and six lines side by side, plus a two-staff
+            // part whose second staff alone is declared one line. Each part has
+            // a note on the middle-C line: a ledger line under the five-line
+            // staff, the sixth line itself on the six-line one.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: stafflines - staves that are not five lines)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/stafflines.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
             // A beam level opened and never closed, at level 2 in the first
             // measure and at level 1 in the second. `validate` reports both as
             // warnings; `render` infers an end and draws them.

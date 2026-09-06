@@ -115,9 +115,10 @@ impl SmuflFont {
             ClefCore::Bass => "fClef",
             ClefCore::Percussion => "unpitchedPercussionClef1",
             // MusicXML's `<clef>` doesn't say how many strings the tablature
-            // has -- `<staff-details><staff-lines>` does, which this lookup
-            // can't see -- so the six-string glyph stands in for every tab
-            // staff. Revisit alongside variable staff-line counts.
+            // has -- `<staff-details><staff-lines>` does, and the staff is now
+            // drawn with that many lines, but the count reaches the staff and
+            // not this lookup -- so the six-string glyph stands in for every
+            // tab staff, however many lines it turns out to have.
             ClefCore::Tab => "6stringTabClef",
         };
         let codepoint = self.glyph_names.get(ref_name).unwrap().codepoint_char();

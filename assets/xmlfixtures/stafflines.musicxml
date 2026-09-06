@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Staves that are not five lines: <staff-details><staff-lines>.
+
+  P1  a normal five-line staff, for comparison.
+  P2  one line, the way an unpitched percussion part is written.
+  P3  six lines, so the staff grows downwards past where the five-line one ends.
+  P4  a two-staff part whose second staff is declared one line, so that a
+      <staff-details number="n"> can be seen to reach that staff and no other.
+
+  Each part carries a note on the middle-C line, which is a ledger line below a
+  five-line treble staff and the sixth line of a six-line one.
+-->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Five lines</part-name></score-part>
+    <score-part id="P2"><part-name>One line</part-name></score-part>
+    <score-part id="P3"><part-name>Six lines</part-name></score-part>
+    <score-part id="P4"><part-name>Two staves</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1" width="240">
+      <print new-system="yes"/>
+      <attributes>
+        <divisions>4</divisions>
+        <key><fifths>0</fifths><mode>major</mode></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="160"><pitch><step>C</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+    </measure>
+    <measure number="2" width="240">
+      <note default-x="80"><pitch><step>A</step><octave>5</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="160"><pitch><step>A</step><octave>3</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+    </measure>
+  </part>
+  <part id="P2">
+    <measure number="1" width="240">
+      <print new-system="yes"/>
+      <attributes>
+        <divisions>4</divisions>
+        <key><fifths>0</fifths><mode>major</mode></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>percussion</sign></clef>
+        <staff-details>
+          <staff-lines>1</staff-lines>
+        </staff-details>
+      </attributes>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="160"><pitch><step>C</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+    </measure>
+    <measure number="2" width="240">
+      <note default-x="80"><pitch><step>A</step><octave>5</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="160"><pitch><step>A</step><octave>3</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+    </measure>
+  </part>
+  <part id="P3">
+    <measure number="1" width="240">
+      <print new-system="yes"/>
+      <attributes>
+        <divisions>4</divisions>
+        <key><fifths>0</fifths><mode>major</mode></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <staff-details>
+          <staff-lines>6</staff-lines>
+        </staff-details>
+      </attributes>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="160"><pitch><step>C</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+    </measure>
+    <measure number="2" width="240">
+      <note default-x="80"><pitch><step>A</step><octave>5</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="160"><pitch><step>A</step><octave>3</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+    </measure>
+  </part>
+  <part id="P4">
+    <measure number="1" width="240">
+      <print new-system="yes"/>
+      <attributes>
+        <divisions>4</divisions>
+        <key><fifths>0</fifths><mode>major</mode></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef number="1"><sign>G</sign><line>2</line></clef>
+        <clef number="2"><sign>percussion</sign></clef>
+        <staff-details number="2">
+          <staff-lines>1</staff-lines>
+        </staff-details>
+      </attributes>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <note default-x="160"><pitch><step>C</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <backup><duration>16</duration></backup>
+      <note default-x="80"><pitch><step>C</step><octave>4</octave></pitch><duration>16</duration><voice>2</voice><type>whole</type><staff>2</staff></note>
+    </measure>
+    <measure number="2" width="240">
+      <note default-x="80"><pitch><step>A</step><octave>5</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <note default-x="160"><pitch><step>A</step><octave>3</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <backup><duration>16</duration></backup>
+      <note default-x="80"><pitch><step>C</step><octave>4</octave></pitch><duration>16</duration><voice>2</voice><type>whole</type><staff>2</staff></note>
+    </measure>
+  </part>
+</score-partwise>

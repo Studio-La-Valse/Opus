@@ -17,8 +17,9 @@ pub enum Clef {
     /// methods below therefore answer for it only so that a document carrying a
     /// tab staff engraves rather than panicking -- the notes on that staff come
     /// out at treble-ish positions, which is the same limitation percussion
-    /// already has. Real tablature (six lines, fret numbers in place of
-    /// noteheads, `<staff-tuning>`) is a feature of its own.
+    /// already has. Real tablature (fret numbers in place of noteheads,
+    /// `<staff-tuning>`) is a feature of its own; the staff does now get its
+    /// declared number of lines, which for a tab staff is its string count.
     Tab,
 }
 
