@@ -1,6 +1,9 @@
 # Roadmap
 
-Work that is known, wanted, and not done. Ordered: the first section is a major (multi commit-) feature that that needs an implementation as soon as possible. 
+Work that is known, wanted, and not done. Ordered: section 1 is a major
+(multi-commit) feature that needs an implementation as soon as possible. The
+sections after it group the rest by kind — bugs first, then small fixes,
+features, open questions, and the long term.
 
 ---
 
@@ -70,75 +73,186 @@ warrants. Three things it gets wrong:
   `beam_level_ends_at` infers around. A strategy that validated the run's shape
   would repair those instead of leaving the renderer to guess.
 
-### 1c. Potentially free/cheap fixes for these currently known issues: 
-- Include: Beam slant is clamped to a flat `MAX_BEAM_SLANT_DY` of two line spaces. Two spaces is indeed the conventional maximum, but a clamp is all it is: the slant a group actually wants follows the interval it spans, how many notes it has and where they sit on the staff. 
-- A beam hook is a fixed `HOOK_LENGTH` of 7.5 tenths. It should be inferred from the space available between the two stems and clamped to a maximum. 
+### 1c. Beam geometry
+
+Two constants stand in for rules that should be computed. One of the two is a
+genuinely cheap fix; the other is not, and should not be scheduled as if it were.
+
+- **Hook length is a constant.** A beam hook is a fixed `HOOK_LENGTH` of 7.5
+  tenths. It should be inferred from the space available between the two stems
+  and clamped to a maximum. Cheap: both stems are already in hand where the hook
+  is drawn.
+- **Slant is a clamp, not a rule.** Beam slant is clamped to a flat
+  `MAX_BEAM_SLANT_DY` of two line spaces. Two spaces is indeed the conventional
+  maximum, but a clamp is all it is: the slant a group actually wants follows the
+  interval it spans, how many notes it has and where they sit on the staff. That
+  is a rule set to implement, not a constant to tweak — smaller than 1a, but not
+  free.
 
 ---
 
-## Simple fixes and features: short term goals
+## 2. Bugs
 
-Smaller, independent, tentatively ordered by consecutive feature impact.
+Defects in what is already built, not missing features.
 
-- support bar lines for a single line staff: should extent one staff space on top and below of the single line (so 20 tenths in total). 
+- **A part whose first measure carries no `<print>` is engraved in a different
+  system than one that does.** `system.index` is per-part state, reset per part
+  and incremented only inside `enter_print`, where measure 1 implies a new
+  system — so a part without the element stays at index 0 while its neighbours
+  move to 1. Real exports write `<print>` in every part, which is what keeps this
+  latent; a validation rule should report a measure where the parts disagree
+  about carrying one.
 
-- Add support for a user to define layout from a deserialized file. Decide yml, ini, json, etc
-Keep current arguments to cli: allow them as additional overrides on top of the user layout. Review structure of user layout particularly, should be flat list or nested? Also fully mirror app defaults and user layout: no option should exit in one that doesnt exist in the other - however user layout options are always optional, app defaults are static and readonly, always have a value assigned. User layout file should always be optional, not required for cli functionality.
+- **Tie direction assumes a five-line staff.** `MIDDLE_STAFF_LINE` in `tie.rs` is
+  a hardcoded 4, so on any staff that is not five lines the over/under inference
+  is measured against the wrong line. Staves now carry their declared line count
+  and `Clef::anchor_line` already takes it, which makes this the remaining
+  five-line assumption in the render path. See also the indexing question in
+  section 5.
 
-- Add support for different brace styles. Now only curly drawing, starting with rectangluar. Read the type from the music xml document. Should be flexible in size as well, like the bracket spine is. Also add support for brace alternatives as defined in smufl. If feasable, add support for user defined style: brace vs square for partgroups, etc. 
+---
 
-- Evaluate/review: a text element should be a text box so that it has a measurable bounding box. Should not change visible behavior at all. We could provide support for box background color as well. 
+## 3. Fixes
 
-- Partgroups and part names should be drawn left of the (part(-group)) brace or section bracket if it exists. Should add a new font type, now only music and titles; should add part names font type to support a user defined font (as well as app default). Include in this feature: support for user defined spacing of bracket and brace left of systems. Sections should not have a (potential) name attached.
+Small and well-specified. Each is a single change and none depend on each other.
 
-- One `ELEMENT_PADDING` constant spaces the clef, the key signature and the time signature alike. It should be split into a padding value per element, each reachable through both `AppDefaults` and `UserLayout`. 
+- Support bar lines for a single line staff: should extend one staff space above
+  and below the single line (so 20 tenths in total).
 
-- Scale grace and cue note's accidental, flag and beam group. Decide how to handle vecs of chord with mixed grace, cue and normal notes: validation is a must.
+- One `ELEMENT_PADDING` constant spaces the clef, the key signature and the time
+  signature alike. It should be split into a padding value per element, each
+  reachable through both `AppDefaults` and `UserLayout`.
 
-- Review: should lib be split into separate crates, akin .net project setup? Review internal dependency tree. For example: Review pdf export dependencies in lib, should only live in cli? Maybe not required/conventional for Rust projects.
+- Scale grace and cue notes' accidental, flag and beam group. Decide how to
+  handle vecs of chords with mixed grace, cue and normal notes: validation is a
+  must.
 
-- Ties and slurs are now multi segment polygons because of thickness. Update path support - or explicitly decide not to.
+---
 
-- Review staff line indexing: ours start at 0 from top to bottom, musicxml counts from 1 bottom to top. Clef anchor lines work on 5 line staves but break on anything else. Either a conversion method or review our internal drawing engine. 
+## 4. Features
 
-- Potential bug: a part whose first measure carries no `<print>` is engraved in a different system than one that does. `system.index` is per-part state, reset per part and incremented only inside `enter_print`, where measure 1 implies a new system — so a part without the element stays at index 0 while its neighbours move to 1. Real exports write `<print>` in every part, which is what keeps this latent; a validation rule should report a measure where the parts disagree about carrying one. 
+Larger than a fix. Several are comparable in size to section 1 and will want the
+same code-anchored breakdown before they start. Tentatively ordered by
+consecutive feature impact.
 
-- Generalize smufl parsing from some point onwards: so far managable in code but defining thousands of smufl glyphs in code is undesirable.
+- **User-defined layout from a deserialized file.** Decide yml, ini, json, etc.
+  Keep the current cli arguments: allow them as additional overrides on top of
+  the user layout. Review the structure of the user layout particularly: should
+  it be a flat list or nested? Also fully mirror app defaults and user layout: no
+  option should exist in one that doesn't exist in the other — however user
+  layout options are always optional, app defaults are static and readonly and
+  always have a value assigned. The user layout file should always be optional,
+  never required for cli functionality. Note that the wasm path already takes a
+  whole `UserLayout` inside its `RenderOptions`, so whatever precedence the cli
+  settles on has to be expressible there too.
 
-- Generalize bounding boxes, every score element should have an inherent bounding box which is always drawn when --debug is provided.
+- **Different brace styles.** Now only a curly drawing; start with rectangular.
+  Read the type from the MusicXML document. Should be flexible in size as well,
+  like the bracket spine is. Also add support for the brace alternatives defined
+  in SMuFL. If feasible, add support for a user defined style: brace vs square
+  for part groups, etc.
 
-- Access Smufl data from installed system wide files (as documented by smufl itself), optionally providing currently supported smufl (meta-)data through cli args. 
+- **Part group and part names drawn left of the brace or section bracket**, if
+  one exists. This needs a part-name font type: `RenderFonts` currently carries
+  music, title and lyric, so part names are the fourth — the lyric face is the
+  pattern to copy, including its `AppDefaults` entry and its `UserLayout` / wasm
+  option. Include in this feature: support for user defined spacing of bracket
+  and brace left of systems. Sections should not have a (potential) name
+  attached.
 
-- Support for other smufl fonts.
+- **Generalize SMuFL parsing** from some point onwards: so far manageable in
+  code, but defining thousands of SMuFL glyphs in code is undesirable.
 
-- Support for lyrics. 
+- **Generalize bounding boxes**: every score element should have an inherent
+  bounding box, always drawn when `--debug` is provided.
 
-- Support for every articulation imaginable. 
+- **Access SMuFL data from installed system-wide files** (as documented by SMuFL
+  itself), optionally providing the currently supported SMuFL (meta-)data through
+  cli args.
 
-- Support for slurs. 
+- **Support for other SMuFL fonts.**
 
+- **Lyrics.** The font is already plumbed end to end — `RenderFonts::lyric`,
+  `AppDefaults::lyric_font`, the wasm `lyricFont` option — so what is missing is
+  reading `<lyric>`, placing the syllables, and the vertical space they claim.
 
-## Long term goals: 
-- Installer, create publication, system wide available `opus` cli. Release once cli reaches stable point, do not wait for full desktop/mobile/web support. Prioritize cli.
+- **Every articulation imaginable.**
 
-- Publication of visual score, smufl and musicxml crates, so users may embed in third party applications.
+- **Slurs.** `tie.rs` was written as the seam: the arc geometry is free functions
+  over anchors, and a slur is the same arc between different anchors. What a slur
+  adds is that its endpoints are not pinned down by pitch the way a tie's are, so
+  choosing the anchors — and the collision avoidance that follows from it — is
+  the actual work.
 
-- Full tablature support. 
+---
 
-- Zero panic render pipeline. Should be able to handle every imaginable musicxml document, guaranteed to not panic once passes validation. Problems in document should be skipped and displayed if --debug is provided (such as a red border around a measure that has content the cli was not able to parse.)
+## 5. Reviews and decisions
 
-- Support for different layout engines. I image for example a layout engine where we can override page size and measures and systems restructure without reading the musicxml print attributes. Support for single page scroll in scope. Current layout engine must keep support. 
+Open questions. Each wants an answer written down, and the answer may be "no".
 
-- Support for mxl (zipped musicxml document). Should be able to export to mxl as well as a separate cli command `export`. 
+- **Should a text element be a text box**, so that it has a measurable bounding
+  box? Should not change visible behavior at all. Could carry support for a box
+  background color as well.
 
-- Support for older musicxml document versions. Should be able to export to any given format as a separate cli command `export`.
+- **Should `lib` be split into separate crates**, akin to a .NET project setup?
+  Review the internal dependency tree. PDF export is the concrete case: `lib`
+  pulls `pdf-writer` and `ttf-parser` for `drawable::canvas::pdf`, which only the
+  cli consumes today. It should not simply move into `cli`, though — the design
+  note at the end of `wasm/src/lib.rs` plans a `render_pdf` on the wasm `Score`
+  built on that same canvas and `write_pdf`. A separate crate that both depend on
+  is the shape that serves both. `lib` also owns the svg and flat-buffer canvases
+  as a matched set, so the real question is where the whole `drawable::canvas`
+  layer belongs. May not be required or conventional for Rust projects.
 
-- Support for finale, sibelius and musescore interop. 
+- **Path support for ties.** Ties are now multi-segment polygons because of
+  thickness. Update path support — or explicitly decide not to. (Slurs are not
+  built yet; they are in section 4.)
 
-- Auto fix document issues. 
+- **Staff line indexing.** Ours start at 0 from top to bottom, MusicXML counts
+  from 1 bottom to top. Either a conversion method, or review our internal
+  drawing engine. `Clef::anchor_line` now takes the staff's line count and
+  centres the unpitched clefs, so the clef case is handled; what remains is the
+  convention itself and the assumptions still riding on it — see the tie
+  direction bug in section 2.
 
-- Improved Web/WASM support.
+---
 
-- Desktop app support - see /platforms skeleton.
+## 6. Long term goals
 
-- Mobile app support - see /platforms skeleton.
+- Installer, create publication, system wide available `opus` cli. Release once
+  the cli reaches a stable point, do not wait for full desktop/mobile/web
+  support. Prioritize the cli.
+
+- Publication of the visual score, smufl and musicxml crates, so users may embed
+  them in third party applications.
+
+- Full tablature support.
+
+- Zero panic render pipeline. Should be able to handle every imaginable MusicXML
+  document, guaranteed not to panic once it passes validation. Problems in the
+  document should be skipped and displayed if `--debug` is provided (such as a
+  red border around a measure that has content the cli was not able to parse).
+
+- Support for different layout engines. I imagine, for example, a layout engine
+  where we can override page size and measures and systems restructure without
+  reading the MusicXML print attributes. Support for single page scroll in scope.
+  The current layout engine must keep support.
+
+- Read mxl (zipped MusicXML documents).
+
+- A separate `export` cli command: one command with several targets — mxl, older
+  MusicXML document versions, and whatever else a converter is asked for.
+
+- Support for finale, sibelius and musescore interop.
+
+- Auto fix document issues.
+
+- Improved Web/WASM support. The one concrete piece already scoped is
+  `render_pdf` on the wasm `Score`; the blocker is that there is no system font
+  database in the browser, so the font programs the PDF embeds have to be bundled
+  or threaded through the constructor. See the design note at the end of
+  `wasm/src/lib.rs`.
+
+- Desktop app support — see `/platforms` skeleton.
+
+- Mobile app support — see `/platforms` skeleton.
