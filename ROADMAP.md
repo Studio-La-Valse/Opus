@@ -241,6 +241,11 @@ Open questions. Each wants an answer written down, and the answer may be "no".
   convention itself and the assumptions still riding on it — see the tie
   direction bug in section 2.
 
+- **Ties should only tie to next immediate note**. Should a tied note search for
+  any note with the same NoteId, potentially skipping notes, or only tie if the
+  following note has the same NoteId? If the next note does not have the same 
+  NoteId, what is the behavior of the tie? Can we simplify code in this case?
+
 ---
 
 ## 6. Long term goals
