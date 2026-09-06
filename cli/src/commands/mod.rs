@@ -38,7 +38,9 @@ fn decode_utf16(path: &str, bytes: &[u8], to_unit: fn([u8; 2]) -> u16) -> String
     }
 
     let units: Vec<u16> = bytes
-        .as_chunks::<2>().0.iter()
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| to_unit([pair[0], pair[1]]))
         .collect();
 
