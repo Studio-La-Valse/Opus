@@ -5,6 +5,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::accidental::Accidental;
 use crate::score::visual::dot::Dot;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::notehead::Notehead;
@@ -49,6 +50,12 @@ pub struct Note {
     pub staff_line: i32,
     pub staff: StaffIdx,
 
+    /// What this note's size is derived from: the staff's content scaling and
+    /// whether the note is normal, grace or cue. Kept unresolved so that the
+    /// note-size factor can be re-decided on every render; see [`NoteScale`].
+    pub size: NoteScale,
+    /// The factor `size` resolved to, written by `resolve_layout` and so only
+    /// meaningful after `measure`.
     pub scale: f32,
 
     pub color: Color,
@@ -69,7 +76,7 @@ impl Note {
         default_x: f32,
         staff: StaffIdx,
         staff_line: i32,
-        scale: f32,
+        size: NoteScale,
         dots: u8,
     ) -> Self {
         Note {
@@ -81,10 +88,11 @@ impl Note {
             staff,
             staff_line,
 
-            dots: (0..dots).map(|_| Dot::new(scale)).collect(),
+            dots: (0..dots).map(|_| Dot::new(size)).collect(),
             dot_spacing: 0.,
 
-            scale,
+            size,
+            scale: size.content_scale,
 
             xy: XY::default(),
             width: f32::default(),
@@ -138,6 +146,8 @@ impl Note {
             app_defaults,
             ..
         } = params;
+
+        self.scale = self.size.resolve(params);
 
         self.color = user_layout
             .foreground_color

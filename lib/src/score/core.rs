@@ -3,6 +3,7 @@ pub mod clef;
 pub mod duration;
 pub mod duration_base;
 pub mod key;
+pub mod note_kind;
 pub mod pitch;
 pub mod staff_idx;
 pub mod step;

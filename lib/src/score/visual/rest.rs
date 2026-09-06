@@ -5,6 +5,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::dot::Dot;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
@@ -20,6 +21,12 @@ pub struct Rest {
     pub staff_line: i32,
     pub staff: StaffIdx,
 
+    /// What this rest's size is derived from: the staff's content scaling and
+    /// whether the rest is normal, grace or cue -- a cue passage's rests are
+    /// reduced along with its notes. See [`NoteScale`].
+    pub size: NoteScale,
+    /// The factor `size` resolved to, written by `resolve_layout` and so only
+    /// meaningful after `measure`.
     pub scale: f32,
 
     pub color: Color,
@@ -45,7 +52,7 @@ impl Rest {
         default_x: Option<f32>,
         staff: StaffIdx,
         staff_line: i32,
-        scale: f32,
+        size: NoteScale,
         dots: u8,
     ) -> Self {
         Rest {
@@ -56,9 +63,11 @@ impl Rest {
             default_x,
             staff,
             staff_line,
-            scale,
 
-            dots: (0..dots).map(|_| Dot::new(scale)).collect(),
+            size,
+            scale: size.content_scale,
+
+            dots: (0..dots).map(|_| Dot::new(size)).collect(),
             dot_spacing: 0.,
 
             xy: XY::default(),
@@ -152,6 +161,8 @@ impl Rest {
             app_defaults,
             ..
         } = params;
+
+        self.scale = self.size.resolve(params);
 
         self.color = user_layout
             .foreground_color

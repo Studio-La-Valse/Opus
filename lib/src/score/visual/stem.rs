@@ -5,6 +5,7 @@ use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::flag::Flag;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::note_scale::NoteScale;
 use std::collections::BTreeMap;
 
 #[derive(Default, Eq, PartialEq, Copy, Clone, Debug)]
@@ -67,6 +68,11 @@ pub struct Stem {
     pub length: f32,
     pub thickness: f32,
 
+    /// What this stem's size is derived from -- the same [`NoteScale`] as the
+    /// noteheads it carries.
+    pub size: NoteScale,
+    /// The factor `size` resolved to, written by `resolve_layout` and so only
+    /// meaningful after `measure`.
     pub scale: f32,
 
     pub direction: UpDown,
@@ -86,7 +92,7 @@ impl Stem {
         direction: UpDown,
         duration: BaseDuration,
         staff: StaffIdx,
-        scale: f32,
+        size: NoteScale,
         default_y: Option<f32>,
     ) -> Self {
         Self {
@@ -94,7 +100,8 @@ impl Stem {
             direction,
             duration,
             staff,
-            scale,
+            size,
+            scale: size.content_scale,
             length: 0.,
             thickness: 0.,
             xy: XY::ZERO,
@@ -178,6 +185,8 @@ impl Stem {
             user_layout,
             app_defaults,
         } = params;
+
+        self.scale = self.size.resolve(params);
 
         self.thickness = user_layout
             .stem_thickness

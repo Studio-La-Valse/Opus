@@ -29,11 +29,16 @@ pub struct UserLayout {
     pub beam_spacing: Option<f32>,
     pub stem_thickness: Option<f32>,
 
-    // No `note_size_grace` / `note_size_cue`. `<note-size>` is resolved on the
-    // document walk, whose result is cached and re-arranged for whatever layout
-    // a later render asks for -- so a value read from here would be baked in at
-    // the wrong moment and then never revisited. Exposing it as an override
-    // means resolving note size in `measure` instead; see docs/roadmap.md.
+    /// Fraction of full size a grace or cue note is drawn at, overriding what
+    /// the document declared in `<defaults><appearance><note-size>`. `0.5` is
+    /// half size; `1.` draws them like any other note.
+    ///
+    /// Applies to everything the note owns -- notehead, dots, stem, flag and the
+    /// beams joining it to its group -- because all of them resolve through
+    /// [`LayoutParams::note_size`](crate::score::visual::layoutable::LayoutParams::note_size).
+    pub note_size_grace: Option<f32>,
+    pub note_size_cue: Option<f32>,
+
     pub dot_radius: Option<f32>,
     pub dot_spacing: Option<f32>,
     pub dot_color: Option<Color>,

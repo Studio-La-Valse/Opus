@@ -3,6 +3,7 @@ use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
+use crate::score::core::note_kind::NoteKind;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
 use crate::score::rebeam_strategy::RebeamStrategy;
@@ -237,12 +238,9 @@ impl PartMeasure {
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
 
-        // The same chain `ContentVisitor::note_scale` uses, so a grace note's
-        // beams are reduced by exactly what its noteheads were.
-        self.note_size_grace = score_defaults
-            .appearance
-            .note_size_grace
-            .unwrap_or(app_defaults.note_size_grace);
+        // Resolved through `note_size` like every other part of a grace note,
+        // so its beams are reduced by exactly what its noteheads were.
+        self.note_size_grace = params.note_size(NoteKind::Grace);
     }
 }
 

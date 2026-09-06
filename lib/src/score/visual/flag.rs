@@ -2,6 +2,7 @@ use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::flag::Flag as SmuflFlag;
 
@@ -10,20 +11,28 @@ pub struct Flag {
     pub width: f32,
     pub height: f32,
 
+    /// What this flag's size is derived from -- the same [`NoteScale`] as the
+    /// stem it hangs off.
+    pub size: NoteScale,
+    /// The factor `size` resolved to, written by `resolve_layout` and so only
+    /// meaningful after `measure`.
     pub scale: f32,
+
     pub color: Color,
 
     pub glyph: SmuflFlag,
 }
 
 impl Flag {
-    pub fn new(glyph: SmuflFlag, scale: f32) -> Self {
+    pub fn new(glyph: SmuflFlag, size: NoteScale) -> Self {
         let mut result = Flag {
             xy: XY::ZERO,
             width: 0.,
             height: 0.,
 
-            scale,
+            size,
+            scale: size.content_scale,
+
             color: Color::BLACK,
 
             glyph,
@@ -71,6 +80,8 @@ impl Flag {
             app_defaults,
             ..
         } = params;
+
+        self.scale = self.size.resolve(params);
 
         self.color = user_layout
             .foreground_color
