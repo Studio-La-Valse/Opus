@@ -2,6 +2,7 @@ use crate::commands::{print_issues, read_musicxml};
 use clap::Args;
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
+use lib::musicxml::visitors::beam_group_visitor::BeamGroupVisitor;
 use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::musicxml::visitors::position_visitor::PositionVisitor;
 use lib::musicxml::walker::Walker;
@@ -34,7 +35,8 @@ pub fn run(args: ValidateArgs) {
 
     let visitor = DefaultVisitor {}
         .uses(PartConsistencyVisitor::default())
-        .uses(PositionVisitor::default());
+        .uses(PositionVisitor::default())
+        .uses(BeamGroupVisitor::default());
 
     Walker::new(visitor).walk(&document, &mut ctx);
 

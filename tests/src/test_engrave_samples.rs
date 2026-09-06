@@ -95,4 +95,12 @@ mod tests {
     fn a_score_of_assorted_time_signatures_engraves() {
         fixture("timesigs");
     }
+
+    /// A beam level opened and never closed, at both the secondary level and at
+    /// level 1. `create_beams` used to unwrap its way to the closing stem and
+    /// panic when there wasn't one.
+    #[test]
+    fn a_score_with_an_unclosed_beam_level_engraves() {
+        fixture("unclosed-beam");
+    }
 }

@@ -221,6 +221,44 @@
             ]
         },
         {
+            // A beam level opened and never closed, at level 2 in the first
+            // measure and at level 1 in the second. `validate` reports both as
+            // warnings; `render` infers an end and draws them.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: unclosed-beam - unterminated beam levels)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/unclosed-beam.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Validate Fixture: unclosed-beam)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "validate",
+                "--file", "assets/xmlfixtures/unclosed-beam.musicxml"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "Debug (Validate Actor Prelude Sample)",

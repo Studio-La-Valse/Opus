@@ -1,5 +1,6 @@
 mod test_arrange;
 mod test_bbox;
+mod test_beam_group_validation;
 mod test_beam_type;
 mod test_canvas;
 mod test_clef;
