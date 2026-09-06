@@ -3,10 +3,6 @@
 Work that is known, wanted, and not done. Ordered: the first section is what gets
 picked up next, the rest is a holding list rather than a queue.
 
-Design documents for individual pieces of work live beside this file (see
-`refactor-enforce-pages-across-sinks.md`); this file is the index of intent, not
-the place to design anything.
-
 ---
 
 ## 1. Beaming
