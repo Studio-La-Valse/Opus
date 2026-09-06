@@ -237,10 +237,9 @@ impl PartMeasure {
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
 
-        self.note_size_grace = score_defaults
-            .appearance
+        self.note_size_grace = user_layout
             .note_size_grace
-            .or(user_layout.note_size_grace)
+            .or(score_defaults.appearance.note_size_grace)
             .unwrap_or(app_defaults.note_size_grace);
     }
 }

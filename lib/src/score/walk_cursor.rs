@@ -1,6 +1,6 @@
 ﻿use crate::score::core::clef::Clef;
 use crate::score::core::duration_base::BaseDuration;
-use crate::score::core::key::{Key, Mode};
+use crate::score::core::key::Key;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
 use crate::score::visual::note::NoteId;
@@ -156,10 +156,7 @@ impl WalkCursor {
         self.beats = 4;
         self.beat_type = 4.into();
         self.voice = 1.into();
-        self.key = Key {
-            fifths: 0,
-            mode: Mode::Major,
-        };
+        self.key = Key::C_MAJOR;
         self.chord = false;
         self.grace = false;
 
@@ -204,10 +201,7 @@ impl Default for WalkCursor {
             beat_type: 4.into(),
             position: 0,
             voice: 1.into(),
-            key: Key {
-                fifths: 0,
-                mode: Mode::Major,
-            },
+            key: Key::C_MAJOR,
 
             chord: false,
             grace: false,

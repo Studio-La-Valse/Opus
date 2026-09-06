@@ -30,7 +30,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
                 bottom: pm.req_child("bottom-margin").req_parse(),
             };
 
-            match pm.req_attribute("type") {
+            // `type` is optional in MusicXML and defaults to "both".
+            match pm.get_attribute("type").unwrap_or("both") {
                 "both" => ctx.layout.page_margins_both = Some(margins),
                 "odd" => ctx.layout.page_margins_odd = Some(margins),
                 "even" => ctx.layout.page_margins_even = Some(margins),

@@ -1,4 +1,4 @@
-use crate::commands::print_issues;
+use crate::commands::{print_issues, read_musicxml};
 use clap::{Args, Subcommand};
 use lib::geometry::color::Color;
 use lib::musicxml::validate::ValidationCtx;
@@ -126,7 +126,7 @@ pub fn run(format: RenderCommand) {
 
     let mut time = Instant::now();
 
-    let data = read_to_string(&file).unwrap_or_else(|err| panic!("Failed to read '{file}': {err}"));
+    let data = read_musicxml(&file);
     let meta_content = read_to_string(&meta)
         .unwrap_or_else(|err| panic!("Failed to read metadata '{meta}': {err}"));
     let glyph_names_content = read_to_string(&glyph_names)

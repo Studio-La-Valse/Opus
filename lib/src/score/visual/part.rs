@@ -160,21 +160,33 @@ impl Part {
             .collect()
     }
 
+    /// Where each staff sits relative to the top of the part, for the elements
+    /// that are positioned against a staff without belonging to it -- notes and
+    /// rests, which hang off a `PartMeasure` and only name their staff by index.
+    ///
+    /// Walks the staves the same way [`Part::arrange`] does, hidden ones
+    /// included in the map but contributing no distance of their own. If they
+    /// contributed here but not there, every staff below a hidden one would have
+    /// its notes pushed down past its own staff lines.
     pub fn create_staff_ctx(&self) -> BTreeMap<StaffIdx, StaffCtx> {
         let mut res = BTreeMap::new();
 
         let mut distance_travelled = 0.;
-        for (_idx, staff) in self.staves.iter() {
-            distance_travelled += staff.distance_final;
+        for (idx, staff) in self.staves.iter() {
+            if !staff.hidden {
+                distance_travelled += staff.distance_final;
+            }
 
             let meta = StaffCtx {
                 hidden: staff.hidden,
                 scaling: staff.scale,
                 distance_from_top: distance_travelled,
             };
-            res.insert(*_idx, meta);
+            res.insert(*idx, meta);
 
-            distance_travelled += staff.height;
+            if !staff.hidden {
+                distance_travelled += staff.height;
+            }
         }
 
         res

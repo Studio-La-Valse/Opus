@@ -1,7 +1,12 @@
+mod test_arrange;
 mod test_bbox;
+mod test_beam_type;
 mod test_canvas;
 mod test_clef;
+mod test_engrave_samples;
 mod test_flat_buffer;
+mod test_key;
+mod test_musicxml_source;
 mod test_part_list;
 mod test_pdf;
 mod test_ray;

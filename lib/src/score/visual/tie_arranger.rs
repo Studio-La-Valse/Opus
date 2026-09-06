@@ -27,11 +27,11 @@ use crate::score::walk_cursor::Visibility;
 /// Addresses one system in the score: its page's key and its own key, both taken
 /// from the enclosing `BTreeMap`s.
 ///
-/// Deliberately *not* `Page::number` / any stored index: the layout pipeline
-/// never populates `Page::number` (pages are created with `entry().or_default()`
-/// in `Score::page_or_insert`), a quirk `RenderedPage` already works around with
-/// its own 1-based counter. The map keys are document order, which is what
-/// "does the tie's start come before its end" means.
+/// Deliberately the map keys rather than any stored index: they are document
+/// order by construction, which is exactly what "does the tie's start come
+/// before its end" means. `Page::number` happens to carry the same value today,
+/// but it is there for margin resolution and nothing here should depend on the
+/// two staying in step.
 pub type SystemKey = (u32, u32);
 
 /// A note's finished geometry, copied out of the tree so the resolution phase

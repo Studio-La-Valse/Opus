@@ -185,13 +185,16 @@ impl ContentVisitor {
         let chord = chords.last_mut().expect("Chord entry should exist");
         chord.grace = ctx.cursor.grace;
 
-        // Parse Stem & Beams
-        if let Some(stem_node) = node.children().find(|n| n.tag_name().name() == "stem") {
+        // Parse Stem & Beams.
+        //
+        // `<stem>` also admits `none` (an explicitly stemless note) and `double`
+        // (a stem in both directions, for a shared notehead). Neither names a
+        // direction, so both are handled the way a note with no `<stem>` at all
+        // is: no stem, and therefore no flag or beam hanging off one.
+        if let Some(stem_node) = node.children().find(|n| n.tag_name().name() == "stem")
+            && let Ok(dir) = UpDown::try_from(stem_node.req_text().trim())
+        {
             let default_y = stem_node.attribute("default-y").map(|a| a.req_parse());
-            let dir: UpDown = stem_node
-                .req_text()
-                .try_into()
-                .expect("Invalid stem direction");
 
             let stem = chord
                 .stem

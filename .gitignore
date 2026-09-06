@@ -6,11 +6,11 @@ target
 # Local scratch / smoke-test output
 /tmp/
 
-# Debug-run output (see .vscode/launch.json's --out arg) - regenerated on
-# every run, never a source of truth. The other assets/xmltest/*.musicxml
-# files are real fixtures and stay tracked.
-/assets/xmltest/*.svg
-/assets/xmltest/*.pdf
+# Scratch dump for test renders (see .vscode/launch.json's --out arg).
+# Everything in here is regenerated on demand and none of it is a source of
+# truth, so the whole directory is ignored rather than a list of extensions.
+# Fixtures belong in assets/xmlsamples, tests in the `tests` crate.
+/assets/xmltest/
 
 # Staged npm package output (scripts/stage-package.sh) - regenerated from
 # wasm/pkg, assets/smufl, and web/, never a source of truth.

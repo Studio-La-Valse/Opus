@@ -3,7 +3,7 @@ use crate::musicxml::utils::ReqParse;
 use crate::musicxml::visitor::Visitor;
 use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::core::clef::Clef;
-use crate::score::core::key::Key;
+use crate::score::core::key::{Key, Mode};
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::walk_cursor::Visibility;
 use roxmltree::Node;
@@ -252,10 +252,18 @@ impl<'a> Visitor<WalkerCtx<'a>> for WalkCursorVisitor {
 
     fn enter_key(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let fifths: i8 = node.req_child("fifths").req_parse();
-        let mode = node.req_child("mode").req_text();
 
-        let key: Key = (fifths, mode).try_into().unwrap();
-        ctx.cursor.key = key;
+        // `<mode>` is optional, and a document that does write one may spell it
+        // `none` or as a church mode. None of that changes the printed
+        // signature -- `<fifths>` already is the accidental count -- so anything
+        // but an outright "minor" is read as major. See `Key::from_mxml`.
+        let mode = node
+            .get_child("mode")
+            .and_then(|n| n.text())
+            .and_then(|text| Mode::try_from(text.trim()).ok())
+            .unwrap_or(Mode::Major);
+
+        ctx.cursor.key = Key::from_mxml(fifths, mode);
     }
 
     fn enter_backup(&mut self, node: &Node, ctx: &mut WalkerCtx) {
