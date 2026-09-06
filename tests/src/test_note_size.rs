@@ -1,7 +1,17 @@
+//! `<note-size>`: the reduction a grace or cue note is drawn at.
+//!
+//! The size has two halves that are settled at different times. The document
+//! walk records only what the note *is* (its [`NoteKind`]) plus the scaling its
+//! staff applies to content; the factor that kind stands for is a layout
+//! decision, resolved on every `arrange_score`. These tests pin both halves, and
+//! the seam between them: a score walked once must resize when it is arranged
+//! again under a different layout.
+
 #[cfg(test)]
 mod tests {
     use lib::score::app_defaults::AppDefaults;
-    use lib::score::engrave::walk_document;
+    use lib::score::core::note_kind::NoteKind;
+    use lib::score::engrave::{arrange_score, walk_document};
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
     use lib::score::visual::score::Score;
@@ -58,6 +68,22 @@ mod tests {
         )
     }
 
+    /// An eighth note, which earns a flag, with one augmentation dot -- so that
+    /// every part of the note a reduction has to reach is present.
+    fn dotted_eighth(kind: &str, x: u32) -> String {
+        let duration = if kind.contains("grace") {
+            ""
+        } else {
+            "<duration>3</duration>"
+        };
+
+        format!(
+            "<note default-x=\"{x}\">{kind}\
+             <pitch><step>C</step><octave>5</octave></pitch>{duration}\
+             <voice>1</voice><type>eighth</type><dot/><stem>up</stem></note>"
+        )
+    }
+
     fn walk(xml: &str) -> (Score, ScoreDefaults) {
         let document = Document::parse(xml).expect("test document does not parse");
         let (score, defaults, _messages) = walk_document(
@@ -71,11 +97,27 @@ mod tests {
         (score, defaults)
     }
 
-    /// Every note the walk built, in document order, by the scale it was built
-    /// at.
-    fn note_scales(xml: &str) -> Vec<f32> {
-        let (score, _) = walk(xml);
+    /// The full pipeline: walk the document, then arrange it under `user_layout`
+    /// -- which is when a note's size is actually decided.
+    fn engrave(xml: &str, user_layout: &UserLayout) -> Score {
+        let (mut score, defaults) = walk(xml);
+        arrange(&mut score, &defaults, user_layout);
 
+        score
+    }
+
+    fn arrange(score: &mut Score, defaults: &ScoreDefaults, user_layout: &UserLayout) {
+        arrange_score(
+            score,
+            defaults,
+            user_layout,
+            &AppDefaults::default(),
+            &mut |_stage| {},
+        );
+    }
+
+    /// Every note in the score, in document order.
+    fn notes(score: &Score) -> Vec<&lib::score::visual::note::Note> {
         score
             .pages
             .values()
@@ -86,7 +128,25 @@ mod tests {
             .flat_map(|part| part.measures.values())
             .flat_map(|measure| measure.chords.values().flatten())
             .flat_map(|chord| chord.notes.iter())
-            .map(|note| note.scale)
+            .collect()
+    }
+
+    fn note_scales(score: &Score) -> Vec<f32> {
+        notes(score).iter().map(|note| note.scale).collect()
+    }
+
+    fn rest_scales(score: &Score) -> Vec<f32> {
+        score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .flat_map(|section| section.part_groups.values())
+            .flat_map(|group| group.parts.values())
+            .flat_map(|part| part.staves.values())
+            .flat_map(|staff| staff.measures.values())
+            .flat_map(|measure| measure.rests.iter())
+            .map(|rest| rest.scale)
             .collect()
     }
 
@@ -114,9 +174,12 @@ mod tests {
         assert_eq!(defaults.appearance.note_size_cue, None);
     }
 
+    /// The walk records what the note *is*, never the factor that stands for --
+    /// the factor belongs to a render, and the walk's result is reused across
+    /// many of them.
     #[test]
-    fn a_declared_note_size_scales_the_note_it_names() {
-        let scales = note_scales(&score_xml(
+    fn the_walk_records_the_kind_and_leaves_the_factor_alone() {
+        let (score, _) = walk(&score_xml(
             "<note-size type=\"grace\">50</note-size><note-size type=\"cue\">70</note-size>",
             &format!(
                 "{}{}{}",
@@ -126,23 +189,54 @@ mod tests {
             ),
         ));
 
+        let kinds: Vec<NoteKind> = notes(&score).iter().map(|note| note.size.kind).collect();
+        assert_eq!(
+            kinds,
+            vec![NoteKind::Normal, NoteKind::Grace, NoteKind::Cue]
+        );
+
+        // No `<staff-size>`, so the one thing the walk *can* settle is 1.
+        assert!(notes(&score).iter().all(|n| n.size.content_scale == 1.0));
+    }
+
+    #[test]
+    fn a_declared_note_size_scales_the_note_it_names() {
+        let score = engrave(
+            &score_xml(
+                "<note-size type=\"grace\">50</note-size><note-size type=\"cue\">70</note-size>",
+                &format!(
+                    "{}{}{}",
+                    note("", 80),
+                    note("<grace/>", 120),
+                    note("<cue/>", 160)
+                ),
+            ),
+            &UserLayout::default(),
+        );
+
+        let scales = note_scales(&score);
         assert_eq!(scales.len(), 3, "got {scales:?}");
         assert_eq!(scales[0], 1.0, "a normal note is not reduced");
         assert_eq!(scales[1], 0.5, "the declared grace size");
         assert_eq!(scales[2], 0.7, "the declared cue size");
     }
 
-    /// A document that declares no `<note-size>` gets the app default, which is
-    /// what every score got before `<note-size>` was read at all.
+    /// A document that declares no `<note-size>` gets the app default.
     #[test]
     fn an_undeclared_note_size_falls_back_to_the_app_default() {
         let app = AppDefaults::default();
-        let scales = note_scales(&score_xml(
-            "",
-            &format!("{}{}", note("<grace/>", 80), note("<cue/>", 120)),
-        ));
+        let score = engrave(
+            &score_xml(
+                "",
+                &format!("{}{}", note("<grace/>", 80), note("<cue/>", 120)),
+            ),
+            &UserLayout::default(),
+        );
 
-        assert_eq!(scales, vec![app.note_size_grace, app.note_size_cue]);
+        assert_eq!(
+            note_scales(&score),
+            vec![app.note_size_grace, app.note_size_cue]
+        );
     }
 
     /// Rests carry the same reduction as notes -- a cue passage's rests are
@@ -151,33 +245,124 @@ mod tests {
     fn a_cue_rest_is_reduced_like_a_cue_note() {
         let rest = "<note default-x=\"80\"><cue/><rest/><duration>4</duration>\
                     <voice>1</voice><type>quarter</type></note>";
-        let (score, _) = walk(&score_xml("<note-size type=\"cue\">60</note-size>", rest));
+        let score = engrave(
+            &score_xml("<note-size type=\"cue\">60</note-size>", rest),
+            &UserLayout::default(),
+        );
 
-        let scales: Vec<f32> = score
-            .pages
-            .values()
-            .flat_map(|page| page.systems.values())
-            .flat_map(|system| system.sections.values())
-            .flat_map(|section| section.part_groups.values())
-            .flat_map(|group| group.parts.values())
-            .flat_map(|part| part.staves.values())
-            .flat_map(|staff| staff.measures.values())
-            .flat_map(|measure| measure.rests.iter())
-            .map(|rest| rest.scale)
-            .collect();
-
-        assert_eq!(scales, vec![0.6]);
+        assert_eq!(rest_scales(&score), vec![0.6]);
     }
 
     /// The two are mutually exclusive in the format. A note carrying both is
     /// read as a grace note rather than compounding the two reductions.
     #[test]
     fn grace_wins_over_cue_on_a_note_carrying_both() {
-        let scales = note_scales(&score_xml(
-            "<note-size type=\"grace\">50</note-size><note-size type=\"cue\">70</note-size>",
-            &note("<grace/><cue/>", 80),
-        ));
+        let score = engrave(
+            &score_xml(
+                "<note-size type=\"grace\">50</note-size><note-size type=\"cue\">70</note-size>",
+                &note("<grace/><cue/>", 80),
+            ),
+            &UserLayout::default(),
+        );
 
-        assert_eq!(scales, vec![0.5]);
+        assert_eq!(note_scales(&score), vec![0.5]);
+    }
+
+    /// A caller's override wins over what the document declared. This is what
+    /// the split exists for: `<note-size>` is a document default, not a
+    /// commitment the engraver has to honour.
+    #[test]
+    fn a_user_override_beats_the_documents_declared_note_size() {
+        let xml = score_xml(
+            "<note-size type=\"grace\">50</note-size><note-size type=\"cue\">70</note-size>",
+            &format!("{}{}", note("<grace/>", 80), note("<cue/>", 120)),
+        );
+
+        let score = engrave(
+            &xml,
+            &UserLayout {
+                note_size_grace: Some(0.25),
+                note_size_cue: Some(0.9),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(note_scales(&score), vec![0.25, 0.9]);
+    }
+
+    /// The pipeline walks once and arranges many times -- the wasm bindings
+    /// cache the walk and re-run only `arrange_score` per render. A note's size
+    /// therefore has to follow the layout of the render asking, not the one that
+    /// happened to come first.
+    #[test]
+    fn re_arranging_the_same_score_resizes_its_grace_notes() {
+        let xml = score_xml(
+            "<note-size type=\"grace\">50</note-size>",
+            &note("<grace/>", 80),
+        );
+        let (mut score, defaults) = walk(&xml);
+
+        arrange(&mut score, &defaults, &UserLayout::default());
+        assert_eq!(note_scales(&score), vec![0.5], "the document's own size");
+
+        arrange(
+            &mut score,
+            &defaults,
+            &UserLayout {
+                note_size_grace: Some(0.8),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            note_scales(&score),
+            vec![0.8],
+            "the override, on a re-render"
+        );
+
+        arrange(&mut score, &defaults, &UserLayout::default());
+        assert_eq!(
+            note_scales(&score),
+            vec![0.5],
+            "and back again -- nothing was baked in"
+        );
+    }
+
+    /// Everything hanging off a reduced note shrinks by the same number.
+    /// Resolving the factor separately per element is how a grace note ends up
+    /// with, say, full-size dots on a half-size notehead.
+    #[test]
+    fn every_part_of_a_grace_note_is_reduced_by_the_same_factor() {
+        let score = engrave(
+            &score_xml(
+                "<note-size type=\"grace\">50</note-size>",
+                &dotted_eighth("<grace/>", 80),
+            ),
+            &UserLayout::default(),
+        );
+
+        let chords: Vec<_> = score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .flat_map(|section| section.part_groups.values())
+            .flat_map(|group| group.parts.values())
+            .flat_map(|part| part.measures.values())
+            .flat_map(|measure| measure.chords.values().flatten())
+            .collect();
+
+        let chord = chords.first().expect("the grace chord should exist");
+        let note = chord.notes.first().expect("the grace note should exist");
+        let stem = chord.stem.as_ref().expect("an eighth note carries a stem");
+        let flag = stem
+            .flag
+            .as_ref()
+            .expect("an unbeamed eighth carries a flag");
+        let dot = note.dots.first().expect("the note is dotted");
+
+        assert_eq!(note.scale, 0.5, "notehead");
+        assert_eq!(dot.scale, 0.5, "augmentation dot");
+        assert_eq!(stem.scale, 0.5, "stem");
+        assert_eq!(flag.scale, 0.5, "flag");
     }
 }

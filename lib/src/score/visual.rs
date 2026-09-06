@@ -9,6 +9,7 @@ pub mod key_signature;
 pub mod layout_engine;
 pub mod layoutable;
 pub mod note;
+pub mod note_scale;
 pub mod page;
 pub mod part;
 pub mod part_group;

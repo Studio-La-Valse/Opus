@@ -85,7 +85,8 @@ Smaller, independent, and in no particular order.
 |---|---|
 | Staves are always five lines. `<staff-lines>` is not read, and `render_staff` loops `0..5`. | `base_renderer.rs`, `Staff::LINES` |
 | Tablature is a clef glyph and nothing else — no six-line staff, no fret numbers, no `<staff-tuning>`. Notes on a tab staff are placed by pitch. | `Clef::Tab` |
-| Note size cannot be overridden per render. `<note-size>` is resolved on the document walk, whose result is cached and re-arranged for whatever layout a later render asks for, so a `UserLayout` value read there would be baked in at the wrong moment. Exposing it means giving a `Note` / `Rest` / `Stem` / `Flag` / `Dot` its *kind* (normal, grace, cue) rather than a pre-multiplied scale, and applying the factor in `resolve_layout`. | `content_visitor.rs::note_scale` |
+| A grace or cue note's accidental is drawn full size. `Accidental` never carries a `NoteScale` — its `scale` is fixed at 1 on construction, so it misses both the `<note-size>` reduction and the staff's own content scaling. | `accidental.rs` |
+| Beam thickness follows a grace group but not a cue one. `arrange_beams` reduces by `note_size_grace` when `Chord::grace`, and a chord knows nothing else; giving `Chord` a `NoteKind` would also split beam groups by kind, which is the part worth thinking about first. | `part_measure.rs::arrange_beams` |
 | Only the first `<key>` in an `<attributes>` is read, so per-staff key signatures (`<key number="n">`) are ignored. | `walker.rs` |
 | The baritone clef's fifth sharp (A♯) is placed below the bottom staff line; every other clef keeps its key signature on the staff. Reachable at five sharps. | `Clef::sharp_lines` |
 | A `Text` element contributes only its anchor point to `compute_bounds`, so a glyph at the edge of a score is not counted in the bounds the wasm canvas and SVG view box are sized from. | `drawable_element.rs::accumulate_bounds` |

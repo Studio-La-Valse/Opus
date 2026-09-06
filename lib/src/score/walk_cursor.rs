@@ -1,6 +1,7 @@
 ﻿use crate::score::core::clef::Clef;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::key::Key;
+use crate::score::core::note_kind::NoteKind;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
 use crate::score::visual::note::NoteId;
@@ -135,6 +136,19 @@ impl WalkCursor {
     /// before any other visitor in the chain sees the element.
     pub fn advance_note_id(&mut self) {
         self.note_id = self.note_id.next();
+    }
+
+    /// How prominently the `<note>` currently being visited should be drawn.
+    /// `<grace>` and `<cue>` are mutually exclusive in the format, so a note
+    /// carrying both is read as a grace note rather than compounding the two.
+    pub fn note_kind(&self) -> NoteKind {
+        if self.grace {
+            NoteKind::Grace
+        } else if self.cue {
+            NoteKind::Cue
+        } else {
+            NoteKind::Normal
+        }
     }
 
     pub fn reset(&mut self) {

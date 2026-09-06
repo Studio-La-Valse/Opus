@@ -9,6 +9,7 @@ use crate::score::core::step::Step;
 use crate::score::visual::chord::Chord;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::note::Note;
+use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::rest::Rest;
 use crate::score::visual::stem::{BeamType, Stem, UpDown};
 
@@ -43,42 +44,24 @@ impl Default for ContentVisitor {
     }
 }
 
-/// The scale one note or rest is drawn at: the staff's own content scaling,
-/// reduced for a grace or a cue note.
+/// The size the note or rest under the cursor is drawn at: the scaling its staff
+/// applies to content, plus whether it is a normal, grace or cue note.
 ///
-/// `<note-size>` resolves from `<defaults><appearance>` and falls back to the
-/// app default, with no `UserLayout` in the chain. That is not an oversight: the
-/// walk this runs on is cached and re-arranged for whatever layout a later
-/// render asks for, so a caller's preference read here would be baked in at the
-/// wrong moment and then never revisited. Making note size a render-time knob
-/// means resolving it in `measure` rather than here -- see docs/roadmap.md.
-///
-/// `<grace>` and `<cue>` are mutually exclusive in the format; a note carrying
-/// both is read as a grace note.
-fn note_scale(ctx: &WalkerCtx) -> f32 {
+/// The two stay unresolved on purpose. The grace/cue reduction comes from
+/// `<note-size>`, which a caller can override, and this walk is cached and
+/// re-arranged for whatever layout a later render asks for -- a factor
+/// multiplied in here would be stuck at whatever the first render happened to
+/// ask for. See [`NoteScale`].
+fn note_scale(ctx: &WalkerCtx) -> NoteScale {
     let staff_idx = ctx.cursor.staff.number;
-    let mut scale = *ctx
+    let content_scale = *ctx
         .cursor
         .staff
         .content_scaling
         .get(&staff_idx)
         .unwrap_or(&1.0);
 
-    if ctx.cursor.grace {
-        scale *= ctx
-            .layout
-            .appearance
-            .note_size_grace
-            .unwrap_or(ctx.app_defaults.note_size_grace);
-    } else if ctx.cursor.cue {
-        scale *= ctx
-            .layout
-            .appearance
-            .note_size_cue
-            .unwrap_or(ctx.app_defaults.note_size_cue);
-    }
-
-    scale
+    NoteScale::new(content_scale, ctx.cursor.note_kind())
 }
 
 impl ContentVisitor {
@@ -86,7 +69,7 @@ impl ContentVisitor {
         let staff_idx = ctx.cursor.staff.number;
         let measure_number = ctx.cursor.measure.number;
         let part_id = ctx.cursor.part_id.as_str();
-        let scale = note_scale(ctx);
+        let size = note_scale(ctx);
 
         let staff_measure = ctx
             .visual_score
@@ -105,7 +88,7 @@ impl ContentVisitor {
                 None,
                 staff_idx,
                 Rest::CENTER_STAFF_LINE,
-                scale,
+                size,
                 dots,
             )
         } else {
@@ -118,7 +101,7 @@ impl ContentVisitor {
                 Some(default_x),
                 staff_idx,
                 Rest::CENTER_STAFF_LINE,
-                scale,
+                size,
                 dots,
             )
         };
@@ -146,7 +129,7 @@ impl ContentVisitor {
         let position = ctx.cursor.position;
         let voice = ctx.cursor.voice;
         let part_id = ctx.cursor.part_id.as_str();
-        let scale = note_scale(ctx);
+        let size = note_scale(ctx);
 
         // Parse Pitch
         let step = pitch_node.req_child("step");
@@ -172,7 +155,7 @@ impl ContentVisitor {
             default_x,
             staff_idx,
             staff_line,
-            scale,
+            size,
             dots,
         );
 
@@ -208,7 +191,7 @@ impl ContentVisitor {
 
             let stem = chord
                 .stem
-                .get_or_insert_with(|| Stem::new(dir, dur, staff_idx, scale, default_y));
+                .get_or_insert_with(|| Stem::new(dir, dur, staff_idx, size, default_y));
 
             let beams: Vec<_> = node
                 .children()
@@ -216,7 +199,7 @@ impl ContentVisitor {
                 .collect();
             if beams.is_empty() && stem.beams.is_empty() {
                 if let Some(flag_name) = dur.flag_glyph(&dir) {
-                    stem.flag = Some(DrawableFlag::new(ctx.font.flag(flag_name, &dir), scale));
+                    stem.flag = Some(DrawableFlag::new(ctx.font.flag(flag_name, &dir), size));
                 }
             } else {
                 for beam in beams {

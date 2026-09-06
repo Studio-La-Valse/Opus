@@ -1,6 +1,7 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::note_scale::NoteScale;
 
 /// A single augmentation dot belonging to a [`Note`](super::note::Note) or
 /// [`Rest`](super::rest::Rest). Notes and rests own a `Vec<Dot>` with one entry
@@ -10,7 +11,13 @@ use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 pub struct Dot {
     pub xy: XY,
 
+    /// What this dot's size is derived from -- the owning note's own
+    /// [`NoteScale`], so a grace note's dots shrink with it.
+    pub size: NoteScale,
+    /// The factor `size` resolved to, written by `resolve_layout` and so only
+    /// meaningful after `measure`.
     pub scale: f32,
+
     pub color: Color,
 
     /// Resolved dot radius in world units (tenths).
@@ -18,11 +25,13 @@ pub struct Dot {
 }
 
 impl Dot {
-    pub fn new(scale: f32) -> Self {
+    pub fn new(size: NoteScale) -> Self {
         Self {
             xy: XY::ZERO,
 
-            scale,
+            size,
+            scale: size.content_scale,
+
             color: Color::BLACK,
 
             radius: 0.,
@@ -37,6 +46,8 @@ impl Dot {
             app_defaults,
             ..
         } = params;
+
+        self.scale = self.size.resolve(params);
 
         self.color = user_layout
             .dot_color
