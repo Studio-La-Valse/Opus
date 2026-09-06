@@ -1,7 +1,6 @@
 # Roadmap
 
-Work that is known, wanted, and not done. Ordered: the first section is what gets
-picked up next, the rest is a holding list rather than a queue.
+Work that is known, wanted, and not done. Ordered: the first section is a major (multi commit-) feature that that needs an implementation as soon as possible. 
 
 ---
 
@@ -71,25 +70,75 @@ warrants. Three things it gets wrong:
   `beam_level_ends_at` infers around. A strategy that validated the run's shape
   would repair those instead of leaving the renderer to guess.
 
+### 1c. Potentially free/cheap fixes for these currently known issues: 
+- Include: Beam slant is clamped to a flat `MAX_BEAM_SLANT_DY` of two line spaces. Two spaces is indeed the conventional maximum, but a clamp is all it is: the slant a group actually wants follows the interval it spans, how many notes it has and where they sit on the staff. 
+- A beam hook is a fixed `HOOK_LENGTH` of 7.5 tenths. It should be inferred from the space available between the two stems and clamped to a maximum. 
+
 ---
 
-## Also outstanding
+## Simple fixes and features: short term goals
 
-Smaller, independent, and in no particular order.
+Smaller, independent, tentatively ordered by consecutive feature impact.
 
-| Item | Where |
-|---|---|
-| Tablature is a clef glyph and nothing else — no fret numbers, no `<staff-tuning>`, and the six-string glyph stands in whatever the string count. Notes on a tab staff are placed by pitch. | `Clef::Tab` |
-| A grace or cue note's accidental is drawn full size. `Accidental` never carries a `NoteScale` — its `scale` is fixed at 1 on construction, so it misses both the `<note-size>` reduction and the staff's own content scaling. | `accidental.rs` |
-| Beam thickness follows a grace group but not a cue one. `arrange_beams` reduces by `note_size_grace` when `Chord::grace`, and a chord knows nothing else; giving `Chord` a `NoteKind` would also split beam groups by kind, which is the part worth thinking about first. | `part_measure.rs::arrange_beams` |
-| Only the first `<key>` in an `<attributes>` is read, so per-staff key signatures (`<key number="n">`) are ignored. | `walker.rs` |
-| The baritone clef's fifth sharp (A♯) is placed below the bottom staff line; every other clef keeps its key signature on the staff. Reachable at five sharps. | `Clef::sharp_lines` |
-| A `Text` element contributes only its anchor point to `compute_bounds`, so a glyph at the edge of a score is not counted in the bounds the wasm canvas and SVG view box are sized from. | `drawable_element.rs::accumulate_bounds` |
-| `LAYOUT_OPTIONS` in the web component is a hand-maintained list naming six of `UserLayout`'s fields; the tie, dot and beam knobs cannot be reached from CSS. | `web/music-xml.js` |
-| Curves are sampled into polygons because there is no path primitive. A real `DrawableElement::Path` would serve ties, slurs, hairpins and ottavas, and the PDF sink already has `cubic_to`. The full migration is written out in `tie_arc`'s doc comment. | `tie.rs` |
-| A one-line staff has invisible barlines. Its height is the distance from top line to bottom line, so it is legitimately zero, and the section and system lines drawn over that height collapse to nothing. A barline on such a staff should span exactly one line space — 10 tenths — centred on the line. | `section_measure.rs`, `system.rs`, `Staff::height` |
-| Staff line indices count half-spaces *down from the top line*; MusicXML counts whole lines *up from the bottom* (`<clef><line>`, `<staff-tuning line="n">`, `<display-step>`/`<display-octave>`). Nothing converts between the two, so `<clef><line>` is only read far enough to tell the C clefs apart and every anchor is a constant hard-coded for a five-line staff. Either add a MusicXML↔internal line-index conversion at the boundary, or revise the internal indexing to count from the bottom. | `Clef::anchor_line`, `Clef::from_mxml`, `walk_cursor_visitor.rs` |
-| A part whose first measure carries no `<print>` is engraved in a different system than one that does. `system.index` is per-part state, reset per part and incremented only inside `enter_print`, where measure 1 implies a new system — so a part without the element stays at index 0 while its neighbours move to 1. Real exports write `<print>` in every part, which is what keeps this latent; a validation rule should report a measure where the parts disagree about carrying one. | `walk_cursor_visitor.rs::enter_print`, a new validation visitor |
-| Beam slant is clamped to a flat `MAX_BEAM_SLANT_DY` of two line spaces. Two spaces is indeed the conventional maximum, but a clamp is all it is: the slant a group actually wants follows the interval it spans, how many notes it has and where they sit on the staff. | `part_measure.rs` |
-| A beam hook is a fixed `HOOK_LENGTH` of 7.5 tenths. It should be inferred from the space available between the two stems and clamped to a maximum. | `part_measure.rs` |
-| One `ELEMENT_PADDING` constant spaces the clef, the key signature and the time signature alike. It should be split into a padding value per element, each reachable through both `AppDefaults` and `UserLayout`. | `staff_measure.rs` |
+- support bar lines for a single line staff: should extent one staff space on top and below of the single line (so 20 tenths in total). 
+
+- Add support for a user to define layout from a deserialized file. Decide yml, ini, json, etc
+Keep current arguments to cli: allow them as additional overrides on top of the user layout. Review structure of user layout particularly, should be flat list or nested? Also fully mirror app defaults and user layout: no option should exit in one that doesnt exist in the other - however user layout options are always optional, app defaults are static and readonly, always have a value assigned. User layout file should always be optional, not required for cli functionality.
+
+- Add support for different brace styles. Now only curly drawing, starting with rectangluar. Read the type from the music xml document. Should be flexible in size as well, like the bracket spine is. Also add support for brace alternatives as defined in smufl. If feasable, add support for user defined style: brace vs square for partgroups, etc. 
+
+- Evaluate/review: a text element should be a text box so that it has a measurable bounding box. Should not change visible behavior at all. We could provide support for box background color as well. 
+
+- Partgroups and part names should be drawn left of the (part(-group)) brace or section bracket if it exists. Should add a new font type, now only music and titles; should add part names font type to support a user defined font (as well as app default). Include in this feature: support for user defined spacing of bracket and brace left of systems. Sections should not have a (potential) name attached.
+
+- One `ELEMENT_PADDING` constant spaces the clef, the key signature and the time signature alike. It should be split into a padding value per element, each reachable through both `AppDefaults` and `UserLayout`. 
+
+- Scale grace and cue note's accidental, flag and beam group. Decide how to handle vecs of chord with mixed grace, cue and normal notes: validation is a must.
+
+- Review: should lib be split into separate crates, akin .net project setup? Review internal dependency tree. For example: Review pdf export dependencies in lib, should only live in cli? Maybe not required/conventional for Rust projects.
+
+- Ties and slurs are now multi segment polygons because of thickness. Update path support - or explicitly decide not to.
+
+- Review staff line indexing: ours start at 0 from top to bottom, musicxml counts from 1 bottom to top. Clef anchor lines work on 5 line staves but break on anything else. Either a conversion method or review our internal drawing engine. 
+
+- Potential bug: a part whose first measure carries no `<print>` is engraved in a different system than one that does. `system.index` is per-part state, reset per part and incremented only inside `enter_print`, where measure 1 implies a new system — so a part without the element stays at index 0 while its neighbours move to 1. Real exports write `<print>` in every part, which is what keeps this latent; a validation rule should report a measure where the parts disagree about carrying one. 
+
+- Generalize smufl parsing from some point onwards: so far managable in code but defining thousands of smufl glyphs in code is undesirable.
+
+- Generalize bounding boxes, every score element should have an inherent bounding box which is always drawn when --debug is provided.
+
+- Access Smufl data from installed system wide files (as documented by smufl itself), optionally providing currently supported smufl (meta-)data through cli args. 
+
+- Support for other smufl fonts.
+
+- Support for lyrics. 
+
+- Support for every articulation imaginable. 
+
+- Support for slurs. 
+
+
+## Long term goals: 
+- Installer, create publication, system wide available `opus` cli. Release once cli reaches stable point, do not wait for full desktop/mobile/web support. Prioritize cli.
+
+- Publication of visual score, smufl and musicxml crates, so users may embed in third party applications.
+
+- Full tablature support. 
+
+- Zero panic render pipeline. Should be able to handle every imaginable musicxml document, guaranteed to not panic once passes validation. Problems in document should be skipped and displayed if --debug is provided (such as a red border around a measure that has content the cli was not able to parse.)
+
+- Support for different layout engines. I image for example a layout engine where we can override page size and measures and systems restructure without reading the musicxml print attributes. Support for single page scroll in scope. Current layout engine must keep support. 
+
+- Support for mxl (zipped musicxml document). Should be able to export to mxl as well as a separate cli command `export`. 
+
+- Support for older musicxml document versions. Should be able to export to any given format as a separate cli command `export`.
+
+- Support for finale, sibelius and musescore interop. 
+
+- Auto fix document issues. 
+
+- Improved Web/WASM support.
+
+- Desktop app support - see /platforms skeleton.
+
+- Mobile app support - see /platforms skeleton.
