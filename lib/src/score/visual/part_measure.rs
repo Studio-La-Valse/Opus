@@ -237,9 +237,11 @@ impl PartMeasure {
             .staff
             .unwrap_or(app_defaults.staff_line_thickness);
 
-        self.note_size_grace = user_layout
+        // The same chain `ContentVisitor::note_scale` uses, so a grace note's
+        // beams are reduced by exactly what its noteheads were.
+        self.note_size_grace = score_defaults
+            .appearance
             .note_size_grace
-            .or(score_defaults.appearance.note_size_grace)
             .unwrap_or(app_defaults.note_size_grace);
     }
 }

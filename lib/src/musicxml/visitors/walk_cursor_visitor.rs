@@ -287,6 +287,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for WalkCursorVisitor {
 
         let is_chord = element.get_child("chord").is_some();
         let is_grace = element.has_child("grace");
+        let is_cue = element.has_child("cue");
 
         let duration: u32 = if is_grace {
             0
@@ -295,7 +296,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for WalkCursorVisitor {
         };
 
         ctx.cursor
-            .enter_note(duration, is_chord, is_grace)
+            .enter_note(duration, is_chord, is_grace, is_cue)
             .expect("chord note duration exceeds current position");
 
         for node in element.children() {

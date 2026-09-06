@@ -43,26 +43,50 @@ impl Default for ContentVisitor {
     }
 }
 
+/// The scale one note or rest is drawn at: the staff's own content scaling,
+/// reduced for a grace or a cue note.
+///
+/// `<note-size>` resolves from `<defaults><appearance>` and falls back to the
+/// app default, with no `UserLayout` in the chain. That is not an oversight: the
+/// walk this runs on is cached and re-arranged for whatever layout a later
+/// render asks for, so a caller's preference read here would be baked in at the
+/// wrong moment and then never revisited. Making note size a render-time knob
+/// means resolving it in `measure` rather than here -- see docs/roadmap.md.
+///
+/// `<grace>` and `<cue>` are mutually exclusive in the format; a note carrying
+/// both is read as a grace note.
+fn note_scale(ctx: &WalkerCtx) -> f32 {
+    let staff_idx = ctx.cursor.staff.number;
+    let mut scale = *ctx
+        .cursor
+        .staff
+        .content_scaling
+        .get(&staff_idx)
+        .unwrap_or(&1.0);
+
+    if ctx.cursor.grace {
+        scale *= ctx
+            .layout
+            .appearance
+            .note_size_grace
+            .unwrap_or(ctx.app_defaults.note_size_grace);
+    } else if ctx.cursor.cue {
+        scale *= ctx
+            .layout
+            .appearance
+            .note_size_cue
+            .unwrap_or(ctx.app_defaults.note_size_cue);
+    }
+
+    scale
+}
+
 impl ContentVisitor {
     fn handle_rest(&mut self, node: &Node, rest_node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx = ctx.cursor.staff.number;
         let measure_number = ctx.cursor.measure.number;
         let part_id = ctx.cursor.part_id.as_str();
-        let mut scale = *ctx
-            .cursor
-            .staff
-            .content_scaling
-            .get(&staff_idx)
-            .unwrap_or(&1.0);
-
-        let is_grace = ctx.cursor.grace;
-        if is_grace {
-            scale *= ctx
-                .layout
-                .appearance
-                .note_size_grace
-                .unwrap_or(ctx.app_defaults.note_size_grace);
-        }
+        let scale = note_scale(ctx);
 
         let staff_measure = ctx
             .visual_score
@@ -122,21 +146,7 @@ impl ContentVisitor {
         let position = ctx.cursor.position;
         let voice = ctx.cursor.voice;
         let part_id = ctx.cursor.part_id.as_str();
-        let mut scale = *ctx
-            .cursor
-            .staff
-            .content_scaling
-            .get(&staff_idx)
-            .unwrap_or(&1.0);
-
-        let is_grace = ctx.cursor.grace;
-        if is_grace {
-            scale *= ctx
-                .layout
-                .appearance
-                .note_size_grace
-                .unwrap_or(ctx.app_defaults.note_size_grace);
-        }
+        let scale = note_scale(ctx);
 
         // Parse Pitch
         let step = pitch_node.req_child("step");

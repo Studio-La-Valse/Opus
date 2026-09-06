@@ -125,13 +125,18 @@ impl Visitor<ValidationCtx> for PositionVisitor {
 
         let is_chord = element.has_child("chord");
         let is_grace = element.has_child("grace");
+        let is_cue = element.has_child("cue");
         let duration = element
             .get_child("duration")
             .and_then(|n| n.text())
             .and_then(|s| s.trim().parse::<u32>().ok())
             .unwrap_or(0);
 
-        if ctx.cursor.enter_note(duration, is_chord, is_grace).is_err() {
+        if ctx
+            .cursor
+            .enter_note(duration, is_chord, is_grace, is_cue)
+            .is_err()
+        {
             ctx.issues.push(ValidationIssue {
                 severity: Severity::Error,
                 message: "chord note duration exceeds the current position".to_string(),

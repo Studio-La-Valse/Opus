@@ -29,9 +29,11 @@ pub struct UserLayout {
     pub beam_spacing: Option<f32>,
     pub stem_thickness: Option<f32>,
 
-    pub note_size_grace: Option<f32>,
-    pub note_size_cue: Option<f32>,
-
+    // No `note_size_grace` / `note_size_cue`. `<note-size>` is resolved on the
+    // document walk, whose result is cached and re-arranged for whatever layout
+    // a later render asks for -- so a value read from here would be baked in at
+    // the wrong moment and then never revisited. Exposing it as an override
+    // means resolving note size in `measure` instead; see docs/roadmap.md.
     pub dot_radius: Option<f32>,
     pub dot_spacing: Option<f32>,
     pub dot_color: Option<Color>,

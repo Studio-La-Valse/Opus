@@ -37,6 +37,22 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
                     _ => {}
                 }
             }
+
+            // `<note-size>` is a percentage of a normal notehead, so it is
+            // stored as the fraction everything else multiplies by. MusicXML
+            // also defines "grace-cue" and "large"; neither is drawn yet, and an
+            // unrecognised type is ignored the way an unrecognised line-width
+            // is.
+            for note_size in appearance.children().filter(|n| n.has_tag("note-size")) {
+                let t = note_size.req_attribute("type");
+                let v: f32 = note_size.req_parse();
+
+                match t {
+                    "grace" => ctx.layout.appearance.note_size_grace = Some(v / 100.),
+                    "cue" => ctx.layout.appearance.note_size_cue = Some(v / 100.),
+                    _ => {}
+                }
+            }
         }
 
         if let Some(system_layout) = element.children().find(|n| n.has_tag("system-layout")) {
