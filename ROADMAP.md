@@ -172,6 +172,27 @@ consecutive feature impact.
 
 - **Support for other SMuFL fonts.**
 
+- **Tuplets.** The number, the bracket and its hooks, nested tuplets, and
+  `<time-modification>` feeding the duration maths. Worth designing alongside
+  section 1 rather than after it: a tuplet bracket spans the same run of chords a
+  beam group does, and when that run is beamed the bracket is conventionally
+  suppressed in favour of the bare number — so whatever shape `Score::beam_groups`
+  takes, a tuplet wants the same one.
+
+- **Barline types, including repeats.** Light and heavy, double and final,
+  repeat dots and their forward/backward direction, volta brackets for endings,
+  and the segno / coda / D.C. / D.S. apparatus that goes with them. Repeat
+  barlines interact with system breaks, so this wants the layout side settled
+  first.
+
+- **Dynamics.** The SMuFL dynamic glyphs and their placement below (or above)
+  the staff, per voice, with the vertical space they claim reserved rather than
+  overlapped.
+
+- **Notehead shape alternatives.** `<notehead>`: x, diamond, slash, triangle and
+  the rest. Needed before percussion is readable, and the shape has to reach the
+  glyph lookup rather than being decided by duration alone.
+
 - **Lyrics.** The font is already plumbed end to end — `RenderFonts::lyric`,
   `AppDefaults::lyric_font`, the wasm `lyricFont` option — so what is missing is
   reading `<lyric>`, placing the syllables, and the vertical space they claim.
@@ -232,6 +253,12 @@ Open questions. Each wants an answer written down, and the answer may be "no".
   document, guaranteed not to panic once it passes validation. Problems in the
   document should be skipped and displayed if `--debug` is provided (such as a
   red border around a measure that has content the cli was not able to parse).
+
+- Note horizontal position currently comes from `default-x`. The MusicXML spec
+  makes that attribute optional; every test document so far has carried one,
+  which is the only reason this holds. Placing a note without it means computing
+  x from duration and content — real spacing — so this comes before the generic
+  layout engine below rather than as part of it.
 
 - Support for different layout engines. I imagine, for example, a layout engine
   where we can override page size and measures and systems restructure without
