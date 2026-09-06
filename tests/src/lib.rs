@@ -8,6 +8,8 @@ mod test_engrave_samples;
 mod test_flat_buffer;
 mod test_key;
 mod test_musicxml_source;
+mod test_page_layout;
+mod test_page_layout_validation;
 mod test_part_list;
 mod test_pdf;
 mod test_ray;

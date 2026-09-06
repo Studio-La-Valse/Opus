@@ -4,6 +4,7 @@ use lib::geometry::color::Color;
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
 use lib::musicxml::visitors::beam_group_visitor::BeamGroupVisitor;
+use lib::musicxml::visitors::page_layout_visitor::PageLayoutVisitor;
 use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::musicxml::visitors::position_visitor::PositionVisitor;
 use lib::musicxml::walker::Walker;
@@ -150,7 +151,8 @@ pub fn run(format: RenderCommand) {
     let visitor = DefaultVisitor {}
         .uses(PartConsistencyVisitor::default())
         .uses(PositionVisitor::default())
-        .uses(BeamGroupVisitor::default());
+        .uses(BeamGroupVisitor::default())
+        .uses(PageLayoutVisitor::default());
     Walker::new(visitor).walk(&document, &mut validation_ctx);
     print_issues(&document, &validation_ctx.issues);
 

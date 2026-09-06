@@ -3,7 +3,7 @@ use crate::musicxml::utils::ReqParse;
 use crate::musicxml::visitor::Visitor;
 use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::part_list::builder::build_part_list;
-use crate::score::score_defaults::PageMargins;
+use crate::score::score_defaults::PageLayout;
 use roxmltree::Node;
 
 pub struct SetupVisitor {}
@@ -18,25 +18,9 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
         ctx.layout.defaults.scaling_millimeters = scaling.req_child("millimeters").req_parse();
         ctx.layout.defaults.scaling_tenths = scaling.req_child("tenths").req_parse();
 
-        let page_layout = element.req_child("page-layout");
-        ctx.layout.defaults.page_height = page_layout.req_child("page-height").req_parse();
-        ctx.layout.defaults.page_width = page_layout.req_child("page-width").req_parse();
-
-        for pm in page_layout.children().filter(|n| n.has_tag("page-margins")) {
-            let margins = PageMargins {
-                left: pm.req_child("left-margin").req_parse(),
-                right: pm.req_child("right-margin").req_parse(),
-                top: pm.req_child("top-margin").req_parse(),
-                bottom: pm.req_child("bottom-margin").req_parse(),
-            };
-
-            // `type` is optional in MusicXML and defaults to "both".
-            match pm.get_attribute("type").unwrap_or("both") {
-                "both" => ctx.layout.page_margins_both = Some(margins),
-                "odd" => ctx.layout.page_margins_odd = Some(margins),
-                "even" => ctx.layout.page_margins_even = Some(margins),
-                other => panic!("Invalid page-margins type '{}'", other),
-            }
+        // `<page-layout>` is optional here, and so is every part of it.
+        if let Some(page_layout) = element.get_child("page-layout") {
+            ctx.layout.page_layout = PageLayout::from_mxml(&page_layout);
         }
 
         if let Some(appearance) = element.children().find(|n| n.has_tag("appearance")) {

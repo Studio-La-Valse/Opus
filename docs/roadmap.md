@@ -83,7 +83,6 @@ Smaller, independent, and in no particular order.
 
 | Item | Where |
 |---|---|
-| `<print><page-layout>` is ignored, so mid-document page size and margin changes do nothing. ActorPreludeSample sets per-page top margins this way. | `walk_cursor_visitor.rs::enter_print` |
 | Staves are always five lines. `<staff-lines>` is not read, and `render_staff` loops `0..5`. | `base_renderer.rs`, `Staff::LINES` |
 | Tablature is a clef glyph and nothing else — no six-line staff, no fret numbers, no `<staff-tuning>`. Notes on a tab staff are placed by pitch. | `Clef::Tab` |
 | `UserLayout::note_size_cue` is never read by anything. `note_size_grace` reaches beam thickness only: the notehead scale is baked in during the cached walk, which by design cannot see a `UserLayout`. | `user_layout.rs`, `content_visitor.rs` |

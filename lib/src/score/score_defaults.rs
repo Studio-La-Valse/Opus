@@ -1,4 +1,7 @@
-﻿use crate::score::part_list::tree::PartListNode;
+﻿use crate::musicxml::utils::{NodeUtils, ReqParse};
+use crate::score::part_list::tree::PartListNode;
+use roxmltree::Node;
+use std::collections::BTreeMap;
 
 /// A `<score-part>`'s section/part-group assignment, returned by
 /// `ScoreDefaults::lookup` for a given part id.
@@ -46,6 +49,93 @@ impl Default for PageMargins {
     }
 }
 
+impl PageMargins {
+    /// Reads one `<page-margins>`. All four edges are required by the format.
+    pub fn from_mxml(node: &Node) -> PageMargins {
+        PageMargins {
+            left: node.req_child("left-margin").req_parse(),
+            right: node.req_child("right-margin").req_parse(),
+            top: node.req_child("top-margin").req_parse(),
+            bottom: node.req_child("bottom-margin").req_parse(),
+        }
+    }
+}
+
+/// Everything a `<page-layout>` can say, all of it optional.
+///
+/// Optional twice over: the element's own content model makes it so --
+/// `<page-height>` and `<page-width>` come as a pair or not at all, and any of
+/// the three kinds of `<page-margins>` may be absent -- and inside a `<print>`
+/// the omissions carry meaning. A mid-document `<page-layout>` changes what it
+/// names and leaves the rest of the page geometry as it was.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct PageLayout {
+    pub width: Option<f32>,
+    pub height: Option<f32>,
+    pub margins_both: Option<PageMargins>,
+    pub margins_odd: Option<PageMargins>,
+    pub margins_even: Option<PageMargins>,
+}
+
+impl PageLayout {
+    /// Reads a `<page-layout>`, from `<defaults>` or from a `<print>`. The two
+    /// mean the same thing; they differ only in what they apply to.
+    pub fn from_mxml(node: &Node) -> PageLayout {
+        let mut layout = PageLayout {
+            width: node.get_child("page-width").map(|n| n.req_parse()),
+            height: node.get_child("page-height").map(|n| n.req_parse()),
+            ..Default::default()
+        };
+
+        for margins in node.children().filter(|n| n.has_tag("page-margins")) {
+            let parsed = PageMargins::from_mxml(&margins);
+
+            // `type` is optional and defaults to "both".
+            match margins.get_attribute("type").unwrap_or("both") {
+                "both" => layout.margins_both = Some(parsed),
+                "odd" => layout.margins_odd = Some(parsed),
+                "even" => layout.margins_even = Some(parsed),
+                other => panic!("Invalid page-margins type '{other}'"),
+            }
+        }
+
+        layout
+    }
+
+    /// The margins this layout specifies for a page of `page_number`'s parity,
+    /// or `None` if it names none that apply.
+    ///
+    /// Resolving parity *before* folding one layout over another is what makes
+    /// a later declaration win: a `<print>` carrying an untyped (`both`)
+    /// `<page-margins>` has to replace the `odd` margins the defaults set, not
+    /// lose to them for being in a less specific slot.
+    pub fn margins_for(&self, page_number: u32) -> Option<PageMargins> {
+        if page_number.is_multiple_of(2) {
+            self.margins_even.or(self.margins_both)
+        } else {
+            self.margins_odd.or(self.margins_both)
+        }
+    }
+
+    /// Folds `other` over `self`: what `other` names wins, what it leaves out
+    /// keeps the value it already had.
+    pub fn apply(&mut self, other: &PageLayout) {
+        self.width = other.width.or(self.width);
+        self.height = other.height.or(self.height);
+        self.margins_both = other.margins_both.or(self.margins_both);
+        self.margins_odd = other.margins_odd.or(self.margins_odd);
+        self.margins_even = other.margins_even.or(self.margins_even);
+    }
+}
+
+/// One page's finished geometry, resolved by [`ScoreDefaults::resolve_page`].
+#[derive(Debug, Clone, Copy)]
+pub struct ResolvedPage {
+    pub width: f32,
+    pub height: f32,
+    pub margins: PageMargins,
+}
+
 #[derive(Default, Clone)]
 pub struct Appearance {
     pub light_barline: Option<f32>,
@@ -64,9 +154,12 @@ pub struct ScoreDefaults {
     pub defaults: Defaults,
     pub appearance: Appearance,
 
-    pub page_margins_both: Option<PageMargins>,
-    pub page_margins_even: Option<PageMargins>,
-    pub page_margins_odd: Option<PageMargins>,
+    /// `<defaults><page-layout>`: the page geometry the whole score starts from.
+    pub page_layout: PageLayout,
+    /// `<print><page-layout>`, keyed by the page it first applies to. Each entry
+    /// holds only what that `<print>` named; [`resolve_page`](Self::resolve_page)
+    /// folds them forward.
+    pub page_overrides: BTreeMap<u32, PageLayout>,
 
     pub system_margin_left: f32,
     pub system_margin_right: f32,
@@ -79,17 +172,30 @@ pub struct ScoreDefaults {
 }
 
 impl ScoreDefaults {
-    pub fn get_margins(&self, page_number: u32) -> PageMargins {
-        let is_even = page_number.is_multiple_of(2);
+    /// The geometry of page `page_number`.
+    ///
+    /// A `<page-layout>` inside a `<print>` applies from its own page onward
+    /// until another one changes it, and changes only what it names. So this
+    /// starts at the document defaults and folds every override up to and
+    /// including this page over it in order, rather than picking a single
+    /// winner. Odd- and even-page margins are folded separately and chosen from
+    /// at the end, because a `<print>` that sets only the odd margins must leave
+    /// the even ones alone.
+    pub fn resolve_page(&self, page_number: u32) -> ResolvedPage {
+        let mut width = self.page_layout.width;
+        let mut height = self.page_layout.height;
+        let mut margins = self.page_layout.margins_for(page_number);
 
-        if is_even {
-            self.page_margins_even
-                .or(self.page_margins_both)
-                .unwrap_or_default()
-        } else {
-            self.page_margins_odd
-                .or(self.page_margins_both)
-                .unwrap_or_default()
+        for layout in self.page_overrides.range(..=page_number).map(|(_, l)| l) {
+            width = layout.width.or(width);
+            height = layout.height.or(height);
+            margins = layout.margins_for(page_number).or(margins);
+        }
+
+        ResolvedPage {
+            width: width.unwrap_or(self.defaults.page_width),
+            height: height.unwrap_or(self.defaults.page_height),
+            margins: margins.unwrap_or_default(),
         }
     }
 
@@ -152,9 +258,8 @@ impl Default for ScoreDefaults {
             defaults: Default::default(),
             appearance: Default::default(),
 
-            page_margins_odd: None,
-            page_margins_even: None,
-            page_margins_both: None,
+            page_layout: Default::default(),
+            page_overrides: BTreeMap::new(),
 
             system_margin_left: 0.,
             system_margin_right: 0.,
