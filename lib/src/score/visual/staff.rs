@@ -9,6 +9,14 @@ pub struct Staff {
     pub width: f32,
     pub height: f32,
 
+    /// How many lines to draw, from `<staff-details><staff-lines>`, defaulting
+    /// to [`Staff::DEFAULT_LINES`]. The lines run downwards from [`Staff::xy`],
+    /// which stays the top line whatever the count: every element positioned
+    /// against a staff -- clefs, key signatures, notes, rests -- is placed in
+    /// half-spaces from that top line, so anchoring anywhere else would move
+    /// the music relative to the lines it is written on.
+    pub lines: usize,
+
     pub measures: BTreeMap<u32, StaffMeasure>,
 
     pub color: Color,
@@ -31,6 +39,8 @@ impl Default for Staff {
             width: Default::default(),
             height: Default::default(),
 
+            lines: Staff::DEFAULT_LINES,
+
             measures: Default::default(),
 
             color: Default::default(),
@@ -49,21 +59,46 @@ impl Default for Staff {
 }
 
 impl Staff {
-    pub const LINES: usize = 5;
-    pub const SPACES: usize = Staff::LINES - 1;
+    /// What a staff has unless `<staff-details><staff-lines>` says otherwise.
+    pub const DEFAULT_LINES: usize = 5;
+
+    /// The four spaces of a normal staff, which is the reference height every
+    /// SMuFL glyph is drawn against: the font's em equals four staff spaces, so
+    /// this is a property of the notation, not of any one staff. It stays four
+    /// on a staff drawn with fewer or more lines -- a percussion staff's
+    /// noteheads are the same size as everyone else's. Use [`Staff::height`] for
+    /// how tall a particular staff actually is.
+    pub const SPACES: usize = Staff::DEFAULT_LINES - 1;
+
     pub const DEFAULT_SPACE_SIZE: f32 = 10.;
 
     pub fn locate_measure_mut(&mut self, measure_number: &u32) -> Option<&mut StaffMeasure> {
         self.measures.get_mut(measure_number)
     }
 
-    // 5 lines, 4 spaces, 10 tenths for each space according to MusicXML spec.
+    /// The distance from the top line to the bottom one: one space fewer than
+    /// there are lines, 10 tenths per space according to the MusicXML spec. A
+    /// staff of one line -- or of none, which `<staff-lines>0</staff-lines>`
+    /// asks for -- is zero tenths tall, and takes up no room of its own between
+    /// the staves around it.
     pub fn height(&self) -> f32 {
-        Staff::SPACES as f32 * self.line_space()
+        self.spaces() as f32 * self.line_space()
+    }
+
+    /// How many spaces this staff's lines enclose.
+    pub fn spaces(&self) -> usize {
+        self.lines.saturating_sub(1)
     }
 
     pub fn line_space(&self) -> f32 {
         Staff::DEFAULT_SPACE_SIZE * self.scale
+    }
+
+    pub fn set_lines(&mut self, lines: usize) {
+        self.lines = lines;
+        for measure in self.measures.values_mut() {
+            measure.lines = lines;
+        }
     }
 
     pub fn set_scale(&mut self, scale: f32) {

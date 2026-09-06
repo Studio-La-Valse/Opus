@@ -6,6 +6,7 @@ use lib::musicxml::visitors::beam_group_visitor::BeamGroupVisitor;
 use lib::musicxml::visitors::page_layout_visitor::PageLayoutVisitor;
 use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::musicxml::visitors::position_visitor::PositionVisitor;
+use lib::musicxml::visitors::staff_details_visitor::StaffDetailsVisitor;
 use lib::musicxml::walker::Walker;
 use roxmltree::{Document, ParsingOptions};
 
@@ -38,7 +39,8 @@ pub fn run(args: ValidateArgs) {
         .uses(PartConsistencyVisitor::default())
         .uses(PositionVisitor::default())
         .uses(BeamGroupVisitor::default())
-        .uses(PageLayoutVisitor::default());
+        .uses(PageLayoutVisitor::default())
+        .uses(StaffDetailsVisitor::default());
 
     Walker::new(visitor).walk(&document, &mut ctx);
 

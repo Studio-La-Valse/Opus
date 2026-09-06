@@ -231,6 +231,11 @@ impl<'a> Visitor<WalkerCtx<'a>> for WalkCursorVisitor {
         }
 
         let number = number.unwrap_or(1.into());
+        if let Some(staff_lines) = element.get_child("staff-lines") {
+            let lines: usize = staff_lines.req_parse();
+            ctx.cursor.staff.lines.insert(number, lines);
+        }
+
         if let Some(staff_size) = element.get_child("staff-size") {
             let mut v: f32 = staff_size.req_parse();
             v /= 100.;

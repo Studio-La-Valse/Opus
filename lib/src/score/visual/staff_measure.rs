@@ -17,6 +17,11 @@ pub struct StaffMeasure {
 
     pub scale: f32,
 
+    /// The line count of the staff this measure belongs to, mirrored the same
+    /// way `scale` is so that a measure can hand a complete
+    /// [`StaffCtx`] to the elements it arranges.
+    pub lines: usize,
+
     pub rests: Vec<Rest>,
 
     // Clef left side of measure
@@ -39,6 +44,7 @@ impl Default for StaffMeasure {
             height: Default::default(),
 
             scale: 1.,
+            lines: Staff::DEFAULT_LINES,
 
             rests: Default::default(),
 
@@ -125,6 +131,7 @@ impl StaffMeasure {
             hidden: false,
             distance_from_top: 0.,
             scaling: self.scale,
+            lines: self.lines,
         };
         for rest in self.rests.iter_mut() {
             let dx: f32 = if rest.is_measure {

@@ -16,6 +16,8 @@ mod test_pdf;
 mod test_ray;
 mod test_render_paths;
 mod test_scale;
+mod test_staff_details_validation;
+mod test_staff_lines;
 mod test_tie;
 mod test_time_signature;
 mod test_wasm;

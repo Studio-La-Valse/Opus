@@ -17,12 +17,19 @@ use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
 
 /// Staff-line index of the top staff line; notes with a lower index sit above the
-/// staff and need ledger lines.
+/// staff and need ledger lines. The top line is where a staff is anchored, so
+/// this holds however many lines it has.
 const LEDGER_ABOVE_STAFF_LINE: i32 = 0;
 
-/// Staff-line index of the bottom staff line; notes with a higher index sit below
-/// the staff and need ledger lines.
-const LEDGER_BELOW_STAFF_LINE: i32 = 9;
+/// Staff-line index just below the bottom staff line of a staff of `lines`
+/// lines; notes with a higher index sit below the staff and need ledger lines.
+///
+/// Indices count half-spaces down from the top line, so the bottom line of a
+/// five-line staff is 8 and this is 9 -- the half-space between it and the first
+/// note that needs a ledger.
+fn ledger_below_staff_line(lines: usize) -> i32 {
+    2 * (lines.saturating_sub(1) as i32) + 1
+}
 
 /// Maximum vertical span a beam is allowed to slant before it is clamped.
 const MAX_BEAM_SLANT_DY: f32 = 20.;
@@ -103,7 +110,14 @@ impl PartMeasure {
 
         for chord in self.chords.values().flatten() {
             for (idx, staff_ctx) in staff_ctx.iter() {
+                // A staff drawn without any lines has nothing for a ledger line
+                // to extend, so notes on it get none.
+                if staff_ctx.lines == 0 {
+                    continue;
+                }
+
                 let each_line = (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling;
+                let below_staff_line = ledger_below_staff_line(staff_ctx.lines);
                 let key = |n: &&Note| OrderedFloat(n.xy.y);
 
                 if let Some(note) = chord
@@ -113,7 +127,8 @@ impl PartMeasure {
                     .min_by_key(key)
                     && note.staff_line < LEDGER_ABOVE_STAFF_LINE
                 {
-                    let lines = self.ledger_lines(note, LedgerSide::Above, each_line);
+                    let lines =
+                        self.ledger_lines(note, LedgerSide::Above, each_line, below_staff_line);
                     self.ledgers.extend(lines);
                 }
 
@@ -122,9 +137,10 @@ impl PartMeasure {
                     .iter()
                     .filter(|n| n.staff == *idx)
                     .max_by_key(key)
-                    && note.staff_line > LEDGER_BELOW_STAFF_LINE
+                    && note.staff_line > below_staff_line
                 {
-                    let lines = self.ledger_lines(note, LedgerSide::Below, each_line);
+                    let lines =
+                        self.ledger_lines(note, LedgerSide::Below, each_line, below_staff_line);
                     self.ledgers.extend(lines);
                 }
             }
@@ -134,7 +150,13 @@ impl PartMeasure {
     /// The ledger lines for a single note that sits `side` of its staff: one
     /// short horizontal line on every even staff-line index between the note and
     /// the staff edge, stepping `each_line` back towards the staff each line.
-    fn ledger_lines(&self, note: &Note, side: LedgerSide, each_line: f32) -> Vec<Line> {
+    fn ledger_lines(
+        &self,
+        note: &Note,
+        side: LedgerSide,
+        each_line: f32,
+        below_staff_line: i32,
+    ) -> Vec<Line> {
         let ledger_width = note.width + 5.;
         let anchor = note.xy.mv(note.width / 2., 0.);
         let left = anchor.mv(ledger_width / -2., 0.);
@@ -148,9 +170,7 @@ impl PartMeasure {
                 each_line,
             ),
             LedgerSide::Below => (
-                (LEDGER_BELOW_STAFF_LINE + 1..=note.staff_line)
-                    .rev()
-                    .collect(),
+                (below_staff_line + 1..=note.staff_line).rev().collect(),
                 -each_line,
             ),
         };

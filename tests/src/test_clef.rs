@@ -31,6 +31,41 @@ mod tests {
         }
     }
 
+    /// A clef that names no pitch has nothing to be fixed to, so it is centred
+    /// on whatever staff it is put on: the middle line of the usual five, the
+    /// single line of a one-line percussion staff, the middle space of a
+    /// six-line tab staff.
+    #[test]
+    fn test_pitchless_clefs_are_centred_on_the_staff() {
+        for clef in [Clef::Tab, Clef::Percussion] {
+            assert_eq!(clef.anchor_line(5), 4, "{clef:?} on five lines");
+            assert_eq!(clef.anchor_line(1), 0, "{clef:?} on one line");
+            assert_eq!(clef.anchor_line(6), 5, "{clef:?} on six lines");
+            assert_eq!(clef.anchor_line(3), 2, "{clef:?} on three lines");
+        }
+    }
+
+    /// A pitched clef names a pitch, and that pitch keeps its place on the staff
+    /// however many lines the staff has -- the notes it fixes are placed from
+    /// the top line too.
+    #[test]
+    fn test_pitched_clefs_keep_their_line_whatever_the_staff() {
+        for clef in [
+            Clef::Treble,
+            Clef::Soprano,
+            Clef::MezzoSoprano,
+            Clef::Alto,
+            Clef::Tenor,
+            Clef::Baritone,
+            Clef::Bass,
+        ] {
+            let five = clef.anchor_line(5);
+            for lines in [0, 1, 3, 4, 6] {
+                assert_eq!(clef.anchor_line(lines), five, "{clef:?} on {lines} lines");
+            }
+        }
+    }
+
     #[test]
     fn test_middle_c_returns_base_line() {
         let c4 = Pitch {

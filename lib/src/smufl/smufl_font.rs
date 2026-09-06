@@ -104,7 +104,10 @@ impl SmuflFont {
         }
     }
 
-    pub fn clef(&self, clef: &ClefCore) -> Clef {
+    /// The glyph for `clef`, anchored against a staff of `staff_lines` lines --
+    /// which for a clef that names no pitch is what decides where on the staff
+    /// it sits. See [`ClefCore::anchor_line`].
+    pub fn clef(&self, clef: &ClefCore, staff_lines: usize) -> Clef {
         let ref_name = match clef {
             ClefCore::Treble => "gClef",
             ClefCore::Soprano
@@ -115,9 +118,10 @@ impl SmuflFont {
             ClefCore::Bass => "fClef",
             ClefCore::Percussion => "unpitchedPercussionClef1",
             // MusicXML's `<clef>` doesn't say how many strings the tablature
-            // has -- `<staff-details><staff-lines>` does, which this lookup
-            // can't see -- so the six-string glyph stands in for every tab
-            // staff. Revisit alongside variable staff-line counts.
+            // has -- `<staff-details><staff-lines>` does, and `staff_lines` now
+            // carries it this far -- but SMuFL offers only a four- and a
+            // six-string glyph, so the six-string one stands in for every tab
+            // staff until the rest of the tablature work picks between them.
             ClefCore::Tab => "6stringTabClef",
         };
         let codepoint = self.glyph_names.get(ref_name).unwrap().codepoint_char();
@@ -127,7 +131,7 @@ impl SmuflFont {
 
         Clef {
             codepoint,
-            line: clef.anchor_line(),
+            line: clef.anchor_line(staff_lines),
             bbox,
         }
     }
