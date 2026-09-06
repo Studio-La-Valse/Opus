@@ -10,7 +10,7 @@ use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
 use crate::smufl::glyphs::clef::Clef;
 use crate::smufl::glyphs::flag::Flag;
 use crate::smufl::glyphs::notehead::Notehead;
-use crate::smufl::glyphs::number::Number;
+use crate::smufl::glyphs::number::{Number, NumberDigit};
 use crate::smufl::glyphs::rest::Rest;
 use crate::smufl::smufl_metadata::{Cutouts, SmuflMetadata};
 use std::collections::HashMap;
@@ -175,27 +175,67 @@ impl SmuflFont {
     }
 
     pub fn time_signature(&self, time_signature: TimeSignatureCore) -> (Number, Number) {
-        let name = "timeSig".to_string() + time_signature.time.to_string().as_str();
-        let codepoint = self
-            .glyph_names
-            .get(name.as_str())
-            .unwrap()
-            .codepoint_char();
-        let glyph_box = self.meta.glyph_boxes.get(name.as_str()).unwrap();
-        let bbox: BoundingBox = glyph_box.into();
-        let num = Number { codepoint, bbox };
-
-        let name = "timeSig".to_string() + time_signature.base.as_int().to_string().as_str();
-        let codepoint = self
-            .glyph_names
-            .get(name.as_str())
-            .unwrap()
-            .codepoint_char();
-        let glyph_box = self.meta.glyph_boxes.get(name.as_str()).unwrap();
-        let bbox: BoundingBox = glyph_box.into();
-        let denom = Number { codepoint, bbox };
+        let num = self.number(u32::from(time_signature.time));
+        let denom = self.number(time_signature.base.as_int().unsigned_abs());
 
         (num, denom)
+    }
+
+    /// `value` spelled in the font's time-signature digits.
+    ///
+    /// SMuFL defines one glyph per decimal digit (`timeSig0`..`timeSig9`) and
+    /// nothing for a whole multi-digit number, so anything from 10 up -- 12/8,
+    /// and every `x/16`, `x/32`, `x/64` -- is a sequence rather than a lookup.
+    pub fn number(&self, value: u32) -> Number {
+        let digits = if value == 0 {
+            vec![0]
+        } else {
+            let mut digits = Vec::new();
+            let mut rest = value;
+            while rest > 0 {
+                digits.push(rest % 10);
+                rest /= 10;
+            }
+            digits.reverse();
+            digits
+        };
+
+        Number {
+            digits: digits.into_iter().map(|d| self.number_digit(d)).collect(),
+        }
+    }
+
+    fn number_digit(&self, digit: u32) -> NumberDigit {
+        let name = format!("timeSig{digit}");
+
+        let codepoint = self
+            .glyph_names
+            .get(name.as_str())
+            .unwrap_or_else(|| panic!("SMuFL font has no glyph named '{name}'"))
+            .codepoint_char();
+
+        let glyph_box = self
+            .meta
+            .glyph_boxes
+            .get(name.as_str())
+            .unwrap_or_else(|| panic!("SMuFL metadata has no bounding box for '{name}'"));
+        let bbox: BoundingBox = glyph_box.into();
+
+        // A font whose metadata omits `glyphAdvanceWidths` falls back to the
+        // ink width, which sets adjacent digits flush against each other. Only
+        // noticeable on a multi-digit number, and better than refusing to draw.
+        let advance = self
+            .meta
+            .glyph_advance_widths
+            .get(name.as_str())
+            .copied()
+            .unwrap_or_else(|| bbox.width());
+
+        NumberDigit {
+            codepoint,
+            bbox,
+            advance,
+        }
     }
 
     pub fn accidental(&self, accidental: AccidentalCore) -> Accidental {

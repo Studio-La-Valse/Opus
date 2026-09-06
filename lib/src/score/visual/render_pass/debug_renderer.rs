@@ -95,13 +95,12 @@ impl RenderPass for DebugRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        for (glyph, xy) in [
-            (&time_signature.num, time_signature.num_xy()),
-            (&time_signature.denom, time_signature.denom_xy()),
-        ] {
-            let bbox = time_signature
-                .scale_box(&glyph.bbox)
-                .mv(0., xy.y - time_signature.xy.y);
+        let digits = time_signature
+            .num_digits()
+            .chain(time_signature.denom_digits());
+
+        for (digit, xy) in digits {
+            let bbox = time_signature.digit_box(digit, xy);
 
             let rect = Rect {
                 xy: bbox.xy,

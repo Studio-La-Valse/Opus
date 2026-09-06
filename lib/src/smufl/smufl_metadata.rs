@@ -11,6 +11,16 @@ pub struct SmuflMetadata {
     #[serde(rename = "glyphBBoxes")]
     pub glyph_boxes: HashMap<String, GlyphBoundingBox>,
 
+    /// How far the pen moves after drawing each glyph, in staff spaces. Wider
+    /// than the glyph's own bounding box by its side bearings, which is what
+    /// makes it the right step between two glyphs set next to each other -- a
+    /// multi-digit time signature is the only place this crate does that today.
+    ///
+    /// Optional in the SMuFL spec, so a font whose metadata omits it still
+    /// loads; callers fall back to the bounding-box width.
+    #[serde(rename = "glyphAdvanceWidths", default)]
+    pub glyph_advance_widths: HashMap<String, f32>,
+
     #[serde(rename = "glyphsWithAnchors")]
     pub glyph_anchors: HashMap<String, GlyphAnchors>,
 
