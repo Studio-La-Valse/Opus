@@ -121,8 +121,11 @@ Defects in what is already built, not missing features.
 
 Small and well-specified. Each is a single change and none depend on each other.
 
-- Support bar lines for a single line staff: should extend one staff space above
-  and below the single line (so 20 tenths in total).
+- ~~Support bar lines for a single line staff: should extend one staff
+  space above and below the single line (so 20 tenths in total).
+  `Staff::barline_overhang` gives the extra at each end, and both the systemic
+  bar line and the one at each measure end take it from the outermost visible
+  staff they cross.~~
 
 - One `ELEMENT_PADDING` constant spaces the clef, the key signature and the time
   signature alike. It should be split into a padding value per element, each

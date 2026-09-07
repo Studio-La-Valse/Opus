@@ -8,6 +8,7 @@ use crate::score::visual::part::Part;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::section_measure::SectionMeasure;
+use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
 
@@ -98,17 +99,35 @@ impl Section {
         }
     }
 
-    pub fn visible_staves(&self) -> usize {
-        let mut count = 0;
-        for part_group in self.part_groups.values() {
-            count += part_group.visible_staves();
-        }
-
-        count
+    /// Every staff of this section that is drawn, top to bottom.
+    pub fn visible_staves(&self) -> impl Iterator<Item = &Staff> {
+        self.part_groups
+            .values()
+            .flat_map(|group| group.visible_staves())
     }
 
     pub fn shows_bracket(&self) -> bool {
-        self.part_groups.len() > 1 && self.visible_staves() > 0
+        self.part_groups.len() > 1 && self.visible_staves().next().is_some()
+    }
+
+    /// How far the barline at a measure end reaches above the top line of the
+    /// section's first visible staff, and below the bottom line of its last.
+    /// Both are zero for the staves that enclose spaces of their own; see
+    /// [`Staff::barline_overhang`].
+    fn barline_overhang(&self) -> (f32, f32) {
+        let top = self
+            .visible_staves()
+            .next()
+            .map(Staff::barline_overhang)
+            .unwrap_or(0.);
+
+        let bottom = self
+            .visible_staves()
+            .last()
+            .map(Staff::barline_overhang)
+            .unwrap_or(0.);
+
+        (top, bottom)
     }
 }
 impl Layoutable for Section {
@@ -125,10 +144,16 @@ impl Layoutable for Section {
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let staves_height = self.height - first_visible_staff_distance;
 
+        // The barline a measure draws at its end is taller than the staves it
+        // crosses when either outermost one is a single line, which is a staff
+        // of no height at all.
+        let (overhang_top, overhang_bottom) = self.barline_overhang();
+        let barline_height = staves_height + overhang_top + overhang_bottom;
+
         for measure in self.measures.values_mut() {
             let available = XY {
                 x: f32::INFINITY,
-                y: staves_height,
+                y: barline_height,
             };
             measure.measure(&available, params);
             self.width += measure.width;
@@ -147,7 +172,8 @@ impl Layoutable for Section {
         self.xy = *origin;
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance);
+        let (overhang_top, _) = self.barline_overhang();
+        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance - overhang_top);
 
         for measure in self.measures.values_mut() {
             measure.arrange(&measure_origin);

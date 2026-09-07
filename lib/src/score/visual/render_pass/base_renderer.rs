@@ -41,9 +41,10 @@ impl RenderPass for BaseRenderer {
         let stroke_color = system.color;
         let stroke_width = system.line_width;
 
+        let (top, bottom) = system.barline_span();
         let left_line = Line {
-            start: system.xy,
-            end: system.xy.mv(0., system.height),
+            start: system.xy.mv(0., top),
+            end: system.xy.mv(0., bottom),
             stroke_width,
             stroke_color,
         };
