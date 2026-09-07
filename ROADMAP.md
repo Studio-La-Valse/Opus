@@ -131,11 +131,11 @@ Small and well-specified. Each is a single change and none depend on each other.
   signature alike. It should be split into a padding value per element, each
   reachable through both `AppDefaults` and `UserLayout`.
 
+- In orchestral scores, not all instruments have the same number of sharps or flats 
+  for a given key signature. Therefore the following key signature is misaligned. 
+  Consider fixing together with the above `ELEMENT_PADDING` fix.
 - Scale grace and cue notes' accidental, flag and beam group. Decide how to
-  handle vecs of chords with mixed grace, cue and normal notes: validation is a
-  must.
-
----
+  handle vecs of chords with mixed grace, cue and normal notes: validation is a must.
 
 ## 4. Features
 
