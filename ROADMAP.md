@@ -246,6 +246,11 @@ Open questions. Each wants an answer written down, and the answer may be "no".
   following note has the same NoteId? If the next note does not have the same 
   NoteId, what is the behavior of the tie? Can we simplify code in this case?
 
+- **Should the user layout pass and the measure/arrange pass be separate?**
+  Now, they are in the same function call, which greatly improves code readability
+  (no separate score tree builder required) - but now score may unnecessarily 
+  be remeasured and arranged, for example on color change. 
+
 ---
 
 ## 6. Long term goals
