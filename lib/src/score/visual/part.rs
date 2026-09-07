@@ -210,12 +210,13 @@ impl Part {
         }
     }
 
-    pub fn visible_staves(&self) -> Vec<&Staff> {
-        self.staves.values().filter(|staff| !staff.hidden).collect()
+    /// The staves of this part that are drawn, top to bottom.
+    pub fn visible_staves(&self) -> impl Iterator<Item = &Staff> {
+        self.staves.values().filter(|staff| !staff.hidden)
     }
 
     pub fn shows_brace(&self) -> bool {
-        self.visible_staves().len() > 1
+        self.visible_staves().count() > 1
     }
 }
 impl Layoutable for Part {

@@ -134,50 +134,42 @@ impl System {
         }
     }
 
+    /// Every staff of this system that is drawn, top to bottom.
+    pub fn visible_staves(&self) -> impl Iterator<Item = &Staff> {
+        self.sections
+            .values()
+            .flat_map(|section| section.visible_staves())
+    }
+
     pub fn find_first_visible_staff(&self) -> &Staff {
-        for section in self.sections.values() {
-            for part_group in section.part_groups.values() {
-                for part in part_group.parts.values() {
-                    if part.visibility == Visibility::Hidden {
-                        continue;
-                    }
-
-                    for staff in part.staves.values() {
-                        if staff.hidden {
-                            continue;
-                        }
-
-                        return staff;
-                    }
-                }
-            }
-        }
-
-        panic!()
+        self.visible_staves().next().unwrap()
     }
 
     pub fn find_last_visible_staff(&self) -> &Staff {
-        let mut last: Option<&Staff> = None;
+        self.visible_staves().last().unwrap()
+    }
 
-        for section in self.sections.values() {
-            for part_group in section.part_groups.values() {
-                for part in part_group.parts.values() {
-                    if part.visibility == Visibility::Hidden {
-                        continue;
-                    }
+    /// Where the systemic barline down the left edge starts and ends, as
+    /// offsets from [`System::xy`], which is the top line of the first visible
+    /// staff.
+    ///
+    /// That is the height of the system, save that a staff of a single line at
+    /// either end has no height for the barline to take: it overhangs such a
+    /// staff by a space at each end instead. See [`Staff::barline_overhang`].
+    pub fn barline_span(&self) -> (f32, f32) {
+        let top = self
+            .visible_staves()
+            .next()
+            .map(Staff::barline_overhang)
+            .unwrap_or(0.);
 
-                    for staff in part.staves.values() {
-                        if staff.hidden {
-                            continue;
-                        }
+        let bottom = self
+            .visible_staves()
+            .last()
+            .map(Staff::barline_overhang)
+            .unwrap_or(0.);
 
-                        last = Some(staff);
-                    }
-                }
-            }
-        }
-
-        last.unwrap()
+        (-top, self.height + bottom)
     }
 
     /// Every first visible staff in a system must have a 0-distance to the top of the system.

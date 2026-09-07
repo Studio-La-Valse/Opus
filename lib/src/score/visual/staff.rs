@@ -90,6 +90,24 @@ impl Staff {
         self.lines.saturating_sub(1)
     }
 
+    /// How far a barline crossing this staff reaches past it, at each end.
+    ///
+    /// Normally nothing: a barline runs from the top line to the bottom one,
+    /// and [`Staff::height`] is the whole of it. A staff of a single line is
+    /// zero tenths tall, though, so a barline held to that height would be a
+    /// point. It is drawn one staff space above and one below the line instead
+    /// -- twenty tenths in all -- which is the width a one-line percussion or
+    /// rhythm staff is read at even though only the middle of it is inked.
+    ///
+    /// A staff with no lines at all has nothing to bar, and gets no overhang.
+    pub fn barline_overhang(&self) -> f32 {
+        if self.lines == 1 {
+            self.line_space()
+        } else {
+            0.
+        }
+    }
+
     pub fn line_space(&self) -> f32 {
         Staff::DEFAULT_SPACE_SIZE * self.scale
     }

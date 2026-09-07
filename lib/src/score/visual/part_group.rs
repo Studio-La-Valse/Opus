@@ -6,6 +6,7 @@ use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
 use crate::score::visual::part_measure::PartMeasure;
+use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::walk_cursor::Visibility;
 use std::collections::BTreeMap;
@@ -102,27 +103,17 @@ impl PartGroup {
         dist
     }
 
-    pub fn visible_staves(&self) -> usize {
-        let mut count = 0;
-        for part in self.parts.values() {
-            if part.visibility == Visibility::Hidden {
-                continue;
-            }
-
-            for staff in part.staves.values() {
-                if staff.hidden {
-                    continue;
-                }
-
-                count += 1;
-            }
-        }
-
-        count
+    /// Every staff of this group that is drawn, top to bottom: the staves of
+    /// its visible parts, each part's hidden staves left out.
+    pub fn visible_staves(&self) -> impl Iterator<Item = &Staff> {
+        self.parts
+            .values()
+            .filter(|part| part.visibility != Visibility::Hidden)
+            .flat_map(|part| part.visible_staves())
     }
 
     pub fn shows_brace(&self) -> bool {
-        self.parts.len() > 1 && self.visible_staves() > 1
+        self.parts.len() > 1 && self.visible_staves().count() > 1
     }
 
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
