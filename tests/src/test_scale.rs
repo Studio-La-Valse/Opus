@@ -200,6 +200,9 @@ mod tests {
                 DrawableElement::Rect(r) => assert_eq!((r.xy.x, r.xy.y), (1.0, 1.0)),
                 DrawableElement::Circle(c) => assert_eq!((c.xy.x, c.xy.y), (1.0, 1.0)),
                 DrawableElement::Text(t) => assert_eq!((t.xy.x, t.xy.y), (1.0, 1.0)),
+                DrawableElement::Glyph(g) => {
+                    assert_eq!((g.origin.x, g.origin.y), (1.0, 1.0))
+                }
                 DrawableElement::Polygon(p) => assert_eq!((p.pts[0].x, p.pts[0].y), (1.0, 1.0)),
             }
         }

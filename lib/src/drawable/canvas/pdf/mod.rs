@@ -68,6 +68,7 @@ use ttf_parser::{Face, GlyphId};
 
 use crate::drawable::canvas::Canvas;
 use crate::drawable::elements::circle::Circle;
+use crate::drawable::elements::glyph::Glyph;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -335,6 +336,32 @@ impl Canvas for PdfPageCanvas<'_> {
             .set_font(Name(font_resource_name(font_index).as_bytes()), t.font_size);
         // Counter-flip against the CTM's y-flip so glyphs render upright.
         self.content.set_text_matrix([1.0, 0.0, 0.0, -1.0, tx, ty]);
+        self.content.show(Str(&gid_bytes));
+        self.content.end_text();
+    }
+
+    fn draw_glyph(&mut self, g: &Glyph<'_>) {
+        let font_index = self.fonts.resolve(g.font);
+        let face = &self.fonts.get(font_index).face;
+
+        // A glyph arrives placed on its own origin, so unlike `draw_text` there
+        // are no advances to accumulate and no ascender/descender to consult:
+        // the origin is the baseline, and the text matrix takes it verbatim.
+        let mut gid_bytes: Vec<u8> = Vec::with_capacity(g.glyph.len() * 2);
+        for ch in g.glyph.chars() {
+            let gid = face.glyph_index(ch).map_or(0, |gid| gid.0);
+            self.used_glyphs.entry(font_index).or_default().insert(gid);
+            gid_bytes.extend_from_slice(&gid.to_be_bytes());
+        }
+
+        self.set_fill_alpha(g.color.a());
+        set_fill_rgb(&mut self.content, g.color);
+        self.content.begin_text();
+        self.content
+            .set_font(Name(font_resource_name(font_index).as_bytes()), g.font_size);
+        // Counter-flip against the CTM's y-flip so glyphs render upright.
+        self.content
+            .set_text_matrix([1.0, 0.0, 0.0, -1.0, g.origin.x, g.origin.y]);
         self.content.show(Str(&gid_bytes));
         self.content.end_text();
     }

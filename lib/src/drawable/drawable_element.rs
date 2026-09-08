@@ -1,4 +1,5 @@
 use crate::drawable::elements::circle::Circle;
+use crate::drawable::elements::glyph::Glyph;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -10,6 +11,7 @@ pub enum DrawableElement<'a> {
     Rect(Rect),
     Circle(Circle),
     Text(Text<'a>),
+    Glyph(Glyph<'a>),
     Polygon(Polygon),
 }
 
@@ -43,6 +45,12 @@ impl<'a> From<Text<'a>> for DrawableElement<'a> {
     }
 }
 
+impl<'a> From<Glyph<'a>> for DrawableElement<'a> {
+    fn from(g: Glyph<'a>) -> Self {
+        DrawableElement::Glyph(g)
+    }
+}
+
 impl<'a> From<Polygon> for DrawableElement<'a> {
     fn from(p: Polygon) -> Self {
         DrawableElement::Polygon(p)
@@ -56,6 +64,7 @@ impl<'a> Scale for DrawableElement<'a> {
             DrawableElement::Rect(r) => r.scale(factor, pivot).into(),
             DrawableElement::Circle(c) => c.scale(factor, pivot).into(),
             DrawableElement::Text(t) => t.scale(factor, pivot).into(),
+            DrawableElement::Glyph(g) => g.scale(factor, pivot).into(),
             DrawableElement::Polygon(p) => p.scale(factor, pivot).into(),
         }
     }
@@ -91,11 +100,20 @@ fn accumulate_bounds(el: &DrawableElement<'_>, bounds: &mut Bounds) {
             *max_x = max_x.max(c.xy.x + c.radius);
             *max_y = max_y.max(c.xy.y + c.radius);
         }
+        // A text run is only ever as wide as the sink's font metrics say, which
+        // this crate has no way to ask, so it measures as its bare anchor. A
+        // glyph knows its ink box and contributes all of it.
         DrawableElement::Text(t) => {
             *min_x = min_x.min(t.xy.x);
             *min_y = min_y.min(t.xy.y);
             *max_x = max_x.max(t.xy.x);
             *max_y = max_y.max(t.xy.y);
+        }
+        DrawableElement::Glyph(g) => {
+            *min_x = min_x.min(g.bounds.x_min());
+            *min_y = min_y.min(g.bounds.y_min());
+            *max_x = max_x.max(g.bounds.x_max());
+            *max_y = max_y.max(g.bounds.y_max());
         }
         DrawableElement::Polygon(p) => {
             for xy in &p.pts {

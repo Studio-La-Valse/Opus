@@ -5,6 +5,7 @@ use crate::score::visual::accidental::Accidental;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::Note;
+use crate::score::visual::placed::Placed;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::stem::{Stem, UpDown};

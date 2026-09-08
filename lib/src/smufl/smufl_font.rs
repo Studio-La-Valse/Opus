@@ -138,9 +138,11 @@ impl SmuflFont {
 
     pub fn bracket_top(&self) -> BracketTop {
         let codepoint = self.glyph_names.get("bracketTop").unwrap().codepoint_char();
+        let bbox: BoundingBox = self.meta.glyph_boxes.get("bracketTop").unwrap().into();
 
         BracketTop {
             codepoint,
+            bbox,
             thickness: 0.5,
         }
     }
@@ -151,31 +153,45 @@ impl SmuflFont {
             .get("bracketBottom")
             .unwrap()
             .codepoint_char();
+        let bbox: BoundingBox = self.meta.glyph_boxes.get("bracketBottom").unwrap().into();
 
         BracketBottom {
             codepoint,
+            bbox,
             thickness: 0.5,
         }
     }
 
     pub fn brace(&self, alternative: Option<&str>) -> Brace {
-        let mut codepoint = self.glyph_names.get("brace").unwrap().codepoint_char();
+        let mut name = "brace";
+        let mut codepoint = self.glyph_names.get(name).unwrap().codepoint_char();
 
         if let Some(alternative) = alternative {
             let alternate = self.meta.glyph_alternatives.get("brace");
 
             if let Some(alternate) = alternate {
-                codepoint = alternate
+                let alternate = alternate
                     .alternates
                     .iter()
                     .find(|v| v.name == alternative)
-                    .unwrap()
-                    .codepoint
-                    .codepoint_char();
+                    .unwrap();
+
+                // The metadata keys a chosen alternate's own box and advance by
+                // its name, so both have to be read against that rather than
+                // against the default brace they replace.
+                name = &alternate.name;
+                codepoint = alternate.codepoint.codepoint_char();
             }
         }
 
-        Brace { codepoint }
+        let bbox: BoundingBox = self.meta.glyph_boxes.get(name).unwrap().into();
+        let advance = *self.meta.glyph_advance_widths.get(name).unwrap();
+
+        Brace {
+            codepoint,
+            bbox,
+            advance,
+        }
     }
 
     pub fn time_signature(&self, time_signature: TimeSignatureCore) -> (Number, Number) {

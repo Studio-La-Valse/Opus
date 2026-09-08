@@ -17,6 +17,7 @@ const TAG_RECT = 1;
 const TAG_TEXT = 2;
 const TAG_POLYGON = 3;
 const TAG_CIRCLE = 4;
+const TAG_GLYPH = 5;
 // `output.page_table` (from wasm) is a parallel table of 5 f32s per page -
 // [geometryStartIndex, originX, originY, width, height] - letting a consumer
 // slice `geometry` per page (page i runs geometry[table[5i] .. table[5(i+1)]],
@@ -574,6 +575,30 @@ export class MusicXmlElement extends HTMLElement {
           );
           this._setTextAlign(H_ALIGN[hAlign]);
           this._setTextBaseline(V_ALIGN[vAlign]);
+          ctx.fillText(texts[textIndex++] ?? "", x, y);
+          break;
+        }
+
+        case TAG_GLYPH: {
+          const x = geometry[i++];
+          const y = geometry[i++];
+          const fontSize = geometry[i++];
+          const r = geometry[i++];
+          const g = geometry[i++];
+          const b = geometry[i++];
+          const a = geometry[i++];
+          const fontIndex = geometry[i++];
+
+          this._setFillStyle(r, g, b, a);
+          this._setFont(
+            fontSize,
+            fontFamilies[fontIndex] ?? "Bravura",
+            fontStyles[fontIndex] ?? 0,
+          );
+          // A glyph is placed on its own origin, so it always draws from the
+          // left on the alphabetic baseline - no alignment to decode.
+          this._setTextAlign("left");
+          this._setTextBaseline("alphabetic");
           ctx.fillText(texts[textIndex++] ?? "", x, y);
           break;
         }

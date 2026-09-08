@@ -4,6 +4,7 @@
 
 #[cfg(test)]
 mod tests {
+    use lib::geometry::bounding_box::BoundingBox;
     use lib::geometry::xy::XY;
     use lib::score::visual::brace::Brace;
     use lib::score::visual::layoutable::Layoutable;
@@ -18,6 +19,8 @@ mod tests {
     fn brace() -> Brace {
         Brace::new(SmuflBrace {
             codepoint: '\u{E000}',
+            bbox: BoundingBox::ZERO,
+            advance: 0.,
         })
     }
 

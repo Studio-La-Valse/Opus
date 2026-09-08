@@ -57,19 +57,19 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let text =
+        let top =
             bracket
                 .bracket_top
-                .as_text(fonts.smufl, bracket.color, bracket.xy, bracket.scale);
-        out.push(text.into());
+                .as_glyph(fonts.smufl, bracket.color, bracket.xy, bracket.scale);
+        out.push(top.into());
 
-        let text = bracket.bracket_bottom.as_text(
+        let bottom = bracket.bracket_bottom.as_glyph(
             fonts.smufl,
             bracket.color,
             bracket.xy.mv(0., bracket.height),
             bracket.scale,
         );
-        out.push(text.into());
+        out.push(bottom.into());
 
         let rect = Rect {
             xy: bracket.xy.mv(0., -1.),
@@ -91,10 +91,10 @@ impl RenderPass for BaseRenderer {
         let def_height = Staff::SPACES as f32 * Staff::DEFAULT_SPACE_SIZE;
         let scale = brace.height / def_height;
 
-        let text = brace
+        let glyph = brace
             .brace
-            .as_text(fonts.smufl, brace.color, brace.xy, scale);
-        out.push(text.into());
+            .as_glyph(fonts.smufl, brace.color, brace.xy, scale);
+        out.push(glyph.into());
     }
 
     fn render_staff<'a>(
@@ -184,10 +184,10 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let text = clef
+        let glyph = clef
             .clef
-            .as_text(fonts.smufl, clef.color, clef.xy, clef.scale);
-        out.push(text.into());
+            .as_glyph(fonts.smufl, clef.color, clef.xy, clef.scale);
+        out.push(glyph.into());
     }
 
     fn render_time_signature<'a>(
@@ -203,8 +203,8 @@ impl RenderPass for BaseRenderer {
             .chain(time_signature.denom_digits());
 
         for (digit, xy) in digits {
-            let text = digit.as_text(fonts.smufl, time_signature.color, xy, time_signature.scale);
-            out.push(text.into());
+            let glyph = digit.as_glyph(fonts.smufl, time_signature.color, xy, time_signature.scale);
+            out.push(glyph.into());
         }
     }
 
@@ -214,14 +214,13 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = &accidental.glyph;
-        let text = glyph.as_text(
+        let glyph = accidental.glyph.as_glyph(
             fonts.smufl,
             accidental.color,
             accidental.xy,
             accidental.scale,
         );
-        out.push(text.into());
+        out.push(glyph.into());
     }
 
     fn render_rest<'a>(
@@ -230,9 +229,10 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = &rest.glyph;
-        let text = glyph.as_text(fonts.smufl, rest.color, rest.xy, rest.scale);
-        out.push(text.into());
+        let glyph = rest
+            .glyph
+            .as_glyph(fonts.smufl, rest.color, rest.xy, rest.scale);
+        out.push(glyph.into());
     }
 
     fn render_note<'a>(
@@ -241,9 +241,10 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = &note.glyph;
-        let text = glyph.as_text(fonts.smufl, note.color, note.xy, note.scale);
-        out.push(text.into());
+        let glyph = note
+            .glyph
+            .as_glyph(fonts.smufl, note.color, note.xy, note.scale);
+        out.push(glyph.into());
     }
 
     fn render_dot<'a>(
@@ -287,8 +288,9 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = &flag.glyph;
-        let text = glyph.as_text(fonts.smufl, flag.color, flag.xy, flag.scale);
-        out.push(text.into());
+        let glyph = flag
+            .glyph
+            .as_glyph(fonts.smufl, flag.color, flag.xy, flag.scale);
+        out.push(glyph.into());
     }
 }

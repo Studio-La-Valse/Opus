@@ -7,6 +7,7 @@ mod test_canvas;
 mod test_clef;
 mod test_engrave_samples;
 mod test_flat_buffer;
+mod test_glyph;
 mod test_key;
 mod test_musicxml_source;
 mod test_note_size;

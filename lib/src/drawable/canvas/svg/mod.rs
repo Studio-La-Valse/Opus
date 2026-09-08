@@ -1,5 +1,6 @@
 use crate::drawable::canvas::Canvas;
 use crate::drawable::elements::circle::Circle;
+use crate::drawable::elements::glyph::Glyph;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -96,6 +97,23 @@ impl Canvas for SvgCanvas {
             ha = t.horizontal_alignment.to_svg(),
             va = t.vertical_alignment.to_svg(),
             content = xml_escape(t.text),
+        ));
+        self.out.push_str("\r\n");
+    }
+
+    fn draw_glyph(&mut self, g: &Glyph<'_>) {
+        // Start-anchored on the alphabetic baseline is the glyph origin itself,
+        // so the renderer is given no anchoring work to do.
+        self.out.push_str(&format!(
+            r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" font-weight="{fw}" font-style="{fst}" text-anchor="start" dominant-baseline="baseline">{content}</text>"#,
+            x = g.origin.x,
+            y = g.origin.y,
+            fill = g.color.to_hex(),
+            fs = g.font_size,
+            ff = xml_escape(g.font.family),
+            fw = g.font.weight.to_css(),
+            fst = g.font.style.to_css(),
+            content = xml_escape(g.glyph),
         ));
         self.out.push_str("\r\n");
     }

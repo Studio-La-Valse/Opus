@@ -2,7 +2,7 @@ use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
-use crate::score::visual::staff::Staff;
+use crate::score::visual::placed::Placed;
 use crate::smufl::glyphs::clef::Clef as SmuflClef;
 
 pub struct Clef {
@@ -14,6 +14,16 @@ pub struct Clef {
     pub scale: f32,
 
     pub clef: SmuflClef,
+}
+
+impl Placed for Clef {
+    fn xy(&self) -> XY {
+        self.xy
+    }
+
+    fn scale(&self) -> f32 {
+        self.scale
+    }
 }
 
 impl Clef {
@@ -32,16 +42,6 @@ impl Clef {
 
             clef,
         }
-    }
-
-    /// Scales a (smufl-like-) normalized bounding box to current position and scale.
-    pub fn scale_box(&self, bbox: &BoundingBox) -> BoundingBox {
-        let scaled: BoundingBox = BoundingBox {
-            xy: bbox.xy.scale(Staff::DEFAULT_SPACE_SIZE * self.scale),
-            size: bbox.size.scale(Staff::DEFAULT_SPACE_SIZE * self.scale),
-        };
-
-        scaled.mv(self.xy.x, self.xy.y)
     }
 
     /// Bounding box scaled to world pixels.
