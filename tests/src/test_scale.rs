@@ -6,6 +6,7 @@ mod tests {
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
     use lib::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
+    use lib::geometry::bounding_box::BoundingBox;
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
 
@@ -109,20 +110,25 @@ mod tests {
     }
 
     #[test]
-    fn text_scale_scales_position_and_font_size_but_not_text_content() {
+    fn text_scale_scales_its_box_and_font_size_but_not_text_content() {
         let text = Text {
             text: "a",
             color: Color::BLACK,
             font_size: 12.0,
             font: FontSpec::plain("Bravura"),
-            xy: XY { x: 4.0, y: 8.0 },
+            bounds: BoundingBox {
+                xy: XY { x: 4.0, y: 8.0 },
+                size: XY { x: 8.0, y: 16.0 },
+            },
             vertical_alignment: VerticalAlign::Middle,
             horizontal_alignment: HorizontalAlign::Center,
+            background: None,
         };
 
         let scaled = text.scale(0.25, XY::ZERO);
 
-        assert_eq!((scaled.xy.x, scaled.xy.y), (1.0, 2.0));
+        assert_eq!((scaled.bounds.xy.x, scaled.bounds.xy.y), (1.0, 2.0));
+        assert_eq!((scaled.bounds.width(), scaled.bounds.height()), (2.0, 4.0));
         assert_eq!(scaled.font_size, 3.0);
         assert_eq!(scaled.text, "a");
     }
@@ -177,9 +183,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 4.0,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 2.0, y: 2.0 },
+                bounds: BoundingBox::point(XY { x: 2.0, y: 2.0 }),
                 vertical_alignment: VerticalAlign::Top,
                 horizontal_alignment: HorizontalAlign::Left,
+                background: None,
             }
             .into(),
             Polygon {
@@ -199,9 +206,11 @@ mod tests {
                 DrawableElement::Line(l) => assert_eq!((l.start.x, l.start.y), (1.0, 1.0)),
                 DrawableElement::Rect(r) => assert_eq!((r.xy.x, r.xy.y), (1.0, 1.0)),
                 DrawableElement::Circle(c) => assert_eq!((c.xy.x, c.xy.y), (1.0, 1.0)),
-                DrawableElement::Text(t) => assert_eq!((t.xy.x, t.xy.y), (1.0, 1.0)),
+                DrawableElement::Text(t) => {
+                    assert_eq!((t.bounds.xy.x, t.bounds.xy.y), (1.0, 1.0))
+                }
                 DrawableElement::Glyph(g) => {
-                    assert_eq!((g.origin.x, g.origin.y), (1.0, 1.0))
+                    assert_eq!((g.origin().x, g.origin().y), (1.0, 1.0))
                 }
                 DrawableElement::Polygon(p) => assert_eq!((p.pts[0].x, p.pts[0].y), (1.0, 1.0)),
             }

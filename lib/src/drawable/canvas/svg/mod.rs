@@ -85,10 +85,19 @@ impl Canvas for SvgCanvas {
     }
 
     fn draw_text(&mut self, t: &Text<'_>) {
+        if let Some(background) = t.background_rect() {
+            self.draw_rect(&background);
+        }
+
+        // `text-anchor` / `dominant-baseline` place the text against the anchor
+        // exactly as the alignments place the anchor in the box, so the two
+        // together put the run inside the box the producer reserved.
+        let anchor = t.anchor();
+
         self.out.push_str(&format!(
             r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" font-weight="{fw}" font-style="{fst}" text-anchor="{ha}" dominant-baseline="{va}">{content}</text>"#,
-            x = t.xy.x,
-            y = t.xy.y,
+            x = anchor.x,
+            y = anchor.y,
             fill = t.color.to_hex(),
             fs = t.font_size,
             ff = xml_escape(t.font.family),
@@ -106,8 +115,8 @@ impl Canvas for SvgCanvas {
         // so the renderer is given no anchoring work to do.
         self.out.push_str(&format!(
             r#"<text x="{x}" y="{y}" fill="{fill}" font-size="{fs}" font-family="{ff}" font-weight="{fw}" font-style="{fst}" text-anchor="start" dominant-baseline="baseline">{content}</text>"#,
-            x = g.origin.x,
-            y = g.origin.y,
+            x = g.origin().x,
+            y = g.origin().y,
             fill = g.color.to_hex(),
             fs = g.font_size,
             ff = xml_escape(g.font.family),

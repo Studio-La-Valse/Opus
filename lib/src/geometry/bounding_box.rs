@@ -118,6 +118,14 @@ impl BoundingBox {
         }
     }
 
+    /// A zero-sized box at `xy`. Every edge, and both midpoints, are that one
+    /// point, so a [`Text`](crate::drawable::elements::text::Text) boxed this
+    /// way anchors there whatever its alignments -- which is how a producer
+    /// with nothing to reserve positions text by a bare point.
+    pub fn point(xy: XY) -> BoundingBox {
+        BoundingBox { xy, size: XY::ZERO }
+    }
+
     pub const ZERO: BoundingBox = BoundingBox {
         xy: XY::ZERO,
         size: XY::ZERO,

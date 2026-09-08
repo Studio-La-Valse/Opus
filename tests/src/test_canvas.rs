@@ -94,24 +94,26 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 12.0,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 2.0, y: 3.0 },
+                bounds: BoundingBox::point(XY { x: 2.0, y: 3.0 }),
                 vertical_alignment: VerticalAlign::Middle,
                 horizontal_alignment: HorizontalAlign::Center,
+                background: None,
             }
             .into(),
-            Glyph {
-                glyph: "\u{E050}",
-                color: Color::BLACK,
-                font_size: 12.0,
-                font: FontSpec::plain("Bravura"),
-                origin: XY { x: 2.0, y: 4.0 },
-                // Inside the other elements' extent, so it does not widen the
-                // bounds the painter reports.
-                bounds: BoundingBox {
-                    xy: XY { x: 2.0, y: 2.0 },
+            Glyph::new(
+                "\u{E050}",
+                FontSpec::plain("Bravura"),
+                12.0,
+                Color::BLACK,
+                XY { x: 2.0, y: 4.0 },
+                // Two units up from the origin and two square: inside the other
+                // elements' extent, so it does not widen the painter's bounds.
+                &BoundingBox {
+                    xy: XY { x: 0.0, y: -2.0 },
                     size: XY { x: 2.0, y: 2.0 },
                 },
-            }
+                1.0,
+            )
             .into(),
             Polygon {
                 pts: vec![

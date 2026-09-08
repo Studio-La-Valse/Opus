@@ -37,12 +37,13 @@ pub fn placed_glyph<'a>(
 ) -> Glyph<'a> {
     let unit = staff_space(scale);
 
-    Glyph {
-        glyph: font.glyph_str(codepoint),
+    Glyph::new(
+        font.glyph_str(codepoint),
+        FontSpec::plain(&font.meta.font),
+        unit * Staff::SPACES as f32,
         color,
-        font_size: unit * Staff::SPACES as f32,
-        font: FontSpec::plain(&font.meta.font),
         origin,
-        bounds: bbox.placed(origin, unit),
-    }
+        bbox,
+        unit,
+    )
 }

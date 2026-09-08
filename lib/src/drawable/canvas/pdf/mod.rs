@@ -295,6 +295,10 @@ impl Canvas for PdfPageCanvas<'_> {
     }
 
     fn draw_text(&mut self, t: &Text<'_>) {
+        if let Some(background) = t.background_rect() {
+            self.draw_rect(&background);
+        }
+
         let font_index = self.fonts.resolve(t.font);
         let face = &self.fonts.get(font_index).face;
 
@@ -310,10 +314,16 @@ impl Canvas for PdfPageCanvas<'_> {
             advance += f32::from(face.glyph_hor_advance(GlyphId(gid)).unwrap_or(0)) * glyph_scale;
         }
 
+        // The anchor is where the box's alignments put it; the shifts below are
+        // what SVG's `text-anchor` and `dominant-baseline` then do to the run
+        // relative to that anchor, done by hand because a PDF has no such
+        // notion.
+        let anchor = t.anchor();
+
         let tx = match t.horizontal_alignment {
-            HorizontalAlign::Left => t.xy.x,
-            HorizontalAlign::Center => t.xy.x - advance / 2.0,
-            HorizontalAlign::Right => t.xy.x - advance,
+            HorizontalAlign::Left => anchor.x,
+            HorizontalAlign::Center => anchor.x - advance / 2.0,
+            HorizontalAlign::Right => anchor.x - advance,
         };
         // In score space (y-down) the glyph is drawn upright with its ascender
         // above the baseline, so aligning the visual top means dropping the
@@ -324,9 +334,9 @@ impl Canvas for PdfPageCanvas<'_> {
         let ascent = f32::from(face.ascender()) * glyph_scale;
         let descent = f32::from(face.descender()) * glyph_scale; // negative
         let ty = match t.vertical_alignment {
-            VerticalAlign::Bottom => t.xy.y,
-            VerticalAlign::Top => t.xy.y + ascent,
-            VerticalAlign::Middle => t.xy.y + (ascent + descent) / 2.0,
+            VerticalAlign::Bottom => anchor.y,
+            VerticalAlign::Top => anchor.y + ascent,
+            VerticalAlign::Middle => anchor.y + (ascent + descent) / 2.0,
         };
 
         self.set_fill_alpha(t.color.a());
@@ -361,7 +371,7 @@ impl Canvas for PdfPageCanvas<'_> {
             .set_font(Name(font_resource_name(font_index).as_bytes()), g.font_size);
         // Counter-flip against the CTM's y-flip so glyphs render upright.
         self.content
-            .set_text_matrix([1.0, 0.0, 0.0, -1.0, g.origin.x, g.origin.y]);
+            .set_text_matrix([1.0, 0.0, 0.0, -1.0, g.origin().x, g.origin().y]);
         self.content.show(Str(&gid_bytes));
         self.content.end_text();
     }

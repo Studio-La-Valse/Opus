@@ -10,6 +10,7 @@ mod tests {
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
     use lib::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
+    use lib::geometry::bounding_box::BoundingBox;
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
     use lib::score::visual::render_compositor::RenderedPage;
@@ -99,9 +100,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 12.0,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 5.0, y: 6.0 },
+                bounds: BoundingBox::point(XY { x: 5.0, y: 6.0 }),
                 vertical_alignment: VerticalAlign::Middle,
                 horizontal_alignment: HorizontalAlign::Center,
+                background: None,
             }
             .into(),
             Text {
@@ -109,9 +111,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 12.0,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 7.0, y: 8.0 },
+                bounds: BoundingBox::point(XY { x: 7.0, y: 8.0 }),
                 vertical_alignment: VerticalAlign::Top,
                 horizontal_alignment: HorizontalAlign::Left,
+                background: None,
             }
             .into(),
         ];
@@ -161,9 +164,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 10.0,
                 font,
-                xy: XY { x: 0.0, y: 0.0 },
+                bounds: BoundingBox::point(XY::ZERO),
                 vertical_alignment: VerticalAlign::Top,
                 horizontal_alignment: HorizontalAlign::Left,
+                background: None,
             })
         };
         // bravura, then title, then lyric, then title again (should reuse idx 1).

@@ -41,7 +41,10 @@ pub const FONT_STYLE_ITALIC: u32 = 2;
 /// - `TAG_RECT`:    `x, y, w, h, r, g, b, a, strokeWidth, sr, sg, sb, sa`
 /// - `TAG_TEXT`:    `x, y, fontSize, r, g, b, a, hAlign, vAlign, fontIndex`
 ///   (text pulled from `text_blob` in order; `hAlign`/`vAlign` are `0/1/2`;
-///   `fontIndex` selects an entry in `font_blob` / `font_styles`)
+///   `fontIndex` selects an entry in `font_blob` / `font_styles`. `x, y` is the
+///   anchor the element's box and alignments resolve to, not the box itself. A
+///   text with a background emits a `TAG_RECT` over its box immediately before
+///   its own record, so one element can contribute two records)
 /// - `TAG_GLYPH`:   `x, y, fontSize, r, g, b, a, fontIndex`
 ///   (a single glyph, drawn from its origin: left-aligned on the alphabetic
 ///   baseline, so it carries no alignment fields. Its codepoint comes from
@@ -172,9 +175,21 @@ impl Canvas for FlatBufferCanvas {
         let flags = font_style_flags(t.font.weight, t.font.style);
         let font_index = self.font_index(t.font.family, flags);
 
+        // Emitted as an ordinary rect record ahead of the text, which is why
+        // the text record needs no background fields and the decoder needs no
+        // new case: it already knows how to fill a rectangle.
+        if let Some(background) = t.background_rect() {
+            self.draw_rect(&background);
+        }
+
+        // The record carries the anchor the box and alignments resolve to, not
+        // the box itself: the buffer is a drawing format, and a sink needs the
+        // anchor plus the alignment modes to place the run, nothing more.
+        let anchor = t.anchor();
+
         self.geometry.push(TAG_TEXT);
-        self.geometry.push(t.xy.x);
-        self.geometry.push(t.xy.y);
+        self.geometry.push(anchor.x);
+        self.geometry.push(anchor.y);
         self.geometry.push(t.font_size);
         push_color(&mut self.geometry, t.color);
         self.geometry
@@ -190,8 +205,8 @@ impl Canvas for FlatBufferCanvas {
         let font_index = self.font_index(g.font.family, flags);
 
         self.geometry.push(TAG_GLYPH);
-        self.geometry.push(g.origin.x);
-        self.geometry.push(g.origin.y);
+        self.geometry.push(g.origin().x);
+        self.geometry.push(g.origin().y);
         self.geometry.push(g.font_size);
         push_color(&mut self.geometry, g.color);
         self.geometry.push(font_index);

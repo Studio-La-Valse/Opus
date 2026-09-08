@@ -32,18 +32,38 @@ mod tests {
         })
     }
 
+    /// Origin (10, 20), with a box normalized to 4 world units: 2 x 6 of them
+    /// starting 4 above the origin, so 8 x 24 spanning y 4..28 in world space.
     fn a_glyph() -> Glyph<'static> {
-        Glyph {
-            glyph: "\u{E050}",
-            color: Color::BLACK,
-            font_size: 40.0,
-            font: FontSpec::plain("Bravura"),
-            origin: XY { x: 10.0, y: 20.0 },
-            bounds: BoundingBox {
-                xy: XY { x: 10.0, y: 4.0 },
-                size: XY { x: 8.0, y: 24.0 },
+        Glyph::new(
+            "\u{E050}",
+            FontSpec::plain("Bravura"),
+            40.0,
+            Color::BLACK,
+            XY { x: 10.0, y: 20.0 },
+            &BoundingBox {
+                xy: XY { x: 0.0, y: -4.0 },
+                size: XY { x: 2.0, y: 6.0 },
             },
-        }
+            4.0,
+        )
+    }
+
+    /// The constructor is the only way in, so the box can only ever be the one
+    /// the origin and the normalized metadata put there.
+    #[test]
+    fn the_constructor_places_the_normalized_box_against_the_origin() {
+        let glyph = a_glyph();
+
+        assert_eq!((glyph.origin().x, glyph.origin().y), (10.0, 20.0));
+        assert_eq!(
+            (glyph.bounds().x_min(), glyph.bounds().y_min()),
+            (10.0, 4.0)
+        );
+        assert_eq!(
+            (glyph.bounds().width(), glyph.bounds().height()),
+            (8.0, 24.0)
+        );
     }
 
     /// The whole reason a glyph is its own element: it measures as the ink it
@@ -59,9 +79,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 40.0,
                 font: FontSpec::plain("serif"),
-                xy: XY { x: 10.0, y: 20.0 },
+                bounds: BoundingBox::point(XY { x: 10.0, y: 20.0 }),
                 vertical_alignment: VerticalAlign::Bottom,
                 horizontal_alignment: HorizontalAlign::Left,
+                background: None,
             }
             .into(),
         ];
@@ -74,10 +95,13 @@ mod tests {
     fn scaling_a_glyph_moves_its_box_with_it() {
         let scaled = a_glyph().scale(0.5, XY::ZERO);
 
-        assert_eq!((scaled.origin.x, scaled.origin.y), (5.0, 10.0));
+        assert_eq!((scaled.origin().x, scaled.origin().y), (5.0, 10.0));
         assert_eq!(scaled.font_size, 20.0);
-        assert_eq!((scaled.bounds.xy.x, scaled.bounds.xy.y), (5.0, 2.0));
-        assert_eq!((scaled.bounds.width(), scaled.bounds.height()), (4.0, 12.0));
+        assert_eq!((scaled.bounds().xy.x, scaled.bounds().xy.y), (5.0, 2.0));
+        assert_eq!(
+            (scaled.bounds().width(), scaled.bounds().height()),
+            (4.0, 12.0)
+        );
     }
 
     /// The glyph record is shorter than a text record -- no alignment fields --
@@ -92,9 +116,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 12.0,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 1.0, y: 2.0 },
+                bounds: BoundingBox::point(XY { x: 1.0, y: 2.0 }),
                 vertical_alignment: VerticalAlign::Top,
                 horizontal_alignment: HorizontalAlign::Left,
+                background: None,
             }
             .into(),
         ];
@@ -131,7 +156,7 @@ mod tests {
         let expected = clef.scaled_box();
         let actual = smufl_clef
             .as_glyph(font(), Color::BLACK, clef.xy, clef.scale)
-            .bounds;
+            .bounds();
 
         assert_eq!((actual.xy.x, actual.xy.y), (expected.xy.x, expected.xy.y));
         assert_eq!(
@@ -152,14 +177,14 @@ mod tests {
         let origin = XY { x: 100.0, y: 200.0 };
         let glyph = smufl_clef.as_glyph(font(), Color::BLACK, origin, 1.0);
 
-        assert_eq!((glyph.origin.x, glyph.origin.y), (100.0, 200.0));
+        assert_eq!((glyph.origin().x, glyph.origin().y), (100.0, 200.0));
 
         // A treble clef's ink runs from 4.392 staff spaces above the baseline
         // to 2.632 below it, and starts at the origin's own x.
         let unit = staff_space(1.0);
-        assert_eq!(glyph.bounds.x_min(), 100.0);
-        assert_eq!(glyph.bounds.y_min(), 200.0 - 4.392 * unit);
-        assert_eq!(glyph.bounds.y_max(), 200.0 + 2.632 * unit);
+        assert_eq!(glyph.bounds().x_min(), 100.0);
+        assert_eq!(glyph.bounds().y_min(), 200.0 - 4.392 * unit);
+        assert_eq!(glyph.bounds().y_max(), 200.0 + 2.632 * unit);
     }
 
     /// The brace is the one glyph placed by its right edge rather than its
@@ -171,12 +196,12 @@ mod tests {
         let glyph = brace.as_glyph(font(), Color::BLACK, at, 2.0);
 
         let unit = staff_space(2.0);
-        assert_eq!(glyph.origin.x, 500.0 - brace.advance * unit);
-        assert_eq!(glyph.origin.y, 300.0);
+        assert_eq!(glyph.origin().x, 500.0 - brace.advance * unit);
+        assert_eq!(glyph.origin().y, 300.0);
         // Its ink ends just short of where it was hung, by the right side
         // bearing the advance includes and the box does not.
-        assert!(glyph.bounds.x_max() < 500.0);
-        assert!(glyph.bounds.x_max() > 500.0 - 0.05 * unit);
+        assert!(glyph.bounds().x_max() < 500.0);
+        assert!(glyph.bounds().x_max() > 500.0 - 0.05 * unit);
     }
 
     /// The brace's placement steps back by the advance width the *metadata*

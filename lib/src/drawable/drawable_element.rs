@@ -100,20 +100,20 @@ fn accumulate_bounds(el: &DrawableElement<'_>, bounds: &mut Bounds) {
             *max_x = max_x.max(c.xy.x + c.radius);
             *max_y = max_y.max(c.xy.y + c.radius);
         }
-        // A text run is only ever as wide as the sink's font metrics say, which
-        // this crate has no way to ask, so it measures as its bare anchor. A
-        // glyph knows its ink box and contributes all of it.
+        // Both boxes, arrived at from opposite ends: a text reserves the box it
+        // is laid out in, a glyph reports the box its ink measures.
         DrawableElement::Text(t) => {
-            *min_x = min_x.min(t.xy.x);
-            *min_y = min_y.min(t.xy.y);
-            *max_x = max_x.max(t.xy.x);
-            *max_y = max_y.max(t.xy.y);
+            *min_x = min_x.min(t.bounds.x_min());
+            *min_y = min_y.min(t.bounds.y_min());
+            *max_x = max_x.max(t.bounds.x_max());
+            *max_y = max_y.max(t.bounds.y_max());
         }
         DrawableElement::Glyph(g) => {
-            *min_x = min_x.min(g.bounds.x_min());
-            *min_y = min_y.min(g.bounds.y_min());
-            *max_x = max_x.max(g.bounds.x_max());
-            *max_y = max_y.max(g.bounds.y_max());
+            let bbox = g.bounds();
+            *min_x = min_x.min(bbox.x_min());
+            *min_y = min_y.min(bbox.y_min());
+            *max_x = max_x.max(bbox.x_max());
+            *max_y = max_y.max(bbox.y_max());
         }
         DrawableElement::Polygon(p) => {
             for xy in &p.pts {

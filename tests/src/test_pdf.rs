@@ -12,6 +12,7 @@ mod tests {
     use lib::drawable::elements::text::{
         FontSpec, FontStyle, FontWeight, HorizontalAlign, Text, VerticalAlign,
     };
+    use lib::geometry::bounding_box::BoundingBox;
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
     use lib::score::visual::render_compositor::RenderCompositor;
@@ -213,9 +214,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 40.0,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 12.0, y: 34.0 },
+                bounds: BoundingBox::point(XY { x: 12.0, y: 34.0 }),
                 vertical_alignment: VerticalAlign::Bottom,
                 horizontal_alignment: HorizontalAlign::Left,
+                background: None,
             }
             .into(),
         ];
@@ -252,9 +254,10 @@ mod tests {
                 color: Color::BLACK,
                 font_size,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 100.0, y: 50.0 },
+                bounds: BoundingBox::point(XY { x: 100.0, y: 50.0 }),
                 vertical_alignment: VerticalAlign::Bottom,
                 horizontal_alignment: HorizontalAlign::Center,
+                background: None,
             }
             .into(),
         ];
@@ -320,12 +323,13 @@ mod tests {
                     color: Color::BLACK,
                     font_size: 40.0,
                     font: FontSpec::plain("Bravura"),
-                    xy: XY {
+                    bounds: BoundingBox::point(XY {
                         x: origin.x + 10.0,
                         y: origin.y + 40.0,
-                    },
+                    }),
                     vertical_alignment: VerticalAlign::Bottom,
                     horizontal_alignment: HorizontalAlign::Left,
+                    background: None,
                 }
                 .into(),
             ];
