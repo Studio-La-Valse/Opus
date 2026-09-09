@@ -1,4 +1,5 @@
 use crate::musicxml::utils::NodeUtils;
+use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::part_list::tree::PartListNode;
 use roxmltree::Node;
 use std::cmp::Reverse;
@@ -7,11 +8,13 @@ use std::cmp::Reverse;
 /// `<part-group>` start/stop and `<score-part>` elements in document order.
 ///
 /// This is the render path and nothing else: attributes the format requires are
-/// read with `req_attribute`, which panics on a document that omits them. That
-/// is only safe because `PartConsistencyVisitor` reports every one of those
-/// causes as an error on the validation walk that runs first -- a
-/// `<part-group>` with no `type`, a `<score-part>` with no `id` -- so nothing
-/// reaches here without having been described in plain words already.
+/// read with `req_attribute`, which panics on a document that omits them, and
+/// `GroupSymbol::from_mxml` panics on a `<group-symbol>` naming something the
+/// format does not define. That is only safe because the validation walk runs
+/// first and reports every one of those causes as an error --
+/// `PartConsistencyVisitor` for a `<part-group>` with no `type` and a
+/// `<score-part>` with no `id`, `GroupSymbolVisitor` for the symbol -- so
+/// nothing reaches here without having been described in plain words already.
 pub fn build_part_list(part_list: &Node) -> Vec<PartListNode> {
     let mut builder = PartListBuilder::default();
     builder.build(part_list);
@@ -22,7 +25,7 @@ pub fn build_part_list(part_list: &Node) -> Vec<PartListNode> {
 struct OpenScope {
     index: u32,
     name: Option<String>,
-    brace: Option<String>,
+    symbol: Option<GroupSymbol>,
     children: Vec<PartListNode>,
 }
 
@@ -30,20 +33,7 @@ struct OpenScope {
 /// held back until the run of consecutive starts it belongs to is complete.
 struct GroupHeader {
     name: Option<String>,
-    brace: Option<String>,
-}
-
-impl GroupHeader {
-    /// How far *out* this header's symbol wants to sit. Standard engraving
-    /// nests these strictly: a bracket encloses a brace, a brace encloses a
-    /// bare (symbol-less) group, and never the other way around.
-    fn nesting_rank(&self) -> u8 {
-        match self.brace.as_deref() {
-            Some("bracket") | Some("line") | Some("square") => 2,
-            Some("brace") => 1,
-            _ => 0,
-        }
-    }
+    symbol: Option<GroupSymbol>,
 }
 
 /// The two-level state machine behind [`build_part_list`]: a section (the outer
@@ -99,13 +89,9 @@ impl PartListBuilder {
             .and_then(|n| n.text())
             .map(|s| s.to_string());
 
-        let brace = node
-            .children()
-            .find(|n| n.has_tag("group-symbol"))
-            .and_then(|n| n.text())
-            .map(|s| s.to_string());
+        let symbol = GroupSymbol::from_mxml(node);
 
-        self.pending_starts.push(GroupHeader { name, brace });
+        self.pending_starts.push(GroupHeader { name, symbol });
     }
 
     /// Opens every `<part-group type="start">` seen since the last
@@ -127,28 +113,28 @@ impl PartListBuilder {
         }
 
         let mut headers = std::mem::take(&mut self.pending_starts);
-        headers.sort_by_key(|header| Reverse(header.nesting_rank()));
+        headers.sort_by_key(|header| Reverse(GroupSymbol::declared_nesting_rank(header.symbol)));
 
         for header in headers {
-            self.open_part_group(header.name, header.brace);
+            self.open_part_group(header.name, header.symbol);
         }
     }
 
     /// Opens one level, ignoring the start entirely once both levels are taken.
-    fn open_part_group(&mut self, name: Option<String>, brace: Option<String>) {
+    fn open_part_group(&mut self, name: Option<String>, symbol: Option<GroupSymbol>) {
         if self.open_section.is_none() {
             self.second_order_index = 0;
             self.open_section = Some(OpenScope {
                 index: self.first_order_index,
                 name,
-                brace,
+                symbol,
                 children: Vec::new(),
             });
         } else if self.open_group.is_none() {
             self.open_group = Some(OpenScope {
                 index: self.second_order_index,
                 name,
-                brace,
+                symbol,
                 children: Vec::new(),
             });
         }
@@ -166,7 +152,7 @@ impl PartListBuilder {
             let node = PartListNode::Group {
                 index: group.index,
                 name: group.name,
-                brace: group.brace,
+                symbol: group.symbol,
                 children: group.children,
             };
 
@@ -181,7 +167,7 @@ impl PartListBuilder {
             self.top.push(PartListNode::Section {
                 index: section.index,
                 name: section.name,
-                brace: section.brace,
+                symbol: section.symbol,
                 children: section.children,
             });
         }
