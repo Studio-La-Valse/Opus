@@ -85,11 +85,45 @@ impl BoundingBox {
         }
     }
 
+    /// Scales the box by `factor` about `pivot`, leaving `pivot` fixed: both
+    /// the corner and the extent grow, unlike [`scale`](Self::scale), which
+    /// resizes in place.
+    pub fn scale_about(&self, factor: f32, pivot: XY) -> BoundingBox {
+        BoundingBox {
+            xy: self.xy.scale_about(factor, pivot),
+            size: self.size.scale(factor),
+        }
+    }
+
+    /// Reads `self` as a box normalized to some unit and measured from a glyph
+    /// origin -- the form SMuFL metadata states its bounding boxes in, in staff
+    /// spaces -- and places it in world space at `origin`, `unit` world units
+    /// to the staff space.
+    ///
+    /// This is the one derivation from normalized glyph metadata to world
+    /// geometry; everything that draws or measures a glyph goes through it, so
+    /// that the box a glyph reports, the box the debug overlay draws and the
+    /// width layout reserves cannot drift apart.
+    pub fn placed(&self, origin: XY, unit: f32) -> BoundingBox {
+        BoundingBox {
+            xy: self.xy.placed(origin, unit),
+            size: self.size.scale(unit),
+        }
+    }
+
     pub fn mv(&self, x: f32, y: f32) -> BoundingBox {
         BoundingBox {
             xy: self.xy.mv(x, y),
             ..*self
         }
+    }
+
+    /// A zero-sized box at `xy`. Every edge, and both midpoints, are that one
+    /// point, so a [`Text`](crate::drawable::elements::text::Text) boxed this
+    /// way anchors there whatever its alignments -- which is how a producer
+    /// with nothing to reserve positions text by a bare point.
+    pub fn point(xy: XY) -> BoundingBox {
+        BoundingBox { xy, size: XY::ZERO }
     }
 
     pub const ZERO: BoundingBox = BoundingBox {

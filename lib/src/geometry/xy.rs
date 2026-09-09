@@ -41,6 +41,14 @@ impl XY {
         pivot + (*self - pivot).scale(factor)
     }
 
+    /// Reads `self` as a figure normalized to some unit and measured from a
+    /// glyph origin -- the form SMuFL metadata states its anchors in, in staff
+    /// spaces -- and places it in world space at `origin`, `unit` world units
+    /// to the staff space.
+    pub fn placed(&self, origin: XY, unit: f32) -> XY {
+        origin + self.scale(unit)
+    }
+
     pub fn length(&self) -> f32 {
         self.x.hypot(self.y)
     }

@@ -1,5 +1,6 @@
 use crate::drawable::canvas::Canvas;
 use crate::drawable::elements::circle::Circle;
+use crate::drawable::elements::glyph::Glyph;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -16,6 +17,7 @@ pub const TAG_RECT: f32 = 1.0;
 pub const TAG_TEXT: f32 = 2.0;
 pub const TAG_POLYGON: f32 = 3.0;
 pub const TAG_CIRCLE: f32 = 4.0;
+pub const TAG_GLYPH: f32 = 5.0;
 
 /// Separates entries in [`FlatBuffer::text_blob`] and [`FlatBuffer::font_blob`].
 /// Neither text elements nor font-family names contain this control character in
@@ -39,7 +41,14 @@ pub const FONT_STYLE_ITALIC: u32 = 2;
 /// - `TAG_RECT`:    `x, y, w, h, r, g, b, a, strokeWidth, sr, sg, sb, sa`
 /// - `TAG_TEXT`:    `x, y, fontSize, r, g, b, a, hAlign, vAlign, fontIndex`
 ///   (text pulled from `text_blob` in order; `hAlign`/`vAlign` are `0/1/2`;
-///   `fontIndex` selects an entry in `font_blob` / `font_styles`)
+///   `fontIndex` selects an entry in `font_blob` / `font_styles`. `x, y` is the
+///   anchor the element's box and alignments resolve to, not the box itself. A
+///   text with a background emits a `TAG_RECT` over its box immediately before
+///   its own record, so one element can contribute two records)
+/// - `TAG_GLYPH`:   `x, y, fontSize, r, g, b, a, fontIndex`
+///   (a single glyph, drawn from its origin: left-aligned on the alphabetic
+///   baseline, so it carries no alignment fields. Its codepoint comes from
+///   `text_blob` in the same order as a `TAG_TEXT` record's content does)
 /// - `TAG_POLYGON`: `nPts, r, g, b, a, strokeWidth, sr, sg, sb, sa, x0, y0, x1, y1, ...`
 /// - `TAG_CIRCLE`:  `cx, cy, radius, r, g, b, a, strokeWidth, sr, sg, sb, sa`
 pub struct FlatBuffer {
@@ -93,6 +102,17 @@ impl FlatBufferCanvas {
                 self.fonts.len() - 1
             });
         idx as f32
+    }
+
+    /// Appends one entry to [`Self::text_blob`], delimited from the last.
+    /// Shared by text and glyph records, which draw from the one blob in the
+    /// order the sink saw them.
+    fn push_text(&mut self, content: &str) {
+        if self.has_text {
+            self.text_blob.push(TEXT_DELIMITER);
+        }
+        self.has_text = true;
+        self.text_blob.push_str(content);
     }
 }
 
@@ -155,9 +175,21 @@ impl Canvas for FlatBufferCanvas {
         let flags = font_style_flags(t.font.weight, t.font.style);
         let font_index = self.font_index(t.font.family, flags);
 
+        // Emitted as an ordinary rect record ahead of the text, which is why
+        // the text record needs no background fields and the decoder needs no
+        // new case: it already knows how to fill a rectangle.
+        if let Some(background) = t.background_rect() {
+            self.draw_rect(&background);
+        }
+
+        // The record carries the anchor the box and alignments resolve to, not
+        // the box itself: the buffer is a drawing format, and a sink needs the
+        // anchor plus the alignment modes to place the run, nothing more.
+        let anchor = t.anchor();
+
         self.geometry.push(TAG_TEXT);
-        self.geometry.push(t.xy.x);
-        self.geometry.push(t.xy.y);
+        self.geometry.push(anchor.x);
+        self.geometry.push(anchor.y);
         self.geometry.push(t.font_size);
         push_color(&mut self.geometry, t.color);
         self.geometry
@@ -165,11 +197,21 @@ impl Canvas for FlatBufferCanvas {
         self.geometry.push(vertical_align_tag(t.vertical_alignment));
         self.geometry.push(font_index);
 
-        if self.has_text {
-            self.text_blob.push(TEXT_DELIMITER);
-        }
-        self.has_text = true;
-        self.text_blob.push_str(t.text);
+        self.push_text(t.text);
+    }
+
+    fn draw_glyph(&mut self, g: &Glyph<'_>) {
+        let flags = font_style_flags(g.font.weight, g.font.style);
+        let font_index = self.font_index(g.font.family, flags);
+
+        self.geometry.push(TAG_GLYPH);
+        self.geometry.push(g.origin().x);
+        self.geometry.push(g.origin().y);
+        self.geometry.push(g.font_size);
+        push_color(&mut self.geometry, g.color);
+        self.geometry.push(font_index);
+
+        self.push_text(g.glyph);
     }
 
     fn draw_polygon(&mut self, p: &Polygon) {

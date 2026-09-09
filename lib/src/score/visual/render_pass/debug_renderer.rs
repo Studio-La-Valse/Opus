@@ -1,6 +1,7 @@
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::{line::Line, rect::Rect};
 use crate::geometry::{color::Color, xy::XY};
+use crate::score::visual::placed::Placed;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::render_pass::RenderPass;
 use crate::score::visual::{

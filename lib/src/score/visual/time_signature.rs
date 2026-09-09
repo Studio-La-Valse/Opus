@@ -2,7 +2,7 @@ use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
-use crate::score::visual::staff::Staff;
+use crate::score::visual::placed::Placed;
 use crate::smufl::glyphs::number::{Number, NumberDigit};
 
 pub struct TimeSignature {
@@ -16,6 +16,16 @@ pub struct TimeSignature {
 
     pub num: Number,
     pub denom: Number,
+}
+
+impl Placed for TimeSignature {
+    fn xy(&self) -> XY {
+        self.xy
+    }
+
+    fn scale(&self) -> f32 {
+        self.scale
+    }
 }
 
 impl TimeSignature {
@@ -37,19 +47,11 @@ impl TimeSignature {
 
     /// World-space bounding box of one digit drawn at `at`, for callers that
     /// need the glyph's ink extent rather than its origin (the debug overlay).
+    /// Unlike the other [`Placed`] elements, a time signature is several glyphs
+    /// rather than one, so a digit is boxed against where that digit was laid
+    /// out rather than against the element's own origin.
     pub fn digit_box(&self, digit: &NumberDigit, at: XY) -> BoundingBox {
-        let unit = self.unit();
-        let scaled = BoundingBox {
-            xy: digit.bbox.xy.scale(unit),
-            size: digit.bbox.size.scale(unit),
-        };
-
-        scaled.mv(at.x, at.y)
-    }
-
-    /// World units per staff space at this element's current scale.
-    fn unit(&self) -> f32 {
-        Staff::DEFAULT_SPACE_SIZE * self.scale
+        digit.bbox.placed(at, self.unit())
     }
 
     /// The numerator sits one space above the middle of the staff, the

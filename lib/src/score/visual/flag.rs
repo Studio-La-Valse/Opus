@@ -1,9 +1,8 @@
-use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note_scale::NoteScale;
-use crate::score::visual::staff::Staff;
+use crate::score::visual::placed::Placed;
 use crate::smufl::glyphs::flag::Flag as SmuflFlag;
 
 pub struct Flag {
@@ -21,6 +20,16 @@ pub struct Flag {
     pub color: Color,
 
     pub glyph: SmuflFlag,
+}
+
+impl Placed for Flag {
+    fn xy(&self) -> XY {
+        self.xy
+    }
+
+    fn scale(&self) -> f32 {
+        self.scale
+    }
 }
 
 impl Flag {
@@ -43,27 +52,17 @@ impl Flag {
         result
     }
 
-    /// Scales a (smufl-like-) normalized bounding box to current position and scale.
-    pub fn scale_box(&self, bbox: &BoundingBox) -> BoundingBox {
-        let scaled: BoundingBox = BoundingBox {
-            xy: bbox.xy.scale(Staff::DEFAULT_SPACE_SIZE * self.scale),
-            size: bbox.size.scale(Staff::DEFAULT_SPACE_SIZE * self.scale),
-        };
-
-        scaled.mv(self.xy.x, self.xy.y)
-    }
-
     /// World-space position of the glyph's own SMuFL stem-attachment anchor.
     /// After `arrange`, this coincides exactly with the stem corner it was
     /// aligned to.
     pub fn stem_anchor_world(&self) -> XY {
-        self.xy + self.scaled_stem_anchor()
+        self.scale_pt(&self.glyph.stem_anchor)
     }
 
+    /// The same anchor as an offset from the glyph origin, which is what
+    /// `arrange` subtracts to put the origin where the anchor lands on the stem.
     fn scaled_stem_anchor(&self) -> XY {
-        self.glyph
-            .stem_anchor
-            .scale(Staff::DEFAULT_SPACE_SIZE * self.scale)
+        self.glyph.stem_anchor.scale(self.unit())
     }
 
     fn measure_size(&mut self) {

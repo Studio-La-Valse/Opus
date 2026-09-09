@@ -121,12 +121,6 @@ Defects in what is already built, not missing features.
 
 Small and well-specified. Each is a single change and none depend on each other.
 
-- ~~Support bar lines for a single line staff: should extend one staff
-  space above and below the single line (so 20 tenths in total).
-  `Staff::barline_overhang` gives the extra at each end, and both the systemic
-  bar line and the one at each measure end take it from the outermost visible
-  staff they cross.~~
-
 - One `ELEMENT_PADDING` constant spaces the clef, the key signature and the time
   signature alike. It should be split into a padding value per element, each
   reachable through both `AppDefaults` and `UserLayout`.
@@ -134,6 +128,7 @@ Small and well-specified. Each is a single change and none depend on each other.
 - In orchestral scores, not all instruments have the same number of sharps or flats 
   for a given key signature. Therefore the following key signature is misaligned. 
   Consider fixing together with the above `ELEMENT_PADDING` fix.
+
 - Scale grace and cue notes' accidental, flag and beam group. Decide how to
   handle vecs of chords with mixed grace, cue and normal notes: validation is a must.
 
@@ -218,10 +213,6 @@ consecutive feature impact.
 ## 5. Reviews and decisions
 
 Open questions. Each wants an answer written down, and the answer may be "no".
-
-- **Should a text element be a text box**, so that it has a measurable bounding
-  box? Should not change visible behavior at all. Could carry support for a box
-  background color as well.
 
 - **Should `lib` be split into separate crates**, akin to a .NET project setup?
   Review the internal dependency tree. PDF export is the concrete case: `lib`

@@ -4,10 +4,12 @@ mod tests {
     use lib::drawable::canvas::{Canvas, CanvasPainter};
     use lib::drawable::drawable_element::DrawableElement;
     use lib::drawable::elements::circle::Circle;
+    use lib::drawable::elements::glyph::Glyph;
     use lib::drawable::elements::line::Line;
     use lib::drawable::elements::polygon::Polygon;
     use lib::drawable::elements::rect::Rect;
     use lib::drawable::elements::text::{FontSpec, HorizontalAlign, Text, VerticalAlign};
+    use lib::geometry::bounding_box::BoundingBox;
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
     use lib::score::visual::render_compositor::RenderedPage;
@@ -45,6 +47,10 @@ mod tests {
 
         fn draw_text(&mut self, _text: &Text<'_>) {
             self.calls.push("text".to_string());
+        }
+
+        fn draw_glyph(&mut self, _glyph: &Glyph<'_>) {
+            self.calls.push("glyph".to_string());
         }
 
         fn draw_polygon(&mut self, _polygon: &Polygon) {
@@ -88,10 +94,26 @@ mod tests {
                 color: Color::BLACK,
                 font_size: 12.0,
                 font: FontSpec::plain("Bravura"),
-                xy: XY { x: 2.0, y: 3.0 },
+                bounds: BoundingBox::point(XY { x: 2.0, y: 3.0 }),
                 vertical_alignment: VerticalAlign::Middle,
                 horizontal_alignment: HorizontalAlign::Center,
+                background: None,
             }
+            .into(),
+            Glyph::new(
+                "\u{E050}",
+                FontSpec::plain("Bravura"),
+                12.0,
+                Color::BLACK,
+                XY { x: 2.0, y: 4.0 },
+                // Two units up from the origin and two square: inside the other
+                // elements' extent, so it does not widen the painter's bounds.
+                &BoundingBox {
+                    xy: XY { x: 0.0, y: -2.0 },
+                    size: XY { x: 2.0, y: 2.0 },
+                },
+                1.0,
+            )
             .into(),
             Polygon {
                 pts: vec![
@@ -119,6 +141,7 @@ mod tests {
                 "rect",
                 "circle",
                 "text",
+                "glyph",
                 "polygon",
                 "finish",
             ]
@@ -152,6 +175,11 @@ mod tests {
         ));
         assert!(svg.contains(r#"font-family="Bravura" font-weight="normal" font-style="normal""#));
         assert!(svg.contains(">a &amp; b</text>"));
+        // A glyph goes out as text too, but always start-anchored on the
+        // baseline, drawn from the origin it arrived with.
+        assert!(svg.contains(
+            r##"<text x="2" y="4" fill="#000000FF" font-size="12" font-family="Bravura" font-weight="normal" font-style="normal" text-anchor="start" dominant-baseline="baseline">"##
+        ));
         assert!(svg.contains(
             r##"<polygon points="0,0 4,0 2,5" fill="#00FF00FF" stroke="none" stroke-width="0" />"##
         ));

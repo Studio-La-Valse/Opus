@@ -4,6 +4,7 @@ pub mod svg;
 
 use crate::drawable::drawable_element::{DrawableElement, compute_bounds};
 use crate::drawable::elements::circle::Circle;
+use crate::drawable::elements::glyph::Glyph;
 use crate::drawable::elements::line::Line;
 use crate::drawable::elements::polygon::Polygon;
 use crate::drawable::elements::rect::Rect;
@@ -38,6 +39,9 @@ pub trait Canvas {
     fn draw_rect(&mut self, rect: &Rect);
     fn draw_circle(&mut self, circle: &Circle);
     fn draw_text(&mut self, text: &Text<'_>);
+    /// Draws a glyph from its origin: no anchoring decisions to make, since a
+    /// [`Glyph`] arrives already placed by the producer that knows its metrics.
+    fn draw_glyph(&mut self, glyph: &Glyph<'_>);
     fn draw_polygon(&mut self, polygon: &Polygon);
 
     fn finish(self) -> Self::Output;
@@ -49,6 +53,7 @@ fn draw_one<C: Canvas>(canvas: &mut C, el: &DrawableElement<'_>) {
         DrawableElement::Rect(r) => canvas.draw_rect(r),
         DrawableElement::Circle(c) => canvas.draw_circle(c),
         DrawableElement::Text(t) => canvas.draw_text(t),
+        DrawableElement::Glyph(g) => canvas.draw_glyph(g),
         DrawableElement::Polygon(p) => canvas.draw_polygon(p),
     }
 }
