@@ -7,8 +7,8 @@ pub use debug_renderer::DebugRenderer;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::{
-    accidental::Accidental, brace::Brace, bracket::Bracket, chord::Chord, clef::Clef, dot::Dot,
-    flag::Flag, key_signature::KeySignature, note::Note, page::Page, part::Part,
+    accidental::Accidental, chord::Chord, clef::Clef, dot::Dot, flag::Flag,
+    group_symbol::GroupSymbol, key_signature::KeySignature, note::Note, page::Page, part::Part,
     part_group::PartGroup, part_group_measure::PartGroupMeasure, part_measure::PartMeasure,
     rest::Rest, section::Section, section_measure::SectionMeasure, staff::Staff,
     staff_measure::StaffMeasure, stem::Stem, system::System, system_measure::SystemMeasure,
@@ -40,9 +40,12 @@ pub trait RenderPass {
     ) {
     }
 
-    fn render_bracket<'a>(
+    /// The one entry point for all five group-symbol shapes, at all three
+    /// levels: a section's, a part-group's and a part's are the same element and
+    /// are drawn the same way.
+    fn render_group_symbol<'a>(
         &self,
-        _bracket: &Bracket,
+        _symbol: &GroupSymbol,
         _fonts: &RenderFonts<'a>,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {
@@ -51,14 +54,6 @@ pub trait RenderPass {
     fn render_part_group<'a>(
         &self,
         _part_group: &PartGroup,
-        _fonts: &RenderFonts<'a>,
-        _out: &mut Vec<DrawableElement<'a>>,
-    ) {
-    }
-
-    fn render_brace<'a>(
-        &self,
-        _brace: &Brace,
         _fonts: &RenderFonts<'a>,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {

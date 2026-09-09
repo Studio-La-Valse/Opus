@@ -8,6 +8,7 @@ mod test_clef;
 mod test_engrave_samples;
 mod test_flat_buffer;
 mod test_glyph;
+mod test_group_symbol;
 mod test_group_symbol_validation;
 mod test_key;
 mod test_musicxml_source;

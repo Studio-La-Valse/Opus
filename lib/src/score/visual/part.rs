@@ -2,8 +2,8 @@ use crate::geometry::xy::XY;
 use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::brace::Brace;
 use crate::score::visual::clef::Clef as DrawableClef;
+use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
@@ -22,11 +22,11 @@ pub struct Part {
 
     pub visibility: Visibility,
 
-    pub brace: Brace,
+    pub symbol: GroupSymbol,
 }
 
 impl Part {
-    pub fn new(brace: Brace) -> Self {
+    pub fn new(symbol: GroupSymbol) -> Self {
         Self {
             measures: BTreeMap::new(),
             staves: BTreeMap::new(),
@@ -37,7 +37,7 @@ impl Part {
 
             visibility: Visibility::Unset,
 
-            brace,
+            symbol,
         }
     }
 
@@ -215,8 +215,10 @@ impl Part {
         self.staves.values().filter(|staff| !staff.hidden)
     }
 
-    pub fn shows_brace(&self) -> bool {
-        self.visible_staves().count() > 1
+    /// Whether this part draws its own symbol: more than one staff to join, and
+    /// a symbol that draws.
+    pub fn shows_symbol(&self) -> bool {
+        self.visible_staves().count() > 1 && self.symbol.is_drawn()
     }
 }
 impl Layoutable for Part {
@@ -253,14 +255,12 @@ impl Layoutable for Part {
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let staves_height = self.height - first_visible_staff_distance;
 
-        let shows_brace = self.shows_brace();
-        if shows_brace {
-            let available = XY {
-                x: self.width,
-                y: staves_height,
-            };
-            self.brace.measure(&available, params);
-        }
+        // Sized on every pass whatever it draws; see `Section::measure`.
+        let available = XY {
+            x: f32::INFINITY,
+            y: staves_height,
+        };
+        self.symbol.measure(&available, params);
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -287,10 +287,7 @@ impl Layoutable for Part {
         }
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let shows_brace = self.shows_brace();
-        if shows_brace {
-            let origin = origin.mv(-5., first_visible_staff_distance);
-            self.brace.arrange(&origin);
-        }
+        self.symbol
+            .arrange(&self.xy.mv(0., first_visible_staff_distance));
     }
 }

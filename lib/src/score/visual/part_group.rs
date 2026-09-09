@@ -1,7 +1,7 @@
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::brace::Brace;
+use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
@@ -19,11 +19,11 @@ pub struct PartGroup {
     pub width: f32,
     pub height: f32,
 
-    pub brace: Brace,
+    pub symbol: GroupSymbol,
 }
 
 impl PartGroup {
-    pub fn new(brace: Brace) -> Self {
+    pub fn new(symbol: GroupSymbol) -> Self {
         PartGroup {
             parts: Default::default(),
             measures: Default::default(),
@@ -32,19 +32,14 @@ impl PartGroup {
             width: Default::default(),
             height: Default::default(),
 
-            brace,
+            symbol,
         }
     }
 
-    pub fn part_or_insert<F: FnOnce() -> Brace>(
-        &mut self,
-        part_id: String,
-        factory: F,
-    ) -> &mut Part {
-        self.parts.entry(part_id.clone()).or_insert_with(|| {
-            let brace = factory();
-            Part::new(brace)
-        })
+    pub fn part_or_insert(&mut self, part_id: String, symbol: GroupSymbol) -> &mut Part {
+        self.parts
+            .entry(part_id)
+            .or_insert_with(|| Part::new(symbol))
     }
 
     pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {
@@ -112,8 +107,10 @@ impl PartGroup {
             .flat_map(|part| part.visible_staves())
     }
 
-    pub fn shows_brace(&self) -> bool {
-        self.parts.len() > 1 && self.visible_staves().count() > 1
+    /// Whether this group draws its symbol: more than one part to bind, more
+    /// than one staff actually drawn, and a symbol that draws.
+    pub fn shows_symbol(&self) -> bool {
+        self.parts.len() > 1 && self.visible_staves().count() > 1 && self.symbol.is_drawn()
     }
 
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
@@ -126,8 +123,6 @@ impl Layoutable for PartGroup {
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
-
-        let show_brace = self.shows_brace();
 
         for part in self.parts.values_mut() {
             let available = XY::INFINITE;
@@ -147,20 +142,18 @@ impl Layoutable for PartGroup {
             self.width += measure.width;
         }
 
-        if show_brace {
-            let available = XY {
-                x: f32::INFINITY,
-                y: staves_height,
-            };
-            self.brace.measure(&available, params);
-        }
+        // Sized on every pass whatever it draws; see `Section::measure`.
+        let available = XY {
+            x: f32::INFINITY,
+            y: staves_height,
+        };
+        self.symbol.measure(&available, params);
     }
 
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let show_brace = self.shows_brace();
 
         let mut _origin = self.xy;
         for measure in self.measures.values_mut() {
@@ -174,9 +167,7 @@ impl Layoutable for PartGroup {
             _origin = _origin.mv(0., part.height);
         }
 
-        if show_brace {
-            let origin = self.xy.mv(-15., first_visible_staff_distance);
-            self.brace.arrange(&origin);
-        }
+        self.symbol
+            .arrange(&self.xy.mv(0., first_visible_staff_distance));
     }
 }

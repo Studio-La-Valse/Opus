@@ -74,6 +74,24 @@ impl BoundingBox {
             && other.y_max() <= self.y_max() + f32::EPSILON
     }
 
+    /// The smallest box containing both. Used where one element's ink is
+    /// several pieces -- a bracket is a spine plus two tips -- and the box it
+    /// reports has to cover all of them.
+    pub fn union(&self, other: &BoundingBox) -> BoundingBox {
+        let x_min = self.x_min().min(other.x_min());
+        let y_min = self.y_min().min(other.y_min());
+        let x_max = self.x_max().max(other.x_max());
+        let y_max = self.y_max().max(other.y_max());
+
+        BoundingBox {
+            xy: XY { x: x_min, y: y_min },
+            size: XY {
+                x: x_max - x_min,
+                y: y_max - y_min,
+            },
+        }
+    }
+
     pub fn is_zero(&self) -> bool {
         self.width().abs() <= f32::EPSILON && self.height().abs() <= f32::EPSILON
     }

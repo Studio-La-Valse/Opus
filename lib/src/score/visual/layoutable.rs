@@ -1,5 +1,6 @@
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
+use crate::score::core::group_symbol::{GroupLevel, GroupSymbol};
 use crate::score::core::note_kind::NoteKind;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
@@ -50,6 +51,82 @@ impl LayoutParams<'_> {
                 .or(self.score_defaults.appearance.note_size_cue)
                 .unwrap_or(self.app_defaults.note_size_cue),
         }
+    }
+
+    /// Which symbol binds a group at `level`, given what its `<part-group>`
+    /// declared.
+    ///
+    /// Three sources in falling precedence, and this is the one place that
+    /// order is decided. A caller's override wins outright -- it is how a score
+    /// is re-drawn with brackets throughout regardless of what the exporter
+    /// wrote. Failing that the document is obeyed. Failing *that* the level's
+    /// own convention applies, which is why an absent `<group-symbol>` and an
+    /// explicit `<group-symbol>none</group-symbol>` cannot be the same value:
+    /// the first falls through to the default, the second is a declaration that
+    /// nothing be drawn and stops here.
+    pub fn group_symbol(&self, level: GroupLevel, declared: Option<GroupSymbol>) -> GroupSymbol {
+        let (user, app_default) = match level {
+            GroupLevel::Section => (
+                self.user_layout.section_symbol,
+                self.app_defaults.section_symbol,
+            ),
+            GroupLevel::PartGroup => (
+                self.user_layout.part_group_symbol,
+                self.app_defaults.part_group_symbol,
+            ),
+            GroupLevel::Part => (self.user_layout.part_symbol, self.app_defaults.part_symbol),
+        };
+
+        user.or(declared).unwrap_or(app_default)
+    }
+
+    /// Tenths between the system's left edge and the right edge of `level`'s
+    /// symbol. Per level, not per shape: see [`GroupLevel`].
+    pub fn group_symbol_gap(&self, level: GroupLevel) -> f32 {
+        match level {
+            GroupLevel::Section => self
+                .user_layout
+                .section_symbol_gap
+                .unwrap_or(self.app_defaults.section_symbol_gap),
+            GroupLevel::PartGroup => self
+                .user_layout
+                .part_group_symbol_gap
+                .unwrap_or(self.app_defaults.part_group_symbol_gap),
+            GroupLevel::Part => self
+                .user_layout
+                .part_symbol_gap
+                .unwrap_or(self.app_defaults.part_symbol_gap),
+        }
+    }
+
+    /// How thick `symbol`'s vertical stroke is drawn, in tenths. Per shape, not
+    /// per level: it describes the drawing rather than the placement. Zero for
+    /// the shapes that have no stroke of their own.
+    pub fn group_symbol_thickness(&self, symbol: GroupSymbol) -> f32 {
+        match symbol {
+            GroupSymbol::Bracket => self
+                .user_layout
+                .group_bracket_thickness
+                .unwrap_or(self.app_defaults.group_bracket_thickness),
+            GroupSymbol::Line => self
+                .user_layout
+                .group_line_thickness
+                .unwrap_or(self.app_defaults.group_line_thickness),
+            GroupSymbol::Square => self
+                .user_layout
+                .group_square_thickness
+                .unwrap_or(self.app_defaults.group_square_thickness),
+            // A brace's weight is the glyph's own, and nothing is drawn for
+            // `None` to have a weight.
+            GroupSymbol::Brace | GroupSymbol::None => 0.,
+        }
+    }
+
+    /// How far a `square` symbol's arms reach toward the system, in tenths.
+    pub fn group_square_arm(&self) -> f32 {
+        self.user_layout
+            .group_square_arm
+            .unwrap_or(self.app_defaults.group_square_arm)
     }
 }
 

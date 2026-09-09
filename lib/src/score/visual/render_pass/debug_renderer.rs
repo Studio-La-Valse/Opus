@@ -9,6 +9,7 @@ use crate::score::visual::{
     clef::Clef,
     dot::Dot,
     flag::Flag,
+    group_symbol::GroupSymbol,
     note::Note,
     page::Page,
     rest::Rest,
@@ -61,6 +62,34 @@ impl RenderPass for DebugRenderer {
             stroke_color,
         };
         out.push(bottom.into());
+    }
+
+    /// The box a group symbol reports, plus its anchor.
+    ///
+    /// Worth drawing even though the symbol is one of the simplest shapes on the
+    /// page: this box is what instrument and part-group names are aligned
+    /// against, so being able to see it is the point of it being exact. A
+    /// bracket's box reaching right of the anchor, past the system's left edge,
+    /// is correct -- its tips flare that way.
+    fn render_group_symbol<'a>(
+        &self,
+        symbol: &GroupSymbol,
+        _fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let bbox = symbol.bounds();
+
+        let rect = Rect {
+            xy: bbox.xy,
+            width: bbox.width(),
+            height: bbox.height(),
+            color: Color::TRANSPARENT,
+            stroke_width: Some(0.25),
+            stroke_color: Some(Color::RED),
+        };
+        out.push(rect.into());
+
+        out.push(display_xy(&symbol.anchor(), &2.5, &Color::GREEN).into());
     }
 
     fn render_clef<'a>(

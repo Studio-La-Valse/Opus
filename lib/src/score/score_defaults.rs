@@ -1,4 +1,5 @@
 ﻿use crate::musicxml::utils::{NodeUtils, ReqParse};
+use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::part_list::tree::PartListNode;
 use roxmltree::Node;
 use std::collections::BTreeMap;
@@ -9,6 +10,14 @@ use std::collections::BTreeMap;
 pub struct ScorePart {
     pub section: u32,
     pub part_group: u32,
+
+    /// The `<group-symbol>` declared by the `<part-group>` this part's section
+    /// came from, and by the one its part-group came from. `None` where the
+    /// document named none, or where there is no such enclosing node at all --
+    /// a part written at the top level of a `<part-list>` still gets a section
+    /// index of its own, with nothing behind it to declare anything.
+    pub section_symbol: Option<GroupSymbol>,
+    pub part_group_symbol: Option<GroupSymbol>,
 }
 
 #[derive(Copy, Clone)]
@@ -215,6 +224,7 @@ impl ScoreDefaults {
                         return Some(ScorePart {
                             section: *section,
                             part_group: *part_group,
+                            ..Default::default()
                         });
                     }
                     PartListNode::Section { children, .. }

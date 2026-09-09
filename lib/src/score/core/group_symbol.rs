@@ -84,6 +84,20 @@ impl GroupSymbol {
     }
 }
 
+/// Which of the three nested things a [`GroupSymbol`] is binding, and so which
+/// set of defaults and overrides it resolves against.
+///
+/// The level decides the symbol *and* the gap rather than the shape doing so,
+/// because those two are what make the three nest legibly against each other: a
+/// section's symbol has to sit further out than the part-group's inside it,
+/// whatever shapes they happen to be.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GroupLevel {
+    Section,
+    PartGroup,
+    Part,
+}
+
 #[derive(Debug)]
 pub struct GroupSymbolParseError(String);
 
