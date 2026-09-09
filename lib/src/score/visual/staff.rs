@@ -133,6 +133,7 @@ impl Staff {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         self.color = user_layout

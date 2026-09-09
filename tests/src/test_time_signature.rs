@@ -107,6 +107,7 @@ mod tests {
                 score_defaults: &score_defaults,
                 user_layout: &user_layout,
                 app_defaults: &app_defaults,
+                font: font(),
             },
         );
         time_signature.arrange(&XY::ZERO);

@@ -110,6 +110,7 @@ mod tests {
         arrange_score(
             score,
             defaults,
+            font(),
             user_layout,
             &AppDefaults::default(),
             &mut |_stage| {},

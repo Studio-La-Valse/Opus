@@ -239,6 +239,7 @@ impl PartMeasure {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         self.beam_thickness = user_layout

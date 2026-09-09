@@ -184,6 +184,7 @@ impl Stem {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         self.scale = self.size.resolve(params);

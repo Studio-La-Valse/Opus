@@ -85,7 +85,14 @@ pub fn engrave(
 ) -> EngravedScore {
     let (mut score, layout, messages) =
         walk_document(document, font, user_layout, app_defaults, progress);
-    arrange_score(&mut score, &layout, user_layout, app_defaults, progress);
+    arrange_score(
+        &mut score,
+        &layout,
+        font,
+        user_layout,
+        app_defaults,
+        progress,
+    );
     EngravedScore {
         score,
         layout,
@@ -156,7 +163,10 @@ pub fn walk_document(
 
 /// Resolves the user layout onto an already-walked `score`, rebeams it, measures
 /// every element and arranges the pages. Callable on its own to re-lay-out a
-/// cached score for a new [`UserLayout`] without re-walking the document.
+/// cached score for a new [`UserLayout`] without re-walking the document -- which
+/// is why `font` is a parameter here as well as on [`walk_document`]: an element
+/// whose glyph depends on the user layout has to be able to look it up on every
+/// arrange, not once during the walk.
 ///
 /// Emits [`Stage::Rebeam`] and [`Stage::LayoutPass`]. Layout resolution is no
 /// longer its own pass -- each element resolves its appearance from the layout
@@ -164,6 +174,7 @@ pub fn walk_document(
 pub fn arrange_score(
     score: &mut Score,
     score_defaults: &ScoreDefaults,
+    font: &SmuflFont,
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
@@ -179,6 +190,7 @@ pub fn arrange_score(
         score_defaults,
         user_layout,
         app_defaults,
+        font,
     };
     score.measure(&XY::INFINITE, params);
     page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);

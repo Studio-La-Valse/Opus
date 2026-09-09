@@ -94,6 +94,7 @@ impl Page {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         let page = score_defaults.resolve_page(self.number);

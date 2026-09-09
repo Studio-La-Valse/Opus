@@ -3,15 +3,28 @@ use crate::score::app_defaults::AppDefaults;
 use crate::score::core::note_kind::NoteKind;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
+use crate::smufl::smufl_font::SmuflFont;
 
-/// The three layout-config sources every element resolves its own appearance
-/// from, threaded through the [`Layoutable::measure`] pass: the document's
-/// declared defaults, the caller's overrides, and the hard-coded fallbacks.
+/// What every element resolves its own appearance and size from, threaded
+/// through the [`Layoutable::measure`] pass.
+///
+/// Three of these are layout config, in falling precedence: the caller's
+/// overrides, the document's declared defaults, and the hard-coded fallbacks.
+/// The fourth, `font`, is not config but a resource -- the glyph metrics an
+/// element needs to size itself.
+///
+/// The font is here rather than being handed to elements at construction
+/// because *which* glyph an element draws is not always settled by then. A
+/// group symbol resolves its shape from the user layout, which is re-resolved on
+/// every `arrange_score` -- the wasm bindings walk a document once and re-lay it
+/// out per render -- so an element that had picked its glyph during the walk
+/// would be frozen at whatever the first render asked for.
 #[derive(Clone, Copy)]
 pub struct LayoutParams<'a> {
     pub score_defaults: &'a ScoreDefaults,
     pub user_layout: &'a UserLayout,
     pub app_defaults: &'a AppDefaults,
+    pub font: &'a SmuflFont,
 }
 
 impl LayoutParams<'_> {
