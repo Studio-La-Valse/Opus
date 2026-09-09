@@ -61,8 +61,10 @@ impl GroupSymbol {
     /// Panics on a value outside the five the format allows, rather than
     /// guessing at one: which symbol a group is bound by is a visible editorial
     /// decision, and inventing one silently redraws the score's structure.
-    /// `GroupSymbolVisitor` reports the same cause in plain words on the
+    /// [`GroupSymbolVisitor`] reports the same cause in plain words on the
     /// validation walk that runs first.
+    ///
+    /// [`GroupSymbolVisitor`]: crate::musicxml::visitors::group_symbol_visitor::GroupSymbolVisitor
     pub fn from_mxml(node: &Node) -> Option<GroupSymbol> {
         let symbol = node.get_child("group-symbol")?;
         let text = symbol.text().unwrap_or("").trim();
