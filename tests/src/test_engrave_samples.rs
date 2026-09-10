@@ -103,4 +103,19 @@ mod tests {
     fn a_score_with_an_unclosed_beam_level_engraves() {
         fixture("unclosed-beam");
     }
+
+    /// Every `<group-symbol>` value at once, over an uneven structure: groups of
+    /// one, two, three and four parts, parts of one, two and three staves, a
+    /// part directly inside a section and one enclosed by nothing at all.
+    #[test]
+    fn a_score_of_every_group_symbol_engraves() {
+        fixture("group-symbols");
+    }
+
+    /// A full orchestral score, which is the largest document the fixtures hold
+    /// and the one that exercises the most levels of grouping at once.
+    #[test]
+    fn an_orchestral_score_engraves() {
+        fixture("stresstest");
+    }
 }

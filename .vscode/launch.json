@@ -300,18 +300,82 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug (ActValidate Fixture: Orchestral score stresstest)",
+            "name": "Debug (Fixture: stresstest - orchestral score)",
             "preLaunchTask": "rust: cargo build",
             "program": "${workspaceRoot}/target/debug/opus",
             "args": [
                 "render",
                 "svg",
-                "--out", "assets/xmltest", 
+                "--out", "assets/xmltest",
                 "--file", "assets/xmlfixtures/stresstest.musicxml",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
                 "--overwrite",
                 "--debug",
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Validate Fixture: stresstest)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "validate",
+                "--file", "assets/xmlfixtures/stresstest.musicxml"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // Every <group-symbol> value at once, over an uneven structure: see
+            // the comment at the top of the fixture for what each level holds
+            // and which of them are expected to draw nothing.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: group-symbols - every <group-symbol> value)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/group-symbols.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            // The same fixture with every symbol forced to one shape, which is
+            // what the cli overrides are for. Swap the value to see each in
+            // turn; `none` on all three suppresses them entirely.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: group-symbols - overridden to square)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/group-symbols.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--section-symbol", "square",
+                "--part-group-symbol", "square",
+                "--part-symbol", "square",
+                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [

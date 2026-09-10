@@ -26,6 +26,7 @@ mod tests {
     use std::sync::OnceLock;
 
     const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
+    const GROUP_SYMBOLS: &str = "assets/xmlfixtures/group-symbols.musicxml";
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
     const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
@@ -607,5 +608,94 @@ mod tests {
 
         assert_eq!(section.symbol.kind(), Kind::None);
         assert!(!section.shows_symbol(), "nothing is drawn for it");
+    }
+
+    /// The whole fixture at once: every shape resolves, and the four levels that
+    /// are expected to draw nothing draw nothing. See the comment at the top of
+    /// `group-symbols.musicxml` for what each level holds.
+    #[test]
+    fn the_group_symbols_fixture_resolves_every_shape() {
+        let score = engrave(&asset(GROUP_SYMBOLS));
+        let sections: Vec<_> = score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .collect();
+
+        assert_eq!(sections.len(), 4, "three grouped sections and P17's own");
+
+        let kinds: Vec<_> = sections.iter().map(|s| s.symbol.kind()).collect();
+        assert_eq!(
+            kinds,
+            vec![Kind::Bracket, Kind::Line, Kind::Square, Kind::Bracket],
+            "the last is P17's, which declared nothing and took the default"
+        );
+
+        let drawn: Vec<_> = sections.iter().map(|s| s.shows_symbol()).collect();
+        assert_eq!(
+            drawn,
+            vec![true, true, true, false],
+            "P17's section holds one part-group, so it binds nothing"
+        );
+
+        // Section 1's first group asks for `none` outright, and its four horns
+        // make it the one group large enough to draw that still draws nothing.
+        let horns = sections[1].part_groups.values().next().unwrap();
+        assert_eq!(horns.parts.len(), 4);
+        assert_eq!(horns.symbol.kind(), Kind::None);
+        assert!(!horns.shows_symbol());
+
+        // Section 0's last group is the lone bassoon, which the builder gives a
+        // part-group of its own -- one part, so nothing to bind.
+        let bassoon = sections[0].part_groups.values().last().unwrap();
+        assert_eq!(bassoon.parts.len(), 1);
+        assert!(!bassoon.shows_symbol());
+
+        // Every shape reaches the tree somewhere.
+        let group_kinds: Vec<_> = sections
+            .iter()
+            .flat_map(|s| s.part_groups.values())
+            .map(|g| g.symbol.kind())
+            .collect();
+        for expected in [Kind::Square, Kind::Brace, Kind::None, Kind::Line] {
+            assert!(
+                group_kinds.contains(&expected),
+                "no part-group resolved to {expected}: {group_kinds:?}"
+            );
+        }
+    }
+
+    /// A multi-staff part draws a symbol of its own, inside whatever its group
+    /// draws. MusicXML has no `<group-symbol>` for a part, so all four of the
+    /// fixture's multi-staff parts take the app default.
+    #[test]
+    fn multi_staff_parts_draw_their_own_symbol() {
+        let score = engrave(&asset(GROUP_SYMBOLS));
+
+        let parts: Vec<_> = score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .flat_map(|section| section.part_groups.values())
+            .flat_map(|group| group.parts.iter())
+            .collect();
+
+        let drawing: Vec<&str> = parts
+            .iter()
+            .filter(|(_, part)| part.shows_symbol())
+            .map(|(id, _)| id.as_str())
+            .collect();
+
+        assert_eq!(
+            drawing,
+            vec!["P12", "P13", "P14", "P15"],
+            "the trombone, organ, celesta and harp are the multi-staff parts"
+        );
+
+        for (_, part) in parts.iter().filter(|(_, p)| p.shows_symbol()) {
+            assert_eq!(part.symbol.kind(), Kind::Brace);
+        }
     }
 }
