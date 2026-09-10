@@ -93,6 +93,57 @@
     <label for="vertical-gutter">Vertical gutter</label>
     <input type="number" id="vertical-gutter" step="any" />
 
+    <label for="section-symbol">Section symbol</label>
+    <select id="section-symbol">
+      <option value="">(from document)</option>
+      <option value="none">None</option>
+      <option value="brace">Brace</option>
+      <option value="bracket">Bracket</option>
+      <option value="line">Line</option>
+      <option value="square">Square</option>
+    </select>
+
+    <label for="part-group-symbol">Part-group symbol</label>
+    <select id="part-group-symbol">
+      <option value="">(from document)</option>
+      <option value="none">None</option>
+      <option value="brace">Brace</option>
+      <option value="bracket">Bracket</option>
+      <option value="line">Line</option>
+      <option value="square">Square</option>
+    </select>
+
+    <label for="part-symbol">Part symbol</label>
+    <select id="part-symbol">
+      <option value="">(default)</option>
+      <option value="none">None</option>
+      <option value="brace">Brace</option>
+      <option value="bracket">Bracket</option>
+      <option value="line">Line</option>
+      <option value="square">Square</option>
+    </select>
+
+    <label for="section-symbol-gap">Section symbol gap</label>
+    <input type="number" id="section-symbol-gap" step="any" />
+
+    <label for="part-group-symbol-gap">Part-group symbol gap</label>
+    <input type="number" id="part-group-symbol-gap" step="any" />
+
+    <label for="part-symbol-gap">Part symbol gap</label>
+    <input type="number" id="part-symbol-gap" step="any" />
+
+    <label for="group-bracket-thickness">Bracket thickness</label>
+    <input type="number" id="group-bracket-thickness" step="any" />
+
+    <label for="group-line-thickness">Line thickness</label>
+    <input type="number" id="group-line-thickness" step="any" />
+
+    <label for="group-square-thickness">Square thickness</label>
+    <input type="number" id="group-square-thickness" step="any" />
+
+    <label for="group-square-arm">Square arm length</label>
+    <input type="number" id="group-square-arm" step="any" />
+
     <label for="debug">Debug overlay</label>
     <input type="checkbox" id="debug" />
   </form>
@@ -130,6 +181,16 @@
       "horizontal-gutter-even",
       "horizontal-gutter-uneven",
       "vertical-gutter",
+      "section-symbol",
+      "part-group-symbol",
+      "part-symbol",
+      "section-symbol-gap",
+      "part-group-symbol-gap",
+      "part-symbol-gap",
+      "group-bracket-thickness",
+      "group-line-thickness",
+      "group-square-thickness",
+      "group-square-arm",
     ];
 
     for (const id of cssVarIds) {

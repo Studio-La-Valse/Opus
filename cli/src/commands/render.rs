@@ -11,6 +11,7 @@ use lib::musicxml::visitors::position_visitor::PositionVisitor;
 use lib::musicxml::visitors::staff_details_visitor::StaffDetailsVisitor;
 use lib::musicxml::walker::Walker;
 use lib::score::app_defaults::AppDefaults;
+use lib::score::core::group_symbol::GroupSymbol;
 use lib::score::engrave::{EngravedScore, Stage, engrave};
 use lib::score::page_orientation::PageOrientation;
 use lib::score::user_layout::UserLayout;
@@ -82,6 +83,46 @@ pub struct RenderArgs {
 
     #[arg(long)]
     vertical_gutter: Option<f32>,
+
+    /// Force one symbol on every section / part-group / part in the score,
+    /// overriding whatever its `<part-group>` declared: `none`, `brace`,
+    /// `bracket`, `line` or `square`. A part has no symbol of its own in
+    /// MusicXML, so `--part-symbol` is the only way to change what joins one
+    /// part's staves.
+    #[arg(long)]
+    section_symbol: Option<GroupSymbol>,
+
+    #[arg(long)]
+    part_group_symbol: Option<GroupSymbol>,
+
+    #[arg(long)]
+    part_symbol: Option<GroupSymbol>,
+
+    /// Tenths between the system's left edge and the right edge of that level's
+    /// symbol. Per level, since the three have to nest against each other.
+    #[arg(long)]
+    section_symbol_gap: Option<f32>,
+
+    #[arg(long)]
+    part_group_symbol_gap: Option<f32>,
+
+    #[arg(long)]
+    part_symbol_gap: Option<f32>,
+
+    /// Stroke thickness in tenths, per shape. A bracket's tip glyphs scale with
+    /// its stroke, so thickening one keeps it in proportion.
+    #[arg(long)]
+    group_bracket_thickness: Option<f32>,
+
+    #[arg(long)]
+    group_line_thickness: Option<f32>,
+
+    #[arg(long)]
+    group_square_thickness: Option<f32>,
+
+    /// How far a square symbol's arms reach toward the system, in tenths.
+    #[arg(long)]
+    group_square_arm: Option<f32>,
 }
 
 /// Output format for `opus render`, chosen as a subcommand: `render svg` or
@@ -126,6 +167,16 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
+        section_symbol,
+        part_group_symbol,
+        part_symbol,
+        section_symbol_gap,
+        part_group_symbol_gap,
+        part_symbol_gap,
+        group_bracket_thickness,
+        group_line_thickness,
+        group_square_thickness,
+        group_square_arm,
     } = args;
 
     let mut time = Instant::now();
@@ -169,6 +220,16 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
+        section_symbol,
+        part_group_symbol,
+        part_symbol,
+        section_symbol_gap,
+        part_group_symbol_gap,
+        part_symbol_gap,
+        group_bracket_thickness,
+        group_line_thickness,
+        group_square_thickness,
+        group_square_arm,
         ..Default::default()
     };
     let app_defaults: AppDefaults = Default::default();

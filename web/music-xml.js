@@ -115,6 +115,16 @@ const LAYOUT_OPTIONS = [
   "horizontalGutterEven",
   "horizontalGutterUneven",
   "verticalGutter",
+  "sectionSymbol",
+  "partGroupSymbol",
+  "partSymbol",
+  "sectionSymbolGap",
+  "partGroupSymbolGap",
+  "partSymbolGap",
+  "groupBracketThickness",
+  "groupLineThickness",
+  "groupSquareThickness",
+  "groupSquareArm",
 ];
 
 function cssPropertyFor(option) {
