@@ -136,8 +136,7 @@ impl Section {
         self.xy = *origin;
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let (overhang_top, _) = self.barline_overhang();
-        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance - overhang_top);
+        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance);
 
         for measure in self.measures.values_mut() {
             measure.arrange(&measure_origin);
@@ -157,26 +156,6 @@ impl Section {
             part_group.arrange_clear_of(&part_group_origin, clear_of, margin_left);
             part_group_origin = part_group_origin.mv(0., part_group.height);
         }
-    }
-
-    /// How far the barline at a measure end reaches above the top line of the
-    /// section's first visible staff, and below the bottom line of its last.
-    /// Both are zero for the staves that enclose spaces of their own; see
-    /// [`Staff::barline_overhang`].
-    fn barline_overhang(&self) -> (f32, f32) {
-        let top = self
-            .visible_staves()
-            .next()
-            .map(Staff::barline_overhang)
-            .unwrap_or(0.);
-
-        let bottom = self
-            .visible_staves()
-            .last()
-            .map(Staff::barline_overhang)
-            .unwrap_or(0.);
-
-        (top, bottom)
     }
 }
 impl Layoutable for Section {
@@ -203,26 +182,12 @@ impl Layoutable for Section {
         }
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        // Top line of the first staff to bottom line of the last: `self.height`
-        // is the room the staves reserve, so the padding a short last staff
-        // keeps below its line has to come back off.
-        let trailing_padding = self
-            .visible_staves()
-            .last()
-            .map(Staff::floor_padding)
-            .unwrap_or(0.);
-        let staves_height = self.height - first_visible_staff_distance - trailing_padding;
-
-        // The barline a measure draws at its end is taller than the staves it
-        // crosses when either outermost one is a single line, which is a staff
-        // of no height at all.
-        let (overhang_top, overhang_bottom) = self.barline_overhang();
-        let barline_height = staves_height + overhang_top + overhang_bottom;
+        let staves_height = self.height - first_visible_staff_distance;
 
         for measure in self.measures.values_mut() {
             let available = XY {
                 x: f32::INFINITY,
-                y: barline_height,
+                y: staves_height,
             };
             measure.measure(&available, params);
             self.width += measure.width;

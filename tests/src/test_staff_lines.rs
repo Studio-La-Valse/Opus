@@ -2,16 +2,16 @@
 //!
 //! Five is only the default. A percussion part is often written on one line, a
 //! tablature staff has one per string, and `0` asks for a staff with no lines at
-//! all. The count reaches three places, each checked here: the staff itself
-//! (its geometric span, and separately the room it reserves between the staves
-//! around it, which never falls below a standard staff's so a one-line staff's
-//! notes have somewhere to go), the renderer (how many lines it draws), and the
-//! ledger lines, which start below whatever the staff's own bottom line turns
-//! out to be.
+//! all. The count reaches three places, each checked here: how much room the
+//! staff takes (always a standard staff's, so its neighbours do not collapse
+//! onto it), the renderer (how many lines it draws, and where), and the ledger
+//! lines, which start below whatever the staff's own bottom drawn line is.
 //!
-//! The top line stays the anchor throughout: every element positioned against a
-//! staff is placed in half-spaces down from it, so a staff with fewer lines
-//! loses them from the bottom and one with more gains them there.
+//! A staff of two to five lines draws them from the top of the block it
+//! occupies; a six-line staff fills the block; a one-line staff is the
+//! percussion exception, its single line drawn on the block's middle, standing
+//! in for a five-line staff's middle line, with clef, time signature, rests and
+//! name centred on it.
 
 #[cfg(test)]
 mod tests {
@@ -205,27 +205,12 @@ mod tests {
         }
     }
 
-    /// `height()` is the geometric span, top line to bottom line: one space
-    /// shorter than the staff has lines, and zero for a staff of one line or
-    /// none. This is the reach of a barline or a group bracket.
+    /// A staff drawn with its full five lines or more is exactly as tall as the
+    /// distance between them; a staff drawn with fewer is still a full staff and
+    /// occupies a standard staff's height, only some lines undrawn. A staff of
+    /// no lines at all is nothing and takes no room.
     #[test]
-    fn a_staff_is_one_space_shorter_than_it_has_lines() {
-        for (lines, expected) in [(0, 0.), (1, 0.), (2, 10.), (5, 40.), (6, 50.)] {
-            let score = engrave(&score_xml(
-                &format!("<staff-details><staff-lines>{lines}</staff-lines></staff-details>"),
-                &note("C", 5),
-            ));
-
-            assert_eq!(staff(&score).height(), expected, "<staff-lines>{lines}");
-        }
-    }
-
-    /// `reserved_height()` is how much room the staff takes between its
-    /// neighbours: its own span, but never less than a standard staff's, so a
-    /// one-line percussion staff still leaves room for the notes and rests
-    /// around its line. A staff with no lines reserves nothing.
-    #[test]
-    fn a_short_staff_still_reserves_a_standard_staffs_worth_of_room() {
+    fn a_short_staff_still_occupies_a_standard_staffs_height() {
         let standard = Staff::SPACES as f32 * Staff::DEFAULT_SPACE_SIZE;
 
         for (lines, expected) in [
@@ -236,26 +221,22 @@ mod tests {
             (5, standard),
             (6, 5. * Staff::DEFAULT_SPACE_SIZE),
         ] {
-            let staff = Staff {
-                lines,
-                ..Default::default()
-            };
+            let score = engrave(&score_xml(
+                &format!("<staff-details><staff-lines>{lines}</staff-lines></staff-details>"),
+                &note("C", 5),
+            ));
+
             assert_eq!(
-                staff.reserved_height(),
+                staff(&score).height(),
                 expected,
-                "a staff of {lines} lines"
-            );
-            assert_eq!(
-                staff.floor_padding(),
-                expected - staff.height(),
-                "padding below the bottom line, a staff of {lines} lines",
+                "<staff-lines>{lines}</staff-lines>",
             );
         }
     }
 
-    /// The reserved height is what stacks: a five-line staff below a one-line
-    /// percussion staff sits a full standard staff plus the staff distance
-    /// below the percussion line, not right underneath it.
+    /// The height is what stacks: a five-line staff below a one-line percussion
+    /// staff sits a full standard staff plus the staff distance below the
+    /// percussion line, not right underneath it.
     #[test]
     fn a_staff_below_a_one_line_staff_gets_room_for_its_neighbour() {
         let score = engrave(&two_staff_score_xml(
@@ -270,7 +251,7 @@ mod tests {
         assert_eq!(
             gap,
             standard + staves[1].1.distance_final,
-            "the lower staff clears the percussion staff's reserved height",
+            "the lower staff clears the percussion staff's height",
         );
     }
 
@@ -351,11 +332,11 @@ mod tests {
         assert_eq!(ledger_count(&three), 2, "E4 hangs two lines below");
     }
 
-    /// The clef a one-line percussion staff opens with is centred on that line,
-    /// not on the middle line the five-line staff it isn't would have had.
+    /// The clef a one-line percussion staff opens with is centred on that line
+    /// -- which is drawn where a five-line staff's middle line would be, index 4.
     #[test]
     fn a_pitchless_clef_is_centred_on_the_staff_it_opens() {
-        for (lines, expected) in [(5, 4), (1, 0), (3, 2)] {
+        for (lines, expected) in [(5, 4), (1, 4), (3, 2)] {
             let score = engrave(&score_xml_with_clef(
                 "<clef><sign>percussion</sign></clef>",
                 &format!("<staff-details><staff-lines>{lines}</staff-lines></staff-details>"),
@@ -401,9 +382,9 @@ mod tests {
         assert!(rendered_lines(staff(&score)).is_empty());
     }
 
-    /// A rest is centred on the middle of its own staff. On a one-line
-    /// percussion staff that is the single line itself, not twenty tenths below
-    /// where a five-line staff's middle would have been.
+    /// A one-line percussion staff draws its line where a five-line staff's
+    /// middle line would be -- two spaces down -- and a measure rest sits on it,
+    /// not twenty tenths below in blank space.
     #[test]
     fn a_measure_rest_on_a_one_line_staff_sits_on_the_line() {
         let score = engrave(&score_xml_with_clef(
@@ -422,15 +403,72 @@ mod tests {
             .and_then(|measure| measure.rests.first())
             .expect("the staff measure has a rest");
 
-        assert_eq!(
-            rest.staff_line, 0,
-            "centred on the single line, not a five-line staff's middle",
-        );
+        assert_eq!(rest.staff_line, 4, "centred where the drawn line is");
+
+        let line_y = staff.xy.y + staff.top_line_offset();
         assert!(
-            (rest.xy.y - staff.xy.y).abs() < 0.01,
-            "the rest glyph origin sits on the staff line ({} vs {})",
+            (rest.xy.y - line_y).abs() < 0.01,
+            "the rest glyph origin sits on the drawn line ({} vs {})",
             rest.xy.y,
-            staff.xy.y,
+            line_y,
+        );
+        assert_eq!(
+            staff.top_line_offset(),
+            2. * Staff::DEFAULT_SPACE_SIZE,
+            "the line is drawn two spaces down",
+        );
+    }
+
+    /// The single line of a one-line staff, and everything pinned to it, is
+    /// drawn two spaces down -- where a five-line staff's middle line sits --
+    /// so the staff reads as a full staff with only its middle line inked.
+    #[test]
+    fn a_one_line_staff_draws_its_line_and_content_where_the_middle_line_would_be() {
+        let score = engrave(&score_xml_with_clef(
+            "<clef><sign>percussion</sign></clef>",
+            "<staff-details><staff-lines>1</staff-lines></staff-details>",
+            "<note><rest measure=\"yes\"/><duration>16</duration><voice>1</voice></note>",
+        ));
+
+        let staff = staff(&score);
+        let middle = 2. * Staff::DEFAULT_SPACE_SIZE;
+        assert_eq!(
+            staff.height(),
+            4. * Staff::DEFAULT_SPACE_SIZE,
+            "a full staff tall"
+        );
+
+        let lines = rendered_lines(staff);
+        assert_eq!(lines.len(), 1);
+        assert_eq!(
+            lines[0].start.y - staff.xy.y,
+            middle,
+            "the one line is drawn on the middle",
+        );
+
+        let measure = staff.measures.values().next().unwrap();
+        let clef = measure.clef_start.as_ref().expect("an opening clef");
+        assert_eq!(
+            clef.xy.y - staff.xy.y,
+            middle,
+            "the clef centres on the line",
+        );
+
+        let time = measure
+            .time_signature_start
+            .as_ref()
+            .expect("an opening time signature");
+        let num = time.num_digits().next().unwrap().1;
+        let denom = time.denom_digits().next().unwrap().1;
+        assert_eq!(
+            num.y - staff.xy.y,
+            middle - 10.,
+            "numerator a space above the line"
+        );
+        assert_eq!(
+            denom.y - staff.xy.y,
+            middle + 10.,
+            "denominator a space below it"
         );
     }
 

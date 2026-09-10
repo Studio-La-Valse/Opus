@@ -2,15 +2,14 @@
 //!
 //! Two barlines bound a system of music: the systemic one down its left edge,
 //! drawn by `render_system`, and the one at each measure end, drawn by
-//! `render_section_measure`. Both normally run from the top line of the first
-//! visible staff to the bottom line of the last, which is exactly the height
-//! those staves occupy.
+//! `render_section_measure`. Both run from the top line of the first visible
+//! staff to the bottom line of the last, which is exactly the height those
+//! staves occupy.
 //!
-//! A staff of a single line -- a percussion or rhythm staff -- breaks that,
-//! because it is zero tenths tall: a barline held to its height would be a
-//! point. Such a staff is barred one space above and one below its line
-//! instead, twenty tenths in all, and these tests pin that down at both ends of
-//! a system and for a staff that has an ordinary staff above it.
+//! A staff drawn with fewer lines than five -- a one-line percussion or rhythm
+//! staff -- is no exception: it occupies a standard staff's height all the
+//! same, only some of its lines going undrawn, so it is barred top to bottom
+//! like any other. These tests pin that down at both ends of a system.
 
 #[cfg(test)]
 mod tests {
@@ -187,7 +186,8 @@ mod tests {
         (systemic.start.y - top_line, systemic.end.y - top_line)
     }
 
-    /// An ordinary staff needs no help: its own lines enclose the barline.
+    /// The base case: a five-line staff is barred from its top line to its
+    /// bottom one, the forty tenths it occupies.
     #[test]
     fn a_five_line_staff_is_barred_from_its_top_line_to_its_bottom_one() {
         let score = engrave(&one_staff_score_xml(
@@ -198,120 +198,48 @@ mod tests {
         assert_eq!(barline_span(&score), (0., 40.));
     }
 
-    /// The case the whole thing is about: a staff of one line is zero tenths
-    /// tall, so its barlines are drawn a space above and a space below the
-    /// line, twenty tenths in all.
+    /// A one-line percussion staff occupies a standard staff's height, so it is
+    /// barred exactly as a five-line staff is -- from its (single, top) line
+    /// down forty tenths, even though the four lines below it are not drawn.
     #[test]
-    fn a_single_line_staff_is_barred_a_space_above_and_below_its_line() {
+    fn a_single_line_staff_is_barred_its_full_height_like_any_other() {
         let score = engrave(&one_staff_score_xml(
             "<clef><sign>percussion</sign></clef>",
             "<staff-details><staff-lines>1</staff-lines></staff-details>",
         ));
 
-        assert_eq!(barline_span(&score), (-10., 10.));
+        assert_eq!(barline_span(&score), (0., 40.));
     }
 
-    /// The overhang is a staff space, so it follows a staff that is drawn
-    /// smaller than the rest of the score.
+    /// Across two staves the barline runs from the first staff's top line to
+    /// the last staff's bottom line, whatever line counts the two are drawn
+    /// with. A one-line staff on top pushes the staff below it down by a full
+    /// standard staff, and the barline reaches all the way to that lower
+    /// staff's bottom line.
     #[test]
-    fn the_overhang_is_a_space_of_the_staff_it_overhangs() {
-        for (scale, expected) in [(1., 10.), (0.5, 5.), (2., 20.)] {
-            let staff = Staff {
-                lines: 1,
-                scale,
-                ..Default::default()
-            };
+    fn two_staves_are_barred_from_the_first_top_line_to_the_last_bottom_line() {
+        for staff_details in [
+            "",
+            "<staff-details number=\"1\"><staff-lines>1</staff-lines></staff-details>",
+            "<staff-details number=\"2\"><staff-lines>1</staff-lines></staff-details>",
+        ] {
+            let score = engrave(&two_staff_score_xml(staff_details));
 
-            assert_eq!(staff.barline_overhang(), expected, "at scale {scale}");
-        }
-    }
+            let staves = staves(&score);
+            assert_eq!(staves.len(), 2, "expected two staves");
+            let top_line = staves[0].1.xy.y;
+            let bottom_staff = staves[1].1;
 
-    /// Only a staff of exactly one line is short of room. Every other count
-    /// encloses spaces of its own, and a staff drawn without any lines has
-    /// nothing to bar in the first place.
-    #[test]
-    fn only_a_single_line_staff_overhangs() {
-        for (lines, expected) in [(0, 0.), (1, 10.), (2, 0.), (5, 0.), (6, 0.)] {
-            let staff = Staff {
-                lines,
-                ..Default::default()
-            };
-
+            let (start, end) = barline_span(&score);
             assert_eq!(
-                staff.barline_overhang(),
-                expected,
-                "a staff of {lines} lines"
+                start, 0.,
+                "starts on the first staff's top line ({staff_details})"
+            );
+            assert_eq!(
+                end + top_line,
+                bottom_staff.xy.y + bottom_staff.height(),
+                "ends on the last staff's bottom line ({staff_details})",
             );
         }
-    }
-
-    /// A single-line staff under an ordinary one only stretches the barline at
-    /// the end it is at: the top stays on the treble staff's top line, and the
-    /// bottom drops a space past the single line.
-    #[test]
-    fn a_single_line_staff_below_an_ordinary_one_stretches_only_the_bottom() {
-        let score = engrave(&two_staff_score_xml(
-            "<staff-details number=\"2\"><staff-lines>1</staff-lines></staff-details>",
-        ));
-
-        let staves = staves(&score);
-        assert_eq!(staves.len(), 2, "expected two staves");
-        assert_eq!(staves[1].1.lines, 1, "staff 2 was declared one line");
-
-        let top_line = staves[0].1.xy.y;
-        let single_line = staves[1].1.xy.y;
-
-        let (start, end) = barline_span(&score);
-        assert_eq!(
-            start, 0.,
-            "the barline starts on the treble staff's top line"
-        );
-        assert_eq!(
-            end + top_line,
-            single_line + 10.,
-            "the barline ends a space below the single line"
-        );
-    }
-
-    /// The mirror image: a single-line staff above an ordinary one lifts the
-    /// top of the barline a space, and leaves the bottom on the lower staff's
-    /// bottom line.
-    #[test]
-    fn a_single_line_staff_above_an_ordinary_one_stretches_only_the_top() {
-        let score = engrave(&two_staff_score_xml(
-            "<staff-details number=\"1\"><staff-lines>1</staff-lines></staff-details>",
-        ));
-
-        let staves = staves(&score);
-        assert_eq!(staves[0].1.lines, 1, "staff 1 was declared one line");
-
-        let top_line = staves[0].1.xy.y;
-        let bottom_staff = staves[1].1;
-
-        let (start, end) = barline_span(&score);
-        assert_eq!(
-            start, -10.,
-            "the barline starts a space above the single line"
-        );
-        assert_eq!(
-            end + top_line,
-            bottom_staff.xy.y + bottom_staff.height(),
-            "the barline ends on the lower staff's bottom line"
-        );
-    }
-
-    /// And the same in reverse: two ordinary staves are barred exactly as far
-    /// as they reach, single-line staves being the only ones that overhang.
-    #[test]
-    fn two_ordinary_staves_are_barred_from_the_first_to_the_last() {
-        let score = engrave(&two_staff_score_xml(""));
-
-        let staves = staves(&score);
-        let top_line = staves[0].1.xy.y;
-        let bottom_staff = staves[1].1;
-
-        let (start, end) = barline_span(&score);
-        assert_eq!(start, 0.);
-        assert_eq!(end + top_line, bottom_staff.xy.y + bottom_staff.height());
     }
 }

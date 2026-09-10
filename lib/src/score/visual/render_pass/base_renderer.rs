@@ -145,13 +145,17 @@ impl RenderPass for BaseRenderer {
             return;
         }
 
+        // The lines start at the top of the block the staff occupies, save for
+        // a one-line staff, whose single line stands in for a five-line staff's
+        // middle and is drawn two spaces down. See `Staff::top_line_offset`.
+        let top = staff.xy.y + staff.top_line_offset();
         let mut start = XY {
             x: staff.xy.x - (staff.barline_thickness_light / 2.),
-            y: staff.xy.y,
+            y: top,
         };
         let mut end = XY {
             x: staff.xy.x + staff.width + (staff.barline_thickness_light / 2.),
-            y: staff.xy.y,
+            y: top,
         };
 
         let stroke_color = staff.color;

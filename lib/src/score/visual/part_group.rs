@@ -210,14 +210,7 @@ impl Layoutable for PartGroup {
         }
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        // The symbol and name cover the staves top line to bottom line; the
-        // padding a short last staff reserves below its line is not theirs.
-        let trailing_padding = self
-            .visible_staves()
-            .last()
-            .map(Staff::floor_padding)
-            .unwrap_or(0.);
-        let staves_height = self.height - first_visible_staff_distance - trailing_padding;
+        let staves_height = self.height - first_visible_staff_distance;
 
         for measure in self.measures.values_mut() {
             let available = XY {

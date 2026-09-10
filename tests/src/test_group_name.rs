@@ -328,11 +328,12 @@ mod tests {
         assert!(!group.shows_symbol());
     }
 
-    /// A one-line percussion staff is zero tenths tall, so the name's vertical
-    /// span is legitimately zero -- but the staff is still drawn (as a single
-    /// line, with a barline overhang) and its name still belongs beside it.
-    /// Regression: `is_drawn` used to require a positive span and dropped the
-    /// name of every percussion instrument.
+    /// A one-line percussion staff occupies a standard staff's height, its
+    /// single line drawn where the middle line would be, so its name is boxed
+    /// and centred exactly as a five-line staff's is -- and its anchor lands on
+    /// that line. Regression: the name of every percussion instrument used to
+    /// be dropped, first because `shows_name` gated on a positive span and then
+    /// because the staff was zero tenths tall.
     #[test]
     fn a_single_line_percussion_staff_still_draws_its_name() {
         let xml = r#"<score-partwise version="4.0">
@@ -356,10 +357,19 @@ mod tests {
         let snare = part(system(&score, 1), "P1");
 
         assert_eq!(snare.name.text(), "Snare Drum");
-        assert_eq!(snare.name.bounds().height(), 0., "a one-line staff is flat");
-        assert!(
-            snare.shows_name(),
-            "a flat staff is still a staff, and still gets its name",
+        assert!(snare.shows_name(), "a one-line staff still gets its name");
+        assert_eq!(
+            snare.name.bounds().height(),
+            40.,
+            "the name box is a standard staff tall, like any other",
+        );
+
+        let staff = snare.staves.values().next().expect("the one staff");
+        let line_y = staff.xy.y + staff.top_line_offset();
+        close(
+            snare.name.anchor().y,
+            line_y,
+            "the name anchor lands on the drawn line",
         );
     }
 }

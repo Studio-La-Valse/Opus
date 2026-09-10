@@ -32,14 +32,15 @@ mod tests {
     }
 
     /// A clef that names no pitch has nothing to be fixed to, so it is centred
-    /// on whatever staff it is put on: the middle line of the usual five, the
-    /// single line of a one-line percussion staff, the middle space of a
-    /// six-line tab staff.
+    /// on the middle of the lines the staff draws: the middle line of the usual
+    /// five, the middle space of a six-line tab staff. A one-line staff's line
+    /// stands in for a five-line staff's middle line and is drawn two spaces
+    /// down, so its clef lands at index 4 too.
     #[test]
     fn test_pitchless_clefs_are_centred_on_the_staff() {
         for clef in [Clef::Tab, Clef::Percussion] {
             assert_eq!(clef.anchor_line(5), 4, "{clef:?} on five lines");
-            assert_eq!(clef.anchor_line(1), 0, "{clef:?} on one line");
+            assert_eq!(clef.anchor_line(1), 4, "{clef:?} on one line");
             assert_eq!(clef.anchor_line(6), 5, "{clef:?} on six lines");
             assert_eq!(clef.anchor_line(3), 2, "{clef:?} on three lines");
         }

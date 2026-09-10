@@ -42,13 +42,18 @@ pub struct Rest {
 }
 
 impl Rest {
-    /// Half-space index, from the top line, of the line a rest is vertically
-    /// centred on: the middle of the staff it sits on. For the usual five lines
-    /// that is the middle line (index 4); for a one-line percussion or rhythm
-    /// staff it is that single line (index 0), not twenty tenths below where a
-    /// five-line staff's middle would have been.
+    /// Half-space index, from the top of the block the staff occupies, of the
+    /// line a rest is vertically centred on: the middle of the drawn lines. For
+    /// the usual five that is the middle line (index 4). A one-line staff's
+    /// single line stands in for that middle line and is drawn two spaces down,
+    /// so a rest on it is centred at index 4 too -- the same place the clef and
+    /// time signature land.
     pub fn center_line(staff_lines: usize) -> i32 {
-        staff_lines.saturating_sub(1) as i32
+        if staff_lines == 1 {
+            4
+        } else {
+            staff_lines.saturating_sub(1) as i32
+        }
     }
 
     pub fn new(

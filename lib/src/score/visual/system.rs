@@ -155,26 +155,11 @@ impl System {
     }
 
     /// Where the systemic barline down the left edge starts and ends, as
-    /// offsets from [`System::xy`], which is the top line of the first visible
-    /// staff.
-    ///
-    /// That is the height of the system, save that a staff of a single line at
-    /// either end has no height for the barline to take: it overhangs such a
-    /// staff by a space at each end instead. See [`Staff::barline_overhang`].
-    /// `self.height` is the room the staves reserve, so the padding a short
-    /// last staff keeps below its line comes off first.
+    /// offsets from [`System::xy`], the top line of the first visible staff:
+    /// from that line down the whole height of the system. Every staff, a
+    /// one-line percussion staff included, is barred its full height.
     pub fn barline_span(&self) -> (f32, f32) {
-        let top = self
-            .visible_staves()
-            .next()
-            .map(Staff::barline_overhang)
-            .unwrap_or(0.);
-
-        let last = self.visible_staves().last();
-        let bottom = last.map(Staff::barline_overhang).unwrap_or(0.);
-        let trailing_padding = last.map(Staff::floor_padding).unwrap_or(0.);
-
-        (-top, self.height - trailing_padding + bottom)
+        (0., self.height)
     }
 
     /// Every first visible staff in a system must have a 0-distance to the top of the system.

@@ -81,13 +81,13 @@ mod tests {
         }
     }
 
-    /// Laid out on a normal five-line staff, 40 tenths tall.
+    /// Laid out on a standard staff, 40 tenths tall -- which is what every staff
+    /// occupies, a one-line percussion staff included, so the signature is
+    /// placed the same way whatever the line count.
     fn measured(beats: u8, beat_type: u32) -> TimeSignature {
         measured_on_staff(beats, beat_type, 40.)
     }
 
-    /// Laid out on a staff of `staff_height` tenths -- 40 for the usual five
-    /// lines, 0 for a staff of a single line.
     fn measured_on_staff(beats: u8, beat_type: u32, staff_height: f32) -> TimeSignature {
         let (num, denom) = font().time_signature(TimeSignatureCore {
             time: beats,
@@ -118,9 +118,9 @@ mod tests {
         time_signature
     }
 
-    /// The two halves sit a space either side of the middle of the staff. On
-    /// five lines that is the second and the fourth, which is where they have
-    /// always been drawn.
+    /// The two halves sit a space either side of the middle of the staff -- the
+    /// second and the fourth line of the usual five, where they have always
+    /// been drawn.
     #[test]
     fn the_halves_sit_a_space_either_side_of_the_middle_of_the_staff() {
         let time_signature = measured_on_staff(4, 4, 40.);
@@ -130,20 +130,6 @@ mod tests {
 
         assert_eq!(num.y, 10., "a space above the middle line");
         assert_eq!(denom.y, 30., "a space below it");
-    }
-
-    /// A staff of one line is zero tenths tall. Splitting that height into
-    /// quarters put both halves of the signature in the same place, one drawn
-    /// over the other; measured from the middle outwards they straddle the line.
-    #[test]
-    fn the_halves_straddle_the_single_line_of_a_one_line_staff() {
-        let time_signature = measured_on_staff(4, 4, 0.);
-
-        let num = time_signature.num_digits().next().unwrap().1;
-        let denom = time_signature.denom_digits().next().unwrap().1;
-
-        assert_eq!(num.y, -10., "a space above the line");
-        assert_eq!(denom.y, 10., "a space below it");
     }
 
     /// Digits step by the font's advance width, which is wider than the glyph's
