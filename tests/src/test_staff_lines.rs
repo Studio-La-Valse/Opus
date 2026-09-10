@@ -2,10 +2,12 @@
 //!
 //! Five is only the default. A percussion part is often written on one line, a
 //! tablature staff has one per string, and `0` asks for a staff with no lines at
-//! all. The count reaches three places, each checked here: the staff itself (how
-//! tall it is, and so how much room it takes between the staves around it), the
-//! renderer (how many lines it draws), and the ledger lines, which start below
-//! whatever the staff's own bottom line turns out to be.
+//! all. The count reaches three places, each checked here: the staff itself
+//! (its geometric span, and separately the room it reserves between the staves
+//! around it, which never falls below a standard staff's so a one-line staff's
+//! notes have somewhere to go), the renderer (how many lines it draws), and the
+//! ledger lines, which start below whatever the staff's own bottom line turns
+//! out to be.
 //!
 //! The top line stays the anchor throughout: every element positioned against a
 //! staff is placed in half-spaces down from it, so a staff with fewer lines
@@ -203,9 +205,9 @@ mod tests {
         }
     }
 
-    /// A staff is as tall as the distance from its top line to its bottom one,
-    /// so it is one space shorter than it has lines -- and a staff of one line,
-    /// or of none, takes up no room of its own at all.
+    /// `height()` is the geometric span, top line to bottom line: one space
+    /// shorter than the staff has lines, and zero for a staff of one line or
+    /// none. This is the reach of a barline or a group bracket.
     #[test]
     fn a_staff_is_one_space_shorter_than_it_has_lines() {
         for (lines, expected) in [(0, 0.), (1, 0.), (2, 10.), (5, 40.), (6, 50.)] {
@@ -216,6 +218,60 @@ mod tests {
 
             assert_eq!(staff(&score).height(), expected, "<staff-lines>{lines}");
         }
+    }
+
+    /// `reserved_height()` is how much room the staff takes between its
+    /// neighbours: its own span, but never less than a standard staff's, so a
+    /// one-line percussion staff still leaves room for the notes and rests
+    /// around its line. A staff with no lines reserves nothing.
+    #[test]
+    fn a_short_staff_still_reserves_a_standard_staffs_worth_of_room() {
+        let standard = Staff::SPACES as f32 * Staff::DEFAULT_SPACE_SIZE;
+
+        for (lines, expected) in [
+            (0, 0.),
+            (1, standard),
+            (2, standard),
+            (4, standard),
+            (5, standard),
+            (6, 5. * Staff::DEFAULT_SPACE_SIZE),
+        ] {
+            let staff = Staff {
+                lines,
+                ..Default::default()
+            };
+            assert_eq!(
+                staff.reserved_height(),
+                expected,
+                "a staff of {lines} lines"
+            );
+            assert_eq!(
+                staff.floor_padding(),
+                expected - staff.height(),
+                "padding below the bottom line, a staff of {lines} lines",
+            );
+        }
+    }
+
+    /// The reserved height is what stacks: a five-line staff below a one-line
+    /// percussion staff sits a full standard staff plus the staff distance
+    /// below the percussion line, not right underneath it.
+    #[test]
+    fn a_staff_below_a_one_line_staff_gets_room_for_its_neighbour() {
+        let score = engrave(&two_staff_score_xml(
+            "<staff-details number=\"1\"><staff-lines>1</staff-lines></staff-details>",
+        ));
+
+        let staves = staves(&score);
+        assert_eq!(staves[0].1.lines, 1, "staff 1 was declared one line");
+
+        let gap = staves[1].1.xy.y - staves[0].1.xy.y;
+        let standard = Staff::SPACES as f32 * Staff::DEFAULT_SPACE_SIZE;
+        assert_eq!(
+            gap,
+            standard + staves[1].1.distance_final,
+            "the lower staff clears the percussion staff's reserved height",
+        );
     }
 
     /// `<staff-details>` names the staff it describes, and a part's other staves

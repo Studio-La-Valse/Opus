@@ -202,7 +202,7 @@ impl Part {
             res.insert(*idx, meta);
 
             if !staff.hidden {
-                distance_travelled += staff.height;
+                distance_travelled += staff.reserved_height();
             }
         }
 
@@ -261,7 +261,7 @@ impl Part {
             _origin = _origin.mv(0., staff.distance_final);
 
             staff.arrange(&_origin);
-            _origin = _origin.mv(0., staff.height);
+            _origin = _origin.mv(0., staff.reserved_height());
         }
 
         let staff_ctx = self.create_staff_ctx();
@@ -318,7 +318,7 @@ impl Layoutable for Part {
                 continue;
             }
 
-            self.height += staff.height;
+            self.height += staff.reserved_height();
             self.height += staff.distance_final;
         }
 
@@ -332,7 +332,15 @@ impl Layoutable for Part {
         }
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let staves_height = self.height - first_visible_staff_distance;
+        // The symbol and name span the staves themselves, top line to bottom
+        // line -- so the padding a short last staff reserves below its line is
+        // not part of what they cover.
+        let trailing_padding = self
+            .visible_staves()
+            .last()
+            .map(Staff::floor_padding)
+            .unwrap_or(0.);
+        let staves_height = self.height - first_visible_staff_distance - trailing_padding;
 
         // Sized on every pass whatever it draws; see `Section::measure`. The
         // name is sized with the same staves height the symbol is.

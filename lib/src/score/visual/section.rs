@@ -203,7 +203,15 @@ impl Layoutable for Section {
         }
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        let staves_height = self.height - first_visible_staff_distance;
+        // Top line of the first staff to bottom line of the last: `self.height`
+        // is the room the staves reserve, so the padding a short last staff
+        // keeps below its line has to come back off.
+        let trailing_padding = self
+            .visible_staves()
+            .last()
+            .map(Staff::floor_padding)
+            .unwrap_or(0.);
+        let staves_height = self.height - first_visible_staff_distance - trailing_padding;
 
         // The barline a measure draws at its end is taller than the staves it
         // crosses when either outermost one is a single line, which is a staff

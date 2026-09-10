@@ -79,10 +79,34 @@ impl Staff {
     /// The distance from the top line to the bottom one: one space fewer than
     /// there are lines, 10 tenths per space according to the MusicXML spec. A
     /// staff of one line -- or of none, which `<staff-lines>0</staff-lines>`
-    /// asks for -- is zero tenths tall, and takes up no room of its own between
-    /// the staves around it.
+    /// asks for -- is zero tenths tall by this measure.
+    ///
+    /// This is the *geometric* span, the reach of a barline or a group bracket.
+    /// For how much vertical room the staff takes in the layout, which is never
+    /// less than a standard staff's, see [`reserved_height`](Self::reserved_height).
     pub fn height(&self) -> f32 {
         self.spaces() as f32 * self.line_space()
+    }
+
+    /// How much vertical room this staff takes between the staves around it: its
+    /// [`height`](Self::height), but at least a standard five-line staff's, so a
+    /// one-line percussion or rhythm staff still leaves room for the notes and
+    /// rests that sit above and below its single line rather than collapsing
+    /// onto its neighbours. A staff drawn with no lines at all reserves nothing.
+    pub fn reserved_height(&self) -> f32 {
+        if self.lines == 0 {
+            0.
+        } else {
+            self.height().max(Staff::SPACES as f32 * self.line_space())
+        }
+    }
+
+    /// The part of [`reserved_height`](Self::reserved_height) that is padding
+    /// below the bottom line rather than staff of its own -- what a barline or a
+    /// group bracket reaching down to this staff must stop short of, so it ends
+    /// on the last line and not in the whitespace beneath it.
+    pub fn floor_padding(&self) -> f32 {
+        self.reserved_height() - self.height()
     }
 
     /// How many spaces this staff's lines enclose.
