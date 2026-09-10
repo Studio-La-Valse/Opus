@@ -9,6 +9,7 @@ use crate::score::visual::{
     clef::Clef,
     dot::Dot,
     flag::Flag,
+    group_name::GroupName,
     group_symbol::GroupSymbol,
     note::Note,
     page::Page,
@@ -90,6 +91,28 @@ impl RenderPass for DebugRenderer {
         out.push(rect.into());
 
         out.push(display_xy(&symbol.anchor(), &2.5, &Color::GREEN).into());
+    }
+
+    /// The reserved box a name reports, plus the point its run is drawn from.
+    fn render_group_name<'a>(
+        &self,
+        name: &'a GroupName,
+        _fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let bbox = name.bounds();
+
+        let rect = Rect {
+            xy: bbox.xy,
+            width: bbox.width(),
+            height: bbox.height(),
+            color: Color::TRANSPARENT,
+            stroke_width: Some(0.25),
+            stroke_color: Some(Color::RED),
+        };
+        out.push(rect.into());
+
+        out.push(display_xy(&name.anchor(), &2.5, &Color::GREEN).into());
     }
 
     fn render_clef<'a>(

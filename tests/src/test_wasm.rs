@@ -272,7 +272,7 @@ mod tests {
         let layout: lib::score::user_layout::UserLayout = serde_json::from_str(
             r##"{ "sectionSymbol": "line", "partGroupSymbol": "square",
                   "partSymbol": "none", "groupLineThickness": 3.5,
-                  "sectionSymbolGap": 20 }"##,
+                  "sectionSymbolGap": 20, "groupNameSize": 18, "groupNamePadding": 12 }"##,
         )
         .expect("valid group symbol options failed to deserialize");
 
@@ -285,7 +285,14 @@ mod tests {
         );
         assert_eq!(layout.group_line_thickness, Some(3.5));
         assert_eq!(layout.section_symbol_gap, Some(20.));
+        assert_eq!(layout.group_name_size, Some(18.));
+        assert_eq!(layout.group_name_padding, Some(12.));
         assert_eq!(layout.part_symbol_gap, None, "unset options stay None");
+
+        let bare: lib::score::user_layout::UserLayout =
+            serde_json::from_str("{}").expect("an empty layout object deserializes");
+        assert_eq!(bare.group_name_size, None, "unset name knobs stay None");
+        assert_eq!(bare.group_name_padding, None);
 
         let unknown = serde_json::from_str::<lib::score::user_layout::UserLayout>(
             r#"{ "sectionSymbol": "curly" }"#,

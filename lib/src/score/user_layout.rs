@@ -79,4 +79,11 @@ pub struct UserLayout {
     pub group_line_thickness: Option<f32>,
     pub group_square_thickness: Option<f32>,
     pub group_square_arm: Option<f32>,
+
+    /// Overrides for the part / part-group name knobs of the same name on
+    /// [`AppDefaults`](crate::score::app_defaults::AppDefaults), in tenths. The
+    /// font family stays out: `UserLayout` is `Copy`, so `title_font` /
+    /// `lyric_font` are excluded for the same reason.
+    pub group_name_size: Option<f32>,
+    pub group_name_padding: Option<f32>,
 }

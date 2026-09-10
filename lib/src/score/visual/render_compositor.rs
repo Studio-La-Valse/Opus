@@ -69,7 +69,7 @@ impl RenderCompositor {
     /// of them; `zip` stops at the shorter side, which is a no-op in practice
     /// because both passes walk the same pages.
     pub fn compose<'a>(
-        score: &Score,
+        score: &'a Score,
         fonts: &RenderFonts<'a>,
         debug: bool,
     ) -> Vec<RenderedPage<'a>> {
@@ -89,7 +89,11 @@ impl RenderCompositor {
     /// one continuous stream (SVG per file, the flat buffer) concatenate the
     /// pages themselves; sinks that emit one surface per page (PDF) drive each
     /// [`RenderedPage`] separately.
-    pub fn walk_pages<'a>(&self, score: &Score, fonts: &RenderFonts<'a>) -> Vec<RenderedPage<'a>> {
+    pub fn walk_pages<'a>(
+        &self,
+        score: &'a Score,
+        fonts: &RenderFonts<'a>,
+    ) -> Vec<RenderedPage<'a>> {
         score
             .pages
             .values()
@@ -116,7 +120,7 @@ impl RenderCompositor {
 
     fn walk_system<'a>(
         &self,
-        system: &System,
+        system: &'a System,
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
@@ -140,7 +144,7 @@ impl RenderCompositor {
 
     fn walk_section<'a>(
         &self,
-        section: &Section,
+        section: &'a Section,
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
@@ -161,7 +165,7 @@ impl RenderCompositor {
 
     fn walk_part_group<'a>(
         &self,
-        group: &PartGroup,
+        group: &'a PartGroup,
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
@@ -169,6 +173,10 @@ impl RenderCompositor {
 
         if group.shows_symbol() {
             self.pass.render_group_symbol(&group.symbol, fonts, out);
+        }
+
+        if group.shows_name() {
+            self.pass.render_group_name(&group.name, fonts, out);
         }
 
         for measure in group.measures.values() {
@@ -186,7 +194,7 @@ impl RenderCompositor {
 
     fn walk_part<'a>(
         &self,
-        part: &Part,
+        part: &'a Part,
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
@@ -194,6 +202,10 @@ impl RenderCompositor {
 
         if part.shows_symbol() {
             self.pass.render_group_symbol(&part.symbol, fonts, out);
+        }
+
+        if part.shows_name() {
+            self.pass.render_group_name(&part.name, fonts, out);
         }
 
         for staff in part.staves.values() {

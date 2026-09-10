@@ -18,12 +18,14 @@ fn render_node(node: &PartListNode) -> Vec<String> {
             name,
             symbol,
             children,
+            ..
         } => render_group("section", *index, name.as_deref(), *symbol, children),
         PartListNode::Group {
             index,
             name,
             symbol,
             children,
+            ..
         } => render_group("part-group", *index, name.as_deref(), *symbol, children),
     }
 }

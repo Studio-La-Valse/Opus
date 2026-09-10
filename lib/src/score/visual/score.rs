@@ -3,6 +3,7 @@ use crate::score::core::group_symbol::GroupLevel;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::ScorePart;
+use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::page::Page;
@@ -74,6 +75,10 @@ impl Score {
         let part_group = section.part_group_or_insert(
             assignment.part_group,
             GroupSymbol::new(GroupLevel::PartGroup, assignment.part_group_symbol),
+            GroupName::new(
+                assignment.part_group_name.clone(),
+                assignment.part_group_abbr.clone(),
+            ),
         );
 
         // MusicXML declares a part's own symbol in `<attributes><part-symbol>`,
@@ -81,6 +86,7 @@ impl Score {
         part_group.part_or_insert(
             part_id.to_string(),
             GroupSymbol::new(GroupLevel::Part, None),
+            GroupName::new(assignment.name.clone(), assignment.abbr.clone()),
         )
     }
 

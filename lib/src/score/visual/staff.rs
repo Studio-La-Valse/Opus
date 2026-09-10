@@ -76,36 +76,44 @@ impl Staff {
         self.measures.get_mut(measure_number)
     }
 
-    /// The distance from the top line to the bottom one: one space fewer than
-    /// there are lines, 10 tenths per space according to the MusicXML spec. A
-    /// staff of one line -- or of none, which `<staff-lines>0</staff-lines>`
-    /// asks for -- is zero tenths tall, and takes up no room of its own between
-    /// the staves around it.
+    /// How much vertical room this staff takes: the distance from its top line
+    /// to its bottom one, 10 tenths per space according to the MusicXML spec,
+    /// but never less than a standard five-line staff's.
+    ///
+    /// A staff drawn with fewer lines than five is still a full staff -- it is
+    /// read, barred and bracketed exactly as a five-line staff is, so the notes
+    /// and rests around its lines have room and its neighbours do not collapse
+    /// onto it. A staff of no lines at all, which `<staff-lines>0</staff-lines>`
+    /// asks for, is nothing and takes no room.
     pub fn height(&self) -> f32 {
-        self.spaces() as f32 * self.line_space()
+        if self.lines == 0 {
+            0.
+        } else {
+            self.spaces().max(Staff::SPACES) as f32 * self.line_space()
+        }
+    }
+
+    /// How far below [`Staff::xy`] -- the top of the standard-height block this
+    /// staff occupies -- its first drawn line sits.
+    ///
+    /// Zero for a staff with its full five lines or more: the first line is the
+    /// top of the block. A one-line staff is the exception the percussion
+    /// convention makes: its single line stands in for the *middle* line of the
+    /// five-line staff it isn't, so it is drawn two spaces down and everything
+    /// pinned to it -- clef, time signature, rests, name, and the block's own
+    /// barlines and brackets -- centres on it. Staves of two to four lines keep
+    /// their lines at the top.
+    pub fn top_line_offset(&self) -> f32 {
+        if self.lines == 1 {
+            Staff::SPACES as f32 / 2. * self.line_space()
+        } else {
+            0.
+        }
     }
 
     /// How many spaces this staff's lines enclose.
     pub fn spaces(&self) -> usize {
         self.lines.saturating_sub(1)
-    }
-
-    /// How far a barline crossing this staff reaches past it, at each end.
-    ///
-    /// Normally nothing: a barline runs from the top line to the bottom one,
-    /// and [`Staff::height`] is the whole of it. A staff of a single line is
-    /// zero tenths tall, though, so a barline held to that height would be a
-    /// point. It is drawn one staff space above and one below the line instead
-    /// -- twenty tenths in all -- which is the width a one-line percussion or
-    /// rhythm staff is read at even though only the middle of it is inked.
-    ///
-    /// A staff with no lines at all has nothing to bar, and gets no overhang.
-    pub fn barline_overhang(&self) -> f32 {
-        if self.lines == 1 {
-            self.line_space()
-        } else {
-            0.
-        }
     }
 
     pub fn line_space(&self) -> f32 {

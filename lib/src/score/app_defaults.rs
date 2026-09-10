@@ -117,6 +117,15 @@ pub struct AppDefaults {
     pub title_font: String,
     /// Default font family for lyrics.
     pub lyric_font: String,
+    /// Default font family for part / part-group names.
+    pub group_name_font: String,
+
+    /// Font size in tenths for a part / part-group name. About 1.6 staff spaces,
+    /// a staff space being 10 tenths.
+    pub group_name_size: f32,
+    /// Padding in tenths between a name's right edge and the symbol it sits
+    /// beside. One staff space.
+    pub group_name_padding: f32,
 }
 
 impl Default for AppDefaults {
@@ -161,6 +170,9 @@ impl Default for AppDefaults {
 
             title_font: "serif".to_string(),
             lyric_font: "serif".to_string(),
+            group_name_font: "serif".to_string(),
+            group_name_size: 16.,
+            group_name_padding: 10.,
         }
     }
 }

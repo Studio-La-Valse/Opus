@@ -47,12 +47,23 @@ impl Clef {
         }
     }
 
-    /// The half-space index of the middle of a staff of `staff_lines` lines:
-    /// the middle line itself when there is an odd number of them, the middle
-    /// space when there is an even number, and the single line of a one-line
-    /// staff.
+    /// The half-space index, from the top drawn line, a pitchless clef or a
+    /// rest centres on: the middle of the drawn lines -- the middle line when
+    /// there is an odd number of them, the middle space when there is an even
+    /// number.
+    ///
+    /// The exception is a one-line staff: its single line stands in for the
+    /// middle line of a five-line staff, drawn two spaces down from the top of
+    /// the block the staff occupies, so what centres on it is two spaces down
+    /// too -- index 4, not 0.
     fn middle_line(staff_lines: usize) -> i32 {
-        staff_lines.saturating_sub(1) as i32
+        if staff_lines == 1 {
+            // Two spaces down: the middle line of the five-line staff a
+            // one-line staff stands in for.
+            4
+        } else {
+            staff_lines.saturating_sub(1) as i32
+        }
     }
 
     /// The line on the staff that denotes the location of the middle c.

@@ -63,6 +63,20 @@ pub struct RenderArgs {
     #[arg(long)]
     lyric_font: Option<String>,
 
+    /// Font family for part / part-group names. Defaults to the app default
+    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
+    #[arg(long)]
+    group_name_font: Option<String>,
+
+    /// Font size in tenths for a part / part-group name.
+    #[arg(long)]
+    group_name_size: Option<f32>,
+
+    /// Padding in tenths between a part / part-group name's right edge and the
+    /// symbol it sits beside.
+    #[arg(long)]
+    group_name_padding: Option<f32>,
+
     #[arg(long, short, action)]
     debug: bool,
 
@@ -160,6 +174,9 @@ pub fn run(format: RenderCommand) {
         glyphs: glyph_names,
         title_font,
         lyric_font,
+        group_name_font,
+        group_name_size,
+        group_name_padding,
         debug,
         page_color,
         foreground_color,
@@ -230,6 +247,8 @@ pub fn run(format: RenderCommand) {
         group_line_thickness,
         group_square_thickness,
         group_square_arm,
+        group_name_size,
+        group_name_padding,
         ..Default::default()
     };
     let app_defaults: AppDefaults = Default::default();
@@ -275,13 +294,16 @@ pub fn run(format: RenderCommand) {
 
     let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
     let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);
+    let group_name_font = group_name_font
+        .as_deref()
+        .unwrap_or(&app_defaults.group_name_font);
 
     let time = Instant::now();
 
     // One walk feeds every format: the score's pages, each carrying its
     // elements in global tenths. `fonts` must outlive `pages`, which borrows
     // glyph data from it.
-    let fonts = RenderFonts::create(&font, title_font, lyric_font);
+    let fonts = RenderFonts::create(&font, title_font, lyric_font, group_name_font);
     let pages = RenderCompositor::compose(&visual, &fonts, debug);
 
     println!("Render pass: {}ms", time.elapsed().as_millis());
