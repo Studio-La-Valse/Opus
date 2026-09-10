@@ -3,6 +3,7 @@ pub mod chord;
 pub mod clef;
 pub mod dot;
 pub mod flag;
+pub mod group_name;
 pub mod group_symbol;
 pub mod key_signature;
 pub mod layout_engine;

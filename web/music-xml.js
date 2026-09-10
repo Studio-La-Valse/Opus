@@ -125,6 +125,8 @@ const LAYOUT_OPTIONS = [
   "groupLineThickness",
   "groupSquareThickness",
   "groupSquareArm",
+  "groupNameSize",
+  "groupNamePadding",
 ];
 
 function cssPropertyFor(option) {
@@ -323,6 +325,7 @@ export class MusicXmlElement extends HTMLElement {
         devicePixelRatio: window.devicePixelRatio || 1,
         titleFont: this._cssVar("title-font"),
         lyricFont: this._cssVar("lyric-font"),
+        groupNameFont: this._cssVar("group-name-font"),
         layout: this._layoutOptions(),
       });
       this._draw(output);

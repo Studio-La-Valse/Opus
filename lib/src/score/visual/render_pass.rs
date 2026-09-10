@@ -7,7 +7,7 @@ pub use debug_renderer::DebugRenderer;
 use crate::drawable::drawable_element::DrawableElement;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::{
-    accidental::Accidental, chord::Chord, clef::Clef, dot::Dot, flag::Flag,
+    accidental::Accidental, chord::Chord, clef::Clef, dot::Dot, flag::Flag, group_name::GroupName,
     group_symbol::GroupSymbol, key_signature::KeySignature, note::Note, page::Page, part::Part,
     part_group::PartGroup, part_group_measure::PartGroupMeasure, part_measure::PartMeasure,
     rest::Rest, section::Section, section_measure::SectionMeasure, staff::Staff,
@@ -46,6 +46,18 @@ pub trait RenderPass {
     fn render_group_symbol<'a>(
         &self,
         _symbol: &GroupSymbol,
+        _fonts: &RenderFonts<'a>,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
+
+    /// The one entry point for a part's and a part-group's name alike, the way
+    /// [`render_group_symbol`](Self::render_group_symbol) serves both. `name`
+    /// borrows for `'a` because the run it draws is a slice of the score tree,
+    /// not of the font.
+    fn render_group_name<'a>(
+        &self,
+        _name: &'a GroupName,
         _fonts: &RenderFonts<'a>,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {

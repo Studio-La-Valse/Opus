@@ -1,6 +1,7 @@
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
@@ -20,10 +21,13 @@ pub struct PartGroup {
     pub height: f32,
 
     pub symbol: GroupSymbol,
+    /// The `<group-name>` drawn to the left of the symbol. One element for both
+    /// levels, as [`GroupSymbol`] is one element for all three.
+    pub name: GroupName,
 }
 
 impl PartGroup {
-    pub fn new(symbol: GroupSymbol) -> Self {
+    pub fn new(symbol: GroupSymbol, name: GroupName) -> Self {
         PartGroup {
             parts: Default::default(),
             measures: Default::default(),
@@ -33,13 +37,19 @@ impl PartGroup {
             height: Default::default(),
 
             symbol,
+            name,
         }
     }
 
-    pub fn part_or_insert(&mut self, part_id: String, symbol: GroupSymbol) -> &mut Part {
+    pub fn part_or_insert(
+        &mut self,
+        part_id: String,
+        symbol: GroupSymbol,
+        name: GroupName,
+    ) -> &mut Part {
         self.parts
             .entry(part_id)
-            .or_insert_with(|| Part::new(symbol))
+            .or_insert_with(|| Part::new(symbol, name))
     }
 
     pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {
@@ -113,12 +123,35 @@ impl PartGroup {
         self.parts.len() > 1 && self.visible_staves().count() > 1 && self.symbol.is_drawn()
     }
 
+    /// Whether this group draws its name: it binds more than one part and more
+    /// than one drawn staff -- the same "a group of one is not a group" test
+    /// [`shows_symbol`](Self::shows_symbol) makes -- and the name has something
+    /// to draw.
+    pub fn shows_name(&self) -> bool {
+        self.parts.len() > 1 && self.visible_staves().count() > 1 && self.name.is_drawn()
+    }
+
+    /// How far left this group's own ink reaches, which is what its name aligns
+    /// against and what its parts keep clear of: the symbol's left edge when it
+    /// draws, and the incoming `clear_of` when it does not -- an undrawn symbol
+    /// must not push what is outside it away by a gap nothing occupies. The
+    /// counterpart of [`Section::symbol_left_edge`](crate::score::visual::section::Section).
+    fn symbol_left_edge(&self, clear_of: f32) -> f32 {
+        if self.shows_symbol() {
+            self.symbol.bounds().x_min()
+        } else {
+            clear_of
+        }
+    }
+
     /// Places this group, with `clear_of` the left edge of whatever the
-    /// enclosing section drew. This group's symbol sits its own gap further out
-    /// than that, and hands its own left edge to its parts in turn -- so the
-    /// three levels stack outward from the system without any of them knowing
-    /// how wide the others are.
-    pub fn arrange_clear_of(&mut self, origin: &XY, clear_of: f32) {
+    /// enclosing section drew and `margin_left` the page's left margin. This
+    /// group's symbol sits its own gap further out than `clear_of`, its name
+    /// ends a padding left of the symbol and reaches back to `margin_left`, and
+    /// its parts keep clear of the symbol in turn -- so the three levels stack
+    /// outward from the system without any of them knowing how wide the others
+    /// are.
+    pub fn arrange_clear_of(&mut self, origin: &XY, clear_of: f32, margin_left: f32) {
         self.xy = *origin;
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
@@ -130,19 +163,18 @@ impl PartGroup {
         }
 
         // Before the parts, whose own symbols keep clear of this one.
-        self.symbol.arrange(&XY {
+        let symbol_top = XY {
             x: clear_of,
             y: self.xy.y + first_visible_staff_distance,
-        });
-        let clear_of = if self.shows_symbol() {
-            self.symbol.bounds().x_min()
-        } else {
-            clear_of
         };
+        self.symbol.arrange(&symbol_top);
+        let clear_of = self.symbol_left_edge(clear_of);
+
+        self.name.arrange_between(symbol_top, clear_of, margin_left);
 
         let mut _origin = self.xy;
         for part in self.parts.values_mut() {
-            part.arrange_clear_of(&_origin, clear_of);
+            part.arrange_clear_of(&_origin, clear_of, margin_left);
             _origin = _origin.mv(0., part.height);
         }
     }
@@ -164,6 +196,7 @@ impl Layoutable for PartGroup {
         }
 
         self.symbol.resolve_layout(params);
+        self.name.resolve_layout(params);
     }
 
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
@@ -188,18 +221,20 @@ impl Layoutable for PartGroup {
             self.width += measure.width;
         }
 
-        // Sized on every pass whatever it draws; see `Section::measure`.
+        // Sized on every pass whatever it draws; see `Section::measure`. The
+        // name is sized with the same staves height the symbol is.
         let available = XY {
             x: f32::INFINITY,
             y: staves_height,
         };
         self.symbol.measure(&available, params);
+        self.name.measure(&available);
     }
 
     /// Places this group as [`arrange`](Layoutable::arrange) does, with its
     /// enclosing section's symbol already at `clear_of`. Used on its own when
     /// there is nothing to keep clear of.
     fn arrange(&mut self, origin: &XY) {
-        self.arrange_clear_of(origin, origin.x);
+        self.arrange_clear_of(origin, origin.x, origin.x);
     }
 }

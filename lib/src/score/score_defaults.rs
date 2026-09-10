@@ -6,7 +6,12 @@ use std::collections::BTreeMap;
 
 /// A `<score-part>`'s section/part-group assignment, returned by
 /// `ScoreDefaults::lookup` for a given part id.
-#[derive(Default, Clone, Copy)]
+///
+/// Not `Copy`: it carries the part's and its part-group's names as owned
+/// `String`s. It is only ever borrowed by the callers that read it, so the cost
+/// of that is the `..enclosing` struct-updates in [`lookup`](Self::lookup)
+/// cloning rather than copying.
+#[derive(Default, Clone)]
 pub struct ScorePart {
     pub section: u32,
     pub part_group: u32,
@@ -18,6 +23,15 @@ pub struct ScorePart {
     /// index of its own, with nothing behind it to declare anything.
     pub section_symbol: Option<GroupSymbol>,
     pub part_group_symbol: Option<GroupSymbol>,
+
+    /// This part's `<part-name>` / `<part-abbreviation>`, and the `<group-name>`
+    /// / `<group-abbreviation>` of the `<part-group>` its part-group came from.
+    /// Empty where the document named none. A section is the (usually unnamed)
+    /// bracket around a run of part-groups and carries no name of its own.
+    pub name: String,
+    pub abbr: String,
+    pub part_group_name: String,
+    pub part_group_abbr: String,
 }
 
 #[derive(Copy, Clone)]
@@ -224,13 +238,16 @@ impl ScoreDefaults {
                 match node {
                     PartListNode::Part {
                         id,
+                        name,
+                        abbr,
                         section,
                         part_group,
-                        ..
                     } if id == part_id => {
                         return Some(ScorePart {
                             section: *section,
                             part_group: *part_group,
+                            name: name.clone(),
+                            abbr: abbr.clone(),
                             ..enclosing
                         });
                     }
@@ -239,18 +256,27 @@ impl ScoreDefaults {
                     } => {
                         let enclosing = ScorePart {
                             section_symbol: *symbol,
-                            ..enclosing
+                            ..enclosing.clone()
                         };
                         if let Some(found) = find(children, part_id, enclosing) {
                             return Some(found);
                         }
                     }
                     PartListNode::Group {
-                        symbol, children, ..
+                        name,
+                        abbr,
+                        symbol,
+                        children,
+                        ..
                     } => {
                         let enclosing = ScorePart {
                             part_group_symbol: *symbol,
-                            ..enclosing
+                            part_group_name: name.clone().unwrap_or_default(),
+                            part_group_abbr: abbr
+                                .clone()
+                                .or_else(|| name.clone())
+                                .unwrap_or_default(),
+                            ..enclosing.clone()
                         };
                         if let Some(found) = find(children, part_id, enclosing) {
                             return Some(found);

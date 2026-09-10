@@ -26,6 +26,14 @@ pub struct LayoutParams<'a> {
     pub user_layout: &'a UserLayout,
     pub app_defaults: &'a AppDefaults,
     pub font: &'a SmuflFont,
+
+    /// Whether group and part names in this subtree draw their abbreviation
+    /// rather than their full name. The one positional fact in an otherwise
+    /// pure-config struct: it is `false` where the params are first built, and
+    /// [`System::resolve_layout`](crate::score::visual::system::System)
+    /// re-stamps it from the system's own index -- the first system of the
+    /// score names in full, every later one abbreviates.
+    pub abbreviate_names: bool,
 }
 
 impl LayoutParams<'_> {
@@ -129,6 +137,22 @@ impl LayoutParams<'_> {
         self.user_layout
             .group_square_arm
             .unwrap_or(self.app_defaults.group_square_arm)
+    }
+
+    /// Font size in tenths for a part / part-group name. Two-tier
+    /// (user -> app), like [`group_square_arm`](Self::group_square_arm).
+    pub fn group_name_size(&self) -> f32 {
+        self.user_layout
+            .group_name_size
+            .unwrap_or(self.app_defaults.group_name_size)
+    }
+
+    /// Padding in tenths between a part / part-group name's right edge and the
+    /// left edge of the symbol it sits beside.
+    pub fn group_name_padding(&self) -> f32 {
+        self.user_layout
+            .group_name_padding
+            .unwrap_or(self.app_defaults.group_name_padding)
     }
 }
 

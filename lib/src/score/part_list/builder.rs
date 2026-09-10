@@ -25,14 +25,17 @@ pub fn build_part_list(part_list: &Node) -> Vec<PartListNode> {
 struct OpenScope {
     index: u32,
     name: Option<String>,
+    abbr: Option<String>,
     symbol: Option<GroupSymbol>,
     children: Vec<PartListNode>,
 }
 
-/// The `<group-name>`/`<group-symbol>` a `<part-group type="start">` carries,
-/// held back until the run of consecutive starts it belongs to is complete.
+/// The `<group-name>`/`<group-abbreviation>`/`<group-symbol>` a
+/// `<part-group type="start">` carries, held back until the run of consecutive
+/// starts it belongs to is complete.
 struct GroupHeader {
     name: Option<String>,
+    abbr: Option<String>,
     symbol: Option<GroupSymbol>,
 }
 
@@ -89,9 +92,19 @@ impl PartListBuilder {
             .and_then(|n| n.text())
             .map(|s| s.to_string());
 
+        // Falls back to the full name when the document names no
+        // `<group-abbreviation>`, the same way `push_score_part` does for a
+        // `<part-abbreviation>`.
+        let abbr = node
+            .children()
+            .find(|n| n.has_tag("group-abbreviation"))
+            .and_then(|n| n.text())
+            .map(|s| s.to_string())
+            .or_else(|| name.clone());
+
         let symbol = GroupSymbol::from_mxml(node);
 
-        self.pending_starts.push(GroupHeader { name, symbol });
+        self.pending_starts.push(GroupHeader { name, abbr, symbol });
     }
 
     /// Opens every `<part-group type="start">` seen since the last
@@ -116,17 +129,23 @@ impl PartListBuilder {
         headers.sort_by_key(|header| Reverse(GroupSymbol::declared_nesting_rank(header.symbol)));
 
         for header in headers {
-            self.open_part_group(header.name, header.symbol);
+            self.open_part_group(header.name, header.abbr, header.symbol);
         }
     }
 
     /// Opens one level, ignoring the start entirely once both levels are taken.
-    fn open_part_group(&mut self, name: Option<String>, symbol: Option<GroupSymbol>) {
+    fn open_part_group(
+        &mut self,
+        name: Option<String>,
+        abbr: Option<String>,
+        symbol: Option<GroupSymbol>,
+    ) {
         if self.open_section.is_none() {
             self.second_order_index = 0;
             self.open_section = Some(OpenScope {
                 index: self.first_order_index,
                 name,
+                abbr,
                 symbol,
                 children: Vec::new(),
             });
@@ -134,6 +153,7 @@ impl PartListBuilder {
             self.open_group = Some(OpenScope {
                 index: self.second_order_index,
                 name,
+                abbr,
                 symbol,
                 children: Vec::new(),
             });
@@ -152,6 +172,7 @@ impl PartListBuilder {
             let node = PartListNode::Group {
                 index: group.index,
                 name: group.name,
+                abbr: group.abbr,
                 symbol: group.symbol,
                 children: group.children,
             };
@@ -167,6 +188,7 @@ impl PartListBuilder {
             self.top.push(PartListNode::Section {
                 index: section.index,
                 name: section.name,
+                abbr: section.abbr,
                 symbol: section.symbol,
                 children: section.children,
             });

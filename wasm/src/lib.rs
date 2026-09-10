@@ -135,6 +135,9 @@ pub struct RenderOptions {
     pub title_font: Option<String>,
     /// Font family for lyrics; falls back to the app default.
     pub lyric_font: Option<String>,
+    /// Font family for part / part-group names; falls back to the app default.
+    /// The size and padding knobs flow through `layout` as `UserLayout` fields.
+    pub group_name_font: Option<String>,
     pub layout: UserLayout,
 }
 
@@ -147,6 +150,7 @@ impl Default for RenderOptions {
             device_pixel_ratio: 1.0,
             title_font: None,
             lyric_font: None,
+            group_name_font: None,
             layout: UserLayout::default(),
         }
     }
@@ -280,7 +284,11 @@ impl WasmScore {
             .lyric_font
             .as_deref()
             .unwrap_or(&app_defaults.lyric_font);
-        let fonts = RenderFonts::create(&self.font, title_font, lyric_font);
+        let group_name_font = options
+            .group_name_font
+            .as_deref()
+            .unwrap_or(&app_defaults.group_name_font);
+        let fonts = RenderFonts::create(&self.font, title_font, lyric_font, group_name_font);
 
         // One page-preserving walk; the flat buffer concatenates the pages into
         // its single stream but records each page's boundary in `page_table`.

@@ -3,6 +3,7 @@ use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::clef::Clef as DrawableClef;
+use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part_measure::PartMeasure;
@@ -23,10 +24,13 @@ pub struct Part {
     pub visibility: Visibility,
 
     pub symbol: GroupSymbol,
+    /// The `<part-name>` drawn to the left of the symbol -- or where the symbol
+    /// would have been, for the common single-staff part that draws none.
+    pub name: GroupName,
 }
 
 impl Part {
-    pub fn new(symbol: GroupSymbol) -> Self {
+    pub fn new(symbol: GroupSymbol, name: GroupName) -> Self {
         Self {
             measures: BTreeMap::new(),
             staves: BTreeMap::new(),
@@ -38,6 +42,7 @@ impl Part {
             visibility: Visibility::Unset,
 
             symbol,
+            name,
         }
     }
 
@@ -221,10 +226,30 @@ impl Part {
         self.visible_staves().count() > 1 && self.symbol.is_drawn()
     }
 
+    /// Whether this part draws its name: it has at least one staff drawn -- a
+    /// single-staff part with no symbol still gets its name, which is the common
+    /// case -- and the name has something to draw.
+    pub fn shows_name(&self) -> bool {
+        self.visible_staves().count() > 0 && self.name.is_drawn()
+    }
+
+    /// How far left this part's own ink reaches, which is what its name aligns
+    /// against: the symbol's left edge when it draws, and the incoming
+    /// `clear_of` when it does not. The counterpart of
+    /// [`Section::symbol_left_edge`](crate::score::visual::section::Section).
+    fn symbol_left_edge(&self, clear_of: f32) -> f32 {
+        if self.shows_symbol() {
+            self.symbol.bounds().x_min()
+        } else {
+            clear_of
+        }
+    }
+
     /// Places this part, with `clear_of` the left edge of whatever its
-    /// part-group drew. A part's symbol is the outermost of the three, so
-    /// nothing keeps clear of it in turn.
-    pub fn arrange_clear_of(&mut self, origin: &XY, clear_of: f32) {
+    /// part-group drew and `margin_left` the page's left margin. A part's
+    /// symbol is the outermost of the three, so nothing keeps clear of it in
+    /// turn; its name ends a padding left of it and reaches back to the margin.
+    pub fn arrange_clear_of(&mut self, origin: &XY, clear_of: f32, margin_left: f32) {
         self.xy = *origin;
 
         let mut _origin = self.xy;
@@ -248,10 +273,15 @@ impl Part {
         }
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
-        self.symbol.arrange(&XY {
+        let symbol_top = XY {
             x: clear_of,
             y: self.xy.y + first_visible_staff_distance,
-        });
+        };
+        self.symbol.arrange(&symbol_top);
+
+        let name_right = self.symbol_left_edge(clear_of);
+        self.name
+            .arrange_between(symbol_top, name_right, margin_left);
     }
 }
 impl Layoutable for Part {
@@ -268,6 +298,7 @@ impl Layoutable for Part {
         }
 
         self.symbol.resolve_layout(params);
+        self.name.resolve_layout(params);
     }
 
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
@@ -303,17 +334,19 @@ impl Layoutable for Part {
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let staves_height = self.height - first_visible_staff_distance;
 
-        // Sized on every pass whatever it draws; see `Section::measure`.
+        // Sized on every pass whatever it draws; see `Section::measure`. The
+        // name is sized with the same staves height the symbol is.
         let available = XY {
             x: f32::INFINITY,
             y: staves_height,
         };
         self.symbol.measure(&available, params);
+        self.name.measure(&available);
     }
 
     /// Places this part as [`arrange_clear_of`](Part::arrange_clear_of) does,
     /// with nothing to its left to keep clear of.
     fn arrange(&mut self, origin: &XY) {
-        self.arrange_clear_of(origin, origin.x);
+        self.arrange_clear_of(origin, origin.x, origin.x);
     }
 }

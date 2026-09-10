@@ -15,6 +15,10 @@ pub enum PartListNode {
     Section {
         index: u32,
         name: Option<String>,
+        /// The `<group-abbreviation>` this level declared, falling back to
+        /// `name` when the document named none, and `None` when it named
+        /// neither.
+        abbr: Option<String>,
         /// The `<group-symbol>` this level declared, `None` when it named one.
         /// Absent is not the same as `Some(GroupSymbol::None)`: the first means
         /// the document expressed no preference and a default applies, the
@@ -25,6 +29,8 @@ pub enum PartListNode {
     Group {
         index: u32,
         name: Option<String>,
+        /// The `<group-abbreviation>` this level declared; see `Section`'s.
+        abbr: Option<String>,
         /// The `<group-symbol>` this level declared; see `Section`'s.
         symbol: Option<GroupSymbol>,
         children: Vec<PartListNode>,

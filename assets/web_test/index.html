@@ -144,6 +144,12 @@
     <label for="group-square-arm">Square arm length</label>
     <input type="number" id="group-square-arm" step="any" />
 
+    <label for="group-name-size">Group name size</label>
+    <input type="number" id="group-name-size" step="any" />
+
+    <label for="group-name-padding">Group name padding</label>
+    <input type="number" id="group-name-padding" step="any" />
+
     <label for="debug">Debug overlay</label>
     <input type="checkbox" id="debug" />
   </form>
@@ -191,6 +197,8 @@
       "group-line-thickness",
       "group-square-thickness",
       "group-square-arm",
+      "group-name-size",
+      "group-name-padding",
     ];
 
     for (const id of cssVarIds) {

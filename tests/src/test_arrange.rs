@@ -6,6 +6,7 @@
 mod tests {
     use lib::geometry::xy::XY;
     use lib::score::core::group_symbol::GroupLevel;
+    use lib::score::visual::group_name::GroupName;
     use lib::score::visual::group_symbol::GroupSymbol;
     use lib::score::visual::layoutable::Layoutable;
     use lib::score::visual::part::Part;
@@ -19,6 +20,12 @@ mod tests {
     /// children, and a symbol that never measures draws nothing.
     fn symbol(level: GroupLevel) -> GroupSymbol {
         GroupSymbol::new(level, None)
+    }
+
+    /// An unnamed name: these tests are about child placement, and a name with
+    /// nothing to draw draws nothing.
+    fn name() -> GroupName {
+        GroupName::new(String::new(), String::new())
     }
 
     /// Measures tile left to right, so each one starts where the previous one
@@ -46,7 +53,7 @@ mod tests {
 
     #[test]
     fn part_group_measures_are_laid_out_left_to_right() {
-        let mut group = PartGroup::new(symbol(GroupLevel::PartGroup));
+        let mut group = PartGroup::new(symbol(GroupLevel::PartGroup), name());
         for (number, width) in [(1u32, 40.), (2, 60.)] {
             let measure = PartGroupMeasure {
                 width,
@@ -67,7 +74,7 @@ mod tests {
     /// staff drift away from its own staff lines.
     #[test]
     fn staff_context_offsets_match_where_arrange_puts_the_staves() {
-        let mut part = Part::new(symbol(GroupLevel::Part));
+        let mut part = Part::new(symbol(GroupLevel::Part), name());
         for idx in [1u32, 2, 3] {
             let staff = part.staff_or_insert(&idx.into());
             staff.distance_final = 80.;

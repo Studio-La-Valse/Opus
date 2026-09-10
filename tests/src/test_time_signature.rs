@@ -103,6 +103,7 @@ mod tests {
             user_layout: &user_layout,
             app_defaults: &app_defaults,
             font: font(),
+            abbreviate_names: false,
         };
         time_signature.resolve_layout(params);
         time_signature.measure(

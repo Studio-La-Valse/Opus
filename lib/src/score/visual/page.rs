@@ -27,8 +27,14 @@ pub struct Page {
 }
 
 impl Page {
+    /// The system under `system_id`, creating it if it isn't there yet. The
+    /// created system is stamped with its own index, which
+    /// [`System::resolve_layout`] needs to decide whether names abbreviate.
     pub fn system_or_insert(&mut self, system_id: u32) -> &mut System {
-        self.systems.entry(system_id).or_default()
+        self.systems.entry(system_id).or_insert_with(|| System {
+            index: system_id,
+            ..Default::default()
+        })
     }
 
     pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {

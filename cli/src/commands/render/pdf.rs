@@ -22,8 +22,6 @@ pub(super) fn write(
     target: &OutputTarget,
 ) {
     let music_family = fonts.music.family;
-    let title_family = fonts.title.family;
-    let lyric_family = fonts.lyric.family;
 
     let mut db = fontdb::Database::new();
     db.load_system_fonts();
@@ -33,23 +31,29 @@ pub(super) fn write(
     let music_bytes = load_family_bytes(&db, music_family).unwrap_or_else(|| {
         panic!("music font '{music_family}' not found in the system fonts; install it")
     });
-    let title_bytes = load_family_bytes(&db, title_family);
-    let lyric_bytes = load_family_bytes(&db, lyric_family);
+    let title_bytes = load_family_bytes(&db, fonts.title.family);
+    let lyric_bytes = load_family_bytes(&db, fonts.lyric.family);
+    let group_name_bytes = load_family_bytes(&db, fonts.group_name.family);
 
-    let mut embedded = vec![embedded_font(music_family, &music_bytes)];
-    if title_family != music_family
-        && let Some(bytes) = &title_bytes
-    {
-        embedded.push(embedded_font(title_family, bytes));
+    // Embed each family the score draws text in exactly once, in a fixed order
+    // so the music font is always entry 0 -- which `FontSet` uses as the
+    // fallback for any family that didn't resolve (e.g. a text font that isn't
+    // installed). A hand-written chain of `!=` comparisons does not scale past
+    // two text faces, so this walks the list and skips families already added.
+    let mut embedded: Vec<EmbeddedFont> = Vec::new();
+    for (family, bytes) in [
+        (music_family, Some(&music_bytes)),
+        (fonts.title.family, title_bytes.as_ref()),
+        (fonts.lyric.family, lyric_bytes.as_ref()),
+        (fonts.group_name.family, group_name_bytes.as_ref()),
+    ] {
+        if embedded.iter().any(|e| e.family == family) {
+            continue;
+        }
+        if let Some(bytes) = bytes {
+            embedded.push(embedded_font(family, bytes));
+        }
     }
-    if lyric_family != music_family
-        && lyric_family != title_family
-        && let Some(bytes) = &lyric_bytes
-    {
-        embedded.push(embedded_font(lyric_family, bytes));
-    }
-    // The music font is entry 0 and the fallback for any family that didn't
-    // resolve (e.g. a lyric font that isn't installed).
     let font_set = FontSet::new(embedded, 0);
 
     // MusicXML tenths -> PDF points: the score's mm-per-tenth scaling times 72

@@ -16,6 +16,16 @@ use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub struct System {
+    /// This system's global index across the whole score, stamped by
+    /// [`Page::system_or_insert`](crate::score::visual::page::Page) the way
+    /// [`Page::number`](crate::score::visual::page::Page) is stamped by
+    /// `Score::page_or_insert`. It comes from the walk cursor, which counts from
+    /// zero but increments on the score's first measure, so the first system of
+    /// the score is index 1 and every later one is 2, 3, ... Used to decide
+    /// whether names abbreviate: the first system names in full, every later one
+    /// uses the abbreviation.
+    pub index: u32,
+
     pub sections: BTreeMap<u32, Section>,
     pub measures: BTreeMap<u32, SystemMeasure>,
 
@@ -221,6 +231,15 @@ impl Layoutable for System {
             .or(score_defaults.appearance.staff)
             .unwrap_or(app_defaults.staff_line_thickness);
 
+        // The first system names its parts and part-groups in full; every later
+        // one uses the abbreviation. Re-stamped here so the whole subtree below
+        // resolves against it. The first system of the score is index 1 (see
+        // `index`), so anything past it abbreviates.
+        let params = LayoutParams {
+            abbreviate_names: self.index > 1,
+            ..params
+        };
+
         for section in self.sections.values_mut() {
             section.resolve_layout(params);
         }
@@ -263,9 +282,14 @@ impl Layoutable for System {
             _origin = _origin.mv(measure.width, 0.);
         }
 
+        // The page's left margin, in world coordinates: `page.rs` places a
+        // system at `page_margin + system.m_left`, so undoing the system's own
+        // margin lands back on it. This is where a name's box reaches left to.
+        let margin_left = self.xy.x - self.m_left;
+
         let mut _origin = self.xy;
         for section in self.sections.values_mut() {
-            section.arrange(&_origin);
+            section.arrange_within(&_origin, margin_left);
             _origin = _origin.mv(0., section.height);
         }
     }

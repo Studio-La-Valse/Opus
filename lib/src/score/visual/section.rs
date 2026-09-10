@@ -1,6 +1,7 @@
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
@@ -40,10 +41,11 @@ impl Section {
         &mut self,
         part_group_id: u32,
         symbol: GroupSymbol,
+        name: GroupName,
     ) -> &mut PartGroup {
         self.part_groups
             .entry(part_group_id)
-            .or_insert_with(|| PartGroup::new(symbol))
+            .or_insert_with(|| PartGroup::new(symbol, name))
     }
 
     pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {
@@ -123,6 +125,40 @@ impl Section {
         }
     }
 
+    /// Places this section, additionally carrying the page's left margin
+    /// (`margin_left`) down the chain so a part / part-group name knows how far
+    /// left its box reaches. A section has no name of its own -- it is the
+    /// (usually unnamed) bracket around a run of part-groups.
+    ///
+    /// [`Layoutable::arrange`] delegates here with `origin.x` for the margin,
+    /// the way each level's `arrange` delegates today.
+    pub fn arrange_within(&mut self, origin: &XY, margin_left: f32) {
+        self.xy = *origin;
+
+        let first_visible_staff_distance = self.first_visible_staff_distance();
+        let (overhang_top, _) = self.barline_overhang();
+        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance - overhang_top);
+
+        for measure in self.measures.values_mut() {
+            measure.arrange(&measure_origin);
+            measure_origin = measure_origin.mv(measure.width, 0.);
+        }
+
+        // Arranged before the part-groups, because where they put their own
+        // symbols depends on how far left this one reached. A section's symbol
+        // is the innermost of the three, so it is the only one measured from
+        // the system itself.
+        self.symbol
+            .arrange(&self.xy.mv(0., first_visible_staff_distance));
+        let clear_of = self.symbol_left_edge();
+
+        let mut part_group_origin = self.xy;
+        for part_group in self.part_groups.values_mut() {
+            part_group.arrange_clear_of(&part_group_origin, clear_of, margin_left);
+            part_group_origin = part_group_origin.mv(0., part_group.height);
+        }
+    }
+
     /// How far the barline at a measure end reaches above the top line of the
     /// section's first visible staff, and below the bottom line of its last.
     /// Both are zero for the staves that enclose spaces of their own; see
@@ -196,29 +232,6 @@ impl Layoutable for Section {
     }
 
     fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-
-        let first_visible_staff_distance = self.first_visible_staff_distance();
-        let (overhang_top, _) = self.barline_overhang();
-        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance - overhang_top);
-
-        for measure in self.measures.values_mut() {
-            measure.arrange(&measure_origin);
-            measure_origin = measure_origin.mv(measure.width, 0.);
-        }
-
-        // Arranged before the part-groups, because where they put their own
-        // symbols depends on how far left this one reached. A section's symbol
-        // is the innermost of the three, so it is the only one measured from
-        // the system itself.
-        self.symbol
-            .arrange(&self.xy.mv(0., first_visible_staff_distance));
-        let clear_of = self.symbol_left_edge();
-
-        let mut part_group_origin = self.xy;
-        for part_group in self.part_groups.values_mut() {
-            part_group.arrange_clear_of(&part_group_origin, clear_of);
-            part_group_origin = part_group_origin.mv(0., part_group.height);
-        }
+        self.arrange_within(origin, origin.x);
     }
 }

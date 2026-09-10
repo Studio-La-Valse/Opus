@@ -1,4 +1,5 @@
 use crate::drawable::drawable_element::DrawableElement;
+use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
 use crate::drawable::elements::{circle::Circle, line::Line, rect::Rect};
 use crate::geometry::xy::XY;
 use crate::score::visual::render_fonts::RenderFonts;
@@ -8,6 +9,7 @@ use crate::score::visual::{
     clef::Clef,
     dot::Dot,
     flag::Flag,
+    group_name::GroupName,
     group_symbol::{GroupSymbol, Shape},
     note::Note,
     page::Page,
@@ -108,6 +110,29 @@ impl RenderPass for BaseRenderer {
                 }
             }
         }
+    }
+
+    /// One [`Text`] laid out in the reserved box the name reports, drawn from
+    /// its right-middle point so the run ends against the symbol and is centred
+    /// on the staves. No background: whatever is under the box shows through, as
+    /// every text does today.
+    fn render_group_name<'a>(
+        &self,
+        name: &'a GroupName,
+        fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        let text = Text {
+            text: name.text(),
+            color: name.color(),
+            font_size: name.font_size(),
+            font: fonts.group_name,
+            bounds: name.bounds(),
+            vertical_alignment: VerticalAlign::Middle,
+            horizontal_alignment: HorizontalAlign::Right,
+            background: None,
+        };
+        out.push(text.into());
     }
 
     fn render_staff<'a>(
