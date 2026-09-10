@@ -1,74 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Every <group-symbol> value the format defines, at both levels that can carry
-  one, over a deliberately uneven structure. Nothing here is a realistic score;
-  it exists so that one render shows all five shapes at once and so that the
-  cases which decide whether a symbol is drawn at all are each present.
+  How the three levels of group symbol stack outward from a system, and what
+  each <group-symbol> value looks like.
+
+  Read from the system leftward, the order is always section, part-group, part:
+  a section's symbol is measured from the system itself, and each level further
+  out clears whatever the level inside it drew.
 
   section 0  bracket
-    group 0  square   P1 P2 P3          three parts
-    group 1  brace    P4 P5             two parts
-             P6                         a part sitting directly in the section,
-                                        which the builder gives a part-group of
-                                        its own. One part, so no symbol
-  section 1  line
-    group 0  none     P7 P8 P9 P10      four parts, and an explicit "none":
-                                        the group is real, its symbol draws
-                                        nothing
-    group 1  square   P11 P12           P12 has two staves, so it draws a part
-                                        symbol of its own inside the group's
-  section 2  square
-    group 0  brace    P13 P14           three staves and two: two nested part
-                                        symbols under one group symbol
-    group 1  line     P15 P16           two staves and one, so the group spans
-                                        an uneven pair
-  P17                                   top level, enclosed by nothing at all.
-                                        It gets a section index with no
-                                        <part-group> behind it to have declared
-                                        anything
+    group 0  brace   P1 Organ (2 staves), P2 Celesta
+    group 1  line    P3 Violin I, P4 Violin II
+  section 1  square
+    group 0  brace   P5 Harp (2 staves), P6 Timpani
+    group 1  none    P7 Trumpet, P8 Trombone
 
-  A section draws its symbol only when it holds more than one part-group, and a
-  part-group only when it holds more than one part and more than one visible
-  staff, which is why the single-part levels above are here: they are the cases
-  that must stay blank.
+  P1 and P5 are the two parts of more than one staff, so they draw a symbol of
+  their own and are where three symbols stand side by side, which is what this
+  fixture is for. Everything else is here to make those two cases legible: a
+  second part-group per section, so the section symbols draw at all, and a
+  second shape at each level so the five values can be told apart.
+
+  Section 1's second group asks for "none": a real group of two parts whose
+  symbol draws nothing, which is the case not to confuse with a part-group that
+  declared no symbol at all and falls back to its level's default.
 -->
 <score-partwise version="4.0">
   <part-list>
     <part-group type="start"><group-symbol>bracket</group-symbol></part-group>
-    <part-group type="start"><group-name>Flutes</group-name><group-symbol>square</group-symbol></part-group>
-    <score-part id="P1"><part-name>Flute 1</part-name><part-abbreviation>Fl. 1</part-abbreviation></score-part>
-    <score-part id="P2"><part-name>Flute 2</part-name><part-abbreviation>Fl. 2</part-abbreviation></score-part>
-    <score-part id="P3"><part-name>Piccolo</part-name><part-abbreviation>Picc.</part-abbreviation></score-part>
-    <part-group type="stop"/>
-    <part-group type="start"><group-name>Clarinets</group-name><group-symbol>brace</group-symbol></part-group>
-    <score-part id="P4"><part-name>Clarinet 1</part-name><part-abbreviation>Cl. 1</part-abbreviation></score-part>
-    <score-part id="P5"><part-name>Clarinet 2</part-name><part-abbreviation>Cl. 2</part-abbreviation></score-part>
-    <part-group type="stop"/>
-    <score-part id="P6"><part-name>Bassoon</part-name><part-abbreviation>Bsn.</part-abbreviation></score-part>
-    <part-group type="stop"/>
-    <part-group type="start"><group-symbol>line</group-symbol></part-group>
-    <part-group type="start"><group-name>Horns</group-name><group-symbol>none</group-symbol></part-group>
-    <score-part id="P7"><part-name>Horn 1</part-name><part-abbreviation>Hn. 1</part-abbreviation></score-part>
-    <score-part id="P8"><part-name>Horn 2</part-name><part-abbreviation>Hn. 2</part-abbreviation></score-part>
-    <score-part id="P9"><part-name>Horn 3</part-name><part-abbreviation>Hn. 3</part-abbreviation></score-part>
-    <score-part id="P10"><part-name>Horn 4</part-name><part-abbreviation>Hn. 4</part-abbreviation></score-part>
-    <part-group type="stop"/>
-    <part-group type="start"><group-symbol>square</group-symbol></part-group>
-    <score-part id="P11"><part-name>Trumpet</part-name><part-abbreviation>Tpt.</part-abbreviation></score-part>
-    <score-part id="P12"><part-name>Trombone</part-name><part-abbreviation>Tbn.</part-abbreviation></score-part>
-    <part-group type="stop"/>
-    <part-group type="stop"/>
-    <part-group type="start"><group-symbol>square</group-symbol></part-group>
     <part-group type="start"><group-name>Keyboards</group-name><group-symbol>brace</group-symbol></part-group>
-    <score-part id="P13"><part-name>Organ</part-name><part-abbreviation>Org.</part-abbreviation></score-part>
-    <score-part id="P14"><part-name>Celesta</part-name><part-abbreviation>Cel.</part-abbreviation></score-part>
+    <score-part id="P1"><part-name>Organ</part-name><part-abbreviation>Org.</part-abbreviation></score-part>
+    <score-part id="P2"><part-name>Celesta</part-name><part-abbreviation>Cel.</part-abbreviation></score-part>
     <part-group type="stop"/>
     <part-group type="start"><group-symbol>line</group-symbol></part-group>
-    <score-part id="P15"><part-name>Harp</part-name><part-abbreviation>Hp.</part-abbreviation></score-part>
-    <score-part id="P16"><part-name>Timpani</part-name><part-abbreviation>Timp.</part-abbreviation></score-part>
+    <score-part id="P3"><part-name>Violin I</part-name><part-abbreviation>Vln. I</part-abbreviation></score-part>
+    <score-part id="P4"><part-name>Violin II</part-name><part-abbreviation>Vln. II</part-abbreviation></score-part>
     <part-group type="stop"/>
     <part-group type="stop"/>
-    <score-part id="P17"><part-name>Solo Violin</part-name><part-abbreviation>Vln.</part-abbreviation></score-part>
+    <part-group type="start"><group-symbol>square</group-symbol></part-group>
+    <part-group type="start"><group-name>Continuo</group-name><group-symbol>brace</group-symbol></part-group>
+    <score-part id="P5"><part-name>Harp</part-name><part-abbreviation>Hp.</part-abbreviation></score-part>
+    <score-part id="P6"><part-name>Timpani</part-name><part-abbreviation>Timp.</part-abbreviation></score-part>
+    <part-group type="stop"/>
+    <part-group type="start"><group-name>Brass</group-name><group-symbol>none</group-symbol></part-group>
+    <score-part id="P7"><part-name>Trumpet</part-name><part-abbreviation>Tpt.</part-abbreviation></score-part>
+    <score-part id="P8"><part-name>Trombone</part-name><part-abbreviation>Tbn.</part-abbreviation></score-part>
+    <part-group type="stop"/>
+    <part-group type="stop"/>
   </part-list>
   <part id="P1">
     <measure number="1" width="240">
@@ -77,14 +54,22 @@
         <divisions>4</divisions>
         <key><fifths>0</fifths><mode>major</mode></key>
         <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
+        <staves>2</staves>
+        <clef number="1"><sign>G</sign><line>2</line></clef>
+        <clef number="2"><sign>F</sign><line>4</line></clef>
       </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <backup><duration>16</duration></backup>
+      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
+      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
     </measure>
     <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <backup><duration>16</duration></backup>
+      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
+      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
     </measure>
   </part>
   <part id="P2">
@@ -145,14 +130,22 @@
         <divisions>4</divisions>
         <key><fifths>0</fifths><mode>major</mode></key>
         <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
+        <staves>2</staves>
+        <clef number="1"><sign>G</sign><line>2</line></clef>
+        <clef number="2"><sign>F</sign><line>4</line></clef>
       </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <backup><duration>16</duration></backup>
+      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
+      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
     </measure>
     <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
+      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
+      <backup><duration>16</duration></backup>
+      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
+      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
     </measure>
   </part>
   <part id="P6">
@@ -196,181 +189,6 @@
         <divisions>4</divisions>
         <key><fifths>0</fifths><mode>major</mode></key>
         <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-  </part>
-  <part id="P9">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-  </part>
-  <part id="P10">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-  </part>
-  <part id="P11">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-  </part>
-  <part id="P12">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <staves>2</staves>
-        <clef number="1"><sign>C</sign><line>3</line></clef>
-        <clef number="2"><sign>F</sign><line>4</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>D</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>D</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>D</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>D</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-    </measure>
-  </part>
-  <part id="P13">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <staves>3</staves>
-        <clef number="1"><sign>G</sign><line>2</line></clef>
-        <clef number="2"><sign>F</sign><line>4</line></clef>
-        <clef number="3"><sign>F</sign><line>4</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>3</voice><type>half</type><staff>3</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>3</voice><type>half</type><staff>3</staff></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>3</voice><type>half</type><staff>3</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>3</voice><type>half</type><staff>3</staff></note>
-    </measure>
-  </part>
-  <part id="P14">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <staves>2</staves>
-        <clef number="1"><sign>G</sign><line>2</line></clef>
-        <clef number="2"><sign>F</sign><line>4</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-    </measure>
-  </part>
-  <part id="P15">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <staves>2</staves>
-        <clef number="1"><sign>G</sign><line>2</line></clef>
-        <clef number="2"><sign>F</sign><line>4</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type><staff>1</staff></note>
-      <backup><duration>16</duration></backup>
-      <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-      <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>2</voice><type>half</type><staff>2</staff></note>
-    </measure>
-  </part>
-  <part id="P16">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
         <clef><sign>F</sign><line>4</line></clef>
       </attributes>
       <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
@@ -379,23 +197,6 @@
     <measure number="2" width="240">
       <note default-x="80"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
       <note default-x="160"><pitch><step>B</step><octave>2</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-  </part>
-  <part id="P17">
-    <measure number="1" width="240">
-      <print new-system="yes"/>
-      <attributes>
-        <divisions>4</divisions>
-        <key><fifths>0</fifths><mode>major</mode></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
-      </attributes>
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-    </measure>
-    <measure number="2" width="240">
-      <note default-x="80"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
-      <note default-x="160"><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><voice>1</voice><type>half</type></note>
     </measure>
   </part>
 </score-partwise>

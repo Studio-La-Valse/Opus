@@ -111,6 +111,18 @@ impl Section {
         self.part_groups.len() > 1 && self.symbol.is_drawn()
     }
 
+    /// How far left this section's own ink reaches, which is what the symbols
+    /// inside it keep clear of. The system's left edge when nothing is drawn --
+    /// an undrawn symbol must not push its part-groups outward by a gap that
+    /// nothing occupies.
+    fn symbol_left_edge(&self) -> f32 {
+        if self.shows_symbol() {
+            self.symbol.bounds().x_min()
+        } else {
+            self.xy.x
+        }
+    }
+
     /// How far the barline at a measure end reaches above the top line of the
     /// section's first visible staff, and below the bottom line of its last.
     /// Both are zero for the staves that enclose spaces of their own; see
@@ -183,15 +195,18 @@ impl Layoutable for Section {
             measure_origin = measure_origin.mv(measure.width, 0.);
         }
 
-        let mut part_group_origin = self.xy;
-        for part_group in self.part_groups.values_mut() {
-            part_group.arrange(&part_group_origin);
-            part_group_origin = part_group_origin.mv(0., part_group.height);
-        }
-
-        // The system's left edge at the top line of the first staff spanned.
-        // The symbol steps out by its own gap from there.
+        // Arranged before the part-groups, because where they put their own
+        // symbols depends on how far left this one reached. A section's symbol
+        // is the innermost of the three, so it is the only one measured from
+        // the system itself.
         self.symbol
             .arrange(&self.xy.mv(0., first_visible_staff_distance));
+        let clear_of = self.symbol_left_edge();
+
+        let mut part_group_origin = self.xy;
+        for part_group in self.part_groups.values_mut() {
+            part_group.arrange_clear_of(&part_group_origin, clear_of);
+            part_group_origin = part_group_origin.mv(0., part_group.height);
+        }
     }
 }

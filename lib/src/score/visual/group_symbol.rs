@@ -354,9 +354,16 @@ impl Layoutable for GroupSymbol {
         self.span = available.y.max(0.);
     }
 
-    /// `origin` is the system's left edge at the top line of the first staff
-    /// spanned -- not a position for the symbol itself. The symbol steps left by
-    /// its own gap, so no container has to know how far out one sits.
+    /// `origin.x` is the left edge this symbol sits clear of, and `origin.y` the
+    /// top line of the first staff it spans. Neither is a position for the
+    /// symbol itself: it steps left by its own gap from there.
+    ///
+    /// What that edge is depends on the level. A section's is the system's own
+    /// left edge, since a section symbol is the innermost of the three. A
+    /// part-group's is whatever its section drew, and a part's is whatever its
+    /// part-group drew, so the three stack outward without any of them knowing
+    /// how wide the others are -- which they could not know, a brace's width
+    /// following the span it covers.
     fn arrange(&mut self, origin: &XY) {
         self.anchor = origin.mv(-self.gap, 0.);
 

@@ -69,16 +69,27 @@ pub struct AppDefaults {
     pub part_symbol: GroupSymbol,
 
     /// Distance in tenths from the system's left edge to the right edge of a
-    /// section symbol's vertical stroke. The gap is per level rather than per
-    /// shape because it is what makes the three nest against each other.
+    /// section symbol's vertical stroke.
+    ///
+    /// A section's symbol is the innermost of the three, so this one is
+    /// measured from the system itself. The other two are measured from
+    /// whatever is already there.
     ///
     /// A bracket's tips flare rightward past its own stroke -- that is how
     /// SMuFL draws them -- so its ink reaches nearer the staff than the gap
     /// suggests, and may cross it.
     pub section_symbol_gap: f32,
-    /// As [`Self::section_symbol_gap`], for a part-group.
+    /// Padding in tenths between the left edge of what a section drew and the
+    /// right edge of a part-group's symbol inside it.
+    ///
+    /// Padding rather than a distance from the system, because a fixed ladder
+    /// of distances cannot hold: a brace's width follows the span it covers, so
+    /// a tall part-group's symbol is far wider than a short one's and would
+    /// eventually reach under the section symbol outside it.
     pub part_group_symbol_gap: f32,
-    /// As [`Self::section_symbol_gap`], for one part's own staves.
+    /// Padding in tenths between the left edge of what a part-group drew and
+    /// the right edge of the symbol joining one part's own staves. As
+    /// [`Self::part_group_symbol_gap`], measured from what is already there.
     pub part_symbol_gap: f32,
 
     /// Thickness in tenths of a bracket's vertical stroke. Bravura's
@@ -141,7 +152,7 @@ impl Default for AppDefaults {
             part_group_symbol: GroupSymbol::Brace,
             part_symbol: GroupSymbol::Brace,
             section_symbol_gap: 5.,
-            part_group_symbol_gap: 15.,
+            part_group_symbol_gap: 5.,
             part_symbol_gap: 5.,
             group_bracket_thickness: 5.,
             group_line_thickness: 1.6,

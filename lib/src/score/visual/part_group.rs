@@ -113,6 +113,40 @@ impl PartGroup {
         self.parts.len() > 1 && self.visible_staves().count() > 1 && self.symbol.is_drawn()
     }
 
+    /// Places this group, with `clear_of` the left edge of whatever the
+    /// enclosing section drew. This group's symbol sits its own gap further out
+    /// than that, and hands its own left edge to its parts in turn -- so the
+    /// three levels stack outward from the system without any of them knowing
+    /// how wide the others are.
+    pub fn arrange_clear_of(&mut self, origin: &XY, clear_of: f32) {
+        self.xy = *origin;
+
+        let first_visible_staff_distance = self.first_visible_staff_distance();
+
+        let mut _origin = self.xy;
+        for measure in self.measures.values_mut() {
+            measure.arrange(&_origin);
+            _origin = _origin.mv(measure.width, 0.);
+        }
+
+        // Before the parts, whose own symbols keep clear of this one.
+        self.symbol.arrange(&XY {
+            x: clear_of,
+            y: self.xy.y + first_visible_staff_distance,
+        });
+        let clear_of = if self.shows_symbol() {
+            self.symbol.bounds().x_min()
+        } else {
+            clear_of
+        };
+
+        let mut _origin = self.xy;
+        for part in self.parts.values_mut() {
+            part.arrange_clear_of(&_origin, clear_of);
+            _origin = _origin.mv(0., part.height);
+        }
+    }
+
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
         for part in self.parts.values_mut() {
             part.rebeam(strategy);
@@ -150,24 +184,10 @@ impl Layoutable for PartGroup {
         self.symbol.measure(&available, params);
     }
 
+    /// Places this group as [`arrange`](Layoutable::arrange) does, with its
+    /// enclosing section's symbol already at `clear_of`. Used on its own when
+    /// there is nothing to keep clear of.
     fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-
-        let first_visible_staff_distance = self.first_visible_staff_distance();
-
-        let mut _origin = self.xy;
-        for measure in self.measures.values_mut() {
-            measure.arrange(&_origin);
-            _origin = _origin.mv(measure.width, 0.);
-        }
-
-        let mut _origin = self.xy;
-        for part in self.parts.values_mut() {
-            part.arrange(&_origin);
-            _origin = _origin.mv(0., part.height);
-        }
-
-        self.symbol
-            .arrange(&self.xy.mv(0., first_visible_staff_distance));
+        self.arrange_clear_of(origin, origin.x);
     }
 }

@@ -80,8 +80,10 @@ impl LayoutParams<'_> {
         user.or(declared).unwrap_or(app_default)
     }
 
-    /// Tenths between the system's left edge and the right edge of `level`'s
-    /// symbol. Per level, not per shape: see [`GroupLevel`].
+    /// How far out `level`'s symbol sits, in tenths, from whatever is already
+    /// to the right of it: the system's left edge for a section, and the left
+    /// edge of the enclosing level's symbol for the other two. Per level, not
+    /// per shape: see [`GroupLevel`].
     pub fn group_symbol_gap(&self, level: GroupLevel) -> f32 {
         match level {
             GroupLevel::Section => self

@@ -220,6 +220,39 @@ impl Part {
     pub fn shows_symbol(&self) -> bool {
         self.visible_staves().count() > 1 && self.symbol.is_drawn()
     }
+
+    /// Places this part, with `clear_of` the left edge of whatever its
+    /// part-group drew. A part's symbol is the outermost of the three, so
+    /// nothing keeps clear of it in turn.
+    pub fn arrange_clear_of(&mut self, origin: &XY, clear_of: f32) {
+        self.xy = *origin;
+
+        let mut _origin = self.xy;
+        for staff in self.staves.values_mut() {
+            if staff.hidden {
+                continue;
+            }
+
+            _origin = _origin.mv(0., staff.distance_final);
+
+            staff.arrange(&_origin);
+            _origin = _origin.mv(0., staff.height);
+        }
+
+        let staff_ctx = self.create_staff_ctx();
+
+        let mut _origin = self.xy;
+        for measure in self.measures.values_mut() {
+            measure.arrange_ctx(&_origin, &staff_ctx);
+            _origin = _origin.mv(measure.width, 0.);
+        }
+
+        let first_visible_staff_distance = self.first_visible_staff_distance();
+        self.symbol.arrange(&XY {
+            x: clear_of,
+            y: self.xy.y + first_visible_staff_distance,
+        });
+    }
 }
 impl Layoutable for Part {
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
@@ -263,31 +296,9 @@ impl Layoutable for Part {
         self.symbol.measure(&available, params);
     }
 
+    /// Places this part as [`arrange_clear_of`](Part::arrange_clear_of) does,
+    /// with nothing to its left to keep clear of.
     fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-
-        let mut _origin = self.xy;
-        for staff in self.staves.values_mut() {
-            if staff.hidden {
-                continue;
-            }
-
-            _origin = _origin.mv(0., staff.distance_final);
-
-            staff.arrange(&_origin);
-            _origin = _origin.mv(0., staff.height);
-        }
-
-        let staff_ctx = self.create_staff_ctx();
-
-        let mut _origin = self.xy;
-        for measure in self.measures.values_mut() {
-            measure.arrange_ctx(&_origin, &staff_ctx);
-            _origin = _origin.mv(measure.width, 0.);
-        }
-
-        let first_visible_staff_distance = self.first_visible_staff_distance();
-        self.symbol
-            .arrange(&self.xy.mv(0., first_visible_staff_distance));
+        self.arrange_clear_of(origin, origin.x);
     }
 }

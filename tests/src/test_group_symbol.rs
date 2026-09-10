@@ -178,22 +178,17 @@ mod tests {
 
     // ------------------------------------------------------------ the anchor
 
-    /// The gap is per level, and a symbol applies it itself -- no container
-    /// carries an offset for it. The three defaults are what the containers used
-    /// to hardcode.
+    /// A symbol steps left by its own gap from whatever edge it is handed, and
+    /// applies it itself -- no container carries an offset for it. What that
+    /// edge is differs per level, which is the nesting test below; the gap
+    /// itself is the same 5 tenths at all three by default.
     #[test]
-    fn each_level_sets_its_symbol_the_default_distance_from_the_system() {
-        let cases = [
-            (GroupLevel::Section, 5.),
-            (GroupLevel::PartGroup, 15.),
-            (GroupLevel::Part, 5.),
-        ];
-
-        for (level, gap) in cases {
+    fn a_symbol_steps_its_own_gap_left_of_the_edge_it_is_given() {
+        for level in [GroupLevel::Section, GroupLevel::PartGroup, GroupLevel::Part] {
             let symbol = laid_out(level, Kind::Line);
             assert_close(
                 symbol.anchor().x,
-                ORIGIN.x - gap,
+                ORIGIN.x - 5.,
                 &format!("{level:?} anchor"),
             );
             assert_close(symbol.anchor().y, ORIGIN.y, &format!("{level:?} anchor y"));
@@ -610,11 +605,135 @@ mod tests {
         assert!(!section.shows_symbol(), "nothing is drawn for it");
     }
 
-    /// The whole fixture at once: every shape resolves, and the four levels that
-    /// are expected to draw nothing draw nothing. See the comment at the top of
-    /// `group-symbols.musicxml` for what each level holds.
+    // ---------------------------------------------------------- the nesting
+
+    /// Every symbol the fixture draws, innermost first, as
+    /// `(what, right edge, left edge)`.
+    fn stacked(
+        score: &Score,
+        section_index: usize,
+        group_index: usize,
+    ) -> Vec<(&'static str, f32, f32)> {
+        let section = score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .nth(section_index)
+            .expect("section");
+        let group = section
+            .part_groups
+            .values()
+            .nth(group_index)
+            .expect("part-group");
+        let part = group.parts.values().next().expect("part");
+
+        [
+            ("section", section.shows_symbol(), &section.symbol),
+            ("part-group", group.shows_symbol(), &group.symbol),
+            ("part", part.shows_symbol(), &part.symbol),
+        ]
+        .into_iter()
+        .filter(|(_, drawn, _)| *drawn)
+        .map(|(what, _, symbol)| (what, symbol.bounds().x_max(), symbol.bounds().x_min()))
+        .collect()
+    }
+
+    /// The order the three levels stand in, which is the whole point of the
+    /// fixture: from the system leftward, section then part-group then part.
+    /// A section's symbol is measured from the system, and each level further
+    /// out clears whatever the level inside it drew, so none of them overlap
+    /// however wide a brace happens to be.
     #[test]
-    fn the_group_symbols_fixture_resolves_every_shape() {
+    fn the_three_levels_stack_outward_from_the_system() {
+        let score = engrave(&asset(GROUP_SYMBOLS));
+
+        for (section_index, what) in [
+            (0, "bracket / brace / brace"),
+            (1, "square / brace / brace"),
+        ] {
+            let stack = stacked(&score, section_index, 0);
+            assert_eq!(stack.len(), 3, "{what}: all three levels draw");
+
+            for pair in stack.windows(2) {
+                let (inner, _, inner_left) = pair[0];
+                let (outer, outer_right, _) = pair[1];
+
+                assert!(
+                    outer_right <= inner_left,
+                    "{what}: the {outer} symbol ends at {outer_right} but the \
+                     {inner} symbol it should sit clear of begins at {inner_left}"
+                );
+            }
+        }
+    }
+
+    /// The gap between two levels is padding, so widening one moves everything
+    /// outside it and nothing inside it. A fixed ladder of distances from the
+    /// system could not do this: a brace's width follows its span, so no set of
+    /// distances keeps a tall part-group's symbol clear of its section's.
+    #[test]
+    fn widening_one_gap_pushes_only_what_lies_outside_it() {
+        let (mut score, defaults, _) = walk(&asset(GROUP_SYMBOLS));
+
+        arrange(&mut score, &defaults, &UserLayout::default());
+        let before = stacked(&score, 0, 0);
+
+        arrange(
+            &mut score,
+            &defaults,
+            &UserLayout {
+                part_group_symbol_gap: Some(45.),
+                ..Default::default()
+            },
+        );
+        let after = stacked(&score, 0, 0);
+
+        assert_close(after[0].1, before[0].1, "the section symbol stays put");
+        assert_close(
+            after[1].1,
+            before[1].1 - 40.,
+            "the part-group symbol moves out by the extra padding",
+        );
+        assert_close(
+            after[2].1,
+            before[2].1 - 40.,
+            "and the part symbol outside it moves with it",
+        );
+    }
+
+    /// A level that draws nothing must not push the levels outside it away by a
+    /// gap nothing occupies. Section 1's second group asks for `none`, so its
+    /// parts sit where they would if the group had never been there.
+    #[test]
+    fn a_level_that_draws_nothing_takes_up_no_room() {
+        let score = engrave(&asset(GROUP_SYMBOLS));
+
+        let section = score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .nth(1)
+            .expect("section 1");
+
+        let brass = section
+            .part_groups
+            .values()
+            .nth(1)
+            .expect("the brass group");
+        assert_eq!(brass.symbol.kind(), Kind::None);
+        assert!(!brass.shows_symbol(), "an explicit 'none' draws nothing");
+
+        // Its parts are single-staff, so none of them draws either -- what is
+        // under test is that the group's own anchor did not shift the section's
+        // reported edge, which the stacking test above would catch downstream.
+        assert!(brass.parts.values().all(|part| !part.shows_symbol()));
+    }
+
+    /// Every shape the format defines reaches the tree from this one fixture.
+    #[test]
+    fn the_fixture_covers_every_shape() {
         let score = engrave(&asset(GROUP_SYMBOLS));
         let sections: Vec<_> = score
             .pages
@@ -623,79 +742,30 @@ mod tests {
             .flat_map(|system| system.sections.values())
             .collect();
 
-        assert_eq!(sections.len(), 4, "three grouped sections and P17's own");
-
-        let kinds: Vec<_> = sections.iter().map(|s| s.symbol.kind()).collect();
         assert_eq!(
-            kinds,
-            vec![Kind::Bracket, Kind::Line, Kind::Square, Kind::Bracket],
-            "the last is P17's, which declared nothing and took the default"
+            sections.iter().map(|s| s.symbol.kind()).collect::<Vec<_>>(),
+            vec![Kind::Bracket, Kind::Square],
         );
 
-        let drawn: Vec<_> = sections.iter().map(|s| s.shows_symbol()).collect();
-        assert_eq!(
-            drawn,
-            vec![true, true, true, false],
-            "P17's section holds one part-group, so it binds nothing"
-        );
-
-        // Section 1's first group asks for `none` outright, and its four horns
-        // make it the one group large enough to draw that still draws nothing.
-        let horns = sections[1].part_groups.values().next().unwrap();
-        assert_eq!(horns.parts.len(), 4);
-        assert_eq!(horns.symbol.kind(), Kind::None);
-        assert!(!horns.shows_symbol());
-
-        // Section 0's last group is the lone bassoon, which the builder gives a
-        // part-group of its own -- one part, so nothing to bind.
-        let bassoon = sections[0].part_groups.values().last().unwrap();
-        assert_eq!(bassoon.parts.len(), 1);
-        assert!(!bassoon.shows_symbol());
-
-        // Every shape reaches the tree somewhere.
-        let group_kinds: Vec<_> = sections
+        let groups: Vec<_> = sections
             .iter()
             .flat_map(|s| s.part_groups.values())
             .map(|g| g.symbol.kind())
             .collect();
-        for expected in [Kind::Square, Kind::Brace, Kind::None, Kind::Line] {
-            assert!(
-                group_kinds.contains(&expected),
-                "no part-group resolved to {expected}: {group_kinds:?}"
-            );
-        }
-    }
+        assert_eq!(
+            groups,
+            vec![Kind::Brace, Kind::Line, Kind::Brace, Kind::None],
+        );
 
-    /// A multi-staff part draws a symbol of its own, inside whatever its group
-    /// draws. MusicXML has no `<group-symbol>` for a part, so all four of the
-    /// fixture's multi-staff parts take the app default.
-    #[test]
-    fn multi_staff_parts_draw_their_own_symbol() {
-        let score = engrave(&asset(GROUP_SYMBOLS));
-
-        let parts: Vec<_> = score
-            .pages
-            .values()
-            .flat_map(|page| page.systems.values())
-            .flat_map(|system| system.sections.values())
-            .flat_map(|section| section.part_groups.values())
-            .flat_map(|group| group.parts.iter())
-            .collect();
-
-        let drawing: Vec<&str> = parts
+        // MusicXML has no <group-symbol> for a part, so both multi-staff parts
+        // take the app default.
+        let drawing: Vec<&str> = sections
             .iter()
+            .flat_map(|s| s.part_groups.values())
+            .flat_map(|g| g.parts.iter())
             .filter(|(_, part)| part.shows_symbol())
             .map(|(id, _)| id.as_str())
             .collect();
-
-        assert_eq!(
-            drawing,
-            vec!["P12", "P13", "P14", "P15"],
-            "the trombone, organ, celesta and harp are the multi-staff parts"
-        );
-
-        for (_, part) in parts.iter().filter(|(_, p)| p.shows_symbol()) {
-            assert_eq!(part.symbol.kind(), Kind::Brace);
-        }
+        assert_eq!(drawing, vec!["P1", "P5"], "the organ and the harp");
     }
 }
