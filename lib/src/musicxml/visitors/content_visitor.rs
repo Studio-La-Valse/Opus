@@ -71,6 +71,11 @@ impl ContentVisitor {
         let part_id = ctx.cursor.part_id.as_str();
         let size = note_scale(ctx);
 
+        // A rest is centred on the middle of its own staff, which is the single
+        // line of a one-line percussion staff, not the middle of a notional
+        // five-line one.
+        let center_line = Rest::center_line(ctx.cursor.staff.lines(&staff_idx));
+
         let staff_measure = ctx
             .visual_score
             .locate_staff_measure_mut(part_id, &staff_idx, measure_number)
@@ -82,15 +87,7 @@ impl ContentVisitor {
 
         let mut rest = if is_measure {
             let glyph = ctx.font.rest(BaseDuration::Whole.rest_glyph());
-            Rest::new(
-                glyph,
-                is_measure,
-                None,
-                staff_idx,
-                Rest::CENTER_STAFF_LINE,
-                size,
-                dots,
-            )
+            Rest::new(glyph, is_measure, None, staff_idx, center_line, size, dots)
         } else {
             let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
             let glyph = ctx.font.rest(dur.rest_glyph());
@@ -100,7 +97,7 @@ impl ContentVisitor {
                 is_measure,
                 Some(default_x),
                 staff_idx,
-                Rest::CENTER_STAFF_LINE,
+                center_line,
                 size,
                 dots,
             )

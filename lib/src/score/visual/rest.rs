@@ -42,9 +42,14 @@ pub struct Rest {
 }
 
 impl Rest {
-    /// Staff-line index of the middle line of a five-line staff, where rests are
-    /// vertically centred by default.
-    pub const CENTER_STAFF_LINE: i32 = 4;
+    /// Half-space index, from the top line, of the line a rest is vertically
+    /// centred on: the middle of the staff it sits on. For the usual five lines
+    /// that is the middle line (index 4); for a one-line percussion or rhythm
+    /// staff it is that single line (index 0), not twenty tenths below where a
+    /// five-line staff's middle would have been.
+    pub fn center_line(staff_lines: usize) -> i32 {
+        staff_lines.saturating_sub(1) as i32
+    }
 
     pub fn new(
         glyph: SmuflRest,

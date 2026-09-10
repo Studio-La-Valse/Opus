@@ -344,4 +344,61 @@ mod tests {
         assert_eq!(ledger_count(&score), 0);
         assert!(rendered_lines(staff(&score)).is_empty());
     }
+
+    /// A rest is centred on the middle of its own staff. On a one-line
+    /// percussion staff that is the single line itself, not twenty tenths below
+    /// where a five-line staff's middle would have been.
+    #[test]
+    fn a_measure_rest_on_a_one_line_staff_sits_on_the_line() {
+        let score = engrave(&score_xml_with_clef(
+            "<clef><sign>percussion</sign></clef>",
+            "<staff-details><staff-lines>1</staff-lines></staff-details>",
+            "<note><rest measure=\"yes\"/><duration>16</duration><voice>1</voice></note>",
+        ));
+
+        let staff = staff(&score);
+        assert_eq!(staff.lines, 1);
+
+        let rest = staff
+            .measures
+            .values()
+            .next()
+            .and_then(|measure| measure.rests.first())
+            .expect("the staff measure has a rest");
+
+        assert_eq!(
+            rest.staff_line, 0,
+            "centred on the single line, not a five-line staff's middle",
+        );
+        assert!(
+            (rest.xy.y - staff.xy.y).abs() < 0.01,
+            "the rest glyph origin sits on the staff line ({} vs {})",
+            rest.xy.y,
+            staff.xy.y,
+        );
+    }
+
+    /// The common case is untouched: a rest on a five-line staff is still
+    /// centred on its middle line, two spaces down from the top.
+    #[test]
+    fn a_rest_on_a_five_line_staff_is_still_centred_on_the_middle_line() {
+        let score = engrave(&score_xml(
+            "",
+            "<note><rest measure=\"yes\"/><duration>16</duration><voice>1</voice></note>",
+        ));
+
+        let staff = staff(&score);
+        let rest = staff
+            .measures
+            .values()
+            .next()
+            .and_then(|measure| measure.rests.first())
+            .expect("the staff measure has a rest");
+
+        assert_eq!(rest.staff_line, 4);
+        assert!(
+            (rest.xy.y - staff.xy.y - 2. * Staff::DEFAULT_SPACE_SIZE).abs() < 0.01,
+            "two spaces below the top line",
+        );
+    }
 }
