@@ -13,16 +13,19 @@ mod tests {
     use lib::geometry::xy::XY;
     use lib::score::app_defaults::AppDefaults;
     use lib::score::core::group_symbol::{GroupLevel, GroupSymbol as Kind};
+    use lib::score::engrave::{arrange_score, walk_document};
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
     use lib::score::visual::layoutable::{LayoutParams, Layoutable};
     use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::{BaseRenderer, RenderPass};
+    use lib::score::visual::score::Score;
     use lib::smufl::smufl_font::SmuflFont;
     use std::fs::read_to_string;
     use std::sync::OnceLock;
 
+    const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
     const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
@@ -79,6 +82,76 @@ mod tests {
         symbol.arrange(&ORIGIN);
 
         symbol
+    }
+
+    /// A minimal `<score-partwise>` around `part_list`, with a one-note measure
+    /// for each of `parts` so the walk has something to lay out.
+    fn score_with_part_list(part_list: &str, parts: &[&str]) -> String {
+        let bodies: String = parts
+            .iter()
+            .map(|id| {
+                format!(
+                    "<part id=\"{id}\"><measure number=\"1\" width=\"300\">\
+                     <print new-system=\"yes\"/>\
+                     <attributes><divisions>4</divisions>\
+                     <key><fifths>0</fifths><mode>major</mode></key>\
+                     <time><beats>4</beats><beat-type>4</beat-type></time>\
+                     <clef><sign>G</sign><line>2</line></clef></attributes>\
+                     <note default-x=\"80\"><pitch><step>C</step><octave>5</octave></pitch>\
+                     <duration>16</duration><voice>1</voice><type>whole</type></note>\
+                     </measure></part>"
+                )
+            })
+            .collect();
+
+        format!(
+            "<score-partwise version=\"4.0\"><part-list>{part_list}</part-list>{bodies}\
+             </score-partwise>"
+        )
+    }
+
+    fn walk(
+        xml: &str,
+    ) -> (
+        Score,
+        ScoreDefaults,
+        Vec<lib::musicxml::validation_issue::ValidationIssue>,
+    ) {
+        let document = roxmltree::Document::parse_with_options(
+            xml,
+            roxmltree::ParsingOptions {
+                allow_dtd: true,
+                ..Default::default()
+            },
+        )
+        .expect("test document does not parse");
+
+        walk_document(
+            &document,
+            font(),
+            &UserLayout::default(),
+            &AppDefaults::default(),
+            &mut |_stage| {},
+        )
+    }
+
+    fn arrange(score: &mut Score, defaults: &ScoreDefaults, user_layout: &UserLayout) {
+        arrange_score(
+            score,
+            defaults,
+            font(),
+            user_layout,
+            &AppDefaults::default(),
+            &mut |_stage| {},
+        );
+    }
+
+    /// A fully engraved score, laid out with no overrides at all -- so what a
+    /// symbol resolves to is what the document asked for.
+    fn engrave(xml: &str) -> Score {
+        let (mut score, defaults, _) = walk(xml);
+        arrange(&mut score, &defaults, &UserLayout::default());
+        score
     }
 
     fn drawables(symbol: &GroupSymbol) -> Vec<DrawableElement<'static>> {
@@ -414,5 +487,125 @@ mod tests {
             Kind::None,
             "an explicit 'none' is a declaration, not an absence"
         );
+    }
+
+    // ---------------------------------------------------------- the document
+
+    /// `lookup` collects the symbols of the levels it descends past, because a
+    /// part knows its section's *index* but nothing about the node that index
+    /// came from.
+    #[test]
+    fn a_part_reports_the_symbols_of_the_levels_enclosing_it() {
+        let defaults = walk(&asset(ACTOR_PRELUDE)).1;
+
+        // P8 is a horn: inside the braced "Horns in F" pair, inside the
+        // bracketed brass section.
+        let horn = defaults.lookup("P8").expect("P8 is in the part-list");
+        assert_eq!(horn.section_symbol, Some(Kind::Bracket));
+        assert_eq!(horn.part_group_symbol, Some(Kind::Brace));
+
+        // P13 is the tuba, which sits directly in that section with no group of
+        // its own between it and the bracket.
+        let tuba = defaults.lookup("P13").expect("P13 is in the part-list");
+        assert_eq!(tuba.section_symbol, Some(Kind::Bracket));
+        assert_eq!(
+            tuba.part_group_symbol, None,
+            "no <part-group> encloses the tuba, so nothing declared a symbol"
+        );
+    }
+
+    /// A part written at the top level of a `<part-list>` is given a section
+    /// index of its own, but there is no `<part-group>` behind that index to
+    /// have declared anything. The index must not carry the previous section's
+    /// symbol with it.
+    #[test]
+    fn a_top_level_part_declares_no_symbols() {
+        let xml = score_with_part_list(
+            r#"<part-group type="start"><group-symbol>bracket</group-symbol></part-group>
+               <score-part id="P1"><part-name>Violin</part-name></score-part>
+               <part-group type="stop"/>
+               <score-part id="P2"><part-name>Timpani</part-name></score-part>"#,
+            &["P1", "P2"],
+        );
+        let defaults = walk(&xml).1;
+
+        assert_eq!(
+            defaults.lookup("P1").unwrap().section_symbol,
+            Some(Kind::Bracket)
+        );
+
+        let loose = defaults.lookup("P2").unwrap();
+        assert_eq!(loose.section_symbol, None, "nothing encloses this part");
+        assert_eq!(loose.part_group_symbol, None);
+    }
+
+    /// End to end: what a `<part-group>` asks for is what the visual tree gets.
+    #[test]
+    fn the_visual_tree_draws_what_the_document_asked_for() {
+        let xml = score_with_part_list(
+            r#"<part-group type="start"><group-symbol>line</group-symbol></part-group>
+               <part-group type="start"><group-symbol>square</group-symbol></part-group>
+               <score-part id="P1"><part-name>Violin I</part-name></score-part>
+               <score-part id="P2"><part-name>Violin II</part-name></score-part>
+               <part-group type="stop"/>
+               <part-group type="stop"/>"#,
+            &["P1", "P2"],
+        );
+
+        let score = engrave(&xml);
+        let section = score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .next()
+            .expect("the score has a section");
+
+        assert_eq!(
+            section.symbol.kind(),
+            Kind::Line,
+            "the outer group asked for a line"
+        );
+
+        let group = section.part_groups.values().next().expect("a part-group");
+        assert_eq!(
+            group.symbol.kind(),
+            Kind::Square,
+            "the inner group asked for a square"
+        );
+    }
+
+    /// The override still wins over what the document declared, on a real walked
+    /// score rather than a hand-built symbol.
+    #[test]
+    fn an_override_replaces_the_documents_symbols_throughout() {
+        let xml = score_with_part_list(
+            r#"<part-group type="start"><group-symbol>brace</group-symbol></part-group>
+               <score-part id="P1"><part-name>Violin I</part-name></score-part>
+               <score-part id="P2"><part-name>Violin II</part-name></score-part>
+               <part-group type="stop"/>"#,
+            &["P1", "P2"],
+        );
+
+        let (mut score, defaults, _) = walk(&xml);
+        arrange(
+            &mut score,
+            &defaults,
+            &UserLayout {
+                section_symbol: Some(Kind::None),
+                ..Default::default()
+            },
+        );
+
+        let section = score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .next()
+            .expect("the score has a section");
+
+        assert_eq!(section.symbol.kind(), Kind::None);
+        assert!(!section.shows_symbol(), "nothing is drawn for it");
     }
 }
