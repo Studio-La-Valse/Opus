@@ -327,4 +327,39 @@ mod tests {
         assert!(!group.shows_name(), "a group of one is not a group");
         assert!(!group.shows_symbol());
     }
+
+    /// A one-line percussion staff is zero tenths tall, so the name's vertical
+    /// span is legitimately zero -- but the staff is still drawn (as a single
+    /// line, with a barline overhang) and its name still belongs beside it.
+    /// Regression: `is_drawn` used to require a positive span and dropped the
+    /// name of every percussion instrument.
+    #[test]
+    fn a_single_line_percussion_staff_still_draws_its_name() {
+        let xml = r#"<score-partwise version="4.0">
+            <part-list>
+                <score-part id="P1"><part-name>Snare Drum</part-name></score-part>
+            </part-list>
+            <part id="P1"><measure number="1" width="300">
+                <print new-system="yes"><system-layout><system-margins>
+                    <left-margin>150</left-margin><right-margin>0</right-margin>
+                </system-margins></system-layout></print>
+                <attributes><divisions>1</divisions>
+                    <time><beats>4</beats><beat-type>4</beat-type></time>
+                    <clef><sign>percussion</sign></clef>
+                    <staff-details><staff-lines>1</staff-lines></staff-details>
+                </attributes>
+                <note><rest measure="yes"/><duration>4</duration><voice>1</voice></note>
+            </measure></part>
+        </score-partwise>"#;
+
+        let score = engrave(xml);
+        let snare = part(system(&score, 1), "P1");
+
+        assert_eq!(snare.name.text(), "Snare Drum");
+        assert_eq!(snare.name.bounds().height(), 0., "a one-line staff is flat");
+        assert!(
+            snare.shows_name(),
+            "a flat staff is still a staff, and still gets its name",
+        );
+    }
 }

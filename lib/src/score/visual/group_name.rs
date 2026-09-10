@@ -91,10 +91,18 @@ impl GroupName {
         }
     }
 
-    /// Whether this name draws anything: it has a string to draw, and staves to
-    /// centre it against.
+    /// Whether this name has anything to draw: a non-empty string. Whether
+    /// there are staves for it to sit beside is the caller's question --
+    /// [`Part::shows_name`](crate::score::visual::part::Part) and
+    /// [`PartGroup::shows_name`](crate::score::visual::part_group::PartGroup)
+    /// both gate on the visible-staff count -- and it is deliberately not asked
+    /// here: a one-line percussion staff is zero tenths tall, so [`span`] is
+    /// legitimately zero for it, and the name still belongs centred on that
+    /// line.
+    ///
+    /// [`span`]: Self::span
     pub fn is_drawn(&self) -> bool {
-        !self.text().is_empty() && self.span > 0.
+        !self.text().is_empty()
     }
 
     /// Resolves the name's appearance from `params`: colour, size, padding, and
