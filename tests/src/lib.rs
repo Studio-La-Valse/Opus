@@ -19,6 +19,7 @@ mod test_part_list;
 mod test_pdf;
 mod test_ray;
 mod test_render_paths;
+mod test_resolve_layout;
 mod test_scale;
 mod test_staff_details_validation;
 mod test_staff_lines;

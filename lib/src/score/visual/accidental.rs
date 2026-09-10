@@ -147,7 +147,7 @@ impl Accidental {
     }
 }
 
-impl Accidental {
+impl Layoutable for Accidental {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
@@ -159,12 +159,8 @@ impl Accidental {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
-}
 
-impl Layoutable for Accidental {
-    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
+    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
         let glyph = &self.glyph;
         let bbox = self.glyph_bbox(&glyph.bbox);
 

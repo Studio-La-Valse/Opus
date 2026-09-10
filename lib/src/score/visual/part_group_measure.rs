@@ -9,6 +9,8 @@ pub struct PartGroupMeasure {
 }
 
 impl Layoutable for PartGroupMeasure {
+    fn resolve_layout(&mut self, _params: LayoutParams<'_>) {}
+
     fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
     }

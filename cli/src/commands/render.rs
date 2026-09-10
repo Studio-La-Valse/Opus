@@ -260,6 +260,7 @@ pub fn run(format: RenderCommand) {
                     println!("Second read pass: walking doc tree for content: {elapsed}ms")
                 }
                 Stage::Rebeam => println!("Rebeaming: {elapsed}ms"),
+                Stage::ResolveLayout => println!("Resolving layout: {elapsed}ms"),
                 Stage::LayoutPass => println!("Layout pass: {elapsed}ms"),
             }
         },

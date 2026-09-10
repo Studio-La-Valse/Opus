@@ -133,9 +133,17 @@ impl LayoutParams<'_> {
 }
 
 pub trait Layoutable {
-    /// Resolves this element's appearance from `params` and sizes it (and its
-    /// children). This is the single downward pass that used to be a separate
-    /// `apply_layout` walk followed by a size-only `measure` walk.
+    /// Resolves this element's appearance from `params` -- colour, thickness,
+    /// which glyph it draws -- and recurses into every child `measure` forwards
+    /// to. Its own downward pass, ahead of `measure`, so that an element's
+    /// appearance is settled from the top of the tree down before any element is
+    /// sized; see [`arrange_score`](crate::score::engrave::arrange_score).
+    fn resolve_layout(&mut self, params: LayoutParams<'_>);
+
+    /// Sizes this element and its children against `available`. Appearance is
+    /// already resolved by this point -- see
+    /// [`resolve_layout`](Layoutable::resolve_layout) -- so this pass is sizing
+    /// only.
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>);
 
     fn arrange(&mut self, origin: &XY);

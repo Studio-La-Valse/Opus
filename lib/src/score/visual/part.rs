@@ -255,6 +255,21 @@ impl Part {
     }
 }
 impl Layoutable for Part {
+    /// Recurses into every child unconditionally, a hidden part included: it
+    /// still has a colour and a symbol to resolve, even though `measure` will
+    /// leave its size at zero and nothing ends up drawing them.
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        for staff in self.staves.values_mut() {
+            staff.resolve_layout(params);
+        }
+
+        for measure in self.measures.values_mut() {
+            measure.resolve_layout(params);
+        }
+
+        self.symbol.resolve_layout(params);
+    }
+
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;

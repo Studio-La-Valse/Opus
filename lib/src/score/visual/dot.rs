@@ -15,7 +15,7 @@ pub struct Dot {
     /// [`NoteScale`], so a grace note's dots shrink with it.
     pub size: NoteScale,
     /// The factor `size` resolved to, written by `resolve_layout` and so only
-    /// meaningful after `measure`.
+    /// meaningful once that pass has run.
     pub scale: f32,
 
     pub color: Color,
@@ -39,7 +39,7 @@ impl Dot {
     }
 }
 
-impl Dot {
+impl Layoutable for Dot {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
@@ -55,12 +55,8 @@ impl Dot {
             .unwrap_or(app_defaults.foreground_color);
         self.radius = user_layout.dot_radius.unwrap_or(app_defaults.dot_radius) * self.scale;
     }
-}
 
-impl Layoutable for Dot {
-    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-    }
+    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {}
 
     /// `origin` is the fully-resolved centre of this dot, worked out by the
     /// owning note or rest.

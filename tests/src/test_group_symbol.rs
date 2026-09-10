@@ -68,17 +68,19 @@ mod tests {
         let app_defaults = AppDefaults::default();
 
         let mut symbol = GroupSymbol::new(level, None);
+        let params = LayoutParams {
+            score_defaults: &score_defaults,
+            user_layout: &user_layout,
+            app_defaults: &app_defaults,
+            font: font(),
+        };
+        symbol.resolve_layout(params);
         symbol.measure(
             &XY {
                 x: f32::INFINITY,
                 y: span,
             },
-            LayoutParams {
-                score_defaults: &score_defaults,
-                user_layout: &user_layout,
-                app_defaults: &app_defaults,
-                font: font(),
-            },
+            params,
         );
         symbol.arrange(&ORIGIN);
 
@@ -407,17 +409,19 @@ mod tests {
         let mut symbol = GroupSymbol::new(GroupLevel::Section, None);
 
         let lay_out = |symbol: &mut GroupSymbol, user_layout: &UserLayout| {
+            let params = LayoutParams {
+                score_defaults: &score_defaults,
+                user_layout,
+                app_defaults: &app_defaults,
+                font: font(),
+            };
+            symbol.resolve_layout(params);
             symbol.measure(
                 &XY {
                     x: f32::INFINITY,
                     y: SPAN,
                 },
-                LayoutParams {
-                    score_defaults: &score_defaults,
-                    user_layout,
-                    app_defaults: &app_defaults,
-                    font: font(),
-                },
+                params,
             );
             symbol.arrange(&ORIGIN);
         };
@@ -452,17 +456,19 @@ mod tests {
                 ..Default::default()
             };
             let mut symbol = GroupSymbol::new(GroupLevel::Section, declared);
+            let params = LayoutParams {
+                score_defaults: &score_defaults,
+                user_layout: &user_layout,
+                app_defaults: &app_defaults,
+                font: font(),
+            };
+            symbol.resolve_layout(params);
             symbol.measure(
                 &XY {
                     x: f32::INFINITY,
                     y: SPAN,
                 },
-                LayoutParams {
-                    score_defaults: &score_defaults,
-                    user_layout: &user_layout,
-                    app_defaults: &app_defaults,
-                    font: font(),
-                },
+                params,
             );
             symbol.kind()
         };

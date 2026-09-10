@@ -234,7 +234,7 @@ impl PartMeasure {
 }
 
 impl PartMeasure {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
@@ -262,13 +262,15 @@ impl PartMeasure {
         // Resolved through `note_size` like every other part of a grace note,
         // so its beams are reduced by exactly what its noteheads were.
         self.note_size_grace = params.note_size(NoteKind::Grace);
+
+        for chord in self.chords.values_mut().flatten() {
+            chord.resolve_layout(params);
+        }
     }
 }
 
 impl PartMeasure {
     pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         self.height = available.y;
 
         for chord in self.chords.values_mut().flatten() {

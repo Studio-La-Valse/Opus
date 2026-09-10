@@ -161,32 +161,6 @@ impl GroupSymbol {
         self.kind != Kind::None && self.span > 0.
     }
 
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
-        let LayoutParams {
-            user_layout,
-            app_defaults,
-            font,
-            ..
-        } = params;
-
-        self.kind = params.group_symbol(self.level, self.declared);
-        self.gap = params.group_symbol_gap(self.level);
-        self.thickness = params.group_symbol_thickness(self.kind);
-        self.arm = params.group_square_arm();
-
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
-
-        // Read here rather than at construction: the walk that builds the tree
-        // runs once, and the shape can change between two renders of it.
-        self.glyphs = match self.kind {
-            Kind::Brace => Glyphs::Brace(font.brace(None)),
-            Kind::Bracket => Glyphs::Bracket(font.bracket_top(), font.bracket_bottom()),
-            Kind::None | Kind::Line | Kind::Square => Glyphs::None,
-        };
-    }
-
     /// A filled rectangle in this symbol's colour.
     fn filled(&self, xy: XY, width: f32, height: f32) -> Rect {
         Rect {
@@ -346,11 +320,36 @@ fn stroke_box(rect: &Rect) -> BoundingBox {
 }
 
 impl Layoutable for GroupSymbol {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        let LayoutParams {
+            user_layout,
+            app_defaults,
+            font,
+            ..
+        } = params;
+
+        self.kind = params.group_symbol(self.level, self.declared);
+        self.gap = params.group_symbol_gap(self.level);
+        self.thickness = params.group_symbol_thickness(self.kind);
+        self.arm = params.group_square_arm();
+
+        self.color = user_layout
+            .foreground_color
+            .unwrap_or(app_defaults.foreground_color);
+
+        // Read here rather than at construction: the walk that builds the tree
+        // runs once, and the shape can change between two renders of it.
+        self.glyphs = match self.kind {
+            Kind::Brace => Glyphs::Brace(font.brace(None)),
+            Kind::Bracket => Glyphs::Bracket(font.bracket_top(), font.bracket_bottom()),
+            Kind::None | Kind::Line | Kind::Square => Glyphs::None,
+        };
+    }
+
     /// `available.y` is how tall a run of staves this symbol binds; `available.x`
     /// is ignored, because a symbol's width follows from its shape rather than
     /// being granted to it.
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
+    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.span = available.y.max(0.);
     }
 

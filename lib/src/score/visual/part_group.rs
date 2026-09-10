@@ -154,6 +154,18 @@ impl PartGroup {
     }
 }
 impl Layoutable for PartGroup {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        for part in self.parts.values_mut() {
+            part.resolve_layout(params);
+        }
+
+        for measure in self.measures.values_mut() {
+            measure.resolve_layout(params);
+        }
+
+        self.symbol.resolve_layout(params);
+    }
+
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;

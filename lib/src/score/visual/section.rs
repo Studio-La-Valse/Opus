@@ -144,6 +144,18 @@ impl Section {
     }
 }
 impl Layoutable for Section {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        for pg in self.part_groups.values_mut() {
+            pg.resolve_layout(params);
+        }
+
+        for measure in self.measures.values_mut() {
+            measure.resolve_layout(params);
+        }
+
+        self.symbol.resolve_layout(params);
+    }
+
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;

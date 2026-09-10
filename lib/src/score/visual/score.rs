@@ -140,6 +140,15 @@ impl Score {
         }
     }
 
+    /// Resolves every page's appearance from `params`. Run once over the whole
+    /// tree ahead of [`measure`](Score::measure) -- see
+    /// [`arrange_score`](crate::score::engrave::arrange_score).
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        for page in self.pages.values_mut() {
+            page.resolve_layout(params);
+        }
+    }
+
     /// Sizes every page. Page *placement* is a separate pass -- see
     /// [`LayoutEngine::arrange_pages`](crate::score::visual::layout_engine::LayoutEngine::arrange_pages),
     /// which is why `Score` has no `arrange`.

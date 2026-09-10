@@ -64,7 +64,7 @@ impl Clef {
     }
 }
 
-impl Clef {
+impl Layoutable for Clef {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
@@ -76,12 +76,8 @@ impl Clef {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
-}
 
-impl Layoutable for Clef {
-    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
+    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
         self.measure_size();
     }
 

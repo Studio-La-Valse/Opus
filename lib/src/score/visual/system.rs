@@ -198,7 +198,7 @@ impl System {
     }
 }
 
-impl System {
+impl Layoutable for System {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
@@ -220,13 +220,17 @@ impl System {
             .staff
             .or(score_defaults.appearance.staff)
             .unwrap_or(app_defaults.staff_line_thickness);
+
+        for section in self.sections.values_mut() {
+            section.resolve_layout(params);
+        }
+
+        for measure in self.measures.values_mut() {
+            measure.resolve_layout(params);
+        }
     }
-}
 
-impl Layoutable for System {
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         self.width = 0.;
         self.height = 0.;
 
