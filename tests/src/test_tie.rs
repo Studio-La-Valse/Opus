@@ -2,6 +2,7 @@
 mod tests {
     use std::collections::HashMap;
     use std::fs::read_to_string;
+    use std::sync::OnceLock;
 
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
@@ -27,6 +28,11 @@ mod tests {
             .unwrap_or_else(|e| panic!("failed to read {relative}: {e}"))
     }
 
+    fn font() -> &'static SmuflFont {
+        static FONT: OnceLock<SmuflFont> = OnceLock::new();
+        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES)))
+    }
+
     fn metrics() -> TieMetrics {
         let score_defaults = ScoreDefaults::default();
         let user_layout = UserLayout::default();
@@ -36,6 +42,7 @@ mod tests {
             score_defaults: &score_defaults,
             user_layout: &user_layout,
             app_defaults: &app_defaults,
+            font: font(),
         })
     }
 
@@ -447,7 +454,6 @@ mod tests {
 
     fn engrave_actor_prelude() -> lib::score::engrave::EngravedScore {
         let musicxml = fixture(ACTOR_PRELUDE);
-        let font = SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES));
         let document = roxmltree::Document::parse_with_options(
             &musicxml,
             roxmltree::ParsingOptions {
@@ -459,7 +465,7 @@ mod tests {
 
         engrave(
             &document,
-            &font,
+            font(),
             &UserLayout::default(),
             &AppDefaults::default(),
             &mut |_| {},
@@ -545,6 +551,7 @@ mod tests {
         lib::score::engrave::arrange_score(
             &mut engraved.score,
             &engraved.layout,
+            font(),
             &UserLayout::default(),
             &AppDefaults::default(),
             &mut |_| {},

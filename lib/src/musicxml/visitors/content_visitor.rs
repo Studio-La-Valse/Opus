@@ -391,16 +391,12 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
 
         let part_id = ctx.cursor.part_id.clone();
         let assignment = ctx.layout.lookup(&part_id).unwrap();
-        let section_number = assignment.section;
-        let part_group_number = assignment.part_group;
 
         // get or create page -> system -> section -> part group -> part
         let part = ctx.visual_score.locate_or_create_part(
-            ctx.font,
             page_number,
             system_index,
-            section_number,
-            part_group_number,
+            &assignment,
             &part_id,
         );
 

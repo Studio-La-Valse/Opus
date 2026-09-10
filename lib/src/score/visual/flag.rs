@@ -14,7 +14,7 @@ pub struct Flag {
     /// stem it hangs off.
     pub size: NoteScale,
     /// The factor `size` resolved to, written by `resolve_layout` and so only
-    /// meaningful after `measure`.
+    /// meaningful once that pass has run.
     pub scale: f32,
 
     pub color: Color,
@@ -72,7 +72,7 @@ impl Flag {
     }
 }
 
-impl Flag {
+impl Layoutable for Flag {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
@@ -86,12 +86,8 @@ impl Flag {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
-}
 
-impl Layoutable for Flag {
-    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
+    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
         self.measure_size();
     }
 

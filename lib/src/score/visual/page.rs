@@ -88,12 +88,13 @@ impl Page {
     }
 }
 
-impl Page {
+impl Layoutable for Page {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         let page = score_defaults.resolve_page(self.number);
@@ -104,13 +105,13 @@ impl Page {
         self.foreground = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+
+        for system in self.systems.values_mut() {
+            system.resolve_layout(params);
+        }
     }
-}
 
-impl Layoutable for Page {
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         for system in self.systems.values_mut() {
             system.measure(available, params);
         }

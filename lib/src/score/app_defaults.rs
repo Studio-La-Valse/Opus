@@ -1,4 +1,5 @@
 ﻿use crate::geometry::color::Color;
+use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::page_orientation::PageOrientation;
 
 pub struct AppDefaults {
@@ -56,6 +57,61 @@ pub struct AppDefaults {
     /// end of its measure.
     pub tie_break_fragment: f32,
 
+    /// What binds a section's part-groups together when the document's
+    /// `<part-group>` names no `<group-symbol>`. A section is the outermost of
+    /// the three, so it gets the outermost symbol.
+    pub section_symbol: GroupSymbol,
+    /// What binds a part-group's parts together, absent a `<group-symbol>`.
+    pub part_group_symbol: GroupSymbol,
+    /// What binds one part's own staves together. MusicXML declares this in
+    /// `<attributes><part-symbol>`, which nothing reads yet, so today this is
+    /// always what a multi-staff part gets.
+    pub part_symbol: GroupSymbol,
+
+    /// Distance in tenths from the system's left edge to the right edge of a
+    /// section symbol's vertical stroke.
+    ///
+    /// A section's symbol is the innermost of the three, so this one is
+    /// measured from the system itself. The other two are measured from
+    /// whatever is already there.
+    ///
+    /// A bracket's tips flare rightward past its own stroke -- that is how
+    /// SMuFL draws them -- so its ink reaches nearer the staff than the gap
+    /// suggests, and may cross it.
+    pub section_symbol_gap: f32,
+    /// Padding in tenths between the left edge of what a section drew and the
+    /// right edge of a part-group's symbol inside it.
+    ///
+    /// Padding rather than a distance from the system, because a fixed ladder
+    /// of distances cannot hold: a brace's width follows the span it covers, so
+    /// a tall part-group's symbol is far wider than a short one's and would
+    /// eventually reach under the section symbol outside it.
+    pub part_group_symbol_gap: f32,
+    /// Padding in tenths between the left edge of what a part-group drew and
+    /// the right edge of the symbol joining one part's own staves. As
+    /// [`Self::part_group_symbol_gap`], measured from what is already there.
+    pub part_symbol_gap: f32,
+
+    /// Thickness in tenths of a bracket's vertical stroke. Bravura's
+    /// `engravingDefaults.bracketThickness` is 0.5 staff spaces, and one space
+    /// is [`Staff::DEFAULT_SPACE_SIZE`](crate::score::visual::staff::Staff) = 10
+    /// tenths. Quoted rather than read, for the reason the `tie_*` values are.
+    ///
+    /// The bracket's tip glyphs are scaled to match, so a thicker stroke keeps
+    /// serifs in proportion to it.
+    pub group_bracket_thickness: f32,
+    /// Thickness in tenths of a `line` symbol. Bravura's `subBracketThickness`,
+    /// 0.16 staff spaces -- the weight SMuFL documents for the vertical line
+    /// grouping staves of one instrument, which is what `line` is for.
+    pub group_line_thickness: f32,
+    /// Thickness in tenths of a `square` symbol's stroke, spine and arms alike.
+    /// Bracket weight, since a square is a bracket with corners rather than
+    /// serifs; SMuFL defines no glyph or figure of its own for it.
+    pub group_square_thickness: f32,
+    /// How far in tenths a `square` symbol's arms reach toward the system,
+    /// measured from the right edge of its spine. One staff space.
+    pub group_square_arm: f32,
+
     /// Default font family for titles / work-level text. A generic CSS family so
     /// both a browser and a system font database can resolve it.
     pub title_font: String,
@@ -91,6 +147,18 @@ impl Default for AppDefaults {
             tie_vertical_offset: 5.,
             tie_break_inset: 10.,
             tie_break_fragment: 20.,
+
+            section_symbol: GroupSymbol::Bracket,
+            part_group_symbol: GroupSymbol::Brace,
+            part_symbol: GroupSymbol::Brace,
+            section_symbol_gap: 5.,
+            part_group_symbol_gap: 5.,
+            part_symbol_gap: 5.,
+            group_bracket_thickness: 5.,
+            group_line_thickness: 1.6,
+            group_square_thickness: 5.,
+            group_square_arm: 10.,
+
             title_font: "serif".to_string(),
             lyric_font: "serif".to_string(),
         }

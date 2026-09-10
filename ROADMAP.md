@@ -109,6 +109,13 @@ Defects in what is already built, not missing features.
   and `Clef::anchor_line` already takes it, which makes this the remaining
   five-line assumption in the render path. See also the indexing question in
   section 5.
+- **A section measures itself from its first part-group, not its first visible
+  one.** `Section::first_visible_staff_distance` reads
+  `part_groups.values().next()` unconditionally, while `PartGroup`'s version of
+  the same method skips hidden parts. A section whose first part-group is
+  entirely hidden therefore places its measures, its barline and its group
+  symbol against the wrong distance.
+
 - **Notes without pitch or default-x value are currently skipped altogether.** These
   notes have a valid musical purpose. Notes without default-x are difficult to handle
   without a custom layout engine, so validate and produce warnings when no default-x 
@@ -149,19 +156,47 @@ consecutive feature impact.
   whole `UserLayout` inside its `RenderOptions`, so whatever precedence the cli
   settles on has to be expressible there too.
 
-- **Different brace styles.** Now only a curly drawing; start with rectangular.
-  Read the type from the MusicXML document. Should be flexible in size as well,
-  like the bracket spine is. Also add support for the brace alternatives defined
-  in SMuFL. If feasible, add support for a user defined style: brace vs square
-  for part groups, etc.
+- **SMuFL brace alternatives.** `SmuflFont::brace` already takes an alternate
+  name and resolves its own box and advance through `glyphsWithAlternates`, but
+  nothing ever passes one, so Bravura's `braceSmall` / `braceLarge` /
+  `braceLarger` / `braceFlat` are unreachable. Exposing them wants a style enum
+  on `UserLayout` rather than a name: `UserLayout` derives `Copy` and so cannot
+  hold a `String`. The brace now scales from the glyph's own bounding box rather
+  than a nominal four staff spaces, so an alternate of a different height comes
+  out the right size with no further work.
+
+- **The rest of what a `<part-group>` says.** `<group-symbol default-x>` is the
+  document declaring how far from the system its symbol sits, and every real
+  sample carries one — ActorPrelude writes `-5` for its brackets and `-9` for
+  its braces, MozartTrio `-10`. Those are close enough to the gaps `AppDefaults`
+  now holds that nothing looks wrong, which is the only reason ignoring them has
+  been tolerable. `<group-barline>` is not read at all. And
+  `<attributes><part-symbol>` is the per-part group symbol: the `declared` slot
+  on a part's `GroupSymbol` exists for it and is always `None` until something
+  fills it. No sample in `assets/` uses one.
+
+- **Read SMuFL `engravingDefaults`.** `SmuflMetadata` deserializes glyph boxes,
+  advance widths, anchors and alternates, but not the `engravingDefaults` block,
+  so every thickness it defines is transcribed into `AppDefaults` by hand — see
+  the note on `tie_endpoint_thickness`, and the two group-symbol thicknesses
+  added with it. Wiring it up means a new resolution tier between
+  `ScoreDefaults.appearance` and `AppDefaults`.
+  
+  Doing so changes existing output, which is why it is not a free cleanup: four
+  of the transcribed values have drifted from Bravura's own —
+  `staff_line_thickness` is 1.1 against `staffLineThickness` 0.13 spaces (1.3),
+  `barline_light` 1.875 against `thinBarlineThickness` 0.16 (1.6),
+  `beam_spacing` 1.5 against `beamSpacing` 0.25 (2.5), and `stem_thickness` 1.0
+  against `stemThickness` 0.12 (1.2). The tie and beam thicknesses are faithful.
 
 - **Part group and part names drawn left of the brace or section bracket**, if
   one exists. This needs a part-name font type: `RenderFonts` currently carries
   music, title and lyric, so part names are the fourth — the lyric face is the
   pattern to copy, including its `AppDefaults` entry and its `UserLayout` / wasm
-  option. Include in this feature: support for user defined spacing of bracket
-  and brace left of systems. Sections should not have a (potential) name
-  attached.
+  option. Every group symbol now reports an exact `bounds()`, which is what a
+  name right-aligns against, and the spacing left of the system is already
+  `section_symbol_gap` and its two siblings. Sections should not have a
+  (potential) name attached.
 
 - **Generalize SMuFL parsing** from some point onwards: so far manageable in
   code, but defining thousands of SMuFL glyphs in code is undesirable.
@@ -234,6 +269,17 @@ Open questions. Each wants an answer written down, and the answer may be "no".
   centres the unpitched clefs, so the clef case is handled; what remains is the
   convention itself and the assumptions still riding on it — see the tie
   direction bug in section 2.
+
+- **Should a declared `<group-symbol>` beat the structural guard?** A group
+  symbol is drawn only when there is more than one thing for it to bind: more
+  than one part-group in a section, more than one part and more than one visible
+  staff in a part-group. So a document that explicitly writes
+  `<group-symbol>bracket</group-symbol>` around a single part gets nothing,
+  though MusicXML would allow it. The guard is what stops a one-part score
+  sprouting a bracket, since `locate_or_create_part` builds a section and a
+  part-group for every part whether the document named one or not — so removing
+  it outright is not the answer. Letting an explicit declaration override it
+  might be.
 
 - **Ties should only tie to next immediate note**. Should a tied note search for
   any note with the same NoteId, potentially skipping notes, or only tie if the

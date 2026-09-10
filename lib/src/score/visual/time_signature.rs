@@ -121,7 +121,7 @@ impl TimeSignature {
     }
 }
 
-impl TimeSignature {
+impl Layoutable for TimeSignature {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
@@ -133,12 +133,8 @@ impl TimeSignature {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
-}
 
-impl Layoutable for TimeSignature {
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
+    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
         self.measure_width();
     }

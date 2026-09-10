@@ -15,6 +15,12 @@ pub struct KeySignature {
 }
 
 impl Layoutable for KeySignature {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        for (_, accidental) in self.accidentals.iter_mut() {
+            accidental.resolve_layout(params);
+        }
+    }
+
     fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         for (_, accidental) in self.accidentals.iter_mut() {

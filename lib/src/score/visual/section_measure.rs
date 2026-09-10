@@ -12,12 +12,13 @@ pub struct SectionMeasure {
     pub line_width: f32,
 }
 
-impl SectionMeasure {
+impl Layoutable for SectionMeasure {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         self.color = user_layout
@@ -29,12 +30,8 @@ impl SectionMeasure {
             .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.barline_light)
     }
-}
 
-impl Layoutable for SectionMeasure {
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
+    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
     }
 

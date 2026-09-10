@@ -40,8 +40,6 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
 
         let part_id = ctx.cursor.part_id.clone();
         let assignment = ctx.layout.lookup(&part_id).unwrap();
-        let section_number = assignment.section;
-        let part_group_number = assignment.part_group;
 
         // get or create the system on the page, applying this measure's system layout
         let system = ctx
@@ -61,11 +59,9 @@ impl<'a> Visitor<WalkerCtx<'a>> for LayoutVisitor {
 
         // get or create section -> part group -> part below the system
         let part = ctx.visual_score.locate_or_create_part(
-            ctx.font,
             page_number,
             system_index,
-            section_number,
-            part_group_number,
+            &assignment,
             &part_id,
         );
         part.measures

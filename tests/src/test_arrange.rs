@@ -4,9 +4,9 @@
 
 #[cfg(test)]
 mod tests {
-    use lib::geometry::bounding_box::BoundingBox;
     use lib::geometry::xy::XY;
-    use lib::score::visual::brace::Brace;
+    use lib::score::core::group_symbol::GroupLevel;
+    use lib::score::visual::group_symbol::GroupSymbol;
     use lib::score::visual::layoutable::Layoutable;
     use lib::score::visual::part::Part;
     use lib::score::visual::part_group::PartGroup;
@@ -14,14 +14,11 @@ mod tests {
     use lib::score::visual::score::Score;
     use lib::score::visual::system::System;
     use lib::score::visual::system_measure::SystemMeasure;
-    use lib::smufl::glyphs::brace::Brace as SmuflBrace;
 
-    fn brace() -> Brace {
-        Brace::new(SmuflBrace {
-            codepoint: '\u{E000}',
-            bbox: BoundingBox::ZERO,
-            advance: 0.,
-        })
+    /// An unmeasured symbol: these tests are about where a container puts its
+    /// children, and a symbol that never measures draws nothing.
+    fn symbol(level: GroupLevel) -> GroupSymbol {
+        GroupSymbol::new(level, None)
     }
 
     /// Measures tile left to right, so each one starts where the previous one
@@ -49,7 +46,7 @@ mod tests {
 
     #[test]
     fn part_group_measures_are_laid_out_left_to_right() {
-        let mut group = PartGroup::new(brace());
+        let mut group = PartGroup::new(symbol(GroupLevel::PartGroup));
         for (number, width) in [(1u32, 40.), (2, 60.)] {
             let measure = PartGroupMeasure {
                 width,
@@ -70,7 +67,7 @@ mod tests {
     /// staff drift away from its own staff lines.
     #[test]
     fn staff_context_offsets_match_where_arrange_puts_the_staves() {
-        let mut part = Part::new(brace());
+        let mut part = Part::new(symbol(GroupLevel::Part));
         for idx in [1u32, 2, 3] {
             let staff = part.staff_or_insert(&idx.into());
             staff.distance_final = 80.;

@@ -1,4 +1,5 @@
 ﻿use crate::musicxml::utils::{NodeUtils, ReqParse};
+use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::part_list::tree::PartListNode;
 use roxmltree::Node;
 use std::collections::BTreeMap;
@@ -9,6 +10,14 @@ use std::collections::BTreeMap;
 pub struct ScorePart {
     pub section: u32,
     pub part_group: u32,
+
+    /// The `<group-symbol>` declared by the `<part-group>` this part's section
+    /// came from, and by the one its part-group came from. `None` where the
+    /// document named none, or where there is no such enclosing node at all --
+    /// a part written at the top level of a `<part-list>` still gets a section
+    /// index of its own, with nothing behind it to declare anything.
+    pub section_symbol: Option<GroupSymbol>,
+    pub part_group_symbol: Option<GroupSymbol>,
 }
 
 #[derive(Copy, Clone)]
@@ -202,8 +211,15 @@ impl ScoreDefaults {
     /// Finds a part's section/part-group assignment by id, searching the
     /// part-list tree directly -- a part-list is small enough that a linear
     /// walk costs nothing, so there's no need to also keep a flattened map.
+    ///
+    /// The symbols each enclosing level declared are collected on the way down,
+    /// which is why the descent carries them rather than the match reading them:
+    /// a part knows its section's index but nothing about the node that index
+    /// came from. A part written at the top level of a `<part-list>` still gets
+    /// a section index of its own, with no `<part-group>` behind it to have
+    /// declared anything, and comes back with both symbols absent.
     pub fn lookup(&self, part_id: &str) -> Option<ScorePart> {
-        fn find(nodes: &[PartListNode], part_id: &str) -> Option<ScorePart> {
+        fn find(nodes: &[PartListNode], part_id: &str, enclosing: ScorePart) -> Option<ScorePart> {
             for node in nodes {
                 match node {
                     PartListNode::Part {
@@ -215,11 +231,28 @@ impl ScoreDefaults {
                         return Some(ScorePart {
                             section: *section,
                             part_group: *part_group,
+                            ..enclosing
                         });
                     }
-                    PartListNode::Section { children, .. }
-                    | PartListNode::Group { children, .. } => {
-                        if let Some(found) = find(children, part_id) {
+                    PartListNode::Section {
+                        symbol, children, ..
+                    } => {
+                        let enclosing = ScorePart {
+                            section_symbol: *symbol,
+                            ..enclosing
+                        };
+                        if let Some(found) = find(children, part_id, enclosing) {
+                            return Some(found);
+                        }
+                    }
+                    PartListNode::Group {
+                        symbol, children, ..
+                    } => {
+                        let enclosing = ScorePart {
+                            part_group_symbol: *symbol,
+                            ..enclosing
+                        };
+                        if let Some(found) = find(children, part_id, enclosing) {
                             return Some(found);
                         }
                     }
@@ -230,7 +263,7 @@ impl ScoreDefaults {
             None
         }
 
-        find(&self.part_list, part_id)
+        find(&self.part_list, part_id, ScorePart::default())
     }
 
     /// Ensures a part is present in the part-list, registering a bare

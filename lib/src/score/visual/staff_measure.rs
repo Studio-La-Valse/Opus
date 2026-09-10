@@ -146,6 +146,30 @@ impl StaffMeasure {
     }
 }
 impl Layoutable for StaffMeasure {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        if let Some(ref mut clef) = self.clef_start {
+            clef.resolve_layout(params);
+        }
+
+        if let Some(ref mut time_signature) = self.time_signature_start {
+            time_signature.resolve_layout(params);
+        }
+
+        self.key_signature_start.resolve_layout(params);
+
+        if let Some(ref mut prepare_time_signature) = self.time_signature_end {
+            prepare_time_signature.resolve_layout(params);
+        }
+
+        if let Some(ref mut clef) = self.clef_end {
+            clef.resolve_layout(params);
+        }
+
+        for rest in self.rests.iter_mut() {
+            rest.resolve_layout(params);
+        }
+    }
+
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         self.height = available.y;
 

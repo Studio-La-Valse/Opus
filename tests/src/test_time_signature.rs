@@ -98,16 +98,19 @@ mod tests {
         let score_defaults = ScoreDefaults::default();
         let user_layout = UserLayout::default();
         let app_defaults = AppDefaults::default();
+        let params = LayoutParams {
+            score_defaults: &score_defaults,
+            user_layout: &user_layout,
+            app_defaults: &app_defaults,
+            font: font(),
+        };
+        time_signature.resolve_layout(params);
         time_signature.measure(
             &XY {
                 x: 0.,
                 y: staff_height,
             },
-            LayoutParams {
-                score_defaults: &score_defaults,
-                user_layout: &user_layout,
-                app_defaults: &app_defaults,
-            },
+            params,
         );
         time_signature.arrange(&XY::ZERO);
 

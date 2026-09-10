@@ -1,4 +1,5 @@
 use crate::geometry::color::Color;
+use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::page_orientation::PageOrientation;
 use serde::Deserialize;
 
@@ -55,4 +56,27 @@ pub struct UserLayout {
     pub tie_vertical_offset: Option<f32>,
     pub tie_break_inset: Option<f32>,
     pub tie_break_fragment: Option<f32>,
+
+    /// Force one symbol on every section / part-group / part in the score,
+    /// overriding what each `<part-group>` declared. Set one to
+    /// [`GroupSymbol::None`](crate::score::core::group_symbol::GroupSymbol) to
+    /// suppress that level's symbols entirely.
+    ///
+    /// Nothing stops a part being given a `Bracket`: its tips reach past the
+    /// system's left edge and would sit over the clef. That is the caller's
+    /// choice, not a case to guard against.
+    pub section_symbol: Option<GroupSymbol>,
+    pub part_group_symbol: Option<GroupSymbol>,
+    pub part_symbol: Option<GroupSymbol>,
+
+    /// Overrides for the group-symbol knobs of the same name on
+    /// [`AppDefaults`](crate::score::app_defaults::AppDefaults), all in tenths.
+    /// The gaps are per level, the thicknesses per shape.
+    pub section_symbol_gap: Option<f32>,
+    pub part_group_symbol_gap: Option<f32>,
+    pub part_symbol_gap: Option<f32>,
+    pub group_bracket_thickness: Option<f32>,
+    pub group_line_thickness: Option<f32>,
+    pub group_square_thickness: Option<f32>,
+    pub group_square_arm: Option<f32>,
 }

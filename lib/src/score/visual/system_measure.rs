@@ -30,7 +30,7 @@ impl SystemMeasure {
     }
 }
 
-impl SystemMeasure {
+impl Layoutable for SystemMeasure {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
@@ -42,12 +42,8 @@ impl SystemMeasure {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
-}
 
-impl Layoutable for SystemMeasure {
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
+    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
     }
 

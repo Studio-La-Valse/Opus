@@ -1,8 +1,7 @@
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::brace::Brace;
-use crate::score::visual::bracket::Bracket;
+use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group::PartGroup;
@@ -20,13 +19,13 @@ pub struct Section {
     pub width: f32,
     pub height: f32,
 
-    pub bracket: Bracket,
+    pub symbol: GroupSymbol,
 }
 
 impl Section {
-    pub fn new(bracket: Bracket) -> Section {
+    pub fn new(symbol: GroupSymbol) -> Section {
         Section {
-            bracket,
+            symbol,
 
             xy: Default::default(),
             width: Default::default(),
@@ -37,15 +36,14 @@ impl Section {
         }
     }
 
-    pub fn part_group_or_insert<F: FnOnce() -> Brace>(
+    pub fn part_group_or_insert(
         &mut self,
         part_group_id: u32,
-        factory: F,
+        symbol: GroupSymbol,
     ) -> &mut PartGroup {
-        self.part_groups.entry(part_group_id).or_insert_with(|| {
-            let brace = factory();
-            PartGroup::new(brace)
-        })
+        self.part_groups
+            .entry(part_group_id)
+            .or_insert_with(|| PartGroup::new(symbol))
     }
 
     pub fn locate_part_mut(&mut self, part_id: &str) -> Option<&mut Part> {
@@ -106,8 +104,23 @@ impl Section {
             .flat_map(|group| group.visible_staves())
     }
 
-    pub fn shows_bracket(&self) -> bool {
-        self.part_groups.len() > 1 && self.visible_staves().next().is_some()
+    /// Whether this section draws its symbol: it has to bind more than one
+    /// part-group for there to be anything to bind, and the symbol itself has to
+    /// be one that draws.
+    pub fn shows_symbol(&self) -> bool {
+        self.part_groups.len() > 1 && self.symbol.is_drawn()
+    }
+
+    /// How far left this section's own ink reaches, which is what the symbols
+    /// inside it keep clear of. The system's left edge when nothing is drawn --
+    /// an undrawn symbol must not push its part-groups outward by a gap that
+    /// nothing occupies.
+    fn symbol_left_edge(&self) -> f32 {
+        if self.shows_symbol() {
+            self.symbol.bounds().x_min()
+        } else {
+            self.xy.x
+        }
     }
 
     /// How far the barline at a measure end reaches above the top line of the
@@ -131,6 +144,18 @@ impl Section {
     }
 }
 impl Layoutable for Section {
+    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        for pg in self.part_groups.values_mut() {
+            pg.resolve_layout(params);
+        }
+
+        for measure in self.measures.values_mut() {
+            measure.resolve_layout(params);
+        }
+
+        self.symbol.resolve_layout(params);
+    }
+
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
@@ -159,13 +184,15 @@ impl Layoutable for Section {
             self.width += measure.width;
         }
 
-        if self.shows_bracket() {
-            let avail = XY {
-                x: self.width,
-                y: staves_height,
-            };
-            self.bracket.measure(&avail, params);
-        }
+        // Measured whatever it turns out to draw: a symbol that has been sized
+        // and placed on every pass cannot go stale, and `shows_symbol` is then
+        // a question about the current pass rather than about which branch last
+        // ran. Only the compositor decides whether to draw it.
+        let avail = XY {
+            x: f32::INFINITY,
+            y: staves_height,
+        };
+        self.symbol.measure(&avail, params);
     }
 
     fn arrange(&mut self, origin: &XY) {
@@ -180,13 +207,18 @@ impl Layoutable for Section {
             measure_origin = measure_origin.mv(measure.width, 0.);
         }
 
+        // Arranged before the part-groups, because where they put their own
+        // symbols depends on how far left this one reached. A section's symbol
+        // is the innermost of the three, so it is the only one measured from
+        // the system itself.
+        self.symbol
+            .arrange(&self.xy.mv(0., first_visible_staff_distance));
+        let clear_of = self.symbol_left_edge();
+
         let mut part_group_origin = self.xy;
         for part_group in self.part_groups.values_mut() {
-            part_group.arrange(&part_group_origin);
+            part_group.arrange_clear_of(&part_group_origin, clear_of);
             part_group_origin = part_group_origin.mv(0., part_group.height);
         }
-
-        let bracket_origin = self.xy.mv(-10., first_visible_staff_distance);
-        self.bracket.arrange(&bracket_origin);
     }
 }

@@ -68,8 +68,10 @@ pub enum Stage {
     SecondPass,
     /// Re-deriving beam groups.
     Rebeam,
-    /// Resolving each element's appearance from the layout params, measuring
-    /// every element and arranging the pages.
+    /// Resolving every element's appearance -- colour, thickness, which glyph
+    /// it draws -- from the layout params.
+    ResolveLayout,
+    /// Measuring every element and arranging the pages.
     LayoutPass,
 }
 
@@ -85,7 +87,14 @@ pub fn engrave(
 ) -> EngravedScore {
     let (mut score, layout, messages) =
         walk_document(document, font, user_layout, app_defaults, progress);
-    arrange_score(&mut score, &layout, user_layout, app_defaults, progress);
+    arrange_score(
+        &mut score,
+        &layout,
+        font,
+        user_layout,
+        app_defaults,
+        progress,
+    );
     EngravedScore {
         score,
         layout,
@@ -154,16 +163,21 @@ pub fn walk_document(
     (score, layout, messages)
 }
 
-/// Resolves the user layout onto an already-walked `score`, rebeams it, measures
-/// every element and arranges the pages. Callable on its own to re-lay-out a
-/// cached score for a new [`UserLayout`] without re-walking the document.
+/// Resolves the user layout onto an already-walked `score`, rebeams it, resolves
+/// every element's appearance, measures every element and arranges the pages.
+/// Callable on its own to re-lay-out a cached score for a new [`UserLayout`]
+/// without re-walking the document -- which is why `font` is a parameter here as
+/// well as on [`walk_document`]: an element whose glyph depends on the user
+/// layout has to be able to look it up on every arrange, not once during the
+/// walk.
 ///
-/// Emits [`Stage::Rebeam`] and [`Stage::LayoutPass`]. Layout resolution is no
-/// longer its own pass -- each element resolves its appearance from the layout
-/// params at the top of its `measure`, so it is folded into `LayoutPass`.
+/// Emits [`Stage::Rebeam`], [`Stage::ResolveLayout`] and [`Stage::LayoutPass`].
+/// Appearance resolution is its own downward pass ahead of measuring -- see
+/// [`Layoutable::resolve_layout`](crate::score::visual::layoutable::Layoutable::resolve_layout).
 pub fn arrange_score(
     score: &mut Score,
     score_defaults: &ScoreDefaults,
+    font: &SmuflFont,
     user_layout: &UserLayout,
     app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
@@ -179,7 +193,12 @@ pub fn arrange_score(
         score_defaults,
         user_layout,
         app_defaults,
+        font,
     };
+    score.resolve_layout(params);
+
+    progress(Stage::ResolveLayout);
+
     score.measure(&XY::INFINITE, params);
     page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);
 

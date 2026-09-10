@@ -9,6 +9,7 @@ mod tests {
     use lib::musicxml::visitors::position_visitor::PositionVisitor;
     use lib::musicxml::walker::Walker;
     use lib::score::app_defaults::AppDefaults;
+    use lib::score::core::group_symbol::GroupSymbol;
     use lib::score::engrave::walk_document;
     use lib::score::part_list::builder::build_part_list;
     use lib::score::part_list::display::format_part_list_tree;
@@ -52,28 +53,28 @@ mod tests {
         build_part_list(&part_list)
     }
 
-    /// (name, brace, children) of a `Section`, panicking if the node is anything else.
-    fn section(node: &PartListNode) -> (Option<&str>, Option<&str>, &[PartListNode]) {
+    /// (name, symbol, children) of a `Section`, panicking if the node is anything else.
+    fn section(node: &PartListNode) -> (Option<&str>, Option<GroupSymbol>, &[PartListNode]) {
         match node {
             PartListNode::Section {
                 name,
-                brace,
+                symbol,
                 children,
                 ..
-            } => (name.as_deref(), brace.as_deref(), children.as_slice()),
+            } => (name.as_deref(), *symbol, children.as_slice()),
             _ => panic!("expected a section"),
         }
     }
 
-    /// (name, brace, children) of a `Group`, panicking if the node is anything else.
-    fn group(node: &PartListNode) -> (Option<&str>, Option<&str>, &[PartListNode]) {
+    /// (name, symbol, children) of a `Group`, panicking if the node is anything else.
+    fn group(node: &PartListNode) -> (Option<&str>, Option<GroupSymbol>, &[PartListNode]) {
         match node {
             PartListNode::Group {
                 name,
-                brace,
+                symbol,
                 children,
                 ..
-            } => (name.as_deref(), brace.as_deref(), children.as_slice()),
+            } => (name.as_deref(), *symbol, children.as_slice()),
             _ => panic!("expected a part-group"),
         }
     }
@@ -110,13 +111,13 @@ mod tests {
         );
 
         assert_eq!(nodes.len(), 1);
-        let (name, brace, children) = section(&nodes[0]);
+        let (name, symbol, children) = section(&nodes[0]);
         assert_eq!(name, None, "a bracket carries no name here");
-        assert_eq!(brace, Some("bracket"));
+        assert_eq!(symbol, Some(GroupSymbol::Bracket));
 
-        let (name, brace, _) = group(&children[0]);
+        let (name, symbol, _) = group(&children[0]);
         assert_eq!(name, Some("Horns in F"));
-        assert_eq!(brace, Some("brace"));
+        assert_eq!(symbol, Some(GroupSymbol::Brace));
     }
 
     /// The same run written the right way round must come out unchanged.
@@ -137,13 +138,13 @@ mod tests {
             </part-list>"#,
         );
 
-        let (name, brace, children) = section(&nodes[0]);
+        let (name, symbol, children) = section(&nodes[0]);
         assert_eq!(name, None);
-        assert_eq!(brace, Some("bracket"));
+        assert_eq!(symbol, Some(GroupSymbol::Bracket));
 
-        let (name, brace, _) = group(&children[0]);
+        let (name, symbol, _) = group(&children[0]);
         assert_eq!(name, Some("Horns in F"));
-        assert_eq!(brace, Some("brace"));
+        assert_eq!(symbol, Some(GroupSymbol::Brace));
     }
 
     /// A `<score-part>` between two starts *is* positional evidence, so the
@@ -166,12 +167,12 @@ mod tests {
             </part-list>"#,
         );
 
-        let (name, brace, children) = section(&nodes[0]);
+        let (name, symbol, children) = section(&nodes[0]);
         assert_eq!(name, Some("Outer"));
-        assert_eq!(brace, Some("brace"));
+        assert_eq!(symbol, Some(GroupSymbol::Brace));
 
-        let (_, brace, _) = group(&children[1]);
-        assert_eq!(brace, Some("bracket"));
+        let (_, symbol, _) = group(&children[1]);
+        assert_eq!(symbol, Some(GroupSymbol::Bracket));
     }
 
     /// A symbol-less group is the innermost of a run: nothing encloses less
@@ -192,13 +193,140 @@ mod tests {
             </part-list>"#,
         );
 
-        let (name, brace, children) = section(&nodes[0]);
+        let (name, symbol, children) = section(&nodes[0]);
         assert_eq!(name, None);
-        assert_eq!(brace, Some("bracket"));
+        assert_eq!(symbol, Some(GroupSymbol::Bracket));
 
-        let (name, brace, _) = group(&children[0]);
+        let (name, symbol, _) = group(&children[0]);
         assert_eq!(name, Some("1 2"));
-        assert_eq!(brace, None);
+        assert_eq!(symbol, None);
+    }
+
+    /// An explicit `<group-symbol>none</group-symbol>` is not the same thing as
+    /// an absent one: the first says "draw nothing", the second says nothing at
+    /// all and lets a default apply. Both rank innermost, so they nest the same
+    /// way, but only one of them survives into the tree as a value.
+    #[test]
+    fn an_explicit_none_is_kept_apart_from_an_absent_symbol() {
+        let nodes = build_str(
+            r#"<part-list>
+                <part-group type="start">
+                    <group-symbol>bracket</group-symbol>
+                </part-group>
+                <part-group type="start">
+                    <group-symbol>none</group-symbol>
+                </part-group>
+                <score-part id="P1"><part-name>Flutes</part-name></score-part>
+                <part-group type="stop"/>
+                <part-group type="stop"/>
+            </part-list>"#,
+        );
+
+        let (_, symbol, children) = section(&nodes[0]);
+        assert_eq!(symbol, Some(GroupSymbol::Bracket));
+
+        let (_, symbol, _) = group(&children[0]);
+        assert_eq!(
+            symbol,
+            Some(GroupSymbol::None),
+            "an explicit 'none' is a declared value, not an absent one"
+        );
+    }
+
+    /// The two symbols the engine could not draw before must still read back off
+    /// the document, since honouring them is the whole point of the type.
+    #[test]
+    fn line_and_square_are_read_like_any_other_symbol() {
+        let nodes = build_str(
+            r#"<part-list>
+                <part-group type="start">
+                    <group-symbol>line</group-symbol>
+                </part-group>
+                <score-part id="P1"><part-name>Violin I</part-name></score-part>
+                <score-part id="P2"><part-name>Violin II</part-name></score-part>
+                <part-group type="stop"/>
+                <part-group type="start">
+                    <group-symbol>square</group-symbol>
+                </part-group>
+                <score-part id="P3"><part-name>Viola</part-name></score-part>
+                <part-group type="stop"/>
+            </part-list>"#,
+        );
+
+        let (_, symbol, _) = section(&nodes[0]);
+        assert_eq!(symbol, Some(GroupSymbol::Line));
+
+        let (_, symbol, _) = section(&nodes[1]);
+        assert_eq!(symbol, Some(GroupSymbol::Square));
+    }
+
+    /// `line` and `square` are bracket-weight symbols, so a run that pairs one
+    /// with a brace has to nest the same way `bracket` would.
+    #[test]
+    fn a_line_start_encloses_a_braced_start() {
+        let nodes = build_str(
+            r#"<part-list>
+                <part-group type="start">
+                    <group-symbol>brace</group-symbol>
+                </part-group>
+                <part-group type="start">
+                    <group-symbol>line</group-symbol>
+                </part-group>
+                <score-part id="P1"><part-name>Organ</part-name></score-part>
+                <part-group type="stop"/>
+                <part-group type="stop"/>
+            </part-list>"#,
+        );
+
+        let (_, symbol, children) = section(&nodes[0]);
+        assert_eq!(symbol, Some(GroupSymbol::Line));
+
+        let (_, symbol, _) = group(&children[0]);
+        assert_eq!(symbol, Some(GroupSymbol::Brace));
+    }
+
+    /// Parsing trims and lowercases, so surrounding whitespace -- which XML
+    /// pretty-printers add freely -- names the symbol it looks like it names.
+    /// Before the value was a type, a padded `<group-symbol>` matched no arm of
+    /// the nesting comparison and silently sank to the bottom of its run.
+    #[test]
+    fn a_padded_symbol_names_the_symbol_it_looks_like() {
+        let nodes = build_str(
+            r#"<part-list>
+                <part-group type="start">
+                    <group-symbol>
+                        Bracket
+                    </group-symbol>
+                </part-group>
+                <score-part id="P1"><part-name>Flute</part-name></score-part>
+                <part-group type="stop"/>
+            </part-list>"#,
+        );
+
+        let (_, symbol, _) = section(&nodes[0]);
+        assert_eq!(symbol, Some(GroupSymbol::Bracket));
+    }
+
+    /// The tree is rendered back with the document's own spelling, which is what
+    /// keeps the build log readable against the file it describes.
+    #[test]
+    fn every_symbol_renders_as_its_musicxml_spelling() {
+        let spellings = [
+            (GroupSymbol::None, "none"),
+            (GroupSymbol::Brace, "brace"),
+            (GroupSymbol::Bracket, "bracket"),
+            (GroupSymbol::Line, "line"),
+            (GroupSymbol::Square, "square"),
+        ];
+
+        for (symbol, spelled) in spellings {
+            assert_eq!(symbol.to_string(), spelled);
+            assert_eq!(
+                spelled.parse::<GroupSymbol>().unwrap(),
+                symbol,
+                "'{spelled}' must parse back to what it prints"
+            );
+        }
     }
 
     /// ActorPreludeSample's brass block: the export names the outer group
@@ -210,13 +338,13 @@ mod tests {
     fn actor_prelude_brass_section_is_the_bracket_not_the_horns() {
         let nodes = build_actor_prelude();
 
-        let (name, brace, children) = section(&nodes[1]);
+        let (name, symbol, children) = section(&nodes[1]);
         assert_eq!(name, None, "sections in this score are unnamed");
-        assert_eq!(brace, Some("bracket"));
+        assert_eq!(symbol, Some(GroupSymbol::Bracket));
 
-        let (name, brace, horns) = group(&children[0]);
+        let (name, symbol, horns) = group(&children[0]);
         assert_eq!(name, Some("Horns in F"));
-        assert_eq!(brace, Some("brace"));
+        assert_eq!(symbol, Some(GroupSymbol::Brace));
         assert_eq!(part_ids(horns), vec!["P8", "P9"]);
 
         // The tuba sits directly in the section, after the three inner groups.
@@ -237,16 +365,16 @@ mod tests {
             .collect();
 
         assert_eq!(sections.len(), 4);
-        for (name, brace, _) in &sections {
+        for (name, symbol, _) in &sections {
             assert_eq!(*name, None);
-            assert_eq!(*brace, Some("bracket"));
+            assert_eq!(*symbol, Some(GroupSymbol::Bracket));
         }
 
         let (_, _, percussion) = sections[2];
         assert_eq!(part_ids(percussion), vec!["P14"]);
-        let (name, brace, _) = group(&percussion[1]);
+        let (name, symbol, _) = group(&percussion[1]);
         assert_eq!(name, Some("Percussion"));
-        assert_eq!(brace, Some("brace"));
+        assert_eq!(symbol, Some(GroupSymbol::Brace));
     }
 
     // ------------------------------------------------------------- validation

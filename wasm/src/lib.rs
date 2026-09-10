@@ -266,6 +266,7 @@ impl WasmScore {
         arrange_score(
             &mut self.score,
             &self.defaults,
+            &self.font,
             &options.layout,
             &app_defaults,
             &mut |_stage| {},

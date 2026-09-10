@@ -1,8 +1,9 @@
 use crate::geometry::xy::XY;
+use crate::score::core::group_symbol::GroupLevel;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::brace::Brace;
-use crate::score::visual::bracket::Bracket;
+use crate::score::score_defaults::ScorePart;
+use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;
@@ -11,7 +12,6 @@ use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system::System;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::score::visual::tie::Tie;
-use crate::smufl::smufl_font::SmuflFont;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -47,28 +47,41 @@ impl Score {
     }
 
     /// Walks page -> system -> section -> part group -> part, creating every
-    /// level on the way down. Section brackets and part-group / part braces are
-    /// built from `font`. Both the layout and the content walk pass need the
+    /// level on the way down. Both the layout and the content walk pass need the
     /// same part to exist before they can populate its measure, so they share
     /// this descent.
+    ///
+    /// A level created here is given the group symbol its `<part-group>`
+    /// declared, which is all this can settle: what is actually *drawn* depends
+    /// on the user layout too, and is resolved on every layout pass. Which is
+    /// also why no font is needed here -- a symbol reads its glyph when it
+    /// measures, not when it is built.
     pub fn locate_or_create_part(
         &mut self,
-        font: &SmuflFont,
         page_number: u32,
         system_index: u32,
-        section_number: u32,
-        part_group_number: u32,
+        assignment: &ScorePart,
         part_id: &str,
     ) -> &mut Part {
         let system = self
             .page_or_insert(page_number)
             .system_or_insert(system_index);
-        let section = system.section_or_insert(section_number, || {
-            Bracket::new(font.bracket_top(), font.bracket_bottom())
-        });
-        let part_group =
-            section.part_group_or_insert(part_group_number, || Brace::new(font.brace(None)));
-        part_group.part_or_insert(part_id.to_string(), || Brace::new(font.brace(None)))
+
+        let section = system.section_or_insert(
+            assignment.section,
+            GroupSymbol::new(GroupLevel::Section, assignment.section_symbol),
+        );
+        let part_group = section.part_group_or_insert(
+            assignment.part_group,
+            GroupSymbol::new(GroupLevel::PartGroup, assignment.part_group_symbol),
+        );
+
+        // MusicXML declares a part's own symbol in `<attributes><part-symbol>`,
+        // which nothing reads yet, so this level has nothing to pass on.
+        part_group.part_or_insert(
+            part_id.to_string(),
+            GroupSymbol::new(GroupLevel::Part, None),
+        )
     }
 
     pub fn locate_system_mut(&mut self, system_idx: &u32) -> Option<&mut System> {
@@ -124,6 +137,15 @@ impl Score {
     pub fn rebeam(&mut self, strategy: &dyn RebeamStrategy) {
         for page in self.pages.values_mut() {
             page.rebeam(strategy);
+        }
+    }
+
+    /// Resolves every page's appearance from `params`. Run once over the whole
+    /// tree ahead of [`measure`](Score::measure) -- see
+    /// [`arrange_score`](crate::score::engrave::arrange_score).
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        for page in self.pages.values_mut() {
+            page.resolve_layout(params);
         }
     }
 

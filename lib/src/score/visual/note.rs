@@ -55,7 +55,7 @@ pub struct Note {
     /// note-size factor can be re-decided on every render; see [`NoteScale`].
     pub size: NoteScale,
     /// The factor `size` resolved to, written by `resolve_layout` and so only
-    /// meaningful after `measure`.
+    /// meaningful once that pass has run.
     pub scale: f32,
 
     pub color: Color,
@@ -130,7 +130,7 @@ impl Placed for Note {
 }
 
 impl Note {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -143,13 +143,19 @@ impl Note {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
         self.dot_spacing = user_layout.dot_spacing.unwrap_or(app_defaults.dot_spacing);
+
+        if let Some(accidental) = self.accidental.as_mut() {
+            accidental.resolve_layout(params);
+        }
+
+        for dot in self.dots.iter_mut() {
+            dot.resolve_layout(params);
+        }
     }
 }
 
 impl Note {
     pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
 
         let glyph = &self.glyph;

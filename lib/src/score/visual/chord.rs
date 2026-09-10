@@ -179,7 +179,7 @@ impl Chord {
 }
 
 impl Chord {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -189,13 +189,23 @@ impl Chord {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+
+        for note in self.notes.iter_mut() {
+            note.resolve_layout(params);
+        }
+
+        if let Some(stem) = self.stem.as_mut() {
+            stem.resolve_layout(params);
+        }
+
+        for clef in self.clef_change.values_mut() {
+            clef.resolve_layout(params);
+        }
     }
 }
 
 impl Chord {
     pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         for note in self.notes.iter_mut() {
             note.measure(available, params);
         }

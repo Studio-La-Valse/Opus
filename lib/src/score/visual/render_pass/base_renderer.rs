@@ -4,9 +4,21 @@ use crate::geometry::xy::XY;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::render_pass::RenderPass;
 use crate::score::visual::{
-    accidental::Accidental, brace::Brace, bracket::Bracket, clef::Clef, dot::Dot, flag::Flag,
-    note::Note, page::Page, part_measure::PartMeasure, rest::Rest, section_measure::SectionMeasure,
-    staff::Staff, stem::Stem, system::System, tie::TieSegment, time_signature::TimeSignature,
+    accidental::Accidental,
+    clef::Clef,
+    dot::Dot,
+    flag::Flag,
+    group_symbol::{GroupSymbol, Shape},
+    note::Note,
+    page::Page,
+    part_measure::PartMeasure,
+    rest::Rest,
+    section_measure::SectionMeasure,
+    staff::Staff,
+    stem::Stem,
+    system::System,
+    tie::TieSegment,
+    time_signature::TimeSignature,
 };
 use crate::smufl::smufl_glyph::SmuflGlyph;
 
@@ -51,50 +63,51 @@ impl RenderPass for BaseRenderer {
         out.push(left_line.into());
     }
 
-    fn render_bracket<'a>(
+    /// Draws whatever shape the symbol resolved to. Everything here is already
+    /// placed -- the renderer works out no geometry of its own, so what is drawn
+    /// and what the symbol reports as its bounds cannot disagree.
+    fn render_group_symbol<'a>(
         &self,
-        bracket: &Bracket,
+        symbol: &GroupSymbol,
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let top =
-            bracket
-                .bracket_top
-                .as_glyph(fonts.smufl, bracket.color, bracket.xy, bracket.scale);
-        out.push(top.into());
+        let color = symbol.color();
 
-        let bottom = bracket.bracket_bottom.as_glyph(
-            fonts.smufl,
-            bracket.color,
-            bracket.xy.mv(0., bracket.height),
-            bracket.scale,
-        );
-        out.push(bottom.into());
+        match symbol.shape() {
+            Shape::Nothing => {}
 
-        let rect = Rect {
-            xy: bracket.xy.mv(0., -1.),
-            width: 5.,
-            height: bracket.height + 2.,
-            color: bracket.color,
-            stroke_color: None,
-            stroke_width: None,
-        };
-        out.push(rect.into());
-    }
+            Shape::Brace { glyph, xy, scale } => {
+                out.push(glyph.as_glyph(fonts.smufl, color, *xy, *scale).into());
+            }
 
-    fn render_brace<'a>(
-        &self,
-        brace: &Brace,
-        fonts: &RenderFonts<'a>,
-        out: &mut Vec<DrawableElement<'a>>,
-    ) {
-        let def_height = Staff::SPACES as f32 * Staff::DEFAULT_SPACE_SIZE;
-        let scale = brace.height / def_height;
+            Shape::Bracket {
+                stroke,
+                top,
+                bottom,
+                scale,
+            } => {
+                // Tips first: the stroke is drawn over them, which is what
+                // closes the seam where they meet.
+                out.push(top.0.as_glyph(fonts.smufl, color, top.1, *scale).into());
+                out.push(
+                    bottom
+                        .0
+                        .as_glyph(fonts.smufl, color, bottom.1, *scale)
+                        .into(),
+                );
+                out.push((*stroke).into());
+            }
 
-        let glyph = brace
-            .brace
-            .as_glyph(fonts.smufl, brace.color, brace.xy, scale);
-        out.push(glyph.into());
+            Shape::Line { stroke } => out.push((*stroke).into()),
+
+            Shape::Square { stroke, arms } => {
+                out.push((*stroke).into());
+                for arm in arms {
+                    out.push((*arm).into());
+                }
+            }
+        }
     }
 
     fn render_staff<'a>(

@@ -72,7 +72,7 @@ pub struct Stem {
     /// noteheads it carries.
     pub size: NoteScale,
     /// The factor `size` resolved to, written by `resolve_layout` and so only
-    /// meaningful after `measure`.
+    /// meaningful once that pass has run.
     pub scale: f32,
 
     pub direction: UpDown,
@@ -178,12 +178,13 @@ impl Stem {
     }
 }
 
-impl Stem {
+impl Layoutable for Stem {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         self.scale = self.size.resolve(params);
@@ -195,13 +196,13 @@ impl Stem {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+
+        if let Some(flag) = self.flag.as_mut() {
+            flag.resolve_layout(params);
+        }
     }
-}
 
-impl Layoutable for Stem {
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         if let Some(flag) = self.flag.as_mut() {
             flag.measure(available, params);
         }

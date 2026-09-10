@@ -127,12 +127,13 @@ impl Staff {
     }
 }
 
-impl Staff {
+impl Layoutable for Staff {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         self.color = user_layout
@@ -153,13 +154,13 @@ impl Staff {
             .heavy_barline
             .or(score_defaults.appearance.heavy_barline)
             .unwrap_or(app_defaults.barline_heavy);
+
+        for measure in self.measures.values_mut() {
+            measure.resolve_layout(params);
+        }
     }
-}
 
-impl Layoutable for Staff {
     fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         self.height = self.height();
         self.width = 0.;
 

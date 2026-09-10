@@ -2,7 +2,7 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
-use crate::score::visual::bracket::Bracket;
+use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
@@ -43,15 +43,10 @@ pub struct System {
 }
 
 impl System {
-    pub fn section_or_insert<F: FnOnce() -> Bracket>(
-        &mut self,
-        section_id: u32,
-        bracket_factory: F,
-    ) -> &mut Section {
-        self.sections.entry(section_id).or_insert_with(|| {
-            let brace = bracket_factory();
-            Section::new(brace)
-        })
+    pub fn section_or_insert(&mut self, section_id: u32, symbol: GroupSymbol) -> &mut Section {
+        self.sections
+            .entry(section_id)
+            .or_insert_with(|| Section::new(symbol))
     }
 
     pub fn locate_system_measure_mut(&mut self, measure_number: u32) -> Option<&mut SystemMeasure> {
@@ -203,12 +198,13 @@ impl System {
     }
 }
 
-impl System {
+impl Layoutable for System {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
             app_defaults,
+            ..
         } = params;
 
         self.color = user_layout
@@ -224,13 +220,17 @@ impl System {
             .staff
             .or(score_defaults.appearance.staff)
             .unwrap_or(app_defaults.staff_line_thickness);
+
+        for section in self.sections.values_mut() {
+            section.resolve_layout(params);
+        }
+
+        for measure in self.measures.values_mut() {
+            measure.resolve_layout(params);
+        }
     }
-}
 
-impl Layoutable for System {
     fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
-        self.resolve_layout(params);
-
         self.width = 0.;
         self.height = 0.;
 

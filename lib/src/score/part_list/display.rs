@@ -1,3 +1,4 @@
+use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::part_list::tree::PartListNode;
 
 /// Renders a `PartListNode` tree as `├──`/`└──` ASCII art, rooted at
@@ -15,27 +16,15 @@ fn render_node(node: &PartListNode) -> Vec<String> {
         PartListNode::Section {
             index,
             name,
-            brace,
+            symbol,
             children,
-        } => render_group(
-            "section",
-            *index,
-            name.as_deref(),
-            brace.as_deref(),
-            children,
-        ),
+        } => render_group("section", *index, name.as_deref(), *symbol, children),
         PartListNode::Group {
             index,
             name,
-            brace,
+            symbol,
             children,
-        } => render_group(
-            "part-group",
-            *index,
-            name.as_deref(),
-            brace.as_deref(),
-            children,
-        ),
+        } => render_group("part-group", *index, name.as_deref(), *symbol, children),
     }
 }
 
@@ -43,13 +32,13 @@ fn render_group(
     label: &str,
     index: u32,
     name: Option<&str>,
-    brace: Option<&str>,
+    symbol: Option<GroupSymbol>,
     children: &[PartListNode],
 ) -> Vec<String> {
     let name = name.unwrap_or("(unnamed)");
-    let brace_suffix = brace.map(|b| format!(" ({b})")).unwrap_or_default();
+    let symbol_suffix = symbol.map(|s| format!(" ({s})")).unwrap_or_default();
 
-    let mut lines = vec![format!("{label} {index} \"{name}\"{brace_suffix}")];
+    let mut lines = vec![format!("{label} {index} \"{name}\"{symbol_suffix}")];
     let blocks: Vec<Vec<String>> = children.iter().map(render_node).collect();
     lines.extend(render_children(blocks));
     lines

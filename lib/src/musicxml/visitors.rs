@@ -1,6 +1,7 @@
 pub mod beam_group_visitor;
 pub mod build_logging_visitor;
 pub mod content_visitor;
+pub mod group_symbol_visitor;
 pub mod layout_visitor;
 pub mod page_layout_visitor;
 pub mod part_consistency_visitor;

@@ -146,8 +146,8 @@ impl RenderCompositor {
     ) {
         self.pass.render_section(section, fonts, out);
 
-        if section.shows_bracket() {
-            self.pass.render_bracket(&section.bracket, fonts, out);
+        if section.shows_symbol() {
+            self.pass.render_group_symbol(&section.symbol, fonts, out);
         }
 
         for measure in section.measures.values() {
@@ -167,8 +167,8 @@ impl RenderCompositor {
     ) {
         self.pass.render_part_group(group, fonts, out);
 
-        if group.shows_brace() {
-            self.pass.render_brace(&group.brace, fonts, out);
+        if group.shows_symbol() {
+            self.pass.render_group_symbol(&group.symbol, fonts, out);
         }
 
         for measure in group.measures.values() {
@@ -192,8 +192,8 @@ impl RenderCompositor {
     ) {
         self.pass.render_part(part, fonts, out);
 
-        if part.shows_brace() {
-            self.pass.render_brace(&part.brace, fonts, out);
+        if part.shows_symbol() {
+            self.pass.render_group_symbol(&part.symbol, fonts, out);
         }
 
         for staff in part.staves.values() {
@@ -331,7 +331,10 @@ impl RenderCompositor {
     }
 
     fn estimate_section(section: &Section) -> usize {
-        1 + section.measures.len() // bracket/section + section measure lines
+        // The symbol counts as one, though a bracket is three elements and a
+        // square four. Only sizes a Vec up front, so an undercount costs at most
+        // one reallocation.
+        1 + section.measures.len() // group symbol + section measure lines
             + section
                 .part_groups
                 .values()
@@ -340,7 +343,7 @@ impl RenderCompositor {
     }
 
     fn estimate_part_group(group: &PartGroup) -> usize {
-        1 + group.measures.len() // brace + part group measure lines
+        1 + group.measures.len() // group symbol + part group measure lines
             + group
                 .parts
                 .values()
@@ -356,7 +359,7 @@ impl RenderCompositor {
             .map(Self::estimate_part_measure)
             .sum();
 
-        1 + staves + measures // brace + staves + measures
+        1 + staves + measures // group symbol + staves + measures
     }
 
     fn estimate_staff(staff: &Staff) -> usize {

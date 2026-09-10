@@ -2,6 +2,7 @@
 pub mod clef;
 pub mod duration;
 pub mod duration_base;
+pub mod group_symbol;
 pub mod key;
 pub mod note_kind;
 pub mod pitch;

@@ -260,4 +260,36 @@ mod tests {
         );
         assert!(bad_color.is_err(), "an unparseable colour must be rejected");
     }
+
+    /// The group-symbol overrides come through the same route, which is what
+    /// lets a page re-draw a score's brackets as braces without re-parsing it.
+    /// Their values are the MusicXML spellings, so a CSS custom property, a CLI
+    /// flag and a `<group-symbol>` all say the same word.
+    #[test]
+    fn group_symbol_options_deserialize_by_their_musicxml_spelling() {
+        use lib::score::core::group_symbol::GroupSymbol;
+
+        let layout: lib::score::user_layout::UserLayout = serde_json::from_str(
+            r##"{ "sectionSymbol": "line", "partGroupSymbol": "square",
+                  "partSymbol": "none", "groupLineThickness": 3.5,
+                  "sectionSymbolGap": 20 }"##,
+        )
+        .expect("valid group symbol options failed to deserialize");
+
+        assert_eq!(layout.section_symbol, Some(GroupSymbol::Line));
+        assert_eq!(layout.part_group_symbol, Some(GroupSymbol::Square));
+        assert_eq!(
+            layout.part_symbol,
+            Some(GroupSymbol::None),
+            "'none' is a symbol that draws nothing, not an absent option"
+        );
+        assert_eq!(layout.group_line_thickness, Some(3.5));
+        assert_eq!(layout.section_symbol_gap, Some(20.));
+        assert_eq!(layout.part_symbol_gap, None, "unset options stay None");
+
+        let unknown = serde_json::from_str::<lib::score::user_layout::UserLayout>(
+            r#"{ "sectionSymbol": "curly" }"#,
+        );
+        assert!(unknown.is_err(), "an unknown symbol name must be rejected");
+    }
 }

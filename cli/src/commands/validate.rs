@@ -3,6 +3,7 @@ use clap::Args;
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
 use lib::musicxml::visitors::beam_group_visitor::BeamGroupVisitor;
+use lib::musicxml::visitors::group_symbol_visitor::GroupSymbolVisitor;
 use lib::musicxml::visitors::page_layout_visitor::PageLayoutVisitor;
 use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::musicxml::visitors::position_visitor::PositionVisitor;
@@ -40,7 +41,8 @@ pub fn run(args: ValidateArgs) {
         .uses(PositionVisitor::default())
         .uses(BeamGroupVisitor::default())
         .uses(PageLayoutVisitor::default())
-        .uses(StaffDetailsVisitor::default());
+        .uses(StaffDetailsVisitor::default())
+        .uses(GroupSymbolVisitor::default());
 
     Walker::new(visitor).walk(&document, &mut ctx);
 
