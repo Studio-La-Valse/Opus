@@ -5,7 +5,6 @@ use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::rest::Rest;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
-use crate::score::visual::start_columns::{StartColumns, StartMetrics};
 use crate::score::visual::time_signature::TimeSignature;
 
 /// Element (Clef, time signature, key signature) spacing
@@ -24,17 +23,6 @@ pub struct StaffMeasure {
     pub lines: usize,
 
     pub rests: Vec<Rest>,
-
-    /// Where the three opening elements below are drawn, as offsets from this
-    /// measure's left edge.
-    ///
-    /// Seeded in [`measure`](Layoutable::measure) with what this measure would
-    /// do on its own, then raised by
-    /// [`System::consolidate_start_columns`](crate::score::visual::system::System)
-    /// to the columns the whole system shares -- the same way `width` is seeded
-    /// here and then consolidated across the system. See
-    /// [`StartColumns`] for why they are shared at all.
-    pub start_columns: StartColumns,
 
     // Clef left side of measure
     pub clef_start: Option<Clef>,
@@ -60,8 +48,6 @@ impl Default for StaffMeasure {
 
             rests: Default::default(),
 
-            start_columns: Default::default(),
-
             clef_start: Default::default(),
             key_signature_start: Default::default(),
             time_signature_start: Default::default(),
@@ -82,29 +68,44 @@ impl StaffMeasure {
         ELEMENT_PADDING * self.scale
     }
 
-    /// What this measure contributes to its system's shared
-    /// [`StartColumns`].
-    pub fn start_metrics(&self) -> StartMetrics {
-        StartMetrics::of(self)
+    /// Places the opening clef `dx` right of this measure's left edge, and
+    /// answers how far right its ink then reaches -- or `None` when the measure
+    /// opens without a clef, which is every measure but the first of a system.
+    ///
+    /// The three `arrange_*_start` methods share this shape so that
+    /// [`System::arrange_measure_starts`](crate::score::visual::system::System)
+    /// can place each of them the same way: it decides the offset, they report
+    /// what the next column has to clear.
+    pub fn arrange_clef_start(&mut self, dx: f32) -> Option<f32> {
+        let xy = self.xy;
+        let line_space = self.line_space() / 2.;
+
+        let clef = self.clef_start.as_mut()?;
+        let dy: f32 = clef.clef.line as f32 * line_space;
+        clef.arrange(&xy.mv(dx, dy));
+
+        Some(dx + clef.width)
     }
 
-    fn arrange_clef_start(&mut self) {
-        let line_space = self.line_space() / 2.;
-        let dx = self.start_columns.clef;
-        if let Some(ref mut clef) = self.clef_start {
-            let dy: f32 = clef.clef.line as f32 * line_space;
-            clef.arrange(&self.xy.mv(dx, dy));
-        }
+    /// Places the opening key signature. Always answers an edge, even for a
+    /// staff carrying no accidentals: an empty key signature is zero wide, so
+    /// the time signature still lands a padding right of the shared column
+    /// rather than crowding whatever came before it.
+    pub fn arrange_key_signature_start(&mut self, dx: f32) -> Option<f32> {
+        self.key_signature_start.arrange(&self.xy.mv(dx, 0.));
+
+        Some(dx + self.key_signature_start.width)
     }
-    fn arrange_key_signature_start(&mut self) {
-        let pos = self.xy.mv(self.start_columns.key, 0.);
-        self.key_signature_start.arrange(&pos);
-    }
-    fn arrange_time_signature_start(&mut self) {
-        let dx = self.start_columns.time;
-        if let Some(ref mut time_signature) = self.time_signature_start {
-            time_signature.arrange(&self.xy.mv(dx, 0.));
-        }
+
+    /// Places the opening time signature, which only the measures that open a
+    /// score or announce a change carry.
+    pub fn arrange_time_signature_start(&mut self, dx: f32) -> Option<f32> {
+        let xy = self.xy;
+
+        let time_signature = self.time_signature_start.as_mut()?;
+        time_signature.arrange(&xy.mv(dx, 0.));
+
+        Some(dx + time_signature.width)
     }
     fn arrange_time_signature_end(&mut self) {
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
@@ -173,9 +174,9 @@ impl Layoutable for StaffMeasure {
 
     /// Sizes the measure's elements, scaling each to the staff first: a clef or
     /// time signature drawn at anything other than full size has to be the
-    /// right size *here*, because its width is what decides the
-    /// [`start_columns`](StaffMeasure::start_columns) the whole system is laid
-    /// out against, and that is settled before anything is arranged.
+    /// right size *here*, because its width is what the system's shared opening
+    /// columns are worked out from, and a stale one would put every staff's
+    /// elements in the wrong place rather than just its own.
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         self.height = available.y;
 
@@ -204,18 +205,18 @@ impl Layoutable for StaffMeasure {
         for rest in self.rests.iter_mut() {
             rest.measure(available, params);
         }
-
-        // What this measure would do left to itself. The system raises these to
-        // the columns every staff shares; see `start_columns`.
-        self.start_columns = StartColumns::fold(&[self.start_metrics()]);
     }
 
+    /// Places everything this measure can place on its own. The three opening
+    /// elements are not among them: where they go is decided across the whole
+    /// system by
+    /// [`System::arrange_measure_starts`](crate::score::visual::system::System),
+    /// which runs once the staves have been placed -- the same way a tie, whose
+    /// two ends may be systems apart, is left to
+    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties).
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
-        self.arrange_clef_start();
-        self.arrange_key_signature_start();
-        self.arrange_time_signature_start();
         self.arrange_time_signature_end();
         self.arrange_clef_end();
         self.arrange_rests();

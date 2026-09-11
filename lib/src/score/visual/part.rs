@@ -220,6 +220,12 @@ impl Part {
         self.staves.values().filter(|staff| !staff.hidden)
     }
 
+    /// The same staves, for a caller that places something on them rather than
+    /// reading them. The mutable twin of [`visible_staves`](Self::visible_staves).
+    pub fn visible_staves_mut(&mut self) -> impl Iterator<Item = &mut Staff> {
+        self.staves.values_mut().filter(|staff| !staff.hidden)
+    }
+
     /// Whether this part draws its own symbol: more than one staff to join, and
     /// a symbol that draws.
     pub fn shows_symbol(&self) -> bool {

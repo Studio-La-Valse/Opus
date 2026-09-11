@@ -17,11 +17,13 @@ mod tests {
     use lib::score::user_layout::UserLayout;
     use lib::score::visual::score::Score;
     use lib::score::visual::staff_measure::StaffMeasure;
-    use lib::score::visual::start_columns::{StartColumns, StartMetrics};
     use lib::smufl::smufl_font::SmuflFont;
     use roxmltree::Document;
     use std::fs::read_to_string;
     use std::sync::OnceLock;
+
+    const TREBLE: &str = "<clef><sign>G</sign><line>2</line></clef>";
+    const BASS: &str = "<clef><sign>F</sign><line>4</line></clef>";
 
     fn asset(relative_path: &str) -> String {
         read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
@@ -38,38 +40,26 @@ mod tests {
         })
     }
 
-    fn metrics(padding: f32, clef_width: Option<f32>, key_width: f32) -> StartMetrics {
-        StartMetrics {
-            padding,
-            clef_width,
-            key_width,
-        }
-    }
-
-    /// A score whose parts each declare their own `<key>`, the way a score with
-    /// transposing instruments does. `keys` is one `<fifths>` per part.
-    fn score_xml(keys: &[i32]) -> String {
-        let part_list: String = keys
-            .iter()
-            .enumerate()
-            .map(|(i, _)| {
-                let id = i + 1;
-                format!("<score-part id=\"P{id}\"><part-name>P{id}</part-name></score-part>")
-            })
+    /// A one-measure score whose parts each declare their own `<key>` and
+    /// `<clef>`, the way a score with transposing instruments does. One
+    /// `(fifths, clef)` pair per part.
+    fn score_xml(parts: &[(i32, &str)]) -> String {
+        let part_list: String = (1..=parts.len())
+            .map(|id| format!("<score-part id=\"P{id}\"><part-name>P{id}</part-name></score-part>"))
             .collect();
 
-        let parts: String = keys
+        let bodies: String = parts
             .iter()
             .enumerate()
-            .map(|(i, fifths)| {
+            .map(|(i, (fifths, clef))| {
                 let id = i + 1;
                 format!(
                     "<part id=\"P{id}\"><measure number=\"1\" width=\"400\">\
                      <attributes><divisions>4</divisions>\
                      <key><fifths>{fifths}</fifths><mode>major</mode></key>\
                      <time><beats>4</beats><beat-type>4</beat-type></time>\
-                     <clef><sign>G</sign><line>2</line></clef></attributes>\
-                     <note default-x=\"200\"><pitch><step>C</step><octave>5</octave></pitch>\
+                     {clef}</attributes>\
+                     <note default-x=\"200\"><pitch><step>C</step><octave>4</octave></pitch>\
                      <duration>16</duration><voice>1</voice><type>whole</type></note>\
                      </measure></part>"
                 )
@@ -78,7 +68,7 @@ mod tests {
 
         format!(
             "<score-partwise version=\"4.0\">\
-             <part-list>{part_list}</part-list>{parts}</score-partwise>"
+             <part-list>{part_list}</part-list>{bodies}</score-partwise>"
         )
     }
 
@@ -118,19 +108,38 @@ mod tests {
             .collect()
     }
 
-    /// The columns are offsets from a measure's own left edge, and every staff
-    /// measure of one measure number shares that edge. Asserted separately
-    /// because it is the premise the whole scheme rests on: without it, equal
-    /// offsets would not put the elements in the same place on the page.
+    fn clef_x(measure: &StaffMeasure) -> f32 {
+        measure.clef_start.as_ref().expect("an opening clef").xy.x
+    }
+
+    fn clef_width(measure: &StaffMeasure) -> f32 {
+        measure.clef_start.as_ref().expect("an opening clef").width
+    }
+
+    fn key_x(measure: &StaffMeasure) -> f32 {
+        measure.key_signature_start.xy.x
+    }
+
+    fn time_x(measure: &StaffMeasure) -> f32 {
+        measure
+            .time_signature_start
+            .as_ref()
+            .expect("an opening time signature")
+            .xy
+            .x
+    }
+
+    /// The premise the whole scheme rests on: every staff measure of one measure
+    /// number starts at the same x, so placing the three elements at equal
+    /// offsets really does line them up on the page.
     #[test]
     fn staff_measures_of_one_measure_share_a_left_edge() {
-        let score = engrave(&score_xml(&[-7, -5, 0]));
+        let score = engrave(&score_xml(&[(-7, TREBLE), (-5, TREBLE), (0, TREBLE)]));
         let measures = staff_measures(&score, 1);
         assert_eq!(measures.len(), 3);
 
-        let first = measures[0].xy.x;
         for measure in &measures {
-            assert_eq!(measure.xy.x, first);
+            assert_eq!(measure.xy.x, measures[0].xy.x);
         }
     }
 
@@ -139,7 +148,7 @@ mod tests {
     /// at the same place.
     #[test]
     fn unequal_key_signatures_do_not_move_the_time_signature() {
-        let score = engrave(&score_xml(&[-7, -5, 0]));
+        let score = engrave(&score_xml(&[(-7, TREBLE), (-5, TREBLE), (0, TREBLE)]));
         let measures = staff_measures(&score, 1);
         assert_eq!(measures.len(), 3);
 
@@ -154,16 +163,6 @@ mod tests {
             "expected three different key signature widths, got {widths:?}"
         );
         assert_eq!(widths[2], 0., "a part in C carries no accidentals");
-
-        let clef_x = |m: &StaffMeasure| m.clef_start.as_ref().expect("an opening clef").xy.x;
-        let key_x = |m: &StaffMeasure| m.key_signature_start.xy.x;
-        let time_x = |m: &StaffMeasure| {
-            m.time_signature_start
-                .as_ref()
-                .expect("an opening time signature")
-                .xy
-                .x
-        };
 
         for measure in &measures {
             assert_eq!(clef_x(measure), clef_x(measures[0]), "clefs align");
@@ -180,91 +179,56 @@ mod tests {
         assert!(key_x(measures[0]) + widths[0] < time_x(measures[0]));
     }
 
+    /// The cascade: the key column is measured from the *widest* clef, not from
+    /// each staff's own. A staff with the narrower clef would have started its
+    /// key signature closer in, and that answer must not survive the clef column
+    /// moving right for somebody else.
+    #[test]
+    fn key_signatures_clear_the_widest_clef() {
+        let score = engrave(&score_xml(&[(-3, TREBLE), (-3, BASS)]));
+        let measures = staff_measures(&score, 1);
+        assert_eq!(measures.len(), 2);
+
+        let widths: Vec<f32> = measures.iter().map(|m| clef_width(m)).collect();
+        assert!(
+            widths[0] != widths[1],
+            "expected a treble and a bass clef to differ in width, got {widths:?}"
+        );
+
+        assert_eq!(
+            key_x(measures[0]),
+            key_x(measures[1]),
+            "key signatures align"
+        );
+
+        let widest = widths[0].max(widths[1]);
+        let padding = measures[0].padding();
+        assert_eq!(
+            key_x(measures[0]),
+            clef_x(measures[0]) + widest + padding,
+            "a padding clear of the wider clef"
+        );
+    }
+
     /// A staff on its own is laid out exactly as it was before there were shared
     /// columns: padding, clef, padding, key signature, padding, time signature.
     #[test]
     fn a_single_staff_still_follows_its_own_spacing() {
-        let score = engrave(&score_xml(&[-3]));
+        let score = engrave(&score_xml(&[(-3, TREBLE)]));
         let measures = staff_measures(&score, 1);
         assert_eq!(measures.len(), 1);
 
         let measure = measures[0];
         let padding = measure.padding();
-        let clef = measure.clef_start.as_ref().expect("an opening clef");
-        let time = measure
-            .time_signature_start
-            .as_ref()
-            .expect("an opening time signature");
 
-        assert_eq!(clef.xy.x - measure.xy.x, padding);
+        assert_eq!(clef_x(measure) - measure.xy.x, padding);
         assert_eq!(
-            measure.key_signature_start.xy.x,
-            clef.xy.x + clef.width + padding
+            key_x(measure),
+            clef_x(measure) + clef_width(measure) + padding
         );
         assert_eq!(
-            time.xy.x,
-            measure.key_signature_start.xy.x + measure.key_signature_start.width + padding
+            time_x(measure),
+            key_x(measure) + measure.key_signature_start.width + padding
         );
-    }
-
-    /// One staff's contribution is what it would have done alone.
-    #[test]
-    fn one_staff_folds_to_its_own_spacing() {
-        let columns = StartColumns::fold(&[metrics(5., Some(20.), 30.)]);
-
-        assert_eq!(columns.clef, 5.);
-        assert_eq!(columns.key, 5. + 20. + 5.);
-        assert_eq!(columns.time, columns.key + 30. + 5.);
-    }
-
-    /// The key column has to be re-derived from the *shared* clef column, not
-    /// taken as the widest of what each staff would have decided alone. A staff
-    /// with a narrow clef computes a near key column, and that answer does not
-    /// survive the clef column moving right for somebody else's wider clef.
-    #[test]
-    fn the_key_column_clears_the_widest_clef() {
-        let columns = StartColumns::fold(&[metrics(5., Some(10.), 0.), metrics(5., Some(40.), 0.)]);
-
-        assert_eq!(columns.key, 5. + 40. + 5., "cleared the wider clef");
-    }
-
-    /// The same cascade one column further out: the time column is measured from
-    /// the shared key column plus the widest key signature, even when the staff
-    /// carrying that key signature is not the one with the widest clef.
-    #[test]
-    fn the_time_column_clears_the_widest_key_signature() {
-        let columns =
-            StartColumns::fold(&[metrics(5., Some(40.), 0.), metrics(5., Some(10.), 70.)]);
-
-        assert_eq!(columns.key, 5. + 40. + 5.);
-        assert_eq!(columns.time, columns.key + 70. + 5.);
-    }
-
-    /// A staff that opens without a clef starts its key signature a padding in
-    /// from the measure's edge, and so has nothing to say about where the clef
-    /// column sits -- but it is still held to the shared key column.
-    #[test]
-    fn a_staff_without_a_clef_does_not_widen_the_key_column() {
-        let with_clef = StartColumns::fold(&[metrics(5., Some(40.), 0.)]);
-        let mixed = StartColumns::fold(&[metrics(5., Some(40.), 0.), metrics(5., None, 0.)]);
-
-        assert_eq!(mixed, with_clef);
-    }
-
-    /// Padding scales with the staff, and the column has to satisfy the most
-    /// demanding one.
-    #[test]
-    fn the_widest_padding_wins() {
-        let columns = StartColumns::fold(&[metrics(2.5, None, 0.), metrics(5., None, 0.)]);
-
-        assert_eq!(columns.clef, 5.);
-        assert_eq!(columns.key, 5.);
-    }
-
-    /// Nothing to fold is not a special case: a measure with no staves at all
-    /// puts its columns at the measure's own edge.
-    #[test]
-    fn no_staves_fold_to_no_offsets() {
-        assert_eq!(StartColumns::fold(&[]), StartColumns::default());
     }
 }
