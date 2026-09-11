@@ -68,8 +68,9 @@ mod tests {
         )
     }
 
-    /// An eighth note, which earns a flag, with one augmentation dot -- so that
-    /// every part of the note a reduction has to reach is present.
+    /// An eighth note, which earns a flag, with one augmentation dot and an
+    /// accidental -- so that every part of the note a reduction has to reach is
+    /// present.
     fn dotted_eighth(kind: &str, x: u32) -> String {
         let duration = if kind.contains("grace") {
             ""
@@ -79,8 +80,9 @@ mod tests {
 
         format!(
             "<note default-x=\"{x}\">{kind}\
-             <pitch><step>C</step><octave>5</octave></pitch>{duration}\
-             <voice>1</voice><type>eighth</type><dot/><stem>up</stem></note>"
+             <pitch><step>C</step><alter>1</alter><octave>5</octave></pitch>{duration}\
+             <voice>1</voice><type>eighth</type><dot/><stem>up</stem>\
+             <accidental>sharp</accidental></note>"
         )
     }
 
@@ -360,10 +362,54 @@ mod tests {
             .as_ref()
             .expect("an unbeamed eighth carries a flag");
         let dot = note.dots.first().expect("the note is dotted");
+        let accidental = note
+            .accidental
+            .as_ref()
+            .expect("the note carries an accidental");
 
         assert_eq!(note.scale, 0.5, "notehead");
         assert_eq!(dot.scale, 0.5, "augmentation dot");
         assert_eq!(stem.scale, 0.5, "stem");
         assert_eq!(flag.scale, 0.5, "flag");
+        assert_eq!(accidental.scale, 0.5, "accidental");
+    }
+
+    /// A reduced accidental also has to be *drawn* smaller, not merely marked
+    /// so: the scale reaches the glyph's own measured size, and the gap it
+    /// leaves before the notehead shrinks with it rather than staying a
+    /// full-size note's.
+    #[test]
+    fn a_reduced_accidental_is_narrower_and_sits_closer_to_its_notehead() {
+        let engrave_at = |grace: f32| {
+            let score = engrave(
+                &score_xml("", &dotted_eighth("<grace/>", 80)),
+                &UserLayout {
+                    note_size_grace: Some(grace),
+                    ..Default::default()
+                },
+            );
+
+            let notes = notes(&score);
+            let note = notes.first().expect("the grace note should exist");
+            let accidental = note
+                .accidental
+                .as_ref()
+                .expect("the note carries an accidental");
+
+            (accidental.width, note.xy.x - accidental.xy.x)
+        };
+
+        let (full_width, full_reach) = engrave_at(1.);
+        let (half_width, half_reach) = engrave_at(0.5);
+
+        assert!(full_width > 0.);
+        assert!(
+            (half_width - full_width / 2.).abs() < 1e-4,
+            "a half-size accidental is half as wide: {half_width} against {full_width}"
+        );
+        assert!(
+            (half_reach - full_reach / 2.).abs() < 1e-4,
+            "and reaches half as far left of the notehead: {half_reach} against {full_reach}"
+        );
     }
 }

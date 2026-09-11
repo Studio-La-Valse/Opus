@@ -70,6 +70,10 @@ pub struct Note {
 }
 
 impl Note {
+    /// Gap in tenths between a notehead's left edge and the right edge of its
+    /// accidental. Scaled with the note, like everything else it owns.
+    const ACCIDENTAL_GAP: f32 = 2.;
+
     pub fn new(
         id: NoteId,
         glyph: Notehead,
@@ -113,8 +117,10 @@ impl Note {
     }
 
     fn arrange_accidental(&mut self) {
+        let gap = Note::ACCIDENTAL_GAP * self.scale;
+
         if let Some(accidental) = &mut self.accidental {
-            accidental.arrange(&self.xy.mv(-2., 0.));
+            accidental.arrange(&self.xy.mv(-gap, 0.));
         }
     }
 }
@@ -164,6 +170,9 @@ impl Note {
         self.width = bbox.width();
 
         if let Some(accidental) = &mut self.accidental {
+            // Sized with the note, not the staff: a cue or grace note's
+            // accidental is reduced by the same factor its notehead is.
+            accidental.rescale(self.scale);
             accidental.measure(available, params);
         }
 

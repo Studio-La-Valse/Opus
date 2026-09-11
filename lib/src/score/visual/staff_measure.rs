@@ -190,6 +190,7 @@ impl Layoutable for StaffMeasure {
             time_signature.measure(available, params);
         }
 
+        self.key_signature_start.rescale(self.scale);
         self.key_signature_start.measure(available, params);
 
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
