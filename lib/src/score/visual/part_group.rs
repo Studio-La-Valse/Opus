@@ -117,6 +117,14 @@ impl PartGroup {
             .flat_map(|part| part.visible_staves())
     }
 
+    /// The mutable twin of [`visible_staves`](Self::visible_staves).
+    pub fn visible_staves_mut(&mut self) -> impl Iterator<Item = &mut Staff> {
+        self.parts
+            .values_mut()
+            .filter(|part| part.visibility != Visibility::Hidden)
+            .flat_map(|part| part.visible_staves_mut())
+    }
+
     /// Whether this group draws its symbol: more than one part to bind, more
     /// than one staff actually drawn, and a symbol that draws.
     pub fn shows_symbol(&self) -> bool {

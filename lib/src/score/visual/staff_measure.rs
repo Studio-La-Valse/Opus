@@ -62,49 +62,53 @@ impl StaffMeasure {
         Staff::DEFAULT_SPACE_SIZE * self.scale
     }
 
-    fn arrange_clef_start(&mut self) {
+    /// The gap this measure wants between one opening element and the next.
+    /// Scaled with the staff, so a cue-sized staff asks for a smaller one.
+    pub fn padding(&self) -> f32 {
+        ELEMENT_PADDING * self.scale
+    }
+
+    /// Places the opening clef `dx` right of this measure's left edge, and
+    /// answers how far right its ink then reaches -- or `None` when the measure
+    /// opens without a clef, which is every measure but the first of a system.
+    ///
+    /// The three `arrange_*_start` methods share this shape so that
+    /// [`System::arrange_measure_starts`](crate::score::visual::system::System)
+    /// can place each of them the same way: it decides the offset, they report
+    /// what the next column has to clear.
+    pub fn arrange_clef_start(&mut self, dx: f32) -> Option<f32> {
+        let xy = self.xy;
         let line_space = self.line_space() / 2.;
-        if let Some(ref mut clef) = self.clef_start {
-            clef.rescale(self.scale);
 
-            let dy: f32 = clef.clef.line as f32 * line_space;
-            let dx = ELEMENT_PADDING * self.scale;
-            clef.arrange(&self.xy.mv(dx, dy));
-        }
+        let clef = self.clef_start.as_mut()?;
+        let dy: f32 = clef.clef.line as f32 * line_space;
+        clef.arrange(&xy.mv(dx, dy));
+
+        Some(dx + clef.width)
     }
-    fn arrange_key_signature_start(&mut self) {
-        let mut pos = self.xy;
 
-        if let Some(clef) = &self.clef_start {
-            // Take the right side of the clef if it exists.
-            pos.x = clef.xy.x + clef.width;
-        }
+    /// Places the opening key signature. Always answers an edge, even for a
+    /// staff carrying no accidentals: an empty key signature is zero wide, so
+    /// the time signature still lands a padding right of the shared column
+    /// rather than crowding whatever came before it.
+    pub fn arrange_key_signature_start(&mut self, dx: f32) -> Option<f32> {
+        self.key_signature_start.arrange(&self.xy.mv(dx, 0.));
 
-        let dx = ELEMENT_PADDING * self.scale;
-        pos = pos.mv(dx, 0.);
-
-        self.key_signature_start.arrange(&pos);
+        Some(dx + self.key_signature_start.width)
     }
-    fn arrange_time_signature_start(&mut self) {
-        if let Some(ref mut time_signature) = self.time_signature_start {
-            time_signature.rescale(self.scale);
 
-            // ignore self.xy, take key signature xy + key signature width.
-            let mut pos = self
-                .key_signature_start
-                .xy
-                .mv(self.key_signature_start.width, 0.);
+    /// Places the opening time signature, which only the measures that open a
+    /// score or announce a change carry.
+    pub fn arrange_time_signature_start(&mut self, dx: f32) -> Option<f32> {
+        let xy = self.xy;
 
-            let dx: f32 = ELEMENT_PADDING * self.scale;
-            pos = pos.mv(dx, 0.);
+        let time_signature = self.time_signature_start.as_mut()?;
+        time_signature.arrange(&xy.mv(dx, 0.));
 
-            time_signature.arrange(&pos);
-        }
+        Some(dx + time_signature.width)
     }
     fn arrange_time_signature_end(&mut self) {
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
-            prepare_time_signature.rescale(self.scale);
-
             let pos = self
                 .xy
                 .mv(self.width - prepare_time_signature.width - 5., 0.);
@@ -113,8 +117,6 @@ impl StaffMeasure {
     }
     fn arrange_clef_end(&mut self) {
         if let Some(ref mut clef) = self.clef_end {
-            clef.rescale(self.scale * Clef::COURTESY_SCALE);
-
             let clef_origin = self.xy;
             let measure_right = clef_origin.mv(self.width, 0.);
             let arrange_left = measure_right.mv(-5. - clef.width, 0.);
@@ -170,24 +172,34 @@ impl Layoutable for StaffMeasure {
         }
     }
 
+    /// Sizes the measure's elements, scaling each to the staff first: a clef or
+    /// time signature drawn at anything other than full size has to be the
+    /// right size *here*, because its width is what the system's shared opening
+    /// columns are worked out from, and a stale one would put every staff's
+    /// elements in the wrong place rather than just its own.
     fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         self.height = available.y;
 
         if let Some(ref mut clef) = self.clef_start {
+            clef.rescale(self.scale);
             clef.measure(available, params);
         }
 
         if let Some(ref mut time_signature) = self.time_signature_start {
+            time_signature.rescale(self.scale);
             time_signature.measure(available, params);
         }
 
+        self.key_signature_start.rescale(self.scale);
         self.key_signature_start.measure(available, params);
 
         if let Some(ref mut prepare_time_signature) = self.time_signature_end {
+            prepare_time_signature.rescale(self.scale);
             prepare_time_signature.measure(available, params);
         }
 
         if let Some(ref mut clef) = self.clef_end {
+            clef.rescale(self.scale * Clef::COURTESY_SCALE);
             clef.measure(available, params);
         }
 
@@ -196,12 +208,16 @@ impl Layoutable for StaffMeasure {
         }
     }
 
+    /// Places everything this measure can place on its own. The three opening
+    /// elements are not among them: where they go is decided across the whole
+    /// system by
+    /// [`System::arrange_measure_starts`](crate::score::visual::system::System),
+    /// which runs once the staves have been placed -- the same way a tie, whose
+    /// two ends may be systems apart, is left to
+    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties).
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
-        self.arrange_clef_start();
-        self.arrange_key_signature_start();
-        self.arrange_time_signature_start();
         self.arrange_time_signature_end();
         self.arrange_clef_end();
         self.arrange_rests();

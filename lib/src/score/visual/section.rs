@@ -106,6 +106,13 @@ impl Section {
             .flat_map(|group| group.visible_staves())
     }
 
+    /// The mutable twin of [`visible_staves`](Self::visible_staves).
+    pub fn visible_staves_mut(&mut self) -> impl Iterator<Item = &mut Staff> {
+        self.part_groups
+            .values_mut()
+            .flat_map(|group| group.visible_staves_mut())
+    }
+
     /// Whether this section draws its symbol: it has to bind more than one
     /// part-group for there to be anything to bind, and the symbol itself has to
     /// be one that draws.

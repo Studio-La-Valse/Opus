@@ -12,6 +12,8 @@ mod test_group_name;
 mod test_group_symbol;
 mod test_group_symbol_validation;
 mod test_key;
+mod test_key_signature;
+mod test_measure_starts;
 mod test_musicxml_source;
 mod test_note_size;
 mod test_page_layout;
