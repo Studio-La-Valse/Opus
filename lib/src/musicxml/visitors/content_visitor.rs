@@ -146,15 +146,7 @@ impl ContentVisitor {
         let notehead = dur.notehead_glyph();
         let glyph = ctx.font.notehead(notehead);
         let dots: u8 = node.get_children("dot").len().try_into().unwrap();
-        let mut note = Note::new(
-            ctx.cursor.note_id,
-            glyph,
-            default_x,
-            staff_idx,
-            staff_line,
-            size,
-            dots,
-        );
+        let mut note = Note::new(glyph, default_x, staff_idx, staff_line, size, dots);
 
         // Locate Measure & Voice Chords
         let system = ctx
@@ -220,7 +212,7 @@ impl ContentVisitor {
             chord.clef_change.insert(s_idx, clef_change);
         }
 
-        chord.notes.push(note);
+        chord.notes.push((ctx.cursor.note_id, note));
     }
 
     /// Populates key signature accidentals at the start of a measure for all staves in a part.

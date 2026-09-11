@@ -123,6 +123,7 @@ impl PartMeasure {
                 if let Some(note) = chord
                     .notes
                     .iter()
+                    .map(|(_, n)| n)
                     .filter(|n| n.staff == *idx)
                     .min_by_key(key)
                     && note.staff_line < LEDGER_ABOVE_STAFF_LINE
@@ -135,6 +136,7 @@ impl PartMeasure {
                 if let Some(note) = chord
                     .notes
                     .iter()
+                    .map(|(_, n)| n)
                     .filter(|n| n.staff == *idx)
                     .max_by_key(key)
                     && note.staff_line > below_staff_line
