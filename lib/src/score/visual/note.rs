@@ -17,6 +17,11 @@ use crate::smufl::glyphs::notehead::Notehead;
 /// exactly what a tie is. Ids let [`Tie`](crate::score::visual::tie::Tie) name
 /// its two endpoints without needing a pointer into the tree.
 ///
+/// The id belongs to the *slot* a note occupies rather than to the note itself
+/// -- nothing a [`Note`] does needs to know its own id -- so it is stored beside
+/// the note in [`Chord::notes`](crate::score::visual::chord::Chord::notes)
+/// instead of as a field on it.
+///
 /// Handed out by
 /// [`WalkCursor`](crate::score::walk_cursor::WalkCursor), so that every visitor
 /// in the chain agrees on which note it is looking at. They are assigned during
@@ -40,8 +45,6 @@ impl From<u32> for NoteId {
 }
 
 pub struct Note {
-    pub id: NoteId,
-
     pub xy: XY,
     pub width: f32,
     pub height: f32,
@@ -75,7 +78,6 @@ impl Note {
     const ACCIDENTAL_GAP: f32 = 2.;
 
     pub fn new(
-        id: NoteId,
         glyph: Notehead,
         default_x: f32,
         staff: StaffIdx,
@@ -84,7 +86,6 @@ impl Note {
         dots: u8,
     ) -> Self {
         Note {
-            id,
             glyph,
             accidental: None,
 
