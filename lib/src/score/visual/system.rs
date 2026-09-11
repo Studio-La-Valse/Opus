@@ -9,6 +9,7 @@ use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::section::Section;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::score::visual::start_columns::{StartColumns, StartMetrics};
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::score::visual::tie::TieSegment;
 use crate::score::walk_cursor::Visibility;
@@ -139,6 +140,54 @@ impl System {
         }
     }
 
+    /// Settles the three columns the opening clef, key signature and time
+    /// signature of every staff are drawn against, one set per measure, and
+    /// writes them into the staff measures that will draw them.
+    ///
+    /// The counterpart of [`consolidate_measure_width`](Self::consolidate_measure_width)
+    /// for what is *inside* a measure: a column, like a measure width, is a fact
+    /// about the whole system that no single staff can work out on its own. Only
+    /// the drawn staves have a say -- a hidden staff's key signature must not
+    /// push everyone else's time signature right for a clef nobody sees -- but
+    /// the result is written to every staff measure, drawn or not, so that
+    /// nothing keeps a column from a previous layout pass.
+    ///
+    /// Run at the end of [`measure`](Layoutable::measure), where every element's
+    /// width is finally known and nothing has been placed yet.
+    fn consolidate_start_columns(&mut self) {
+        let mut metrics: BTreeMap<u32, Vec<StartMetrics>> = BTreeMap::new();
+        for staff in self.visible_staves() {
+            for (number, measure) in staff.measures.iter() {
+                metrics
+                    .entry(*number)
+                    .or_default()
+                    .push(measure.start_metrics());
+            }
+        }
+
+        let columns: BTreeMap<u32, StartColumns> = metrics
+            .into_iter()
+            .map(|(number, metrics)| (number, StartColumns::fold(&metrics)))
+            .collect();
+
+        for (number, measure) in self.staff_measures_mut() {
+            if let Some(&shared) = columns.get(number) {
+                measure.start_columns = shared;
+            }
+        }
+    }
+
+    /// Every staff measure in this system with the measure number it belongs
+    /// to, hidden staves and hidden parts included.
+    fn staff_measures_mut(&mut self) -> impl Iterator<Item = (&u32, &mut StaffMeasure)> {
+        self.sections
+            .values_mut()
+            .flat_map(|section| section.part_groups.values_mut())
+            .flat_map(|part_group| part_group.parts.values_mut())
+            .flat_map(|part| part.staves.values_mut())
+            .flat_map(|staff| staff.measures.iter_mut())
+    }
+
     /// Every staff of this system that is drawn, top to bottom.
     pub fn visible_staves(&self) -> impl Iterator<Item = &Staff> {
         self.sections
@@ -247,6 +296,10 @@ impl Layoutable for System {
             section.measure(&available, params);
             self.height += section.height;
         }
+
+        // Every opening element now knows its width, which is all the columns
+        // are folded from.
+        self.consolidate_start_columns();
 
         for measure in self.measures.values_mut() {
             let available = XY {

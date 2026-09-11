@@ -24,6 +24,7 @@ mod test_resolve_layout;
 mod test_scale;
 mod test_staff_details_validation;
 mod test_staff_lines;
+mod test_start_columns;
 mod test_text_box;
 mod test_tie;
 mod test_time_signature;
