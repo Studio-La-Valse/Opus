@@ -1,11 +1,11 @@
 //! Resolves [`Tie`]s into drawn arcs, after the pages have been arranged.
 //!
 //! This is the one pass that has to see the whole score at once. Every other
-//! layout step is local -- a `PartMeasure` arranges its own beams from its own
-//! chords -- but a tie's two endpoints may sit in different measures, different
-//! systems or different pages, and a note's absolute position does not exist
-//! until `arrange` has run. So ties are resolved last, from a flat index of
-//! every note's final coordinates.
+//! layout step is local -- a `Part` arranges its own beams from its own chords,
+//! including the ones whose group carries on past it -- but a tie's two endpoints
+//! may sit in different measures, different systems or different pages, and a
+//! note's absolute position does not exist until `arrange` has run. So ties are
+//! resolved last, from a flat index of every note's final coordinates.
 //!
 //! The payoff is that a cross-**page** tie needs no code of its own. Once
 //! fragments are keyed by [`SystemKey`], a tie whose endpoints happen to be on
@@ -81,9 +81,10 @@ pub struct SystemExtent {
 /// Rebuilds every system's tie arcs from `score.ties`.
 ///
 /// Runs after `LayoutEngine::arrange_pages`, and assigns rather than appends, so
-/// calling it repeatedly is idempotent -- the same property `PartMeasure` gets
-/// from clearing `self.beams` before rebuilding them, and the reason the wasm
-/// render path can re-arrange a cached score for a new `UserLayout`.
+/// calling it repeatedly is idempotent -- the same property
+/// [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams) gets
+/// from assigning `Part::beams`, and the reason the wasm render path can
+/// re-arrange a cached score for a new `UserLayout`.
 pub fn arrange_ties(score: &mut Score, params: LayoutParams<'_>) {
     let metrics = TieMetrics::resolve(params);
     let anchors = collect_note_anchors(score);

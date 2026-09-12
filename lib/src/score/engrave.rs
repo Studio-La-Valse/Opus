@@ -207,7 +207,8 @@ pub fn arrange_score(
 
     // Last: a tie's two endpoints can be measures, systems or pages apart, so it
     // is the one element that cannot be arranged until every note in the score
-    // has its final position.
+    // has its final position. Beams need only one part's worth of chords, so
+    // `Part::arrange_clear_of` has already drawn them by this point.
     arrange_ties(score, params);
 
     progress(Stage::LayoutPass);

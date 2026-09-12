@@ -22,9 +22,6 @@ mod tests {
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
     const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
-    /// The app default `group_name_padding`, in tenths.
-    const PADDING: f32 = 10.;
-
     /// A braced two-part group, named and abbreviated, nested inside an outer
     /// bracket so it reaches the visual tree as a part-group rather than a
     /// section. Both its symbol and its name draw.
@@ -172,11 +169,13 @@ mod tests {
         let score = engrave(&score_xml(NAMED_GROUP, &["P1", "P2"], 1));
         let group = group(system(&score, 1));
 
+        let padding = AppDefaults::default().group_name_padding;
+
         assert!(group.shows_symbol(), "the brace draws");
         assert!(group.shows_name(), "the group name draws");
         close(
             group.name.bounds().x_max(),
-            group.symbol.bounds().x_min() - PADDING,
+            group.symbol.bounds().x_min() - padding,
             "name right edge sits a padding left of the brace",
         );
     }
@@ -199,11 +198,13 @@ mod tests {
         let score = engrave(&score_xml(part_list, &["P1", "P2"], 1));
         let group = group(system(&score, 1));
 
+        let padding = AppDefaults::default().group_name_padding;
+
         assert!(!group.shows_symbol(), "an explicit 'none' draws nothing");
         assert!(group.shows_name());
         close(
             group.name.bounds().x_max(),
-            group.xy.x - PADDING,
+            group.xy.x - padding,
             "name right edge falls a padding left of the system edge",
         );
     }
@@ -270,12 +271,15 @@ mod tests {
 
     #[test]
     fn a_padding_override_moves_only_the_right_edge() {
+        let extra = 20.;
+        let widened = AppDefaults::default().group_name_padding + extra;
+
         let xml = score_xml(NAMED_GROUP, &["P1", "P2"], 1);
         let base = engrave_with(&xml, &UserLayout::default());
         let wide = engrave_with(
             &xml,
             &UserLayout {
-                group_name_padding: Some(PADDING + 20.),
+                group_name_padding: Some(widened),
                 ..Default::default()
             },
         );
@@ -286,7 +290,7 @@ mod tests {
         close(wide_box.x_min(), base_box.x_min(), "left edge stays put");
         close(
             wide_box.x_max(),
-            base_box.x_max() - 20.,
+            base_box.x_max() - extra,
             "right edge moves in by the extra padding",
         );
     }

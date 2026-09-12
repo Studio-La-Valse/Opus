@@ -382,5 +382,30 @@
                 "rust"
             ]
         },
+        {
+            // A piano part whose beam groups run straight through the barline,
+            // four times over, and whose stems point up from one staff of the
+            // grand staff and down from the other. The cross-measure group is
+            // what used to panic outright; the cross-staff beaming already
+            // worked and has to keep working.
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (Fixture: crazy-beams - beams across barlines, cross-staff)",
+            "preLaunchTask": "rust: cargo build",
+            "program": "${workspaceRoot}/target/debug/opus",
+            "args": [
+                "render",
+                "svg",
+                "--file", "assets/xmlfixtures/crazy-beams.musicxml",
+                "--out", "assets/xmltest", "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+                "--glyphs", "assets/smufl/metadata/glyphnames.json",
+                "--debug"
+            ],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
     ]
 }

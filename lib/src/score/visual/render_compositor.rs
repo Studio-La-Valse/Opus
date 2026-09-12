@@ -216,6 +216,13 @@ impl RenderCompositor {
             self.walk_staff(staff, fonts, out);
         }
 
+        // After the staff lines a beam crosses and before the noteheads it never
+        // overlaps, which is where they were drawn when a `PartMeasure` owned
+        // them. A hidden part is skipped above, so its beams are skipped with it.
+        for beam in part.beams.iter() {
+            self.pass.render_beam(beam, fonts, out);
+        }
+
         for measure in part.measures.values() {
             self.walk_part_measure(measure, fonts, out);
         }
@@ -371,7 +378,7 @@ impl RenderCompositor {
             .map(Self::estimate_part_measure)
             .sum();
 
-        1 + staves + measures // group symbol + staves + measures
+        1 + part.beams.len() + staves + measures // group symbol + beams + staves + measures
     }
 
     fn estimate_staff(staff: &Staff) -> usize {
@@ -382,8 +389,7 @@ impl RenderCompositor {
         let chords = measure.chords.values().flatten();
 
         // notehead + stem per chord, plus headroom for accidentals/flags/extra notes.
-        measure.beams.len()
-            + measure.ledgers.len()
+        measure.ledgers.len()
             + chords.clone().count() * 2
             + chords.map(|c| c.notes.len()).sum::<usize>()
     }

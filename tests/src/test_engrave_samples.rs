@@ -112,6 +112,18 @@ mod tests {
         fixture("group-symbols");
     }
 
+    /// Beam groups that run straight through a barline, and one that runs through a
+    /// system break, on a piano grand staff whose beams also cross between the two
+    /// staves of the grand staff.
+    ///
+    /// The cross-measure group is the case that panicked outright:
+    /// `create_beam_groups` met a `<beam number="1">end</beam>` with no group
+    /// open, because the group had been flushed at the previous barline.
+    #[test]
+    fn a_score_with_beams_across_barlines_engraves() {
+        fixture("crazy-beams");
+    }
+
     /// A full orchestral score, which is the largest document the fixtures hold
     /// and the one that exercises the most levels of grouping at once.
     #[test]

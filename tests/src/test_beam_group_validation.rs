@@ -92,7 +92,7 @@ mod tests {
         assert!(found[0].contains("number=\"2\""), "{}", found[0]);
     }
 
-    /// The group itself running off the end of the measure is the same defect a
+    /// The group itself running off the end of the part is the same defect a
     /// level up, and panicked in the same place.
     #[test]
     fn a_group_that_never_ends_warns() {
@@ -168,13 +168,23 @@ mod tests {
         assert!(warnings(&[&m]).is_empty());
     }
 
-    /// A beam group cannot span a barline -- a `PartMeasure` beams its own
-    /// chords and nothing else -- so a level left open at the end of a measure
-    /// is stranded rather than continued.
+    /// A beam group may span a barline: `arrange_beams` builds its runs from a
+    /// whole part, so a level opened at the end of one measure and closed at the
+    /// start of the next is well formed, not stranded.
     #[test]
-    fn a_group_does_not_continue_across_a_barline() {
+    fn a_group_continues_across_a_barline() {
         let first = note(1, &beam(1, "begin"));
         let second = note(1, &beam(1, "end"));
+
+        assert!(warnings(&[&first, &second]).is_empty());
+    }
+
+    /// The barline is not a boundary, so a level left open at the *end of the
+    /// part* is what is finally stranded.
+    #[test]
+    fn a_group_left_open_at_the_end_of_the_part_warns() {
+        let first = note(1, &beam(1, "begin"));
+        let second = note(1, &beam(1, "continue"));
 
         let found = warnings(&[&first, &second]);
         assert_eq!(found.len(), 1, "expected one warning, got {found:?}");
