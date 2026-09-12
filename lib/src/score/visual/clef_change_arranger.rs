@@ -20,14 +20,12 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::visual::clef::{Clef, ClefChange};
+use crate::score::visual::clef::{Clef, ClefAnchor, ClefChange};
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::NoteId;
 use crate::score::visual::part::Part;
 use crate::score::visual::score::Score;
-use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::system::SystemKey;
 use crate::score::walk_cursor::Visibility;
@@ -167,34 +165,15 @@ fn place_clef_change(
 
     let mut clef = Clef::new(change.clef.clone());
     clef.resolve_layout(params);
-    place_courtesy_clef(
-        &mut clef,
-        left,
+
+    // Built here rather than during the measure pass, so it has to size itself
+    // before `place` can read the width back off it.
+    clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
+    clef.place(
+        ClefAnchor::GapBefore(left),
         part_top + ctx.distance_from_top,
         ctx.scaling,
     );
 
     Some(clef)
-}
-
-/// Puts a clef in front of something: reduced to courtesy size, its right edge
-/// [`Clef::COURTESY_GAP`] to the left of `left`, and sitting on whichever line
-/// its own clef names, measured down from `staff_top`.
-///
-/// A pure function of four numbers, so the rule can be checked without building
-/// a document -- the seam
-/// [`split_tie`](crate::score::visual::tie_arranger::split_tie) is for ties.
-/// Nothing here is specific to a *change*: the same reduced clef announced at a
-/// barline is the same shape in a different place, which is what
-/// `StaffMeasure::arrange_clef_end` draws by hand today.
-pub fn place_courtesy_clef(clef: &mut Clef, left: f32, staff_top: f32, scaling: f32) {
-    // Sets the width the placement below reads back, so it has to come first.
-    clef.rescale(scaling * Clef::COURTESY_SCALE);
-
-    let dy = clef.clef.line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.) * scaling;
-
-    clef.arrange(&XY {
-        x: left - Clef::COURTESY_GAP - clef.width,
-        y: staff_top + dy,
-    });
 }

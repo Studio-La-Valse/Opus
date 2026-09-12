@@ -7,7 +7,6 @@ use crate::score::core::pitch::Pitch;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
 use crate::score::visual::chord::Chord;
-use crate::score::visual::clef::Clef;
 use crate::score::visual::note::Note;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::rest::Rest;
@@ -307,36 +306,6 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
         }
     }
 
-    /// The clef a measure opens with, drawn at the *previous* measure's barline
-    /// as the courtesy announcing it.
-    ///
-    /// A clef written part-way through a measure is a different thing entirely --
-    /// it has no barline to sit at, only the note or rest that follows it -- and
-    /// is recorded by
-    /// [`ClefChangeVisitor`](crate::musicxml::visitors::clef_change_visitor::ClefChangeVisitor)
-    /// instead.
-    fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        if ctx.cursor.position > 0 {
-            return;
-        }
-
-        let staff_idx: StaffIdx = ctx.cursor.staff.number;
-        let clef = ctx.cursor.staff.active_clef.get(&staff_idx).unwrap();
-        let staff_lines = ctx.cursor.staff.lines(&staff_idx);
-        let visual_clef = Clef::new(ctx.font.clef(clef, staff_lines));
-
-        let measure_number = ctx.cursor.measure.number;
-        let part_id = ctx.cursor.part_id.as_str();
-
-        if measure_number > 1
-            && let Some(previous_measure) =
-                ctx.visual_score
-                    .locate_staff_measure_mut(part_id, &staff_idx, measure_number - 1)
-        {
-            previous_measure.clef_end = Some(visual_clef);
-        }
-    }
-
     fn enter_key(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         if ctx.cursor.new_system {
             // handled in exit_measure() for new systems
@@ -374,10 +343,18 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
         }
     }
 
+    /// The key signature a new system opens with, which -- unlike one written
+    /// mid-score, handled in [`enter_key`](Self::enter_key) -- has no `<key>` of
+    /// its own to hang off: a system repeats the key it is already in.
     fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
+        if !ctx.cursor.new_system {
+            return;
+        }
+
         let page_number = ctx.cursor.page.page_number;
         let system_index = ctx.cursor.system.index;
         let measure_number = ctx.cursor.measure.number;
+        let key = ctx.cursor.key;
 
         let part_id = ctx.cursor.part_id.clone();
         let assignment = ctx.layout.lookup(&part_id).unwrap();
@@ -390,23 +367,12 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
             &part_id,
         );
 
-        // set_opening_clef must run after the layout pass' consolidate_measure_width(),
-        // because all measures must exist in each staff
-        part.set_opening_clef(&ctx.cursor.staff.opening_clef, |c, staff_lines| {
-            let smufl_clef = ctx.font.clef(&c, staff_lines);
-            Clef::new(smufl_clef)
-        });
-
-        if ctx.cursor.new_system {
-            let key = ctx.cursor.key;
-
-            self.populate_key_signature(
-                part,
-                measure_number,
-                key,
-                &ctx.cursor.staff.active_clef,
-                ctx.font,
-            );
-        }
+        self.populate_key_signature(
+            part,
+            measure_number,
+            key,
+            &ctx.cursor.staff.active_clef,
+            ctx.font,
+        );
     }
 }

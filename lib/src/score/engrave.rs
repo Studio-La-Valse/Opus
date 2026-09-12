@@ -26,7 +26,7 @@ use crate::geometry::xy::XY;
 use crate::musicxml::validation_issue::ValidationIssue;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
 use crate::musicxml::visitors::build_logging_visitor::BuildLoggingVisitor;
-use crate::musicxml::visitors::clef_change_visitor::ClefChangeVisitor;
+use crate::musicxml::visitors::clef_visitor::ClefVisitor;
 use crate::musicxml::visitors::content_visitor::ContentVisitor;
 use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
 use crate::musicxml::visitors::print_layout_visitor::PrintLayoutVisitor;
@@ -150,7 +150,7 @@ pub fn walk_document(
         .uses(WalkCursorVisitor {})
         .uses(ContentVisitor::new())
         .uses(TieVisitor::new())
-        .uses(ClefChangeVisitor::new());
+        .uses(ClefVisitor::new());
     let mut ctx = WalkerCtx::new(
         user_layout,
         &mut layout,
