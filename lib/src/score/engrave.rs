@@ -39,6 +39,7 @@ use crate::score::page_orientation::PageOrientation;
 use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
+use crate::score::visual::beam_arranger::arrange_beams;
 use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
@@ -205,9 +206,11 @@ pub fn arrange_score(
     score.measure(&XY::INFINITE, params);
     page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);
 
-    // Last: a tie's two endpoints can be measures, systems or pages apart, so it
-    // is the one element that cannot be arranged until every note in the score
-    // has its final position.
+    // Last, and in this order: a beam group's chords and a tie's two endpoints
+    // can be measures, systems or pages apart, so neither can be arranged until
+    // every note in the score has its final position. Beams first because they
+    // move stem tips, and nothing in the tie geometry reads a stem's length.
+    arrange_beams(score, params);
     arrange_ties(score, params);
 
     progress(Stage::LayoutPass);

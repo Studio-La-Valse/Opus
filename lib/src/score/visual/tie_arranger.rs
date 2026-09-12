@@ -1,11 +1,12 @@
 //! Resolves [`Tie`]s into drawn arcs, after the pages have been arranged.
 //!
-//! This is the one pass that has to see the whole score at once. Every other
-//! layout step is local -- a `PartMeasure` arranges its own beams from its own
-//! chords -- but a tie's two endpoints may sit in different measures, different
-//! systems or different pages, and a note's absolute position does not exist
-//! until `arrange` has run. So ties are resolved last, from a flat index of
-//! every note's final coordinates.
+//! One of the two passes that have to see the whole score at once -- beams are
+//! the other, for the same reason and in the same place. Every step before this
+//! is local: a `StaffMeasure` places its own clef from its own left edge. But a
+//! tie's two endpoints may sit in different measures, different systems or
+//! different pages, and a note's absolute position does not exist until
+//! `arrange` has run. So ties are resolved last, from a flat index of every
+//! note's final coordinates.
 //!
 //! The payoff is that a cross-**page** tie needs no code of its own. Once
 //! fragments are keyed by [`SystemKey`], a tie whose endpoints happen to be on
@@ -21,18 +22,9 @@ use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::NoteId;
 use crate::score::visual::score::Score;
 use crate::score::visual::stem::UpDown;
+use crate::score::visual::system::SystemKey;
 use crate::score::visual::tie::{Tie, TieMetrics, TieSegment, TieSide, tie_arc};
 use crate::score::walk_cursor::Visibility;
-
-/// Addresses one system in the score: its page's key and its own key, both taken
-/// from the enclosing `BTreeMap`s.
-///
-/// Deliberately the map keys rather than any stored index: they are document
-/// order by construction, which is exactly what "does the tie's start come
-/// before its end" means. `Page::number` happens to carry the same value today,
-/// but it is there for margin resolution and nothing here should depend on the
-/// two staying in step.
-pub type SystemKey = (u32, u32);
 
 /// A note's finished geometry, copied out of the tree so the resolution phase
 /// can borrow the score immutably and the install phase mutably.
@@ -81,9 +73,10 @@ pub struct SystemExtent {
 /// Rebuilds every system's tie arcs from `score.ties`.
 ///
 /// Runs after `LayoutEngine::arrange_pages`, and assigns rather than appends, so
-/// calling it repeatedly is idempotent -- the same property `PartMeasure` gets
-/// from clearing `self.beams` before rebuilding them, and the reason the wasm
-/// render path can re-arrange a cached score for a new `UserLayout`.
+/// calling it repeatedly is idempotent -- the same property
+/// [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams) gets
+/// from assigning `System::beams`, and the reason the wasm render path can
+/// re-arrange a cached score for a new `UserLayout`.
 pub fn arrange_ties(score: &mut Score, params: LayoutParams<'_>) {
     let metrics = TieMetrics::resolve(params);
     let anchors = collect_note_anchors(score);

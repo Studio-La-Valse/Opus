@@ -12,8 +12,8 @@ use std::collections::BTreeMap;
 /// left edge and no right one, which used to be a panic and is now inferred --
 /// the level is taken to run to the last note that carries it (see
 /// `beam_level_ends_at` in
-/// [`part_measure`](crate::score::visual::part_measure)). Since the document is
-/// repairable rather than un-renderable, this is a `Warning` and not an
+/// [`beam_arranger`](crate::score::visual::beam_arranger)). Since the document
+/// is repairable rather than un-renderable, this is a `Warning` and not an
 /// `Error`.
 ///
 /// Notably *not* caught by the rebeam pass: that compares how many beams a note
@@ -21,9 +21,16 @@ use std::collections::BTreeMap;
 /// right but whose types are inconsistent passes straight through it.
 ///
 /// Levels are tracked per voice, and separately for grace notes, because that is
-/// how `PartMeasure::arrange_beams` groups the chords it beams. A group also
-/// ends at a note carrying no `<beam>` at all, and at the end of a measure,
-/// which is as far as a `PartMeasure` can see.
+/// how [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams)
+/// groups the chords it beams. A group also ends at a note carrying no `<beam>`
+/// at all.
+///
+/// A barline is *not* such a boundary. It was, while beams were a
+/// `PartMeasure`'s own business and a measure was as far as one could see, so a
+/// level left open at the end of a measure was stranded by construction. Now
+/// that a run is a whole part's, a group legally spans a barline and closing
+/// every open level at `exit_measure` would report each such beam as a defect.
+/// `exit_part` still catches the levels that really are never closed.
 #[derive(Default)]
 pub struct BeamGroupVisitor {
     /// Per group, the levels currently open and the byte offset of the `<beam>`
@@ -31,8 +38,8 @@ pub struct BeamGroupVisitor {
     open: BTreeMap<GroupKey, BTreeMap<u32, usize>>,
 }
 
-/// What `PartMeasure::arrange_beams` beams together: one voice's notes, with
-/// grace notes kept apart from the rest.
+/// What [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams)
+/// beams together: one voice's notes, with grace notes kept apart from the rest.
 type GroupKey = (u32, bool);
 
 impl BeamGroupVisitor {
@@ -125,10 +132,6 @@ impl Visitor<ValidationCtx> for BeamGroupVisitor {
         if !group_open {
             self.close_group(key, ctx);
         }
-    }
-
-    fn exit_measure(&mut self, ctx: &mut ValidationCtx) {
-        self.close_all(ctx);
     }
 
     fn exit_part(&mut self, ctx: &mut ValidationCtx) {

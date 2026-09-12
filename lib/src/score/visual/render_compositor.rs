@@ -134,9 +134,18 @@ impl RenderCompositor {
             self.walk_section(section, fonts, out);
         }
 
-        // Last, so ties paint on top. Elements are drawn in walk order and the
-        // staff lines a tie crosses come out of `render_staff`, part-way through
-        // the section walk above.
+        // Last, so beams and ties paint on top. Elements are drawn in walk order
+        // and the staff lines they cross come out of `render_staff`, part-way
+        // through the section walk above.
+        //
+        // Beams used to draw inside their own part, between its staff lines and
+        // its noteheads; from here they draw over both. A beam sits at the stem
+        // tip and so never overlaps a notehead, which is why the move is
+        // invisible -- but it is a real change in paint order.
+        for beam in system.beams.iter() {
+            self.pass.render_beam(beam, fonts, out);
+        }
+
         for tie in system.ties.iter() {
             self.pass.render_tie(tie, fonts, out);
         }
@@ -334,6 +343,7 @@ impl RenderCompositor {
 
     fn estimate_system(system: &System) -> usize {
         1 + system.measures.len() // system line + system measure lines
+            + system.beams.len()
             + system.ties.len()
             + system
                 .sections
@@ -382,8 +392,7 @@ impl RenderCompositor {
         let chords = measure.chords.values().flatten();
 
         // notehead + stem per chord, plus headroom for accidentals/flags/extra notes.
-        measure.beams.len()
-            + measure.ledgers.len()
+        measure.ledgers.len()
             + chords.clone().count() * 2
             + chords.map(|c| c.notes.len()).sum::<usize>()
     }

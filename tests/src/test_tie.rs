@@ -13,9 +13,10 @@ mod tests {
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::note::NoteId;
     use lib::score::visual::stem::UpDown;
+    use lib::score::visual::system::SystemKey;
     use lib::score::visual::tie::{Tie, TieMetrics, TieSide, tie_arc};
     use lib::score::visual::tie_arranger::{
-        NoteAnchor, SystemExtent, SystemKey, collect_note_anchors, split_tie,
+        NoteAnchor, SystemExtent, collect_note_anchors, split_tie,
     };
     use lib::smufl::smufl_font::SmuflFont;
 

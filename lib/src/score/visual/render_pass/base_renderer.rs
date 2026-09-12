@@ -1,6 +1,6 @@
 use crate::drawable::drawable_element::DrawableElement;
 use crate::drawable::elements::text::{HorizontalAlign, Text, VerticalAlign};
-use crate::drawable::elements::{circle::Circle, line::Line, rect::Rect};
+use crate::drawable::elements::{circle::Circle, line::Line, polygon::Polygon, rect::Rect};
 use crate::geometry::xy::XY;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::render_pass::RenderPass;
@@ -201,14 +201,19 @@ impl RenderPass for BaseRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        for beam in &part_measure.beams {
-            let line: DrawableElement = beam.clone().into();
-            out.push(line);
-        }
         for line in &part_measure.ledgers {
             let line: DrawableElement = (*line).into();
             out.push(line);
         }
+    }
+
+    fn render_beam<'a>(
+        &self,
+        beam: &Polygon,
+        _fonts: &RenderFonts<'a>,
+        out: &mut Vec<DrawableElement<'a>>,
+    ) {
+        out.push(beam.clone().into());
     }
 
     fn render_tie<'a>(

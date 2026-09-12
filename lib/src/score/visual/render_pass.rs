@@ -5,6 +5,7 @@ pub use base_renderer::BaseRenderer;
 pub use debug_renderer::DebugRenderer;
 
 use crate::drawable::drawable_element::DrawableElement;
+use crate::drawable::elements::polygon::Polygon;
 use crate::score::visual::render_fonts::RenderFonts;
 use crate::score::visual::{
     accidental::Accidental, chord::Chord, clef::Clef, dot::Dot, flag::Flag, group_name::GroupName,
@@ -202,6 +203,18 @@ pub trait RenderPass {
     fn render_dot<'a>(
         &self,
         _dot: &Dot,
+        _fonts: &RenderFonts<'a>,
+        _out: &mut Vec<DrawableElement<'a>>,
+    ) {
+    }
+
+    /// One segment of one beam. Takes the finished quad rather than a score
+    /// element because that is all a beam is: `arrange_beams` resolves the whole
+    /// group's geometry and files the segments on the `System`, so there is no
+    /// `Beam` in the tree for a pass to be handed.
+    fn render_beam<'a>(
+        &self,
+        _beam: &Polygon,
         _fonts: &RenderFonts<'a>,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {
