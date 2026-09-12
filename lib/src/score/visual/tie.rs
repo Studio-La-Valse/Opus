@@ -1,19 +1,20 @@
-//! Ties: the pairing recorded during the content walk, and the pure geometry
-//! that turns a pair of endpoints into a drawable arc.
+//! Ties: what the content walk hangs on a note, and the geometry that turns a
+//! pair of endpoints into a drawable arc.
 //!
-//! Nothing here touches the score tree -- [`arrange_ties`] in
-//! [`tie_arranger`](crate::score::visual::tie_arranger) does that. Keeping the
-//! geometry as free functions over [`XY`] is what lets the cross-system case be
-//! tested without a multi-system fixture, and is the seam a future slur
+//! Nothing here touches the score tree --
+//! [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) does
+//! that. Working from
+//! [`TieAnchor`]s rather than from notes in place is what lets the broken case
+//! be tested without a multi-system fixture, and is the seam a future slur
 //! implementation reuses: a slur is the same arc between different anchors.
 
 use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
+use crate::score::core::staff_idx::StaffIdx;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::layoutable::LayoutParams;
-use crate::score::visual::note::NoteId;
 use crate::score::visual::stem::UpDown;
 
 /// How many points each of the arc's two edges is sampled at. Bumping this
@@ -96,27 +97,124 @@ impl TieSide {
     }
 }
 
-/// A tie between two notes, recorded during the content walk.
+/// A tie leaving a note for the next note of its pitch, hung on the note it
+/// leaves -- see [`Note::tie`](crate::score::visual::note::Note).
 ///
-/// Purely a pairing -- it holds no geometry. The drawn arcs are derived after
-/// the pages are arranged, by
-/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties), because
-/// that is the first moment both endpoints have absolute coordinates.
+/// All the content walk records is *that* the note is tied and how the document
+/// wants the arc to look; which note it reaches, and where the arc runs, is
+/// settled later by
+/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties), once the
+/// part holding the note has been arranged and the notes in it have positions.
 pub struct Tie {
-    pub start: NoteId,
-    pub end: NoteId,
-    /// From MusicXML `<tied orientation=…>` / `placement=…`. `None` means
-    /// "infer from the start note" -- see [`TieSide::infer`].
+    /// Which way the arc bulges, from `<tied orientation=…>` / `placement=…`.
+    /// `None` means the document did not say, and the side is inferred from the
+    /// note the tie leaves -- see [`TieSide::infer`].
     pub side: Option<TieSide>,
+
+    /// The drawn arc, in absolute (global tenths) coordinates, assigned on every
+    /// arrange pass. `None` before the first one, and for a tie with no room to
+    /// draw in -- a span that does not run left to right.
+    pub shape: Option<Polygon>,
 }
 
-/// One drawn arc, in absolute (global tenths) coordinates.
+impl Tie {
+    pub fn new(side: Option<TieSide>) -> Self {
+        Tie { side, shape: None }
+    }
+
+    /// The arc from the note this tie leaves to the note it arrives at.
+    ///
+    /// `stem` is the *start* chord's stem direction, the other half of what
+    /// [`TieSide::infer`] needs when the document named no side.
+    pub fn arrange(
+        &mut self,
+        start: &TieAnchor,
+        end: &TieAnchor,
+        stem: Option<UpDown>,
+        metrics: &TieMetrics,
+    ) {
+        let side = self.resolve_side(start, stem);
+        let p0 = start.tip_right(side, metrics);
+        let p1 = end.tip_left(side, metrics);
+
+        self.draw(p0, p1, side, start, metrics);
+    }
+
+    /// The opening half of a tie with no note left to reach: a complete arc
+    /// leaving the note and running out to `limit`, the end of the part less a
+    /// margin that clears the final barline.
+    ///
+    /// It ends level with the note it left, not raised to an apex, because it is
+    /// a whole tie shape in its own right -- tapered at both of its own ends --
+    /// which is how printed music engraves a tie running into a break. What it
+    /// does *not* do is draw the other half: there is no courtesy arc in front
+    /// of the note on the next system. See the module docs of
+    /// [`tie_arranger`](crate::score::visual::tie_arranger).
+    pub fn arrange_open(
+        &mut self,
+        start: &TieAnchor,
+        stem: Option<UpDown>,
+        limit: f32,
+        metrics: &TieMetrics,
+    ) {
+        let side = self.resolve_side(start, stem);
+        let p0 = start.tip_right(side, metrics);
+
+        self.draw(p0, XY { x: limit, y: p0.y }, side, start, metrics);
+    }
+
+    /// Which way this tie bulges: what the document named, else what the note it
+    /// leaves implies.
+    fn resolve_side(&self, start: &TieAnchor, stem: Option<UpDown>) -> TieSide {
+        self.side
+            .unwrap_or_else(|| TieSide::infer(stem, start.staff_line))
+    }
+
+    /// Assigns the arc between two resolved endpoints, or nothing at all when
+    /// there is no room between them. `start` is the note the tie leaves: its
+    /// scale sets the arc's thickness and its colour fills it, so a grace note
+    /// gets a proportionate tie.
+    fn draw(&mut self, p0: XY, p1: XY, side: TieSide, start: &TieAnchor, metrics: &TieMetrics) {
+        self.shape =
+            (p1.x > p0.x).then(|| tie_arc(p0, p1, side, start.scale, metrics, start.color));
+    }
+}
+
+/// One note's finished geometry, as much of it as a tie needs.
 ///
-/// A tie whose endpoints share a system produces one of these; a tie broken
-/// across a system -- or page -- break produces two, one filed under each
-/// system.
-pub struct TieSegment {
-    pub shape: Polygon,
+/// Copied out of the tree so that a tie can be arranged while the note it hangs
+/// off is borrowed mutably, and so that the search for a tie's other end can
+/// answer with a value rather than a reference into the measure it sits in.
+#[derive(Copy, Clone, Debug)]
+pub struct TieAnchor {
+    /// Left edge of the notehead at its vertical centre -- exactly what
+    /// `Note::xy` is, per `Note::arrange_ctx` and `PartMeasure::ledger_lines`.
+    pub left: XY,
+    pub width: f32,
+    /// The note's own scale factor, so grace notes get proportionate ties.
+    pub scale: f32,
+    pub color: Color,
+    /// Staff and line, which is how a tie's other end is recognised once the
+    /// pitches are gone: two tied notes are the same pitch, so they sit on the
+    /// same line of the same staff.
+    pub staff: StaffIdx,
+    pub staff_line: i32,
+}
+
+impl TieAnchor {
+    /// Where a tie leaving this note to the right begins.
+    fn tip_right(&self, side: TieSide, metrics: &TieMetrics) -> XY {
+        self.left.mv(
+            self.width + metrics.note_gap,
+            side.sign() * metrics.vertical_offset,
+        )
+    }
+
+    /// Where a tie arriving at this note from the left ends.
+    fn tip_left(&self, side: TieSide, metrics: &TieMetrics) -> XY {
+        self.left
+            .mv(-metrics.note_gap, side.sign() * metrics.vertical_offset)
+    }
 }
 
 /// The resolved appearance knobs a tie is drawn with, folded once per arrange
@@ -125,7 +223,7 @@ pub struct TieSegment {
 /// Follows the two-source pattern `beam_spacing` and `dot_spacing` use: user
 /// override, else app default. There is no `ScoreDefaults` source because no
 /// `<line-width type="tie">` appears in any of the bundled samples.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct TieMetrics {
     pub endpoint_thickness: f32,
     pub midpoint_thickness: f32,
@@ -135,7 +233,6 @@ pub struct TieMetrics {
     pub note_gap: f32,
     pub vertical_offset: f32,
     pub break_inset: f32,
-    pub break_fragment: f32,
 }
 
 impl TieMetrics {
@@ -163,7 +260,6 @@ impl TieMetrics {
             note_gap: user.tie_note_gap.unwrap_or(app.tie_note_gap),
             vertical_offset: user.tie_vertical_offset.unwrap_or(app.tie_vertical_offset),
             break_inset: user.tie_break_inset.unwrap_or(app.tie_break_inset),
-            break_fragment: user.tie_break_fragment.unwrap_or(app.tie_break_fragment),
         }
     }
 
@@ -191,12 +287,6 @@ impl TieMetrics {
 /// The shape is a cubic-Bezier centre curve offset by a half-width that varies
 /// along it: widest in the middle, tapering to a point at both ends. Sampling
 /// the two offset edges and joining them gives one closed, filled polygon.
-///
-/// This one builder serves both the unbroken case and each half of a tie split
-/// across a system or page break, because a broken tie is engraved as **two
-/// complete arcs** -- each tapered at both of its own ends -- rather than as one
-/// arc sliced at its apex. See
-/// [`split_tie`](crate::score::visual::tie_arranger::split_tie).
 ///
 /// `scale` is the endpoint note's own scale factor.
 ///

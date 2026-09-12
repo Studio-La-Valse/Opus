@@ -30,7 +30,6 @@ use crate::musicxml::visitors::content_visitor::ContentVisitor;
 use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
 use crate::musicxml::visitors::print_layout_visitor::PrintLayoutVisitor;
 use crate::musicxml::visitors::setup_visitor::SetupVisitor;
-use crate::musicxml::visitors::tie_visitor::TieVisitor;
 use crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor;
 use crate::musicxml::walker::Walker;
 use crate::musicxml::walker_ctx::WalkerCtx;
@@ -42,7 +41,6 @@ use crate::score::user_layout::UserLayout;
 use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::tie_arranger::arrange_ties;
 use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
 
@@ -145,8 +143,7 @@ pub fn walk_document(
 
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
-        .uses(ContentVisitor::new())
-        .uses(TieVisitor::new());
+        .uses(ContentVisitor::new());
     let mut ctx = WalkerCtx::new(
         user_layout,
         &mut layout,
@@ -204,12 +201,6 @@ pub fn arrange_score(
 
     score.measure(&XY::INFINITE, params);
     page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);
-
-    // Last: a tie's two endpoints can be measures, systems or pages apart, so it
-    // is the one element that cannot be arranged until every note in the score
-    // has its final position. Beams need only one part's worth of chords, so
-    // `Part::arrange_clear_of` has already drawn them by this point.
-    arrange_ties(score, params);
 
     progress(Stage::LayoutPass);
 }

@@ -12,6 +12,7 @@ use crate::score::visual::note::Note;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::rest::Rest;
 use crate::score::visual::stem::{BeamType, Stem, UpDown};
+use crate::score::visual::tie::{Tie, TieSide};
 
 use crate::musicxml::utils::ReqParse;
 use crate::score::core::accidental::Accidental as AccidentalCore;
@@ -36,6 +37,52 @@ impl ContentVisitor {
             clef_change: HashMap::new(),
         }
     }
+}
+
+/// The tie leaving this `<note>`, if the document says one does.
+///
+/// MusicXML spells a tie twice: `<tie>` is a direct child of `<note>` and
+/// carries the sounding semantics, `<notations><tied>` is the notated curve and
+/// carries the placement attributes. Exports usually emit both, but not always,
+/// so a note starts a tie if *either* says so. `type="continue"` is the middle
+/// of a chained a-b-c tie -- it stops one and starts the next -- so it counts
+/// here too.
+///
+/// Nothing reads `type="stop"`, and `<tied number=…>` is ignored. Both exist to
+/// say which start an end belongs to, and neither is needed: a tie can only
+/// reach the next note of its pitch in its voice, so
+/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) finds the
+/// other end by looking rather than by being told. A slur, which really can
+/// overlap another slur, will need the number.
+///
+/// The one thing given up with `type="stop"` is an orientation written only
+/// there. It is legal -- `Dichterliebe01.musicxml` has exactly one
+/// `<tied orientation="under" type="stop"/>` among its 104 tied elements -- and
+/// such a tie now curves the way its stem implies instead. Honouring it means
+/// reading an attribute off a note this one cannot see, which is the correlation
+/// this visitor deliberately does not do.
+fn tie(node: &Node) -> Option<Tie> {
+    let tied = node
+        .get_child("notations")
+        .map(|n| n.get_children("tied"))
+        .unwrap_or_default();
+    let ties = node.get_children("tie");
+
+    let starts = |n: &Node| matches!(n.get_attribute("type"), Some("start" | "continue"));
+
+    if !tied.iter().chain(ties.iter()).any(starts) {
+        return None;
+    }
+
+    // Only the `<tied>` that opens this tie speaks for it. A note in the middle
+    // of a chain carries the previous tie's `stop` as well, and that one's
+    // orientation belongs to the arc arriving, not the one leaving.
+    let side = tied
+        .iter()
+        .filter(|n| starts(n))
+        .find_map(|n| TieSide::parse(n.get_attribute("orientation"), n.get_attribute("placement")));
+
+    Some(Tie::new(side))
 }
 
 impl Default for ContentVisitor {
@@ -147,6 +194,7 @@ impl ContentVisitor {
         let glyph = ctx.font.notehead(notehead);
         let dots: u8 = node.get_children("dot").len().try_into().unwrap();
         let mut note = Note::new(glyph, default_x, staff_idx, staff_line, size, dots);
+        note.tie = tie(node);
 
         // Locate Measure & Voice Chords
         let system = ctx
@@ -212,7 +260,7 @@ impl ContentVisitor {
             chord.clef_change.insert(s_idx, clef_change);
         }
 
-        chord.notes.push((ctx.cursor.note_id, note));
+        chord.notes.push(note);
     }
 
     /// Populates key signature accidentals at the start of a measure for all staves in a part.

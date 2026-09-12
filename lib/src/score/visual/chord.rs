@@ -4,7 +4,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::accidental::Accidental;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
-use crate::score::visual::note::{Note, NoteId};
+use crate::score::visual::note::Note;
 use crate::score::visual::placed::Placed;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
@@ -22,10 +22,8 @@ pub struct Chord {
 
     pub grace: bool,
 
-    /// The chord's notes in document order, each paired with the id that names
-    /// it from outside the tree -- see [`NoteId`]. A `Note` never needs its own
-    /// id, so the id lives here rather than on it.
-    pub notes: Vec<(NoteId, Note)>,
+    /// The chord's notes, in document order.
+    pub notes: Vec<Note>,
     pub stem: Option<Stem>,
 
     pub color: Color,
@@ -48,7 +46,7 @@ impl Chord {
     }
 
     fn arrange_notes(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
-        for (_, note) in self.notes.iter_mut() {
+        for note in self.notes.iter_mut() {
             let ctx = staff_ctx.get(&note.staff).unwrap();
             note.arrange_ctx(&self.xy, ctx);
         }
@@ -60,8 +58,8 @@ impl Chord {
 
             let key = |n: &&Note| OrderedFloat(n.xy.y);
 
-            let lowest_note = self.notes.iter().map(|(_, n)| n).max_by_key(key);
-            let highest_note = self.notes.iter().map(|(_, n)| n).min_by_key(key);
+            let lowest_note = self.notes.iter().max_by_key(key);
+            let highest_note = self.notes.iter().min_by_key(key);
 
             let tail_note = match stem.direction {
                 UpDown::Up => lowest_note,
@@ -127,10 +125,10 @@ impl Chord {
         let column_x = self
             .notes
             .iter()
-            .map(|(_, note)| note.xy.x + note.width)
+            .map(|note| note.xy.x + note.width)
             .fold(f32::MIN, f32::max);
 
-        for (_, note) in self.notes.iter_mut() {
+        for note in self.notes.iter_mut() {
             if note.dots.is_empty() {
                 continue;
             }
@@ -160,7 +158,7 @@ impl Chord {
 
             clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
 
-            let dx = -5. + self.notes.first().unwrap().1.default_x - clef.width;
+            let dx = -5. + self.notes.first().unwrap().default_x - clef.width;
             let dy = ctx.distance_from_top
                 + Staff::DEFAULT_SPACE_SIZE / 2. * clef.clef.line as f32 * ctx.scaling;
 
@@ -174,7 +172,7 @@ impl Chord {
         let mut accidentals: Vec<&mut Accidental> = self
             .notes
             .iter_mut()
-            .filter_map(|(_, v)| v.accidental.as_mut())
+            .filter_map(|note| note.accidental.as_mut())
             .collect();
 
         rearrange_accidentals(&mut accidentals)
@@ -193,7 +191,7 @@ impl Chord {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
-        for (_, note) in self.notes.iter_mut() {
+        for note in self.notes.iter_mut() {
             note.resolve_layout(params);
         }
 
@@ -209,7 +207,7 @@ impl Chord {
 
 impl Chord {
     pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        for (_, note) in self.notes.iter_mut() {
+        for note in self.notes.iter_mut() {
             note.measure(available, params);
         }
 

@@ -13,7 +13,7 @@ use crate::score::visual::{
     part_group::PartGroup, part_group_measure::PartGroupMeasure, part_measure::PartMeasure,
     rest::Rest, section::Section, section_measure::SectionMeasure, staff::Staff,
     staff_measure::StaffMeasure, stem::Stem, system::System, system_measure::SystemMeasure,
-    tie::TieSegment, time_signature::TimeSignature,
+    time_signature::TimeSignature,
 };
 
 pub trait RenderPass {
@@ -220,9 +220,14 @@ pub trait RenderPass {
     ) {
     }
 
+    /// One tie arc. Takes the finished shape rather than the
+    /// [`Tie`](crate::score::visual::tie::Tie) it came from for the reason
+    /// [`render_beam`](Self::render_beam) does: by this point the arc is all
+    /// there is to draw, and it is handed over a system at a time rather than
+    /// with the note that owns it.
     fn render_tie<'a>(
         &self,
-        _tie: &TieSegment,
+        _tie: &Polygon,
         _fonts: &RenderFonts<'a>,
         _out: &mut Vec<DrawableElement<'a>>,
     ) {

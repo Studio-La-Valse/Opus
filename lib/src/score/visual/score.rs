@@ -12,28 +12,11 @@ use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system::System;
 use crate::score::visual::system_measure::SystemMeasure;
-use crate::score::visual::tie::Tie;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub struct Score {
     pub pages: BTreeMap<u32, Page>,
-
-    /// Every tie in the document, as a flat list of note-id pairs.
-    ///
-    /// A tie is a *relation* between two notes, and the page tree can only own
-    /// what it contains -- the two endpoints may be measures, systems or pages
-    /// apart. Hanging the tie on its start `Note` instead would force every
-    /// arrange to walk the whole tree just to discover which notes start ties,
-    /// and would pick one endpoint as the owner arbitrarily. A flat list is also
-    /// where the spanners that follow ties belong: slurs, hairpins, ottavas,
-    /// pedal lines.
-    ///
-    /// Populated by the content walk and left alone by `arrange`; the drawn arcs
-    /// live on [`System::ties`](crate::score::visual::system::System) and are
-    /// rebuilt from this list by
-    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties).
-    pub ties: Vec<Tie>,
 }
 
 impl Score {

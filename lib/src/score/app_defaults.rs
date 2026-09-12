@@ -47,15 +47,11 @@ pub struct AppDefaults {
     pub tie_note_gap: f32,
     /// Offset from a notehead's vertical centre to the tie tip, in tenths.
     pub tie_vertical_offset: f32,
-    /// Margin, in tenths, between the barline and the far end of the opening
-    /// fragment of a tie broken across a system break. That fragment runs out to
-    /// the end of its own measure, less this.
+    /// Margin, in tenths, between the end of a part and the far end of a tie
+    /// that found no note to reach -- one whose next note of that pitch falls on
+    /// the following system. That tie runs out to the end of its part, less
+    /// this, so it clears the final barline instead of touching it.
     pub tie_break_inset: f32,
-    /// Length of the closing fragment of a broken tie -- the short "courtesy"
-    /// arc that arrives at the note on the next system, in tenths. Also the
-    /// minimum length of the opening fragment, for a note sitting right at the
-    /// end of its measure.
-    pub tie_break_fragment: f32,
 
     /// What binds a section's part-groups together when the document's
     /// `<part-group>` names no `<group-symbol>`. A section is the outermost of
@@ -158,7 +154,6 @@ impl Default for AppDefaults {
             tie_note_gap: 2.,
             tie_vertical_offset: 5.,
             tie_break_inset: 10.,
-            tie_break_fragment: 20.,
 
             section_symbol: GroupSymbol::Bracket,
             part_group_symbol: GroupSymbol::Brace,

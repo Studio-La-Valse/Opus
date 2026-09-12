@@ -133,13 +133,6 @@ impl RenderCompositor {
         for section in system.sections.values() {
             self.walk_section(section, fonts, out);
         }
-
-        // Last, so ties paint on top. Elements are drawn in walk order and the
-        // staff lines a tie crosses come out of `render_staff`, part-way through
-        // the section walk above.
-        for tie in system.ties.iter() {
-            self.pass.render_tie(tie, fonts, out);
-        }
     }
 
     fn walk_section<'a>(
@@ -216,11 +209,16 @@ impl RenderCompositor {
             self.walk_staff(staff, fonts, out);
         }
 
-        // After the staff lines a beam crosses and before the noteheads it never
-        // overlaps, which is where they were drawn when a `PartMeasure` owned
-        // them. A hidden part is skipped above, so its beams are skipped with it.
+        // After the staff lines a beam or a tie crosses and before the noteheads
+        // neither overlaps, which is where the beams were drawn when a
+        // `PartMeasure` owned them. A hidden part is skipped above, so both are
+        // skipped with it.
         for beam in part.beams.iter() {
             self.pass.render_beam(beam, fonts, out);
+        }
+
+        for tie in part.ties() {
+            self.pass.render_tie(tie, fonts, out);
         }
 
         for measure in part.measures.values() {
@@ -299,7 +297,7 @@ impl RenderCompositor {
     ) {
         self.pass.render_chord(chord, fonts, out);
 
-        for (_, note) in chord.notes.iter() {
+        for note in chord.notes.iter() {
             self.pass.render_note(note, fonts, out);
 
             if let Some(ref accidental) = note.accidental {
@@ -341,7 +339,6 @@ impl RenderCompositor {
 
     fn estimate_system(system: &System) -> usize {
         1 + system.measures.len() // system line + system measure lines
-            + system.ties.len()
             + system
                 .sections
                 .values()
@@ -388,7 +385,8 @@ impl RenderCompositor {
     fn estimate_part_measure(measure: &PartMeasure) -> usize {
         let chords = measure.chords.values().flatten();
 
-        // notehead + stem per chord, plus headroom for accidentals/flags/extra notes.
+        // notehead + stem per chord, plus headroom for accidentals, flags, extra
+        // notes and the odd tie arc.
         measure.ledgers.len()
             + chords.clone().count() * 2
             + chords.map(|c| c.notes.len()).sum::<usize>()

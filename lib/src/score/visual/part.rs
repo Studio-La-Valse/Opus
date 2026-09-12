@@ -12,6 +12,8 @@ use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::staff_measure::StaffMeasure;
+use crate::score::visual::tie::TieMetrics;
+use crate::score::visual::tie_arranger::arrange_ties;
 use crate::score::walk_cursor::Visibility;
 use std::collections::{BTreeMap, HashSet};
 
@@ -28,6 +30,10 @@ pub struct Part {
     /// stub out towards the break.
     pub beams: Vec<Polygon>,
     pub beam_metrics: BeamMetrics,
+
+    /// Read back by [`arrange_ties`], which -- like [`arrange_beams`] -- runs
+    /// from `arrange`, where there are no [`LayoutParams`] to resolve from.
+    pub tie_metrics: TieMetrics,
 
     pub xy: XY,
     pub width: f32,
@@ -49,6 +55,7 @@ impl Part {
 
             beams: Vec::new(),
             beam_metrics: BeamMetrics::default(),
+            tie_metrics: TieMetrics::default(),
 
             xy: XY::ZERO,
             width: 0.0,
@@ -230,6 +237,21 @@ impl Part {
         }
     }
 
+    /// Every tie arc this part draws, in note order.
+    ///
+    /// The arcs hang off the notes they leave, but they are drawn from here, the
+    /// way [`beams`](Self::beams) are: both run between notes rather than
+    /// belonging to any one of them, and both want painting over the staff lines
+    /// they cross and under nothing.
+    pub fn ties(&self) -> impl Iterator<Item = &Polygon> {
+        self.measures
+            .values()
+            .flat_map(|measure| measure.chords.values())
+            .flatten()
+            .flat_map(|chord| chord.notes.iter())
+            .filter_map(|note| note.tie.as_ref()?.shape.as_ref())
+    }
+
     /// The staves of this part that are drawn, top to bottom.
     pub fn visible_staves(&self) -> impl Iterator<Item = &Staff> {
         self.staves.values().filter(|staff| !staff.hidden)
@@ -293,11 +315,12 @@ impl Part {
             _origin = _origin.mv(measure.width, 0.);
         }
 
-        // After the measures, because a beam group runs between two stems and
-        // those are only in their final place once the measure holding each of
-        // them has been arranged. Before the symbol and the name, which have
-        // nothing to do with it.
+        // After the measures, because a beam group runs between two stems, and a
+        // tie between two noteheads, and those are only in their final place
+        // once the measure holding each of them has been arranged. Before the
+        // symbol and the name, which have nothing to do with either.
         arrange_beams(self);
+        arrange_ties(self);
 
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let symbol_top = XY {
@@ -317,6 +340,7 @@ impl Layoutable for Part {
     /// leave its size at zero and nothing ends up drawing them.
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         self.beam_metrics = BeamMetrics::resolve(params);
+        self.tie_metrics = TieMetrics::resolve(params);
 
         for staff in self.staves.values_mut() {
             staff.resolve_layout(params);

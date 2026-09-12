@@ -19,7 +19,6 @@ use crate::score::visual::{
     staff::Staff,
     stem::Stem,
     system::System,
-    tie::TieSegment,
     time_signature::TimeSignature,
 };
 use crate::smufl::smufl_glyph::SmuflGlyph;
@@ -218,11 +217,11 @@ impl RenderPass for BaseRenderer {
 
     fn render_tie<'a>(
         &self,
-        tie: &TieSegment,
+        tie: &Polygon,
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        out.push(tie.shape.clone().into());
+        out.push(tie.clone().into());
     }
 
     fn render_clef<'a>(

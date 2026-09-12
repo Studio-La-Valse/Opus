@@ -8,41 +8,8 @@ use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::placed::Placed;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
+use crate::score::visual::tie::{Tie, TieAnchor};
 use crate::smufl::glyphs::notehead::Notehead;
-
-/// Identifies one [`Note`] within a [`Score`](crate::score::visual::score::Score).
-///
-/// The visual tree is a pure containment hierarchy, so it cannot express a
-/// relation between two notes that sit in different branches of it -- which is
-/// exactly what a tie is. Ids let [`Tie`](crate::score::visual::tie::Tie) name
-/// its two endpoints without needing a pointer into the tree.
-///
-/// The id belongs to the *slot* a note occupies rather than to the note itself
-/// -- nothing a [`Note`] does needs to know its own id -- so it is stored beside
-/// the note in [`Chord::notes`](crate::score::visual::chord::Chord::notes)
-/// instead of as a field on it.
-///
-/// Handed out by
-/// [`WalkCursor`](crate::score::walk_cursor::WalkCursor), so that every visitor
-/// in the chain agrees on which note it is looking at. They are assigned during
-/// the cached `walk_document` half of the pipeline, so they stay stable across
-/// the repeated `arrange_score` calls the wasm render path makes. Only
-/// uniqueness is meaningful -- never read anything into the values themselves.
-#[derive(Default, Ord, PartialOrd, Eq, PartialEq, Copy, Clone, Hash, Debug)]
-pub struct NoteId(u32);
-
-impl NoteId {
-    /// The next id in sequence.
-    pub fn next(self) -> Self {
-        NoteId(self.0 + 1)
-    }
-}
-
-impl From<u32> for NoteId {
-    fn from(value: u32) -> Self {
-        NoteId(value)
-    }
-}
 
 pub struct Note {
     pub xy: XY,
@@ -70,6 +37,18 @@ pub struct Note {
 
     pub glyph: Notehead,
     pub accidental: Option<Accidental>,
+
+    /// The tie leaving this note for the next one of its pitch, set by the
+    /// content walk straight from the `<note>`'s own `<tie>` / `<tied>`. `None`
+    /// for a note nothing is tied from -- which is most of them.
+    ///
+    /// Lives on the note it leaves rather than in a list of pairs beside the
+    /// tree because that is what a tie *is*: a relation between a note and the
+    /// one that follows it, in the same voice of the same part. Which note that
+    /// turns out to be is left to
+    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties), which
+    /// simply looks ahead for it.
+    pub tie: Option<Tie>,
 }
 
 impl Note {
@@ -89,6 +68,8 @@ impl Note {
             glyph,
             accidental: None,
 
+            tie: None,
+
             default_x,
             staff,
             staff_line,
@@ -104,6 +85,19 @@ impl Note {
             height: f32::default(),
 
             color: Color::default(),
+        }
+    }
+
+    /// This note as one end of a tie -- see [`TieAnchor`]. Only meaningful once
+    /// [`arrange_ctx`](Self::arrange_ctx) has placed it.
+    pub fn tie_anchor(&self) -> TieAnchor {
+        TieAnchor {
+            left: self.xy,
+            width: self.width,
+            scale: self.scale,
+            color: self.color,
+            staff: self.staff,
+            staff_line: self.staff_line,
         }
     }
 

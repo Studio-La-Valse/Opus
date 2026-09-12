@@ -9,5 +9,4 @@ pub mod position_visitor;
 pub mod print_layout_visitor;
 pub mod setup_visitor;
 pub mod staff_details_visitor;
-pub mod tie_visitor;
 pub mod walk_cursor_visitor;

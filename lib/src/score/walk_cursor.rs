@@ -4,7 +4,6 @@ use crate::score::core::key::Key;
 use crate::score::core::note_kind::NoteKind;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::voice::Voice;
-use crate::score::visual::note::NoteId;
 use crate::score::visual::staff::Staff;
 use std::collections::{BTreeMap, HashSet};
 
@@ -129,31 +128,9 @@ pub struct WalkCursor {
     /// mutually exclusive in the format, and a note carrying both is read as a
     /// grace note.
     pub cue: bool,
-
-    /// Identity of the `<note>` currently being visited, handed out by
-    /// [`WalkCursorVisitor`](crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor)
-    /// on `enter_note`.
-    ///
-    /// Lives here rather than inside one visitor because more than one visitor
-    /// needs it and they must agree: `ContentVisitor` stamps it onto the `Note`
-    /// it builds, and `TieVisitor` uses it to name a tie's endpoints. Private
-    /// counters in each would silently drift apart the moment one visitor's skip
-    /// conditions changed.
-    ///
-    /// Deliberately **not** cleared by [`WalkCursor::reset`], which runs once per
-    /// part -- resetting it there would make ids collide between parts. It just
-    /// counts up for the life of the cursor, across both document walks; only
-    /// uniqueness matters, not the actual values.
-    pub note_id: NoteId,
 }
 
 impl WalkCursor {
-    /// Assigns the next id and makes it current. Called once per `<note>`,
-    /// before any other visitor in the chain sees the element.
-    pub fn advance_note_id(&mut self) {
-        self.note_id = self.note_id.next();
-    }
-
     /// How prominently the `<note>` currently being visited should be drawn.
     /// `<grace>` and `<cue>` are mutually exclusive in the format, so a note
     /// carrying both is read as a grace note rather than compounding the two.
@@ -248,7 +225,6 @@ impl Default for WalkCursor {
             chord: false,
             grace: false,
             cue: false,
-            note_id: NoteId::default(),
 
             new_page: true,
             new_system: true,
