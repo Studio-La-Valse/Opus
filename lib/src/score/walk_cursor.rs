@@ -136,7 +136,8 @@ pub struct WalkCursor {
     ///
     /// Lives here rather than inside one visitor because more than one visitor
     /// needs it and they must agree: `ContentVisitor` stamps it onto the `Note`
-    /// it builds, and `TieVisitor` uses it to name a tie's endpoints. Private
+    /// or `Rest` it builds, `TieVisitor` uses it to name a tie's endpoints and
+    /// `ClefChangeVisitor` to name the anchor of a clef change. Private
     /// counters in each would silently drift apart the moment one visitor's skip
     /// conditions changed.
     ///

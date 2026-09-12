@@ -136,11 +136,9 @@ impl StaffMeasure {
             lines: self.lines,
         };
         for rest in self.rests.iter_mut() {
-            let dx: f32 = if rest.is_measure {
-                self.width / 2.
-            } else {
-                rest.default_x.unwrap()
-            };
+            // A whole-measure rest carries no position of its own and is centred
+            // in whatever width the measure ended up with.
+            let dx: f32 = rest.default_x.unwrap_or(self.width / 2.);
 
             let glyph_origin = self.xy.mv(dx, 0.);
             rest.arrange_ctx(&glyph_origin, &staff_ctx);

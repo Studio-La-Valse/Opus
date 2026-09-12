@@ -2,6 +2,7 @@ pub mod accidental;
 pub mod beam_arranger;
 pub mod chord;
 pub mod clef;
+pub mod clef_change_arranger;
 pub mod dot;
 pub mod flag;
 pub mod group_name;

@@ -1,9 +1,9 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::visual::clef::Clef;
 use crate::score::visual::dot::Dot;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::note::NoteId;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::placed::Placed;
 use crate::score::visual::staff::Staff;
@@ -11,12 +11,23 @@ use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
 
 pub struct Rest {
+    /// Identity within the score, so that something outside the tree can name
+    /// this rest -- a mid-measure clef change drawn in front of it. A rest is a
+    /// `<note>` in MusicXML and is counted as one; see [`NoteId`].
+    pub id: NoteId,
+
     pub xy: XY,
     pub width: f32,
     pub height: f32,
 
-    pub is_measure: bool,
-
+    /// Where in its measure the document put this rest, or `None` for a
+    /// whole-measure rest.
+    ///
+    /// The two cases used to be a `default_x: Option<f32>` and an `is_measure:
+    /// bool` that always agreed with it, since a `<rest measure="yes">` is
+    /// exactly the rest that carries no `default-x`: it stands for the measure
+    /// rather than for a moment in it, and so is centred in whatever width the
+    /// measure ends up with. One field cannot fall out of step with itself.
     pub default_x: Option<f32>,
     pub staff_line: i32,
     pub staff: StaffIdx,
@@ -37,8 +48,6 @@ pub struct Rest {
     /// Resolved centre-to-centre dot step (and rest-edge-to-first-dot gap), in
     /// world units; see [`AppDefaults::dot_spacing`](crate::score::app_defaults::AppDefaults).
     pub dot_spacing: f32,
-
-    pub clef_change: Option<Clef>,
 }
 
 impl Rest {
@@ -57,8 +66,8 @@ impl Rest {
     }
 
     pub fn new(
+        id: NoteId,
         glyph: SmuflRest,
-        is_measure: bool,
         default_x: Option<f32>,
         staff: StaffIdx,
         staff_line: i32,
@@ -66,9 +75,8 @@ impl Rest {
         dots: u8,
     ) -> Self {
         Rest {
+            id,
             glyph,
-
-            is_measure,
 
             default_x,
             staff,
@@ -85,15 +93,12 @@ impl Rest {
             height: f32::default(),
 
             color: Color::default(),
-
-            clef_change: None,
         }
     }
 
     /// here, origin is the origin of the staff measure, so adjust y coordinate for staff distance.
     pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
         self.arrange_glyph(origin, staff_ctx);
-        self.arrange_clef_changes(origin, staff_ctx);
         self.arrange_dots(staff_ctx);
     }
 
@@ -122,20 +127,6 @@ impl Rest {
             y: origin.y + dy,
         };
     }
-
-    fn arrange_clef_changes(&mut self, origin: &XY, ctx: &StaffCtx) {
-        if let Some(ref mut clef) = self.clef_change {
-            clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
-
-            let dx = -5. - clef.width;
-            let dy = ctx.distance_from_top
-                + clef.clef.line as f32 * Staff::DEFAULT_SPACE_SIZE / 2. * ctx.scaling;
-
-            let origin = origin.mv(dx, dy);
-
-            clef.arrange(&origin);
-        }
-    }
 }
 
 impl Placed for Rest {
@@ -163,10 +154,6 @@ impl Rest {
             .unwrap_or(app_defaults.foreground_color);
         self.dot_spacing = user_layout.dot_spacing.unwrap_or(app_defaults.dot_spacing);
 
-        if let Some(clef) = self.clef_change.as_mut() {
-            clef.resolve_layout(params);
-        }
-
         for dot in self.dots.iter_mut() {
             dot.resolve_layout(params);
         }
@@ -179,10 +166,6 @@ impl Rest {
 
         let glyph = &self.glyph;
         let bbox = self.scale_box(&glyph.bbox);
-
-        if let Some(clef) = self.clef_change.as_mut() {
-            clef.measure(available, params);
-        }
 
         for dot in &mut self.dots {
             dot.measure(available, params);

@@ -6,6 +6,7 @@ mod test_beam_group_validation;
 mod test_beam_type;
 mod test_canvas;
 mod test_clef;
+mod test_clef_change;
 mod test_engrave_samples;
 mod test_flat_buffer;
 mod test_glyph;

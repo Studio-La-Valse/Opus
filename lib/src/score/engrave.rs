@@ -26,6 +26,7 @@ use crate::geometry::xy::XY;
 use crate::musicxml::validation_issue::ValidationIssue;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
 use crate::musicxml::visitors::build_logging_visitor::BuildLoggingVisitor;
+use crate::musicxml::visitors::clef_change_visitor::ClefChangeVisitor;
 use crate::musicxml::visitors::content_visitor::ContentVisitor;
 use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
 use crate::musicxml::visitors::print_layout_visitor::PrintLayoutVisitor;
@@ -40,6 +41,7 @@ use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeam
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::beam_arranger::arrange_beams;
+use crate::score::visual::clef_change_arranger::arrange_clef_changes;
 use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
@@ -147,7 +149,8 @@ pub fn walk_document(
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
         .uses(ContentVisitor::new())
-        .uses(TieVisitor::new());
+        .uses(TieVisitor::new())
+        .uses(ClefChangeVisitor::new());
     let mut ctx = WalkerCtx::new(
         user_layout,
         &mut layout,
@@ -210,8 +213,15 @@ pub fn arrange_score(
     // can be measures, systems or pages apart, so neither can be arranged until
     // every note in the score has its final position. Beams first because they
     // move stem tips, and nothing in the tie geometry reads a stem's length.
+    //
+    // A clef change has only one anchor and so could be placed as soon as that
+    // note has its position, but it is here for the same structural reason: what
+    // it needs is spread across the tree, so nothing below the score owns it.
+    // Order among the three does not matter to it -- it reads noteheads and
+    // staves, neither of which the other two touch.
     arrange_beams(score, params);
     arrange_ties(score, params);
+    arrange_clef_changes(score, params);
 
     progress(Stage::LayoutPass);
 }

@@ -2,7 +2,6 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::accidental::Accidental;
-use crate::score::visual::clef::Clef;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::Note;
 use crate::score::visual::placed::Placed;
@@ -26,8 +25,6 @@ pub struct Chord {
     pub stem: Option<Stem>,
 
     pub color: Color,
-
-    pub clef_change: BTreeMap<StaffIdx, Clef>,
 }
 
 impl Chord {
@@ -38,7 +35,6 @@ impl Chord {
         self.arrange_notes(staff_ctx);
         self.arrange_stem(staff_ctx);
         self.arrange_dots(staff_ctx);
-        self.arrange_clef_changes(staff_ctx);
 
         // rearrange the accidentals so that they don't overlap.
         self.rearrange_accidentals();
@@ -151,22 +147,6 @@ impl Chord {
         }
     }
 
-    fn arrange_clef_changes(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
-        for (staff_idx, clef) in self.clef_change.iter_mut() {
-            let ctx = staff_ctx.get(staff_idx).unwrap();
-
-            clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
-
-            let dx = -5. + self.notes.first().unwrap().default_x - clef.width;
-            let dy = ctx.distance_from_top
-                + Staff::DEFAULT_SPACE_SIZE / 2. * clef.clef.line as f32 * ctx.scaling;
-
-            let origin = self.xy.mv(dx, dy);
-
-            clef.arrange(&origin);
-        }
-    }
-
     fn rearrange_accidentals(&mut self) {
         let mut accidentals: Vec<&mut Accidental> = self
             .notes
@@ -197,10 +177,6 @@ impl Chord {
         if let Some(stem) = self.stem.as_mut() {
             stem.resolve_layout(params);
         }
-
-        for clef in self.clef_change.values_mut() {
-            clef.resolve_layout(params);
-        }
     }
 }
 
@@ -212,10 +188,6 @@ impl Chord {
 
         if let Some(stem) = self.stem.as_mut() {
             stem.measure(available, params);
-        }
-
-        for clef in self.clef_change.values_mut() {
-            clef.measure(available, params);
         }
     }
 }
