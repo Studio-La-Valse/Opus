@@ -301,7 +301,7 @@ impl RenderCompositor {
     ) {
         self.pass.render_chord(chord, fonts, out);
 
-        for (_, note) in chord.notes.iter() {
+        for note in chord.notes.iter() {
             self.pass.render_note(note, fonts, out);
 
             if let Some(ref accidental) = note.accidental {

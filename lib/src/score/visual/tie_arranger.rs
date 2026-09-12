@@ -129,9 +129,9 @@ pub fn collect_note_anchors(score: &Score) -> HashMap<NoteId, NoteAnchor> {
                             for chord in measure.chords.values().flatten() {
                                 let stem = chord.stem.as_ref().map(|s| s.direction);
 
-                                for (id, note) in chord.notes.iter() {
+                                for note in chord.notes.iter() {
                                     anchors.insert(
-                                        *id,
+                                        note.id,
                                         NoteAnchor {
                                             key,
                                             left: note.xy,

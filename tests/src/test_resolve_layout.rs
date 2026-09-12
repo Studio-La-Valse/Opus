@@ -119,7 +119,7 @@ mod tests {
 
     fn assert_chord(chord: &Chord, what: &str) {
         assert_red(chord.color, what);
-        for (i, (_, note)) in chord.notes.iter().enumerate() {
+        for (i, note) in chord.notes.iter().enumerate() {
             assert_note(note, &format!("{what} note {i}"));
         }
         if let Some(stem) = &chord.stem {
