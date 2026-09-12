@@ -9,6 +9,7 @@ use lib::musicxml::visitors::page_layout_visitor::PageLayoutVisitor;
 use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
 use lib::musicxml::visitors::position_visitor::PositionVisitor;
 use lib::musicxml::visitors::staff_details_visitor::StaffDetailsVisitor;
+use lib::musicxml::visitors::tie_orientation_visitor::TieOrientationVisitor;
 use lib::musicxml::walker::Walker;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::core::group_symbol::GroupSymbol;
@@ -224,7 +225,8 @@ pub fn run(format: RenderCommand) {
         .uses(BeamGroupVisitor::default())
         .uses(PageLayoutVisitor::default())
         .uses(StaffDetailsVisitor::default())
-        .uses(GroupSymbolVisitor::default());
+        .uses(GroupSymbolVisitor::default())
+        .uses(TieOrientationVisitor::default());
     Walker::new(visitor).walk(&document, &mut validation_ctx);
     print_issues(&document, &validation_ctx.issues);
 

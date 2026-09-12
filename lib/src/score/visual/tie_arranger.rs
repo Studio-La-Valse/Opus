@@ -45,9 +45,8 @@ use crate::score::visual::tie::TieAnchor;
 pub fn arrange_ties(part: &mut Part) {
     let metrics = part.tie_metrics;
 
-    // Where a tie with no note left to reach runs out to: the end of the part,
-    // less a margin so it clears the final barline rather than touching it.
-    let part_end = part.xy.x + part.width - metrics.break_inset;
+    // All a tie with no note left to reach needs: where its part stops.
+    let part_right = part.xy.x + part.width;
 
     for mut chords in collect_voices(part.measures.values_mut()) {
         for i in 0..chords.len() {
@@ -67,7 +66,7 @@ pub fn arrange_ties(part: &mut Part) {
                         Some(end) => tie.arrange(&anchor, &end, stem, &metrics),
                         // Nothing ahead to tie to: the end note is on the next
                         // system, so the tie runs off the end of this part.
-                        None => tie.arrange_open(&anchor, stem, part_end, &metrics),
+                        None => tie.arrange_open(&anchor, stem, part_right, &metrics),
                     }
                 }
 

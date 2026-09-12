@@ -207,6 +207,19 @@ impl ContentVisitor {
         // drawing, and drawing it twice would double the ink.
         if ctx.cursor.new_system && position == 0 {
             note.courtesy_tie = tie(node, ARRIVING);
+
+            // A tie continuing *through* this note -- one arriving and one
+            // leaving -- is heard as a single held note, so the two arcs are
+            // engraved as one shape interrupted by a notehead and must curve
+            // the same way. The arc leaving settles it: only that one can still
+            // see the note it is heading for.
+            //
+            // A courtesy arc with nothing leaving after it simply follows this
+            // note's own stem, which is all a tie ending here has to go on.
+            if let (Some(courtesy), Some(leaving)) = (note.courtesy_tie.as_mut(), note.tie.as_ref())
+            {
+                courtesy.side = leaving.side;
+            }
         }
 
         // Locate Measure & Voice Chords

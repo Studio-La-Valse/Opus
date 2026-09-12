@@ -53,6 +53,14 @@ impl TieSide {
         }
     }
 
+    /// The other side: an arc over its notes becomes one under them.
+    pub fn flip(self) -> Self {
+        match self {
+            TieSide::Over => TieSide::Under,
+            TieSide::Under => TieSide::Over,
+        }
+    }
+
     /// Parses MusicXML's `<tied orientation="over|under">`, falling back to
     /// `placement="above|below"`. Returns `None` for anything else, meaning
     /// "infer it".
@@ -133,7 +141,7 @@ impl Tie {
         stem: Option<UpDown>,
         metrics: &TieMetrics,
     ) {
-        let side = self.resolve_side(start, stem);
+        let side = self.resolve_side(stem, start.staff_line);
         let p0 = start.tip_right(side, metrics);
         let p1 = end.tip_left(side, metrics);
 
@@ -141,25 +149,38 @@ impl Tie {
     }
 
     /// The opening half of a tie with no note left to reach: a complete arc
-    /// leaving the note and running out to `limit`, the end of the part less a
-    /// margin that clears the final barline.
+    /// leaving the note and taking the room left in its part, which ends at
+    /// `part_right`.
     ///
     /// It ends level with the note it left, not raised to an apex, because it is
     /// a whole tie shape in its own right -- tapered at both of its own ends --
     /// which is how printed music engraves a tie running into a break. The other
     /// half is [`arrange_close`](Self::arrange_close), drawn a system later by a
     /// part that knows nothing of this one.
+    ///
+    /// Three numbers settle where it ends. It reaches the end of the part less
+    /// [`TieMetrics::break_inset`], so it clears the final barline rather than
+    /// touching it; but never comes out shorter than
+    /// [`TieMetrics::break_fragment`], so a note crowded against that barline
+    /// still gets a visible arc instead of a sliver; and never runs past
+    /// `part_right` itself, because a tie reaching into the page margin reads as
+    /// a mistake. For a note right at the end of its part the floor and the cap
+    /// meet, and the cap wins.
     pub fn arrange_open(
         &mut self,
         start: &TieAnchor,
         stem: Option<UpDown>,
-        limit: f32,
+        part_right: f32,
         metrics: &TieMetrics,
     ) {
-        let side = self.resolve_side(start, stem);
+        let side = self.resolve_side(stem, start.staff_line);
         let p0 = start.tip_right(side, metrics);
 
-        self.draw(p0, XY { x: limit, y: p0.y }, side, start, metrics);
+        let x = (part_right - metrics.break_inset)
+            .max(p0.x + metrics.break_fragment)
+            .min(part_right);
+
+        self.draw(p0, XY { x, y: p0.y }, side, start, metrics);
     }
 
     /// The closing half of a broken tie -- the courtesy arc -- arriving at the
@@ -172,18 +193,33 @@ impl Tie {
     /// needing nothing but its own note: no limit to be handed, no other half to
     /// be found.
     pub fn arrange_close(&mut self, end: &TieAnchor, stem: Option<UpDown>, metrics: &TieMetrics) {
-        let side = self.resolve_side(end, stem);
+        let side = self.resolve_side(stem, end.staff_line);
         let p1 = end.tip_left(side, metrics);
         let p0 = p1.mv(-metrics.break_fragment, 0.);
 
         self.draw(p0, p1, side, end, metrics);
     }
 
+    /// Flips which way this tie bulges.
+    ///
+    /// Names the side outright, settling it against the note first when the
+    /// document never did -- otherwise the flip would not survive, since the
+    /// next arrange re-infers an unnamed side from the same stem and gets the
+    /// same answer back. Takes the same two arguments [`TieSide::infer`] does.
+    ///
+    /// Nothing calls this yet. It is here because the refinement
+    /// [`TieSide::infer`] declines to make -- the top note of a chord ties over
+    /// and the bottom one under, whatever the stem says -- is a flip applied by
+    /// a caller holding the whole chord, and that caller wants exactly this.
+    pub fn flip(&mut self, stem: Option<UpDown>, staff_line: i32) {
+        self.side = Some(self.resolve_side(stem, staff_line).flip());
+    }
+
     /// Which way this tie bulges: what the document named, else what the note it
     /// hangs off implies.
-    fn resolve_side(&self, start: &TieAnchor, stem: Option<UpDown>) -> TieSide {
+    fn resolve_side(&self, stem: Option<UpDown>, staff_line: i32) -> TieSide {
         self.side
-            .unwrap_or_else(|| TieSide::infer(stem, start.staff_line))
+            .unwrap_or_else(|| TieSide::infer(stem, staff_line))
     }
 
     /// Assigns the arc between two resolved endpoints, or nothing at all when

@@ -271,7 +271,7 @@ mod tests {
     /// of its own ends rather than sliced at an apex, leaving the note and
     /// running out to the limit it was given.
     #[test]
-    fn a_tie_with_no_note_to_reach_runs_out_to_its_limit() {
+    fn a_tie_with_no_note_to_reach_runs_out_to_the_end_of_its_part() {
         let m = metrics();
         let start = anchor(100., 200.);
 
@@ -285,11 +285,69 @@ mod tests {
 
         let (lo, hi) = x_span(pts);
         assert!((lo - (100. + start.width + m.note_gap)).abs() < 0.5);
-        assert!((hi - 400.).abs() < 0.5, "should reach its limit, got {hi}");
+        assert!(
+            (hi - (400. - m.break_inset)).abs() < 0.5,
+            "should stop an inset short of the part's end, got {hi}"
+        );
 
         // Both ends sit level with the note it left; only the middle lifts off.
         assert!((pts[0].y - 200.).abs() < m.vertical_offset + m.endpoint_thickness);
         assert!((pts[16].y - 200.).abs() < m.vertical_offset + m.endpoint_thickness);
+    }
+
+    /// Where a note has to sit for the arc leaving it to start `from_end` short
+    /// of a part ending at `part_right`.
+    fn note_starting_a_tie_at(m: &TieMetrics, part_right: f32, from_end: f32) -> f32 {
+        part_right - from_end - (anchor(0., 0.).width + m.note_gap)
+    }
+
+    /// A note crowded against the end of its part still gets a visible arc
+    /// rather than a sliver -- even though honouring the floor means eating into
+    /// the margin the inset exists to leave.
+    #[test]
+    fn a_cramped_opening_fragment_falls_back_to_the_fragment_length() {
+        let m = metrics();
+        let part_right = 400.;
+        // A whole fragment still fits before the part's edge, but not before the
+        // inset, so the floor is what settles the length.
+        let note_x = note_starting_a_tie_at(&m, part_right, m.break_fragment + 2.);
+
+        let mut tie = Tie::new(Some(TieSide::Over));
+        tie.arrange_open(&anchor(note_x, 200.), None, part_right, &m);
+
+        let (lo, hi) = x_span(&shape(&tie).pts);
+        assert!(
+            hi - lo >= m.break_fragment - 0.5,
+            "opening fragment collapsed to {} tenths",
+            hi - lo
+        );
+        assert!(
+            hi > part_right - m.break_inset,
+            "the floor should have beaten the inset"
+        );
+    }
+
+    /// ...but the end of the part is a hard stop the floor above may not push it
+    /// past, because a tie reaching into the page margin reads as a mistake.
+    #[test]
+    fn an_opening_fragment_never_leaves_its_part() {
+        let m = metrics();
+        let part_right = 400.;
+        // Now a whole fragment no longer fits, so the cap is what settles it.
+        let note_x = note_starting_a_tie_at(&m, part_right, m.break_fragment - 4.);
+
+        let mut tie = Tie::new(Some(TieSide::Over));
+        tie.arrange_open(&anchor(note_x, 200.), None, part_right, &m);
+
+        let (lo, hi) = x_span(&shape(&tie).pts);
+        assert!(
+            hi <= part_right + m.endpoint_thickness,
+            "fragment ran past the end of its part to {hi}"
+        );
+        assert!(
+            hi - lo < m.break_fragment,
+            "the cap should have beaten the floor"
+        );
     }
 
     /// The other half of that same break: a complete arc too, arriving at the
@@ -345,8 +403,8 @@ mod tests {
         backwards.arrange(&anchor(300., 200.), &anchor(100., 200.), None, &m);
         assert!(backwards.shape.is_none());
 
-        // A note sitting past the limit its tie would run out to, which is what
-        // a note crowded right against the end of its part looks like.
+        // A note sitting past the end of its own part, which nothing legal
+        // produces but the cap must survive anyway.
         let mut cramped = Tie::new(Some(TieSide::Over));
         cramped.arrange_open(&anchor(400., 200.), None, 390., &m);
         assert!(cramped.shape.is_none());
