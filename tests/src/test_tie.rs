@@ -132,16 +132,28 @@ mod tests {
         );
     }
 
+    /// Spans are chosen from the metrics rather than written down, so the test
+    /// follows the ratio and the two limits wherever they are tuned to.
     #[test]
     fn arc_height_is_clamped_at_both_extremes() {
         let m = metrics();
 
-        // 10 tenths * 0.15 = 1.5, below the 5.0 floor.
-        assert_eq!(m.height(10.), m.height_min);
-        // 400 tenths * 0.15 = 60.0, above the 16.0 ceiling.
-        assert_eq!(m.height(400.), m.height_max);
-        // 60 tenths * 0.15 = 9.0, inside the range.
-        assert_eq!(m.height(60.), 9.);
+        // Half the span the floor starts at, so the ratio lands well under it.
+        let short = m.height_min / m.height_ratio / 2.;
+        assert_eq!(m.height(short), m.height_min);
+
+        // Twice the span the ceiling starts at.
+        let long = m.height_max / m.height_ratio * 2.;
+        assert_eq!(m.height(long), m.height_max);
+
+        // And between the two, the ratio applies as written.
+        let middle = (m.height_min + m.height_max) / 2.;
+        let dx = middle / m.height_ratio;
+        assert!(
+            (m.height(dx) - middle).abs() < 0.01,
+            "expected {middle}, got {}",
+            m.height(dx)
+        );
     }
 
     #[test]

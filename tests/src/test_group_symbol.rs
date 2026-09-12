@@ -158,6 +158,24 @@ mod tests {
         score
     }
 
+    /// The gap `level` steps by with no overrides, asked of the one place that
+    /// decides it -- the three are not all the same, and which one is which is
+    /// tuning rather than something these tests should pin.
+    fn default_gap(level: GroupLevel) -> f32 {
+        let score_defaults = ScoreDefaults::default();
+        let user_layout = UserLayout::default();
+        let app_defaults = AppDefaults::default();
+
+        LayoutParams {
+            score_defaults: &score_defaults,
+            user_layout: &user_layout,
+            app_defaults: &app_defaults,
+            font: font(),
+            abbreviate_names: false,
+        }
+        .group_symbol_gap(level)
+    }
+
     fn drawables(symbol: &GroupSymbol) -> Vec<DrawableElement<'static>> {
         let fonts = RenderFonts::music_only(font());
         let mut out = Vec::new();
@@ -182,16 +200,17 @@ mod tests {
     // ------------------------------------------------------------ the anchor
 
     /// A symbol steps left by its own gap from whatever edge it is handed, and
-    /// applies it itself -- no container carries an offset for it. What that
-    /// edge is differs per level, which is the nesting test below; the gap
-    /// itself is the same 5 tenths at all three by default.
+    /// applies it itself -- no container carries an offset for it. What that edge
+    /// is differs per level, which is the nesting test below; the gap is per level
+    /// too, so each one is checked against its own rather than against a shared
+    /// number.
     #[test]
     fn a_symbol_steps_its_own_gap_left_of_the_edge_it_is_given() {
         for level in [GroupLevel::Section, GroupLevel::PartGroup, GroupLevel::Part] {
             let symbol = laid_out(level, Kind::Line);
             assert_close(
                 symbol.anchor().x,
-                ORIGIN.x - 5.,
+                ORIGIN.x - default_gap(level),
                 &format!("{level:?} anchor"),
             );
             assert_close(symbol.anchor().y, ORIGIN.y, &format!("{level:?} anchor y"));
@@ -226,7 +245,7 @@ mod tests {
         assert!(!symbol.is_drawn());
         assert!(drawables(&symbol).is_empty());
 
-        let anchor = ORIGIN.x - 5.;
+        let anchor = ORIGIN.x - default_gap(GroupLevel::Section);
         assert_box(
             symbol.bounds(),
             [anchor, ORIGIN.y, anchor, ORIGIN.y + SPAN],
@@ -234,50 +253,71 @@ mod tests {
         );
     }
 
-    /// A bare vertical line at sub-bracket weight, spanning exactly the staves,
-    /// with its right edge on the anchor.
+    /// A bare vertical line at the `line` weight, spanning exactly the staves,
+    /// with its right edge on the anchor. Which weight that is belongs to
+    /// [`AppDefaults`]; what is pinned here is that the stroke *is* that weight
+    /// and that the box is exactly the stroke.
     #[test]
     fn line_is_one_stroke_of_sub_bracket_weight() {
+        let thickness = AppDefaults::default().group_line_thickness;
         let symbol = laid_out(GroupLevel::Section, Kind::Line);
-        let anchor = ORIGIN.x - 5.;
+        let anchor = ORIGIN.x - default_gap(GroupLevel::Section);
 
         let Shape::Line { stroke } = symbol.shape() else {
             panic!("expected a line, got something else");
         };
-        assert_close(stroke.width, 1.6, "Bravura subBracketThickness in tenths");
+        assert_close(
+            stroke.width,
+            thickness,
+            "the stroke is drawn at line weight",
+        );
         assert_close(stroke.height, SPAN, "stroke spans the staves exactly");
 
         assert_box(
             symbol.bounds(),
-            [anchor - 1.6, ORIGIN.y, anchor, ORIGIN.y + SPAN],
+            [anchor - thickness, ORIGIN.y, anchor, ORIGIN.y + SPAN],
             "line",
         );
         assert_eq!(drawables(&symbol).len(), 1);
     }
 
     /// The bracket keeps the geometry it had before the shapes were unified: a
-    /// 5-tenth stroke whose right edge is 5 tenths from the system, with tips
-    /// that flare rightward past the anchor and 11.8 tenths beyond each end.
+    /// stroke at bracket weight whose right edge sits its own gap from the system,
+    /// with tips registered against the stroke's left edge that flare past each
+    /// end of it.
+    ///
+    /// The tips are scaled to the stroke -- the factor being the stroke's weight
+    /// over the glyph's own -- so the box is checked against the `scale` the shape
+    /// reports. Checking it against a factor of 1 would only hold while the
+    /// default weight happens to equal the glyph's.
     #[test]
     fn bracket_matches_the_geometry_it_had_before() {
+        let thickness = AppDefaults::default().group_bracket_thickness;
         let symbol = laid_out(GroupLevel::Section, Kind::Bracket);
-        let anchor = ORIGIN.x - 5.;
+        let anchor = ORIGIN.x - default_gap(GroupLevel::Section);
 
         let Shape::Bracket { stroke, scale, .. } = symbol.shape() else {
             panic!("expected a bracket, got something else");
         };
-        assert_close(stroke.width, 5., "Bravura bracketThickness in tenths");
-        assert_close(*scale, 1., "tips are nominal size at the default thickness");
+        let scale = *scale;
+
+        assert_close(
+            stroke.width,
+            thickness,
+            "the stroke is drawn at bracket weight",
+        );
 
         // Bravura's bracketTop / bracketBottom are 1.876 spaces wide and flare
-        // 1.18 spaces past the end they cap.
+        // 1.18 spaces past the end they cap. Glyph metrics rather than layout
+        // config, so unlike the thickness these stay as numbers -- at whatever
+        // size the tips were scaled to.
         assert_box(
             symbol.bounds(),
             [
-                anchor - 5.,
-                ORIGIN.y - 11.8,
-                anchor - 5. + 18.76,
-                ORIGIN.y + SPAN + 11.8,
+                anchor - thickness,
+                ORIGIN.y - 11.8 * scale,
+                anchor - thickness + 18.76 * scale,
+                ORIGIN.y + SPAN + 11.8 * scale,
             ],
             "bracket",
         );
@@ -288,14 +328,28 @@ mod tests {
 
     /// Thickening the stroke scales the tips with it, so a bracket stays in
     /// proportion instead of growing a stroke its own serifs no longer match.
+    ///
+    /// Stated as a ratio against the default bracket rather than against a factor
+    /// of 1, so what is pinned is that the two move together.
     #[test]
     fn a_thicker_bracket_scales_its_tips_to_match() {
+        let nominal = laid_out(GroupLevel::Section, Kind::Bracket);
+        let Shape::Bracket {
+            scale: nominal_scale,
+            ..
+        } = nominal.shape()
+        else {
+            panic!("expected a bracket");
+        };
+
+        // Twice the default, whatever the default happens to be.
+        let doubled = AppDefaults::default().group_bracket_thickness * 2.;
         let symbol = laid_out_with(
             GroupLevel::Section,
             Kind::Bracket,
             SPAN,
             UserLayout {
-                group_bracket_thickness: Some(10.),
+                group_bracket_thickness: Some(doubled),
                 ..Default::default()
             },
         );
@@ -303,11 +357,18 @@ mod tests {
         let Shape::Bracket { stroke, scale, .. } = symbol.shape() else {
             panic!("expected a bracket");
         };
-        assert_close(stroke.width, 10., "stroke follows the override");
-        assert_close(*scale, 2., "twice Bravura's own 5-tenth stroke");
+        let scale = *scale;
+
+        assert_close(stroke.width, doubled, "stroke follows the override");
+        assert_close(
+            scale,
+            nominal_scale * 2.,
+            "twice the stroke, so tips at twice the size",
+        );
         assert_close(
             symbol.bounds().height(),
-            SPAN + 11.8 * 2. * 2.,
+            // 11.8 tenths of flare at each end, at the scaled tip size.
+            SPAN + 11.8 * 2. * scale,
             "the flare scales with the tips",
         );
     }
@@ -317,15 +378,21 @@ mod tests {
     /// staff, and they sit outside the staves rather than over them.
     #[test]
     fn square_brackets_the_staves_with_two_arms() {
+        // Both are tuned values, so what is pinned here is how the shape is built
+        // out of them, not what they happen to be.
+        let app = AppDefaults::default();
+        let t = app.group_square_thickness;
+        let arm = app.group_square_arm;
+
         let symbol = laid_out(GroupLevel::Section, Kind::Square);
-        let anchor = ORIGIN.x - 5.;
+        let anchor = ORIGIN.x - default_gap(GroupLevel::Section);
 
         let Shape::Square { stroke, arms } = symbol.shape() else {
             panic!("expected a square, got something else");
         };
-        assert_close(stroke.width, 5., "square is drawn at bracket weight");
-        assert_close(arms[0].width, 15., "one staff space, plus the stroke");
-        assert_close(arms[0].xy.y, ORIGIN.y - 5., "top arm sits above the staff");
+        assert_close(stroke.width, t, "the spine is one stroke wide");
+        assert_close(arms[0].width, arm + t, "the arm's reach, plus the spine");
+        assert_close(arms[0].xy.y, ORIGIN.y - t, "top arm sits above the staff");
         assert_close(
             arms[1].xy.y,
             ORIGIN.y + SPAN,
@@ -334,7 +401,7 @@ mod tests {
 
         assert_box(
             symbol.bounds(),
-            [anchor - 15., ORIGIN.y - 5., anchor, ORIGIN.y + SPAN + 5.],
+            [anchor - arm - t, ORIGIN.y - t, anchor, ORIGIN.y + SPAN + t],
             "square",
         );
         assert_eq!(drawables(&symbol).len(), 3);
@@ -688,25 +755,28 @@ mod tests {
         arrange(&mut score, &defaults, &UserLayout::default());
         let before = stacked(&score, 0, 0);
 
+        let widened = 45.;
         arrange(
             &mut score,
             &defaults,
             &UserLayout {
-                part_group_symbol_gap: Some(45.),
+                part_group_symbol_gap: Some(widened),
                 ..Default::default()
             },
         );
         let after = stacked(&score, 0, 0);
 
+        let extra = widened - default_gap(GroupLevel::PartGroup);
+
         assert_close(after[0].1, before[0].1, "the section symbol stays put");
         assert_close(
             after[1].1,
-            before[1].1 - 40.,
+            before[1].1 - extra,
             "the part-group symbol moves out by the extra padding",
         );
         assert_close(
             after[2].1,
-            before[2].1 - 40.,
+            before[2].1 - extra,
             "and the part symbol outside it moves with it",
         );
     }
