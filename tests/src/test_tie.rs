@@ -292,6 +292,50 @@ mod tests {
         assert!((pts[16].y - 200.).abs() < m.vertical_offset + m.endpoint_thickness);
     }
 
+    /// The other half of that same break: a complete arc too, arriving at the
+    /// note from the left, and a fixed length rather than one it was handed.
+    #[test]
+    fn a_courtesy_tie_is_a_fixed_stub_arriving_at_its_note() {
+        let m = metrics();
+        let end = anchor(400., 200.);
+
+        let mut tie = Tie::new(Some(TieSide::Over));
+        tie.arrange_close(&end, None, &m);
+
+        let pts = &shape(&tie).pts;
+        assert!((thickness_at(pts, 0) - m.endpoint_thickness).abs() < 0.01);
+        assert!((thickness_at(pts, 16) - m.endpoint_thickness).abs() < 0.01);
+        assert!((thickness_at(pts, 8) - m.midpoint_thickness).abs() < 0.01);
+
+        let (lo, hi) = x_span(pts);
+        assert!((hi - (400. - m.note_gap)).abs() < 0.5, "ends at its note");
+        assert!(
+            (hi - lo - m.break_fragment).abs() < 1.,
+            "should span the fragment length, got {}",
+            hi - lo
+        );
+    }
+
+    /// The two halves of one broken tie are deliberately different lengths: the
+    /// opening one takes the room left in its part, the closing one is a stub.
+    #[test]
+    fn the_opening_half_of_a_broken_tie_is_the_longer_one() {
+        let m = metrics();
+
+        let mut opening = Tie::new(Some(TieSide::Over));
+        opening.arrange_open(&anchor(100., 200.), None, 400., &m);
+
+        let mut closing = Tie::new(Some(TieSide::Over));
+        closing.arrange_close(&anchor(80., 600.), None, &m);
+
+        let span = |tie: &Tie| {
+            let (lo, hi) = x_span(&shape(tie).pts);
+            hi - lo
+        };
+
+        assert!(span(&opening) > span(&closing));
+    }
+
     #[test]
     fn a_tie_with_nowhere_to_go_draws_nothing() {
         let m = metrics();
@@ -370,14 +414,15 @@ mod tests {
     }
 
     /// Every tie in a real score draws an arc, whether or not it found the note
-    /// it was reaching for -- so `drawn` counts exactly the ties in the tree.
+    /// it was reaching for -- so `drawn` counts exactly the ties in the tree,
+    /// courtesy stubs included.
     #[test]
     fn engraving_a_real_score_draws_an_arc_for_every_tie() {
         let engraved = engrave_actor_prelude();
 
         let ties = notes(&engraved.score)
-            .filter_map(|note| note.tie.as_ref())
-            .count();
+            .map(|note| note.tie.iter().count() + note.courtesy_tie.iter().count())
+            .sum::<usize>();
 
         assert!(
             ties > 0,
@@ -386,11 +431,12 @@ mod tests {
         assert_eq!(drawn(&engraved.score), ties);
     }
 
-    /// A tie whose end note fell on the next system runs out to the end of its
-    /// part instead. The fixture is long enough to contain some, so the path is
-    /// exercised rather than merely assumed.
+    /// Every broken tie is engraved from both sides: the part it leaves runs an
+    /// arc out to its own end, and the part it arrives in puts a courtesy stub
+    /// in front of the note. Neither side knows about the other, so the two
+    /// counts agreeing is what says the pair of local rules line up.
     #[test]
-    fn a_tie_with_no_note_left_to_reach_runs_out_to_the_end_of_its_part() {
+    fn a_broken_tie_is_drawn_from_both_sides_of_the_break() {
         let engraved = engrave_actor_prelude();
         let m = metrics();
 
@@ -408,10 +454,19 @@ mod tests {
             }
         }
 
+        let courtesy = notes(&engraved.score)
+            .filter(|note| note.courtesy_tie.is_some())
+            .count();
+
         assert!(
             ran_out > 0,
             "a 4-page score with 186 <tied> elements should carry at least one tie \
              across a system break"
+        );
+        assert_eq!(
+            ran_out, courtesy,
+            "{ran_out} ties ran off the end of a part but {courtesy} notes were given \
+             a courtesy stub; the two halves disagree about where the breaks are"
         );
     }
 

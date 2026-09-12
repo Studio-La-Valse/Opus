@@ -237,10 +237,11 @@ impl Part {
         }
     }
 
-    /// Every tie arc this part draws, in note order.
+    /// Every tie arc this part draws, in note order, each note's outgoing tie
+    /// ahead of the courtesy stub arriving at it.
     ///
-    /// The arcs hang off the notes they leave, but they are drawn from here, the
-    /// way [`beams`](Self::beams) are: both run between notes rather than
+    /// The arcs hang off the notes they belong to, but they are drawn from here,
+    /// the way [`beams`](Self::beams) are: both run between notes rather than
     /// belonging to any one of them, and both want painting over the staff lines
     /// they cross and under nothing.
     pub fn ties(&self) -> impl Iterator<Item = &Polygon> {
@@ -249,7 +250,8 @@ impl Part {
             .flat_map(|measure| measure.chords.values())
             .flatten()
             .flat_map(|chord| chord.notes.iter())
-            .filter_map(|note| note.tie.as_ref()?.shape.as_ref())
+            .flat_map(|note| note.tie.iter().chain(note.courtesy_tie.iter()))
+            .filter_map(|tie| tie.shape.as_ref())
     }
 
     /// The staves of this part that are drawn, top to bottom.

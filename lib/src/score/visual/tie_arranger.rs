@@ -60,17 +60,22 @@ pub fn arrange_ties(part: &mut Part) {
             let stem = chord.stem.as_ref().map(|stem| stem.direction);
 
             for note in chord.notes.iter_mut() {
-                let start = note.tie_anchor();
+                let anchor = note.tie_anchor();
 
-                let Some(tie) = note.tie.as_mut() else {
-                    continue;
-                };
+                if let Some(tie) = note.tie.as_mut() {
+                    match target(ahead, &anchor) {
+                        Some(end) => tie.arrange(&anchor, &end, stem, &metrics),
+                        // Nothing ahead to tie to: the end note is on the next
+                        // system, so the tie runs off the end of this part.
+                        None => tie.arrange_open(&anchor, stem, part_end, &metrics),
+                    }
+                }
 
-                match target(ahead, &start) {
-                    Some(end) => tie.arrange(&start, &end, stem, &metrics),
-                    // Nothing ahead to tie to: the end note is on the next
-                    // system, so the tie runs off the end of this part instead.
-                    None => tie.arrange_open(&start, stem, part_end, &metrics),
+                // The other half of that same break, seen from the far side. It
+                // needs no search at all: the content walk only hangs one on a
+                // note whose tie must have started in the part before this one.
+                if let Some(tie) = note.courtesy_tie.as_mut() {
+                    tie.arrange_close(&anchor, stem, &metrics);
                 }
             }
         }

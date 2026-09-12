@@ -146,10 +146,9 @@ impl Tie {
     ///
     /// It ends level with the note it left, not raised to an apex, because it is
     /// a whole tie shape in its own right -- tapered at both of its own ends --
-    /// which is how printed music engraves a tie running into a break. What it
-    /// does *not* do is draw the other half: there is no courtesy arc in front
-    /// of the note on the next system. See the module docs of
-    /// [`tie_arranger`](crate::score::visual::tie_arranger).
+    /// which is how printed music engraves a tie running into a break. The other
+    /// half is [`arrange_close`](Self::arrange_close), drawn a system later by a
+    /// part that knows nothing of this one.
     pub fn arrange_open(
         &mut self,
         start: &TieAnchor,
@@ -163,20 +162,37 @@ impl Tie {
         self.draw(p0, XY { x: limit, y: p0.y }, side, start, metrics);
     }
 
+    /// The closing half of a broken tie -- the courtesy arc -- arriving at the
+    /// note from the left. Likewise a complete tie shape, and likewise level
+    /// with its note.
+    ///
+    /// Its length is fixed at [`TieMetrics::break_fragment`] rather than reaching
+    /// back to the barline, because a system opens with a clef and a key
+    /// signature the arc must not run through. That also makes it the one arc
+    /// needing nothing but its own note: no limit to be handed, no other half to
+    /// be found.
+    pub fn arrange_close(&mut self, end: &TieAnchor, stem: Option<UpDown>, metrics: &TieMetrics) {
+        let side = self.resolve_side(end, stem);
+        let p1 = end.tip_left(side, metrics);
+        let p0 = p1.mv(-metrics.break_fragment, 0.);
+
+        self.draw(p0, p1, side, end, metrics);
+    }
+
     /// Which way this tie bulges: what the document named, else what the note it
-    /// leaves implies.
+    /// hangs off implies.
     fn resolve_side(&self, start: &TieAnchor, stem: Option<UpDown>) -> TieSide {
         self.side
             .unwrap_or_else(|| TieSide::infer(stem, start.staff_line))
     }
 
     /// Assigns the arc between two resolved endpoints, or nothing at all when
-    /// there is no room between them. `start` is the note the tie leaves: its
-    /// scale sets the arc's thickness and its colour fills it, so a grace note
-    /// gets a proportionate tie.
-    fn draw(&mut self, p0: XY, p1: XY, side: TieSide, start: &TieAnchor, metrics: &TieMetrics) {
+    /// there is no room between them. `scaled_to` is the note this arc hangs
+    /// off: its scale sets the thickness and its colour fills it, so a grace
+    /// note gets a proportionate tie.
+    fn draw(&mut self, p0: XY, p1: XY, side: TieSide, scaled_to: &TieAnchor, metrics: &TieMetrics) {
         self.shape =
-            (p1.x > p0.x).then(|| tie_arc(p0, p1, side, start.scale, metrics, start.color));
+            (p1.x > p0.x).then(|| tie_arc(p0, p1, side, scaled_to.scale, metrics, scaled_to.color));
     }
 }
 
@@ -233,6 +249,7 @@ pub struct TieMetrics {
     pub note_gap: f32,
     pub vertical_offset: f32,
     pub break_inset: f32,
+    pub break_fragment: f32,
 }
 
 impl TieMetrics {
@@ -260,6 +277,7 @@ impl TieMetrics {
             note_gap: user.tie_note_gap.unwrap_or(app.tie_note_gap),
             vertical_offset: user.tie_vertical_offset.unwrap_or(app.tie_vertical_offset),
             break_inset: user.tie_break_inset.unwrap_or(app.tie_break_inset),
+            break_fragment: user.tie_break_fragment.unwrap_or(app.tie_break_fragment),
         }
     }
 

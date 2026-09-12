@@ -39,51 +39,55 @@ impl ContentVisitor {
     }
 }
 
-/// The tie leaving this `<note>`, if the document says one does.
+/// The tie this `<note>` takes part in on one side: `LEAVING` for the arc that
+/// starts here, `ARRIVING` for the one that ends here.
 ///
 /// MusicXML spells a tie twice: `<tie>` is a direct child of `<note>` and
 /// carries the sounding semantics, `<notations><tied>` is the notated curve and
 /// carries the placement attributes. Exports usually emit both, but not always,
-/// so a note starts a tie if *either* says so. `type="continue"` is the middle
-/// of a chained a-b-c tie -- it stops one and starts the next -- so it counts
-/// here too.
+/// so a side counts if *either* says so. `type="continue"` is the middle of a
+/// chained a-b-c tie -- it ends one arc and starts the next -- so it answers to
+/// both.
 ///
-/// Nothing reads `type="stop"`, and `<tied number=…>` is ignored. Both exist to
-/// say which start an end belongs to, and neither is needed: a tie can only
-/// reach the next note of its pitch in its voice, so
-/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) finds the
-/// other end by looking rather than by being told. A slur, which really can
-/// overlap another slur, will need the number.
+/// Only the `<tied>` elements on the side being asked about speak for its
+/// orientation. A note in the middle of a chain carries two of them, and they
+/// describe different arcs.
 ///
-/// The one thing given up with `type="stop"` is an orientation written only
-/// there. It is legal -- `Dichterliebe01.musicxml` has exactly one
-/// `<tied orientation="under" type="stop"/>` among its 104 tied elements -- and
-/// such a tie now curves the way its stem implies instead. Honouring it means
-/// reading an attribute off a note this one cannot see, which is the correlation
-/// this visitor deliberately does not do.
-fn tie(node: &Node) -> Option<Tie> {
+/// `<tied number=…>` is ignored. It exists to say which start an end belongs to,
+/// and nothing here needs that: a tie reaches the next note of its pitch in its
+/// voice, which
+/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) finds by
+/// looking rather than by being told. A slur, which really can overlap another
+/// slur, will need the number.
+fn tie(node: &Node, side_of: [&str; 2]) -> Option<Tie> {
     let tied = node
         .get_child("notations")
         .map(|n| n.get_children("tied"))
         .unwrap_or_default();
     let ties = node.get_children("tie");
 
-    let starts = |n: &Node| matches!(n.get_attribute("type"), Some("start" | "continue"));
+    let wanted = |n: &Node| {
+        n.get_attribute("type")
+            .is_some_and(|t| side_of.contains(&t))
+    };
 
-    if !tied.iter().chain(ties.iter()).any(starts) {
+    if !tied.iter().chain(ties.iter()).any(wanted) {
         return None;
     }
 
-    // Only the `<tied>` that opens this tie speaks for it. A note in the middle
-    // of a chain carries the previous tie's `stop` as well, and that one's
-    // orientation belongs to the arc arriving, not the one leaving.
     let side = tied
         .iter()
-        .filter(|n| starts(n))
+        .filter(|n| wanted(n))
         .find_map(|n| TieSide::parse(n.get_attribute("orientation"), n.get_attribute("placement")));
 
     Some(Tie::new(side))
 }
+
+/// The `<tie>` / `<tied>` types that open an arc at this note, for [`tie`].
+const LEAVING: [&str; 2] = ["start", "continue"];
+
+/// The types that close one at it.
+const ARRIVING: [&str; 2] = ["stop", "continue"];
 
 impl Default for ContentVisitor {
     fn default() -> Self {
@@ -194,7 +198,16 @@ impl ContentVisitor {
         let glyph = ctx.font.notehead(notehead);
         let dots: u8 = node.get_children("dot").len().try_into().unwrap();
         let mut note = Note::new(glyph, default_x, staff_idx, staff_line, size, dots);
-        note.tie = tie(node);
+        note.tie = tie(node, LEAVING);
+
+        // A tie arriving at the very first position of a part cannot have
+        // started in it: whatever it is tied to is on the previous system, so
+        // this note wants the courtesy stub in front of it. Anywhere else the
+        // arc arriving here is the one some earlier note in this part is already
+        // drawing, and drawing it twice would double the ink.
+        if ctx.cursor.new_system && position == 0 {
+            note.courtesy_tie = tie(node, ARRIVING);
+        }
 
         // Locate Measure & Voice Chords
         let system = ctx

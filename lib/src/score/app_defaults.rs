@@ -52,6 +52,11 @@ pub struct AppDefaults {
     /// the following system. That tie runs out to the end of its part, less
     /// this, so it clears the final barline instead of touching it.
     pub tie_break_inset: f32,
+    /// Length, in tenths, of the courtesy tie: the short arc drawn in front of a
+    /// note that was already sounding when the system broke. Fixed rather than
+    /// reaching back to the barline, because the system opens with a clef and a
+    /// key signature the arc must not run through.
+    pub tie_break_fragment: f32,
 
     /// What binds a section's part-groups together when the document's
     /// `<part-group>` names no `<group-symbol>`. A section is the outermost of
@@ -154,6 +159,7 @@ impl Default for AppDefaults {
             tie_note_gap: 2.,
             tie_vertical_offset: 5.,
             tie_break_inset: 10.,
+            tie_break_fragment: 20.,
 
             section_symbol: GroupSymbol::Bracket,
             part_group_symbol: GroupSymbol::Brace,

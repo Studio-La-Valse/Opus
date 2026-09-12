@@ -49,6 +49,16 @@ pub struct Note {
     /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties), which
     /// simply looks ahead for it.
     pub tie: Option<Tie>,
+
+    /// The courtesy tie arriving at this note: the short stub drawn in front of
+    /// a note that was already sounding when the system broke.
+    ///
+    /// Set by the content walk on the same evidence [`tie`](Self::tie) is -- the
+    /// note's own `<tie>` / `<tied>`, read for an *end* rather than a start --
+    /// plus the one fact that makes a tie arriving here a broken one: this note
+    /// sits at the very first position of its part, so whatever it is tied to
+    /// cannot be in the same part.
+    pub courtesy_tie: Option<Tie>,
 }
 
 impl Note {
@@ -69,6 +79,7 @@ impl Note {
             accidental: None,
 
             tie: None,
+            courtesy_tie: None,
 
             default_x,
             staff,

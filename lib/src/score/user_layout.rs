@@ -55,6 +55,7 @@ pub struct UserLayout {
     pub tie_note_gap: Option<f32>,
     pub tie_vertical_offset: Option<f32>,
     pub tie_break_inset: Option<f32>,
+    pub tie_break_fragment: Option<f32>,
 
     /// Force one symbol on every section / part-group / part in the score,
     /// overriding what each `<part-group>` declared. Set one to
