@@ -1,4 +1,3 @@
-use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
@@ -13,23 +12,6 @@ use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::score::visual::tie::TieSegment;
 use std::collections::BTreeMap;
-
-/// Addresses one system in the score: its page's key and its own key, both taken
-/// from the enclosing `BTreeMap`s.
-///
-/// Deliberately the map keys rather than any stored index: they are document
-/// order by construction, which is exactly what "does the tie's start come
-/// before its end" means, and what tells two beam fragments on either side of a
-/// break apart. `Page::number` happens to carry the same value today, but it is
-/// there for margin resolution and nothing here should depend on the two staying
-/// in step.
-///
-/// Lives beside [`System`] rather than with either pass that keys on it: it
-/// addresses a `System`, and both
-/// [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams) and
-/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) file their
-/// output under it.
-pub type SystemKey = (u32, u32);
 
 #[derive(Default)]
 pub struct System {
@@ -54,17 +36,6 @@ pub struct System {
     /// to the next system; a tie broken across a *page* break is the same case,
     /// since the two systems are simply on different pages.
     pub ties: Vec<TieSegment>,
-
-    /// The beam segments that fall inside this system, rebuilt from the chords
-    /// in the tree by
-    /// [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams)
-    /// once the pages have been arranged.
-    ///
-    /// A beam group is a run of consecutive chords, so unlike a tie it does not
-    /// need naming from outside the tree -- but it breaks the same way: a group
-    /// crossing a system break contributes segments here and to the next system,
-    /// and a group crossing a *page* break is the same case again.
-    pub beams: Vec<Polygon>,
 
     pub xy: XY,
     pub width: f32,

@@ -1,11 +1,11 @@
-//! The beam pass, from the run it is handed down to what each fragment draws.
+//! The beam pass, from the run it is handed down to what each group draws.
 //!
-//! Three stages, and each one is where a different kind of mistake would land: a
-//! run is chunked into groups by the beam types the document declares, a group is
-//! chunked into fragments by the system breaks it crosses, and a fragment then
-//! resolves each of its levels to a span. The first two are pure list handling and
-//! are unit-tested here; the third only means anything in tenths, so it is checked
-//! against `crazy-beams.musicxml` engraved end to end.
+//! Two stages, and each is where a different kind of mistake would land: a run is
+//! chunked into groups by the beam types the document declares -- which is also
+//! where a group reaching past the part it was collected from is recognised -- and
+//! each group then resolves its levels to spans. The first is pure list handling
+//! and is unit-tested here; the second only means anything in tenths, so it is
+//! checked against `crazy-beams.musicxml` engraved end to end.
 
 #[cfg(test)]
 mod tests {
@@ -19,14 +19,12 @@ mod tests {
     use lib::score::engrave::engrave;
     use lib::score::user_layout::UserLayout;
     use lib::score::visual::beam_arranger::{
-        Beamable, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
-        split_at_system_breaks,
+        BeamGroup, Cut, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
     };
     use lib::score::visual::chord::Chord;
     use lib::score::visual::note_scale::NoteScale;
     use lib::score::visual::score::Score;
     use lib::score::visual::stem::{BeamType, Stem, UpDown};
-    use lib::score::visual::system::SystemKey;
     use lib::smufl::smufl_font::SmuflFont;
 
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
@@ -74,26 +72,40 @@ mod tests {
         Chord::default()
     }
 
-    /// The run the pass is handed: each chord paired with the system it landed on.
-    fn run<'a>(chords: &'a mut [Chord], keys: &[SystemKey]) -> Vec<Beamable<'a>> {
-        assert_eq!(chords.len(), keys.len(), "one key per chord");
+    /// The run the pass is handed: one voice's chords from one part, in measure
+    /// order.
+    fn run(chords: &mut [Chord]) -> Vec<&mut Chord> {
+        chords.iter_mut().collect()
+    }
 
-        chords
-            .iter_mut()
-            .zip(keys)
-            .map(|(chord, key)| Beamable { key: *key, chord })
+    /// A group that begins and ends inside this part, and so draws no stub.
+    const WHOLE: Cut = Cut {
+        left: false,
+        right: false,
+    };
+    /// A group whose `begin` is on the previous system.
+    const OPENS_BEFORE: Cut = Cut {
+        left: true,
+        right: false,
+    };
+    /// A group that closes on the next system.
+    const CLOSES_AFTER: Cut = Cut {
+        left: false,
+        right: true,
+    };
+    /// A group that only passes through this part, reaching past it both ways.
+    const PASSES_THROUGH: Cut = Cut {
+        left: true,
+        right: true,
+    };
+
+    /// How many chords each group holds and how far past this part it reaches,
+    /// which between them are everything the grouping decides.
+    fn group_shapes(groups: &[BeamGroup<'_>]) -> Vec<(usize, Cut)> {
+        groups
+            .iter()
+            .map(|group| (group.chords.len(), group.cut))
             .collect()
-    }
-
-    /// Every chord of the run on one and the same system, for the tests that are
-    /// about grouping rather than breaking.
-    fn one_system(chords: &mut [Chord]) -> Vec<Beamable<'_>> {
-        let keys = vec![(1, 1); chords.len()];
-        run(chords, &keys)
-    }
-
-    fn group_sizes(groups: &[Vec<Beamable<'_>>]) -> Vec<usize> {
-        groups.iter().map(|group| group.len()).collect()
     }
 
     // ---------------------------------------------------------------- grouping
@@ -106,12 +118,12 @@ mod tests {
             beamed(BeamType::End),
         ];
 
-        let groups = create_beam_groups(one_system(&mut chords));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(group_sizes(&groups), vec![3]);
+        assert_eq!(group_shapes(&groups), vec![(3, WHOLE)]);
     }
 
-    /// The run is now a whole part's, so a group may legally span a barline: two
+    /// The run is a whole part's, so a group may legally span a barline: two
     /// measures' worth of chords that read `begin ... end` are one group, not two.
     #[test]
     fn a_group_spans_whatever_barlines_lie_inside_it() {
@@ -124,13 +136,16 @@ mod tests {
             beamed(BeamType::End),
         ];
 
-        let groups = create_beam_groups(one_system(&mut chords));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(group_sizes(&groups), vec![4]);
+        assert_eq!(group_shapes(&groups), vec![(4, WHOLE)]);
     }
 
     /// Formerly `panic!("Cannot start a beam group when one is already open")`.
-    /// The second `begin` says a group starts there, so whatever was open ended.
+    /// The second `begin` says a group starts there, so whatever was open ended --
+    /// and it is *not* treated as running on to the next system, because a group
+    /// that only the middle of the run leaves open is a contradiction in the
+    /// document rather than a break.
     #[test]
     fn a_second_begin_closes_the_group_that_was_open() {
         let mut chords = [
@@ -140,9 +155,9 @@ mod tests {
             beamed(BeamType::End),
         ];
 
-        let groups = create_beam_groups(one_system(&mut chords));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(group_sizes(&groups), vec![2, 2]);
+        assert_eq!(group_shapes(&groups), vec![(2, WHOLE), (2, WHOLE)]);
     }
 
     /// Formerly `panic!("Cannot continue a beam group when none is open")` -- the
@@ -151,9 +166,9 @@ mod tests {
     fn a_continue_with_nothing_open_opens_a_group() {
         let mut chords = [beamed(BeamType::Continue), beamed(BeamType::End)];
 
-        let groups = create_beam_groups(one_system(&mut chords));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(group_sizes(&groups), vec![2]);
+        assert_eq!(group_shapes(&groups), vec![(2, OPENS_BEFORE)]);
     }
 
     /// Formerly `panic!("Cannot end a beam group when none is open")`.
@@ -161,9 +176,14 @@ mod tests {
     fn an_end_with_nothing_open_opens_and_closes_a_group() {
         let mut chords = [beamed(BeamType::End), beamed(BeamType::Start)];
 
-        let groups = create_beam_groups(one_system(&mut chords));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(group_sizes(&groups), vec![1, 1]);
+        assert_eq!(
+            group_shapes(&groups),
+            vec![(1, OPENS_BEFORE), (1, CLOSES_AFTER)],
+            "an `end` first and a `begin` last are each half of a group the run \
+             does not hold all of"
+        );
     }
 
     /// A chord carrying no beam at all stands alone, and closes whatever it lands
@@ -178,86 +198,93 @@ mod tests {
             beamed(BeamType::End),
         ];
 
-        let groups = create_beam_groups(one_system(&mut chords));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(group_sizes(&groups), vec![3, 2]);
+        assert_eq!(group_shapes(&groups), vec![(3, WHOLE), (2, WHOLE)]);
     }
 
-    // ------------------------------------------------------------- fragmenting
+    // ---------------------------------------------------------- reaching beyond
 
+    // A part is one system's worth of one instrument, so a beam group crossing a
+    // system break is two groups -- one in each part -- and neither sees the whole
+    // of it. Neither has to: the group's `begin` missing from the front of a run,
+    // or its `end` missing from the back, is the break seen from one side.
+
+    /// A run whose first group opens with no `begin` of its own opened on the
+    /// previous system, so its levels reach back past the first stem.
     #[test]
-    fn a_group_inside_one_system_is_a_single_uncut_fragment() {
+    fn a_run_opening_without_a_begin_reaches_back_to_the_previous_system() {
         let mut chords = [
-            beamed(BeamType::Start),
+            beamed(BeamType::Continue),
             beamed(BeamType::Continue),
             beamed(BeamType::End),
         ];
 
-        let fragments = split_at_system_breaks(one_system(&mut chords));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(fragments.len(), 1);
-        assert_eq!(fragments[0].chords.len(), 3);
-        assert!(!fragments[0].cut.left, "nothing precedes it");
-        assert!(!fragments[0].cut.right, "nothing follows it");
+        assert_eq!(group_shapes(&groups), vec![(3, OPENS_BEFORE)]);
     }
 
+    /// A run whose last group never closes closes on the next system, so its
+    /// levels reach on past the last stem.
     #[test]
-    fn a_group_across_a_system_break_splits_at_it() {
+    fn a_run_left_open_reaches_on_to_the_next_system() {
         let mut chords = [
             beamed(BeamType::Start),
             beamed(BeamType::Continue),
             beamed(BeamType::Continue),
-            beamed(BeamType::End),
         ];
-        let keys = [(1, 1), (1, 1), (1, 2), (1, 2)];
 
-        let fragments = split_at_system_breaks(run(&mut chords, &keys));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(fragments.len(), 2);
-        assert_eq!(fragments[0].key, (1, 1));
-        assert_eq!(fragments[0].chords.len(), 2);
-        assert_eq!(fragments[1].key, (1, 2));
-        assert_eq!(fragments[1].chords.len(), 2);
-
-        assert!(!fragments[0].cut.left && fragments[0].cut.right);
-        assert!(fragments[1].cut.left && !fragments[1].cut.right);
+        assert_eq!(group_shapes(&groups), vec![(3, CLOSES_AFTER)]);
     }
 
-    /// A page break *is* a system break, so this needs no handling of its own:
-    /// the two fragments simply file under two different pages.
+    /// Both at once: a group long enough to take up a whole system in the middle
+    /// of it, which arrives from one break and leaves through the next. This is
+    /// also the shape a lone chord stranded between two breaks takes.
     #[test]
-    fn a_group_across_a_page_break_splits_the_same_way() {
-        let mut chords = [beamed(BeamType::Start), beamed(BeamType::End)];
-        let keys = [(1, 2), (2, 1)];
+    fn a_run_that_neither_opens_nor_closes_reaches_both_ways() {
+        let mut chords = [beamed(BeamType::Continue), beamed(BeamType::Continue)];
 
-        let fragments = split_at_system_breaks(run(&mut chords, &keys));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(fragments.len(), 2);
-        assert_eq!(fragments[0].key, (1, 2));
-        assert_eq!(fragments[1].key, (2, 1));
-        assert!(fragments[0].cut.right && fragments[1].cut.left);
+        assert_eq!(group_shapes(&groups), vec![(2, PASSES_THROUGH)]);
     }
 
-    /// A group reaching into three systems is cut on both sides in the middle.
+    /// A cross-page group is not a case of its own: a page break is a system
+    /// break, so each side is an ordinary part whose run is missing one end.
     #[test]
-    fn a_fragment_between_two_others_is_cut_on_both_sides() {
+    fn a_single_chord_carrying_only_an_end_is_a_whole_run_on_its_own() {
+        let mut chords = [beamed(BeamType::End)];
+
+        let groups = create_beam_groups(run(&mut chords));
+
+        assert_eq!(group_shapes(&groups), vec![(1, OPENS_BEFORE)]);
+    }
+
+    /// Only the *edges* of a run can be a break. A `continue` with nothing open
+    /// part-way through means the document contradicts itself -- there is a group
+    /// before it that closed properly -- so it recovers into a group of its own and
+    /// earns no stub.
+    #[test]
+    fn a_contradiction_in_the_middle_of_a_run_earns_no_stub() {
         let mut chords = [
             beamed(BeamType::Start),
+            beamed(BeamType::End),
             beamed(BeamType::Continue),
             beamed(BeamType::End),
         ];
-        let keys = [(1, 1), (1, 2), (1, 3)];
 
-        let fragments = split_at_system_breaks(run(&mut chords, &keys));
+        let groups = create_beam_groups(run(&mut chords));
 
-        assert_eq!(fragments.len(), 3);
-        assert!(fragments[1].cut.left && fragments[1].cut.right);
+        assert_eq!(group_shapes(&groups), vec![(2, WHOLE), (2, WHOLE)]);
     }
 
     // ------------------------------------------------------------- level spans
 
     #[test]
-    fn a_level_that_ends_in_the_fragment_is_closed_at_that_stem() {
+    fn a_level_that_ends_in_the_group_is_closed_at_that_stem() {
         let chords = [
             chord(UpDown::Up, &[(1, BeamType::Start), (2, BeamType::Start)]),
             chord(UpDown::Up, &[(1, BeamType::Continue), (2, BeamType::End)]),
@@ -278,8 +305,8 @@ mod tests {
 
     /// An unterminated level: the document declares `begin`, `continue` and no
     /// `end`, so the level is taken to run to the last stem carrying it. Which is
-    /// also what a level running off the edge of a fragment looks like -- only the
-    /// caller, which knows whether the fragment was cut, can tell the two apart.
+    /// also what a level running off the edge of a part looks like -- only the
+    /// caller, which knows whether the group was cut, can tell the two apart.
     #[test]
     fn a_level_with_no_end_is_open_at_its_last_carrier() {
         let mut chords = [
@@ -329,9 +356,7 @@ mod tests {
     fn a_group_whose_stems_agree_stacks_away_from_them() {
         let mut chords = [beamed(BeamType::Start), beamed(BeamType::End)];
 
-        let group = one_system(&mut chords);
-
-        assert_eq!(infer_direction(&group), Some(UpDown::Down));
+        assert_eq!(infer_direction(&run(&mut chords)), Some(UpDown::Down));
     }
 
     /// Cross-staff beaming: the stems of one staff point up and the other's down,
@@ -345,18 +370,14 @@ mod tests {
             chord(UpDown::Down, &[(1, BeamType::End)]),
         ];
 
-        let group = one_system(&mut chords);
-
-        assert_eq!(infer_direction(&group), Some(UpDown::Up));
+        assert_eq!(infer_direction(&run(&mut chords)), Some(UpDown::Up));
     }
 
     #[test]
     fn a_group_of_nothing_but_stemless_chords_has_no_direction() {
         let mut chords = [stemless(), stemless()];
 
-        let group = one_system(&mut chords);
-
-        assert_eq!(infer_direction(&group), None);
+        assert_eq!(infer_direction(&run(&mut chords)), None);
     }
 
     // ------------------------------------------------------------- in tenths
@@ -388,10 +409,10 @@ mod tests {
     /// against: how far the stems on that system reach, and where its internal
     /// barlines fall.
     ///
-    /// Deliberately relative rather than a table of tenths. What the fragment
-    /// rule claims is that a beam reaches *past its outermost stem* when its group
-    /// carries on past the system, and *through a barline* when the group spans
-    /// one -- both of which stay true however the fixture is spaced.
+    /// Deliberately relative rather than a table of tenths. What the pass claims
+    /// is that a beam reaches *past its outermost stem* when its group carries on
+    /// past the system, and *through a barline* when the group spans one -- both of
+    /// which stay true however the fixture is spaced.
     struct SystemBeams {
         measures: Vec<u32>,
         stem_left: f32,
@@ -408,10 +429,18 @@ mod tests {
                 let mut stem_left = f32::MAX;
                 let mut stem_right = f32::MIN;
                 let mut barlines = Vec::new();
+                let mut spans = Vec::new();
 
                 for section in system.sections.values() {
                     for group in section.part_groups.values() {
                         for part in group.parts.values() {
+                            spans.extend(part.beams.iter().map(|beam| {
+                                (
+                                    beam.pts.iter().map(|p| p.x).fold(f32::MAX, f32::min),
+                                    beam.pts.iter().map(|p| p.x).fold(f32::MIN, f32::max),
+                                )
+                            }));
+
                             for measure in part.measures.values() {
                                 barlines.push(measure.origin.x + measure.width);
 
@@ -437,16 +466,7 @@ mod tests {
                     stem_left,
                     stem_right,
                     barlines,
-                    spans: system
-                        .beams
-                        .iter()
-                        .map(|beam| {
-                            (
-                                beam.pts.iter().map(|p| p.x).fold(f32::MAX, f32::min),
-                                beam.pts.iter().map(|p| p.x).fold(f32::MIN, f32::max),
-                            )
-                        })
-                        .collect(),
+                    spans,
                 });
             }
         }
@@ -455,8 +475,8 @@ mod tests {
     }
 
     /// A beam group left open at the end of a system runs a stub out past its last
-    /// stem to the break, and the fragment arriving on the next system runs one
-    /// back in past its first stem.
+    /// stem to the break, and the group arriving on the next system runs one back
+    /// in past its first stem.
     ///
     /// `crazy-beams.musicxml` crosses its measure 2 / 3 system break with exactly
     /// one group, which carries both beam levels -- so there is one stub per level
@@ -541,12 +561,20 @@ mod tests {
                 let below_upper = upper.xy.y + upper.height();
                 let above_lower_bottom = lower.xy.y + lower.height();
 
+                let beams: Vec<_> = system
+                    .sections
+                    .values()
+                    .flat_map(|section| section.part_groups.values())
+                    .flat_map(|group| group.parts.values())
+                    .flat_map(|part| part.beams.iter())
+                    .collect();
+
                 assert!(
-                    !system.beams.is_empty(),
+                    !beams.is_empty(),
                     "every system of the fixture carries beams"
                 );
 
-                for beam in system.beams.iter() {
+                for beam in beams {
                     for point in beam.pts.iter() {
                         assert!(
                             point.y > below_upper && point.y < above_lower_bottom,

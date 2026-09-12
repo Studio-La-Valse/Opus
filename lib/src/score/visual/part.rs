@@ -1,7 +1,9 @@
+use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::xy::XY;
 use crate::score::core::clef::Clef as CoreClef;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::visual::beam_arranger::{BeamMetrics, arrange_beams};
 use crate::score::visual::clef::Clef as DrawableClef;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
@@ -16,6 +18,16 @@ use std::collections::{BTreeMap, HashSet};
 pub struct Part {
     pub measures: BTreeMap<u32, PartMeasure>,
     pub staves: BTreeMap<StaffIdx, Staff>,
+
+    /// The beam segments of every group in this part, rebuilt from its chords by
+    /// [`arrange_beams`] once its measures have been arranged.
+    ///
+    /// A beam group never spans two parts, so a part owns whole groups -- and
+    /// since a part is one system's worth of one instrument, a group crossing a
+    /// system break is two groups here, one on each side of it, each carrying a
+    /// stub out towards the break.
+    pub beams: Vec<Polygon>,
+    pub beam_metrics: BeamMetrics,
 
     pub xy: XY,
     pub width: f32,
@@ -34,6 +46,9 @@ impl Part {
         Self {
             measures: BTreeMap::new(),
             staves: BTreeMap::new(),
+
+            beams: Vec::new(),
+            beam_metrics: BeamMetrics::default(),
 
             xy: XY::ZERO,
             width: 0.0,
@@ -278,6 +293,12 @@ impl Part {
             _origin = _origin.mv(measure.width, 0.);
         }
 
+        // After the measures, because a beam group runs between two stems and
+        // those are only in their final place once the measure holding each of
+        // them has been arranged. Before the symbol and the name, which have
+        // nothing to do with it.
+        arrange_beams(self);
+
         let first_visible_staff_distance = self.first_visible_staff_distance();
         let symbol_top = XY {
             x: clear_of,
@@ -295,6 +316,8 @@ impl Layoutable for Part {
     /// still has a colour and a symbol to resolve, even though `measure` will
     /// leave its size at zero and nothing ends up drawing them.
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        self.beam_metrics = BeamMetrics::resolve(params);
+
         for staff in self.staves.values_mut() {
             staff.resolve_layout(params);
         }
