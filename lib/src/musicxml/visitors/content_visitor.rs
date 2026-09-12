@@ -7,7 +7,6 @@ use crate::score::core::pitch::Pitch;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::core::step::Step;
 use crate::score::visual::chord::Chord;
-use crate::score::visual::clef::Clef;
 use crate::score::visual::note::Note;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::rest::Rest;
@@ -24,17 +23,13 @@ use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
 use crate::score::visual::part::Part;
 use crate::smufl::smufl_font::SmuflFont;
 use roxmltree::Node;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
-pub struct ContentVisitor {
-    pub clef_change: HashMap<StaffIdx, Clef>,
-}
+pub struct ContentVisitor {}
 
 impl ContentVisitor {
     pub fn new() -> Self {
-        Self {
-            clef_change: HashMap::new(),
-        }
+        Self {}
     }
 }
 
@@ -66,6 +61,7 @@ fn note_scale(ctx: &WalkerCtx) -> NoteScale {
 
 impl ContentVisitor {
     fn handle_rest(&mut self, node: &Node, rest_node: &Node, ctx: &mut WalkerCtx) {
+        let note_id = ctx.cursor.note_id;
         let staff_idx = ctx.cursor.staff.number;
         let measure_number = ctx.cursor.measure.number;
         let part_id = ctx.cursor.part_id.as_str();
@@ -85,16 +81,16 @@ impl ContentVisitor {
 
         let dots: u8 = node.get_children("dot").len().try_into().unwrap();
 
-        let mut rest = if is_measure {
+        let rest = if is_measure {
             let glyph = ctx.font.rest(BaseDuration::Whole.rest_glyph());
-            Rest::new(glyph, is_measure, None, staff_idx, center_line, size, dots)
+            Rest::new(note_id, glyph, None, staff_idx, center_line, size, dots)
         } else {
             let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
             let glyph = ctx.font.rest(dur.rest_glyph());
             let default_x: f32 = node.req_attribute("default-x").req_parse();
             Rest::new(
+                note_id,
                 glyph,
-                is_measure,
                 Some(default_x),
                 staff_idx,
                 center_line,
@@ -102,9 +98,6 @@ impl ContentVisitor {
                 dots,
             )
         };
-
-        // Attach pending clef change specifically for this staff
-        rest.clef_change = self.clef_change.remove(&staff_idx);
 
         staff_measure.rests.push(rest);
     }
@@ -215,11 +208,6 @@ impl ContentVisitor {
             note.accidental = Some(accidental)
         }
 
-        // Attach pending clef changes
-        for (s_idx, clef_change) in self.clef_change.drain() {
-            chord.clef_change.insert(s_idx, clef_change);
-        }
-
         chord.notes.push(note);
     }
 
@@ -318,32 +306,6 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
         }
     }
 
-    fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
-        let staff_idx: StaffIdx = ctx.cursor.staff.number;
-        let clef = ctx.cursor.staff.active_clef.get(&staff_idx).unwrap();
-        let staff_lines = ctx.cursor.staff.lines(&staff_idx);
-        let visual_clef = Clef::new(ctx.font.clef(clef, staff_lines));
-
-        if ctx.cursor.position > 0 {
-            // Mid-measure: Anchor to a chord or rest
-            self.clef_change.insert(staff_idx, visual_clef);
-        } else {
-            // Anchor to previous measure bar
-            let measure_number = ctx.cursor.measure.number;
-            let part_id = ctx.cursor.part_id.as_str();
-
-            if measure_number > 1
-                && let Some(previous_measure) = ctx.visual_score.locate_staff_measure_mut(
-                    part_id,
-                    &staff_idx,
-                    measure_number - 1,
-                )
-            {
-                previous_measure.clef_end = Some(visual_clef);
-            }
-        }
-    }
-
     fn enter_key(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         if ctx.cursor.new_system {
             // handled in exit_measure() for new systems
@@ -381,10 +343,18 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
         }
     }
 
+    /// The key signature a new system opens with, which -- unlike one written
+    /// mid-score, handled in [`enter_key`](Self::enter_key) -- has no `<key>` of
+    /// its own to hang off: a system repeats the key it is already in.
     fn exit_measure(&mut self, ctx: &mut WalkerCtx) {
+        if !ctx.cursor.new_system {
+            return;
+        }
+
         let page_number = ctx.cursor.page.page_number;
         let system_index = ctx.cursor.system.index;
         let measure_number = ctx.cursor.measure.number;
+        let key = ctx.cursor.key;
 
         let part_id = ctx.cursor.part_id.clone();
         let assignment = ctx.layout.lookup(&part_id).unwrap();
@@ -397,23 +367,12 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
             &part_id,
         );
 
-        // set_opening_clef must run after the layout pass' consolidate_measure_width(),
-        // because all measures must exist in each staff
-        part.set_opening_clef(&ctx.cursor.staff.opening_clef, |c, staff_lines| {
-            let smufl_clef = ctx.font.clef(&c, staff_lines);
-            Clef::new(smufl_clef)
-        });
-
-        if ctx.cursor.new_system {
-            let key = ctx.cursor.key;
-
-            self.populate_key_signature(
-                part,
-                measure_number,
-                key,
-                &ctx.cursor.staff.active_clef,
-                ctx.font,
-            );
-        }
+        self.populate_key_signature(
+            part,
+            measure_number,
+            key,
+            &ctx.cursor.staff.active_clef,
+            ctx.font,
+        );
     }
 }

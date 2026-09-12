@@ -109,9 +109,6 @@ mod tests {
 
     fn assert_rest(rest: &Rest, what: &str) {
         assert_red(rest.color, what);
-        if let Some(clef) = &rest.clef_change {
-            assert_red(clef.color, &format!("{what} clef change"));
-        }
         for (i, dot) in rest.dots.iter().enumerate() {
             assert_red(dot.color, &format!("{what} dot {i}"));
         }
@@ -124,12 +121,6 @@ mod tests {
         }
         if let Some(stem) = &chord.stem {
             assert_stem(stem, &format!("{what} stem"));
-        }
-        for (staff, clef) in chord.clef_change.iter() {
-            assert_red(
-                clef.color,
-                &format!("{what} clef change on staff {staff:?}"),
-            );
         }
     }
 
@@ -177,6 +168,13 @@ mod tests {
 
                 for measure in system.measures.values() {
                     assert_red(measure.color, "system measure");
+                }
+
+                // Built by `arrange_clef_changes` rather than by the downward
+                // `resolve_layout` pass, so this is the arranger being checked
+                // for resolving the colour itself.
+                for (i, clef) in system.clef_changes.iter().enumerate() {
+                    assert_red(clef.color, &format!("system clef change {i}"));
                 }
 
                 for section in system.sections.values() {

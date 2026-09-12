@@ -10,12 +10,16 @@ use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::notehead::Notehead;
 
-/// Identifies one [`Note`] within a [`Score`](crate::score::visual::score::Score).
+/// Identifies one [`Note`] -- or one [`Rest`](crate::score::visual::rest::Rest),
+/// which is a `<note>` in MusicXML and counted as one here -- within a
+/// [`Score`](crate::score::visual::score::Score).
 ///
 /// The visual tree is a pure containment hierarchy, so it cannot express a
 /// relation between two notes that sit in different branches of it -- which is
 /// exactly what a tie is. Ids let [`Tie`](crate::score::visual::tie::Tie) name
-/// its two endpoints without needing a pointer into the tree.
+/// its two endpoints without needing a pointer into the tree, and
+/// [`ClefChange`](crate::score::visual::clef::ClefChange) name the note or rest
+/// it is drawn in front of.
 ///
 /// Handed out by
 /// [`WalkCursor`](crate::score::walk_cursor::WalkCursor), so that every visitor

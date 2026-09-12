@@ -3,6 +3,7 @@ use crate::score::core::group_symbol::GroupLevel;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::ScorePart;
+use crate::score::visual::clef::ClefChange;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
@@ -34,6 +35,21 @@ pub struct Score {
     /// rebuilt from this list by
     /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties).
     pub ties: Vec<Tie>,
+
+    /// Every mid-measure clef change in the document, as a flat list.
+    ///
+    /// Here for a variation on the reason `ties` is: a clef change belongs to a
+    /// staff, but only the note or rest it precedes can say where on the page it
+    /// goes, and those live in a different branch of the tree. It used to be
+    /// stored on the anchor itself, which left every `Chord` and `Rest` carrying
+    /// a clef slot they almost never filled.
+    ///
+    /// Populated by the content walk and left alone by `arrange`; the drawn
+    /// clefs live on
+    /// [`System::clef_changes`](crate::score::visual::system::System) and are
+    /// rebuilt from this list by
+    /// [`arrange_clef_changes`](crate::score::visual::clef_change_arranger::arrange_clef_changes).
+    pub clef_changes: Vec<ClefChange>,
 }
 
 impl Score {

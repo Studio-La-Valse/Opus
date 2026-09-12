@@ -1,5 +1,5 @@
 use crate::geometry::xy::XY;
-use crate::score::visual::clef::Clef;
+use crate::score::visual::clef::{Clef, ClefAnchor};
 use crate::score::visual::key_signature::KeySignature;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::rest::Rest;
@@ -77,13 +77,14 @@ impl StaffMeasure {
     /// can place each of them the same way: it decides the offset, they report
     /// what the next column has to clear.
     pub fn arrange_clef_start(&mut self, dx: f32) -> Option<f32> {
-        let xy = self.xy;
-        let line_space = self.line_space() / 2.;
+        let origin = self.xy;
+        let scaling = self.scale;
 
         let clef = self.clef_start.as_mut()?;
-        let dy: f32 = clef.clef.line as f32 * line_space;
-        clef.arrange(&xy.mv(dx, dy));
+        clef.place(ClefAnchor::LeftEdgeAt(origin.x + dx), origin.y, scaling);
 
+        // The columns are worked out as offsets from the measure's own left
+        // edge, so the edge reported back is one too.
         Some(dx + clef.width)
     }
 
@@ -116,16 +117,12 @@ impl StaffMeasure {
         }
     }
     fn arrange_clef_end(&mut self) {
-        if let Some(ref mut clef) = self.clef_end {
-            let clef_origin = self.xy;
-            let measure_right = clef_origin.mv(self.width, 0.);
-            let arrange_left = measure_right.mv(-5. - clef.width, 0.);
+        let origin = self.xy;
+        let scaling = self.scale;
+        let measure_right = origin.x + self.width;
 
-            let dy = clef.clef.line as f32 * Staff::DEFAULT_SPACE_SIZE / 2. * self.scale;
-
-            let origin = arrange_left.mv(0., dy);
-
-            clef.arrange(&origin);
+        if let Some(clef) = self.clef_end.as_mut() {
+            clef.place(ClefAnchor::GapBefore(measure_right), origin.y, scaling);
         }
     }
     fn arrange_rests(&mut self) {
@@ -136,11 +133,9 @@ impl StaffMeasure {
             lines: self.lines,
         };
         for rest in self.rests.iter_mut() {
-            let dx: f32 = if rest.is_measure {
-                self.width / 2.
-            } else {
-                rest.default_x.unwrap()
-            };
+            // A whole-measure rest carries no position of its own and is centred
+            // in whatever width the measure ended up with.
+            let dx: f32 = rest.default_x.unwrap_or(self.width / 2.);
 
             let glyph_origin = self.xy.mv(dx, 0.);
             rest.arrange_ctx(&glyph_origin, &staff_ctx);

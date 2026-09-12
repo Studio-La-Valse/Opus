@@ -3,6 +3,7 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
+use crate::score::visual::clef::Clef;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::part::Part;
@@ -65,6 +66,18 @@ pub struct System {
     /// crossing a system break contributes segments here and to the next system,
     /// and a group crossing a *page* break is the same case again.
     pub beams: Vec<Polygon>,
+
+    /// The mid-measure clef changes that fall inside this system, rebuilt from
+    /// `Score::clef_changes` by
+    /// [`arrange_clef_changes`](crate::score::visual::clef_change_arranger::arrange_clef_changes)
+    /// once the pages have been arranged.
+    ///
+    /// Unlike a tie or a beam group a clef change cannot straddle a break -- it
+    /// sits next to one note or rest, and that note is on one system. It is
+    /// filed here all the same, because what it needs to be placed is spread
+    /// across the tree in the same way; see
+    /// [`ClefChange`](crate::score::visual::clef::ClefChange).
+    pub clef_changes: Vec<Clef>,
 
     pub xy: XY,
     pub width: f32,

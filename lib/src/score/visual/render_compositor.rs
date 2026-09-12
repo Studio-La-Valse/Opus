@@ -134,6 +134,14 @@ impl RenderCompositor {
             self.walk_section(section, fonts, out);
         }
 
+        // Mid-measure clef changes are filed on the system for the same reason
+        // beams and ties are, but they are ordinary staff glyphs and sit in the
+        // gap before their note, so nothing about them wants to be painted over
+        // the music.
+        for clef in system.clef_changes.iter() {
+            self.pass.render_clef(clef, fonts, out);
+        }
+
         // Last, so beams and ties paint on top. Elements are drawn in walk order
         // and the staff lines they cross come out of `render_staff`, part-way
         // through the section walk above.
@@ -270,10 +278,6 @@ impl RenderCompositor {
                 for dot in rest.dots.iter() {
                     self.pass.render_dot(dot, fonts, out);
                 }
-
-                if let Some(ref clef) = rest.clef_change {
-                    self.pass.render_clef(clef, fonts, out);
-                }
             }
         }
     }
@@ -320,10 +324,6 @@ impl RenderCompositor {
                 self.pass.render_flag(flag, fonts, out);
             }
         }
-
-        for clef_change in chord.clef_change.values() {
-            self.pass.render_clef(clef_change, fonts, out);
-        }
     }
 
     /// Cheap, pass-agnostic upper-bound-ish estimate of how many `DrawableElement`s
@@ -345,6 +345,7 @@ impl RenderCompositor {
         1 + system.measures.len() // system line + system measure lines
             + system.beams.len()
             + system.ties.len()
+            + system.clef_changes.len()
             + system
                 .sections
                 .values()
