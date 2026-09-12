@@ -105,11 +105,14 @@ pub struct AppDefaults {
     /// grouping staves of one instrument, which is what `line` is for.
     pub group_line_thickness: f32,
     /// Thickness in tenths of a `square` symbol's stroke, spine and arms alike.
-    /// Bracket weight, since a square is a bracket with corners rather than
-    /// serifs; SMuFL defines no glyph or figure of its own for it.
+    ///
+    /// SMuFL defines no glyph or figure of its own for a square, so unlike the
+    /// bracket's and the line's this weight is quoted from nothing: it is tuned
+    /// by eye, and deliberately lighter than a bracket's.
     pub group_square_thickness: f32,
     /// How far in tenths a `square` symbol's arms reach toward the system,
-    /// measured from the right edge of its spine. One staff space.
+    /// measured from the right edge of its spine. Tuned by eye, as
+    /// [`Self::group_square_thickness`] is.
     pub group_square_arm: f32,
 
     /// Default font family for titles / work-level text. A generic CSS family so
