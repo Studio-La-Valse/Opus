@@ -210,7 +210,7 @@ pub trait RenderPass {
 
     /// One segment of one beam. Takes the finished quad rather than a score
     /// element because that is all a beam is: `arrange_beams` resolves the whole
-    /// group's geometry and files the segments on the `Part`, so there is no
+    /// group's geometry and files the segments on the `System`, so there is no
     /// `Beam` in the tree for a pass to be handed.
     fn render_beam<'a>(
         &self,

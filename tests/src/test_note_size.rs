@@ -130,7 +130,7 @@ mod tests {
             .flat_map(|group| group.parts.values())
             .flat_map(|part| part.measures.values())
             .flat_map(|measure| measure.chords.values().flatten())
-            .flat_map(|chord| chord.notes.iter().map(|(_, note)| note))
+            .flat_map(|chord| chord.notes.iter())
             .collect()
     }
 
@@ -355,7 +355,7 @@ mod tests {
             .collect();
 
         let chord = chords.first().expect("the grace chord should exist");
-        let (_, note) = chord.notes.first().expect("the grace note should exist");
+        let note = chord.notes.first().expect("the grace note should exist");
         let stem = chord.stem.as_ref().expect("an eighth note carries a stem");
         let flag = stem
             .flag

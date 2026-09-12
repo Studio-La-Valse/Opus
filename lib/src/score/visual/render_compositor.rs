@@ -134,9 +134,18 @@ impl RenderCompositor {
             self.walk_section(section, fonts, out);
         }
 
-        // Last, so ties paint on top. Elements are drawn in walk order and the
-        // staff lines a tie crosses come out of `render_staff`, part-way through
-        // the section walk above.
+        // Last, so beams and ties paint on top. Elements are drawn in walk order
+        // and the staff lines they cross come out of `render_staff`, part-way
+        // through the section walk above.
+        //
+        // Beams used to draw inside their own part, between its staff lines and
+        // its noteheads; from here they draw over both. A beam sits at the stem
+        // tip and so never overlaps a notehead, which is why the move is
+        // invisible -- but it is a real change in paint order.
+        for beam in system.beams.iter() {
+            self.pass.render_beam(beam, fonts, out);
+        }
+
         for tie in system.ties.iter() {
             self.pass.render_tie(tie, fonts, out);
         }
@@ -216,13 +225,6 @@ impl RenderCompositor {
             self.walk_staff(staff, fonts, out);
         }
 
-        // After the staff lines a beam crosses and before the noteheads it never
-        // overlaps, which is where they were drawn when a `PartMeasure` owned
-        // them. A hidden part is skipped above, so its beams are skipped with it.
-        for beam in part.beams.iter() {
-            self.pass.render_beam(beam, fonts, out);
-        }
-
         for measure in part.measures.values() {
             self.walk_part_measure(measure, fonts, out);
         }
@@ -299,7 +301,7 @@ impl RenderCompositor {
     ) {
         self.pass.render_chord(chord, fonts, out);
 
-        for (_, note) in chord.notes.iter() {
+        for note in chord.notes.iter() {
             self.pass.render_note(note, fonts, out);
 
             if let Some(ref accidental) = note.accidental {
@@ -341,6 +343,7 @@ impl RenderCompositor {
 
     fn estimate_system(system: &System) -> usize {
         1 + system.measures.len() // system line + system measure lines
+            + system.beams.len()
             + system.ties.len()
             + system
                 .sections
@@ -378,7 +381,7 @@ impl RenderCompositor {
             .map(Self::estimate_part_measure)
             .sum();
 
-        1 + part.beams.len() + staves + measures // group symbol + beams + staves + measures
+        1 + staves + measures // group symbol + staves + measures
     }
 
     fn estimate_staff(staff: &Staff) -> usize {
