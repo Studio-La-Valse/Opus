@@ -7,14 +7,16 @@ use crate::score::visual::clef::ClefChange;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::note::{NoteAnchor, NoteId};
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff_measure::StaffMeasure;
-use crate::score::visual::system::System;
+use crate::score::visual::system::{System, SystemExtent, SystemKey};
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::score::visual::tie::Tie;
-use std::collections::BTreeMap;
+use crate::score::walk_cursor::Visibility;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Default)]
 pub struct Score {
@@ -33,7 +35,7 @@ pub struct Score {
     /// Populated by the content walk and left alone by `arrange`; the drawn arcs
     /// live on [`System::ties`](crate::score::visual::system::System) and are
     /// rebuilt from this list by
-    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties).
+    /// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger).
     pub ties: Vec<Tie>,
 
     /// Every mid-measure clef change in the document, as a flat list.
@@ -48,7 +50,7 @@ pub struct Score {
     /// clefs live on
     /// [`System::clef_changes`](crate::score::visual::system::System) and are
     /// rebuilt from this list by
-    /// [`arrange_clef_changes`](crate::score::visual::clef_change_arranger::arrange_clef_changes).
+    /// [`ClefChangeArranger`](crate::score::visual::clef_change_arranger::ClefChangeArranger).
     pub clef_changes: Vec<ClefChange>,
 }
 
@@ -178,5 +180,85 @@ impl Score {
         for page in self.pages.values_mut() {
             page.measure(available, params);
         }
+    }
+
+    /// Every note's final geometry, keyed by id.
+    ///
+    /// Indexes exactly the notes `RenderCompositor::walk_pages` draws, so a tie can
+    /// never point at a note that is not on the page. That means skipping hidden
+    /// *parts* but not hidden *staves*: the compositor's `walk_part` skips a hidden
+    /// staff when drawing staff lines, yet still walks every `PartMeasure` chord
+    /// regardless of which staff its notes sit on, so those noteheads do get drawn.
+    /// Filtering them here instead would leave a notehead rendered with its tie
+    /// missing. One O(notes) pass per arrange, negligible next to the arrange
+    /// itself.
+    pub fn note_anchors(&self) -> HashMap<NoteId, NoteAnchor> {
+        let mut anchors = HashMap::new();
+
+        for (page_key, page) in self.pages.iter() {
+            for (system_key, system) in page.systems.iter() {
+                let key = (*page_key, *system_key);
+
+                for section in system.sections.values() {
+                    for group in section.part_groups.values() {
+                        for part in group.parts.values() {
+                            if part.visibility == Visibility::Hidden {
+                                continue;
+                            }
+
+                            for measure in part.measures.values() {
+                                // `Part::arrange` walks its measures left to
+                                // right, advancing the origin by each
+                                // measure's width, so these two are the
+                                // measure's own span.
+                                let measure_right = measure.origin.x + measure.width;
+
+                                for chord in measure.chords.values().flatten() {
+                                    let stem = chord.stem.as_ref().map(|s| s.direction);
+
+                                    for note in chord.notes.iter() {
+                                        anchors.insert(
+                                            note.id,
+                                            NoteAnchor {
+                                                key,
+                                                left: note.xy,
+                                                width: note.width,
+                                                measure_right,
+                                                scale: note.scale,
+                                                staff_line: note.staff_line,
+                                                stem,
+                                                color: note.color,
+                                            },
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        anchors
+    }
+
+    /// Every system's horizontal extent, keyed the same way as
+    /// [`note_anchors`](Self::note_anchors).
+    pub fn system_extents(&self) -> HashMap<SystemKey, SystemExtent> {
+        let mut extents = HashMap::new();
+
+        for (page_key, page) in self.pages.iter() {
+            for (system_key, system) in page.systems.iter() {
+                extents.insert(
+                    (*page_key, *system_key),
+                    SystemExtent {
+                        left: system.xy.x,
+                        right: system.xy.x + system.width,
+                    },
+                );
+            }
+        }
+
+        extents
     }
 }

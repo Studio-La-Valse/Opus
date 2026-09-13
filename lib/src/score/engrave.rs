@@ -40,12 +40,10 @@ use crate::score::page_orientation::PageOrientation;
 use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
-use crate::score::visual::beam_arranger::arrange_beams;
-use crate::score::visual::clef_change_arranger::arrange_clef_changes;
 use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::tie_arranger::arrange_ties;
+use crate::score::visual::score_arranger::SCORE_ARRANGERS;
 use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
 
@@ -209,19 +207,12 @@ pub fn arrange_score(
     score.measure(&XY::INFINITE, params);
     page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);
 
-    // Last, and in this order: a beam group's chords and a tie's two endpoints
-    // can be measures, systems or pages apart, so neither can be arranged until
-    // every note in the score has its final position. Beams first because they
-    // move stem tips, and nothing in the tie geometry reads a stem's length.
-    //
-    // A clef change has only one anchor and so could be placed as soon as that
-    // note has its position, but it is here for the same structural reason: what
-    // it needs is spread across the tree, so nothing below the score owns it.
-    // Order among the three does not matter to it -- it reads noteheads and
-    // staves, neither of which the other two touch.
-    arrange_beams(score, params);
-    arrange_ties(score, params);
-    arrange_clef_changes(score, params);
+    // Last: every coordinate in the tree is now absolute, which is what beams,
+    // ties and mid-measure clef changes need. See `SCORE_ARRANGERS` for why
+    // they run in this order.
+    for arranger in SCORE_ARRANGERS {
+        arranger.arrange(score, params);
+    }
 
     progress(Stage::LayoutPass);
 }

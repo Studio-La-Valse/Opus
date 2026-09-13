@@ -17,7 +17,7 @@ use crate::smufl::glyphs::clef::Clef as SmuflClef;
 /// but the only thing that can say where it goes is a note or rest in a
 /// `PartMeasure`, and those are different branches of the tree. The drawn clefs
 /// are rebuilt from this list by
-/// [`arrange_clef_changes`](crate::score::visual::clef_change_arranger::arrange_clef_changes).
+/// [`ClefChangeArranger`](crate::score::visual::clef_change_arranger::ClefChangeArranger).
 ///
 /// Holds the SMuFL glyph rather than the core clef because picking the glyph
 /// needs the staff's line count, which is settled during the walk -- see

@@ -47,7 +47,18 @@ impl Chord {
         }
     }
 
-    fn arrange_stem(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+    /// Positions this chord's stem and computes its natural length from the
+    /// notes' already-arranged positions and `default_y` (or the engine's own
+    /// default when the document gives none).
+    ///
+    /// Called once from [`arrange_ctx`](Self::arrange_ctx) during the ordinary
+    /// arrange, and a second time by
+    /// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
+    /// before it fits a beam ray: resetting the stem to this natural length
+    /// undoes whatever an earlier beam pass adjusted it to, which is what
+    /// keeps beaming idempotent. Pure in the notes and the staff context, so
+    /// calling it again always reproduces the same length.
+    pub fn arrange_stem(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         if let Some(stem) = self.stem.as_mut() {
             let staff_top = staff_ctx.get(&stem.staff).unwrap().distance_from_top;
 

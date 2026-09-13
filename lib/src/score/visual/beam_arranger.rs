@@ -1,4 +1,5 @@
-//! Resolves beam groups into drawn segments, after the pages have been arranged.
+//! Resolves beam groups into drawn segments, after the pages have been
+//! arranged.
 //!
 //! Beams used to be a `PartMeasure`'s own business: it collected its chords,
 //! grouped them and emitted the segments into itself. That works right up to the
@@ -18,15 +19,20 @@
 //! walking the tree and there is no second source of truth to keep in step
 //! with it.
 //!
-//! # On idempotency
+//! # Idempotency
 //!
-//! This pass is not idempotent on its own: [`Stem::attach_ray`] writes an
-//! absolute stem length and [`create_ray`] reads [`Stem::tip`], which depends on
-//! that length. It does not have to be. `Chord::arrange_stem` recomputes
-//! `length` from `default_y` on every arrange and still runs first, inside
-//! `Part::arrange_clear_of`, so repeated `arrange_score` calls on a cached score
-//! converge -- which is what the wasm render path depends on. Worth saying out
-//! loud here, because the reset is now a long way from the code relying on it.
+//! [`Stem::attach_ray`](crate::score::visual::stem::Stem::attach_ray) writes an
+//! absolute stem length, and `create_ray` reads
+//! [`Stem::tip`](crate::score::visual::stem::Stem::tip), which depends on it --
+//! so fitting a ray from a stem this pass already adjusted would fit against
+//! the wrong tip. [`collect_runs`] avoids that by resetting every beamable
+//! chord's stem to its natural length -- via
+//! [`Chord::arrange_stem`](crate::score::visual::chord::Chord::arrange_stem),
+//! the same pure function `Part::arrange_clear_of` calls during the ordinary
+//! arrange -- before the chord is ever handed to a group. Every ray is
+//! therefore always fitted from the same tips, however many times
+//! `arrange_score` runs on a cached score, which is what the wasm render path
+//! depends on.
 
 use std::collections::BTreeMap;
 
@@ -35,48 +41,93 @@ use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
-use crate::score::core::note_kind::NoteKind;
 use crate::score::core::voice::Voice;
+use crate::score::visual::beam::{
+    BeamMetrics, Beamable, Cut, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
+    split_at_system_breaks,
+};
 use crate::score::visual::chord::Chord;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::stem::{BeamType, Stem, UpDown};
+use crate::score::visual::score_arranger::ScoreArranger;
+use crate::score::visual::stem::{BeamType, UpDown};
 use crate::score::visual::system::SystemKey;
 use crate::score::walk_cursor::Visibility;
+
+/// Rebuilds every system's beam segments from the chords in the tree.
+pub struct BeamArranger;
+
+impl ScoreArranger for BeamArranger {
+    /// Assigns rather than appends, so calling it repeatedly leaves the same
+    /// segments behind -- the property `PartMeasure` used to get from clearing
+    /// `self.beams` first. See the module's `# Idempotency` note for how it
+    /// stays idempotent despite adjusting stem lengths as it goes.
+    fn arrange(&self, score: &mut Score, params: LayoutParams<'_>) {
+        let metrics = BeamMetrics::resolve(params);
+
+        let mut out: BTreeMap<SystemKey, Vec<Polygon>> = BTreeMap::new();
+
+        for ((_, _, grace), run) in collect_runs(score) {
+            // A grace group's beams are reduced by the same factor its noteheads
+            // were; a normal one is drawn at full size.
+            let scale = if grace { metrics.grace_scale } else { 1. };
+            let thickness = metrics.thickness * scale;
+            let spacing = metrics.spacing * scale;
+
+            for group in create_beam_groups(run) {
+                // Inferred once for the whole group, so the beam stack grows the
+                // same way on either side of a break: it is a fact about the
+                // group's stems, and half a group's stems would answer
+                // differently from all of them.
+                let Some(direction) = infer_direction(&group) else {
+                    continue;
+                };
+
+                // The ray, though, is fitted per fragment, from that fragment's
+                // own stems -- which is what makes the slant right on both
+                // systems.
+                for mut fragment in split_at_system_breaks(group) {
+                    let Some(ray) = create_ray(&fragment.chords, &direction, &thickness, &spacing)
+                    else {
+                        continue;
+                    };
+
+                    out.entry(fragment.key).or_default().extend(create_beams(
+                        &fragment.chords,
+                        &ray,
+                        &direction,
+                        &thickness,
+                        &spacing,
+                        &metrics.color,
+                        fragment.cut,
+                    ));
+
+                    adjust_stem_lengths(
+                        &mut fragment.chords,
+                        &ray,
+                        &direction,
+                        &thickness,
+                        &spacing,
+                    );
+                }
+            }
+        }
+
+        for (page_key, page) in score.pages.iter_mut() {
+            for (system_key, system) in page.systems.iter_mut() {
+                system.beams = out.remove(&(*page_key, *system_key)).unwrap_or_default();
+            }
+        }
+    }
+}
+
+// ---- internals ----
 
 /// Maximum vertical span a beam is allowed to slant before it is clamped.
 const MAX_BEAM_SLANT_DY: f32 = 20.;
 
 /// The length of a hook beam. TODO: infer from available space between two stems and clam to a max length.
 const HOOK_LENGTH: f32 = 7.5;
-
-/// One chord in a part's beamable sequence, with the one thing the beam pass
-/// needs to know about where it ended up.
-pub struct Beamable<'a> {
-    pub key: SystemKey,
-    pub chord: &'a mut Chord,
-}
-
-/// Whether a fragment's group carries on past it, and so on which side the
-/// levels reaching the fragment's edge run a stub out to the break.
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
-pub struct Cut {
-    pub left: bool,
-    pub right: bool,
-}
-
-/// A maximal run of one beam group within one system: what actually gets a ray
-/// fitted and segments drawn.
-///
-/// A group inside one system is a single fragment and is drawn exactly as it
-/// always was -- the ray simply spans more measures than it used to. Only a group
-/// crossing a break has more than one, and `cut` is all the geometry needs to
-/// know about that.
-pub struct Fragment<'a> {
-    pub key: SystemKey,
-    pub chords: Vec<&'a mut Chord>,
-    pub cut: Cut,
-}
 
 /// What gets beamed together: one voice of one part, with grace notes kept apart
 /// from the rest. Exactly the grouping `BeamGroupVisitor` validates against.
@@ -86,104 +137,11 @@ pub struct Fragment<'a> {
 /// the measure's, so a group still open at a barline simply carries on.
 type RunKey = (String, Voice, bool);
 
-/// Everything the drawn beams look like, resolved once from [`LayoutParams`]
-/// rather than per measure, since none of it varies per measure. The mirror of
-/// [`TieMetrics::resolve`](crate::score::visual::tie::TieMetrics).
-pub struct BeamMetrics {
-    pub thickness: f32,
-    pub spacing: f32,
-    /// The fraction of full size a grace note is drawn at, so a grace group's
-    /// beams are reduced by exactly what its noteheads were.
-    pub grace_scale: f32,
-    pub color: Color,
-}
-
-impl BeamMetrics {
-    pub fn resolve(params: LayoutParams<'_>) -> Self {
-        let LayoutParams {
-            score_defaults,
-            user_layout,
-            app_defaults,
-            ..
-        } = params;
-
-        Self {
-            thickness: user_layout
-                .beam_thickness
-                .or(score_defaults.appearance.beam_thickness)
-                .unwrap_or(app_defaults.beam_thickness),
-            spacing: user_layout
-                .beam_spacing
-                .unwrap_or(app_defaults.beam_spacing),
-            grace_scale: params.note_size(NoteKind::Grace),
-            color: user_layout
-                .foreground_color
-                .unwrap_or(app_defaults.foreground_color),
-        }
-    }
-}
-
-/// Rebuilds every system's beam segments from the chords in the tree.
-///
-/// Runs after `LayoutEngine::arrange_pages`, and assigns rather than appends, so
-/// calling it repeatedly leaves the same segments behind -- the property
-/// `PartMeasure` used to get from clearing `self.beams` first.
-pub fn arrange_beams(score: &mut Score, params: LayoutParams<'_>) {
-    let metrics = BeamMetrics::resolve(params);
-
-    let mut out: BTreeMap<SystemKey, Vec<Polygon>> = BTreeMap::new();
-
-    for ((_, _, grace), run) in collect_runs(score) {
-        // A grace group's beams are reduced by the same factor its noteheads
-        // were; a normal one is drawn at full size.
-        let scale = if grace { metrics.grace_scale } else { 1. };
-        let thickness = metrics.thickness * scale;
-        let spacing = metrics.spacing * scale;
-
-        for group in create_beam_groups(run) {
-            // Inferred once for the whole group, so the beam stack grows the same
-            // way on either side of a break: it is a fact about the group's
-            // stems, and half a group's stems would answer differently from all
-            // of them.
-            let Some(direction) = infer_direction(&group) else {
-                continue;
-            };
-
-            // The ray, though, is fitted per fragment, from that fragment's own
-            // stems -- which is what makes the slant right on both systems.
-            for mut fragment in split_at_system_breaks(group) {
-                let Some(ray) = create_ray(&fragment.chords, &direction, &thickness, &spacing)
-                else {
-                    continue;
-                };
-
-                out.entry(fragment.key).or_default().extend(create_beams(
-                    &fragment.chords,
-                    &ray,
-                    &direction,
-                    &thickness,
-                    &spacing,
-                    &metrics.color,
-                    fragment.cut,
-                ));
-
-                adjust_stem_lengths(&mut fragment.chords, &ray, &direction, &thickness, &spacing);
-            }
-        }
-    }
-
-    for (page_key, page) in score.pages.iter_mut() {
-        for (system_key, system) in page.systems.iter_mut() {
-            system.beams = out.remove(&(*page_key, *system_key)).unwrap_or_default();
-        }
-    }
-}
-
 /// Every beamable chord in the score, gathered into the runs that are beamed as
 /// a unit.
 ///
 /// The mutable twin of
-/// [`collect_note_anchors`](crate::score::visual::tie_arranger::collect_note_anchors):
+/// [`Score::note_anchors`](crate::score::visual::score::Score::note_anchors):
 /// pages, systems, sections, groups, parts, measures, voices, appending in walk
 /// order so each run comes out in document order -- which is what lets the
 /// grouping below treat "consecutive" as a fact about the sequence rather than
@@ -193,6 +151,9 @@ pub fn arrange_beams(score: &mut Score, params: LayoutParams<'_>) {
 /// part's beams used to be invisible because they hung off a `PartMeasure` that
 /// the compositor's `walk_part` never reached; now that they are filed on the
 /// `System`, nothing downstream filters them.
+///
+/// Also resets every chord's stem to its natural length before it is collected
+/// -- see the module's `# Idempotency` note.
 fn collect_runs(score: &mut Score) -> BTreeMap<RunKey, Vec<Beamable<'_>>> {
     let mut runs: BTreeMap<RunKey, Vec<Beamable<'_>>> = BTreeMap::new();
 
@@ -207,9 +168,13 @@ fn collect_runs(score: &mut Score) -> BTreeMap<RunKey, Vec<Beamable<'_>>> {
                             continue;
                         }
 
+                        let staff_ctx = part.create_staff_ctx();
+
                         for measure in part.measures.values_mut() {
                             for (voice, chords) in measure.chords.iter_mut() {
                                 for chord in chords.iter_mut() {
+                                    chord.arrange_stem(&staff_ctx);
+
                                     let run = (part_id.clone(), *voice, chord.grace);
                                     runs.entry(run).or_default().push(Beamable { key, chord });
                                 }
@@ -222,147 +187,6 @@ fn collect_runs(score: &mut Score) -> BTreeMap<RunKey, Vec<Beamable<'_>>> {
     }
 
     runs
-}
-
-enum BeamGroupAction {
-    Start,
-    Continue,
-    End,
-    Standalone,
-    Panic(&'static str),
-}
-
-/// Chunks one run into the groups that are beamed together: a group runs from
-/// the chord declaring [`BeamType::Start`] at level 1 to the one declaring
-/// [`BeamType::End`], and a chord carrying no beam at all stands alone.
-///
-/// The three ways a document can contradict itself here -- opening a group while
-/// one is open, continuing or ending one that was never opened -- used to be
-/// panics, on the reading that a group could not legally cross the barline so
-/// any of them meant the document was broken. Now that a run is a whole part's,
-/// they mean only that the document is broken, and `BeamGroupVisitor` already
-/// reports each as a `Warning`. A repairable document should draw something
-/// rather than abort the render, so each one recovers.
-pub fn create_beam_groups(chords: Vec<Beamable<'_>>) -> Vec<Vec<Beamable<'_>>> {
-    let mut result = vec![];
-    let mut group: Vec<Beamable<'_>> = vec![];
-
-    for beamable in chords {
-        let action = match &beamable.chord.stem {
-            Some(stem) => match stem.beams.get(&1) {
-                Some(BeamType::Start) => BeamGroupAction::Start,
-                Some(BeamType::Continue) => BeamGroupAction::Continue,
-                Some(BeamType::End) => BeamGroupAction::End,
-                Some(BeamType::HookStart) | Some(BeamType::HookEnd) => {
-                    BeamGroupAction::Panic("First beam cannot be a hook")
-                }
-                None => BeamGroupAction::Standalone,
-            },
-            None => BeamGroupAction::Standalone,
-        };
-
-        match action {
-            // A second `Start` closes whatever was open: the level-1 `begin`
-            // says a group starts here, so whatever came before it ended.
-            BeamGroupAction::Start => {
-                if !group.is_empty() {
-                    result.push(group);
-                    group = vec![];
-                }
-                group.push(beamable);
-            }
-            // A `Continue` or `End` with nothing open opens the group it claims
-            // to carry on, which is the least the document can be taken to mean.
-            BeamGroupAction::Continue => {
-                group.push(beamable);
-            }
-            BeamGroupAction::End => {
-                group.push(beamable);
-                result.push(group);
-                group = vec![];
-            }
-            BeamGroupAction::Standalone => {
-                group.push(beamable);
-                result.push(group);
-                group = vec![];
-            }
-            BeamGroupAction::Panic(msg) => {
-                panic!("{}", msg);
-            }
-        }
-    }
-
-    if !group.is_empty() {
-        result.push(group);
-    }
-    result
-}
-
-/// Chunks one group into its fragments, one per system it reaches into.
-///
-/// Consecutive runs are all that is needed: `collect_runs` appends in document
-/// order, so a group's [`SystemKey`]s are non-decreasing and every chord on one
-/// system is adjacent to the rest of them.
-///
-/// A group that never leaves its system comes out as one uncut fragment, which is
-/// the overwhelmingly common case and the one that has to stay exactly as it was.
-pub fn split_at_system_breaks<'a>(group: Vec<Beamable<'a>>) -> Vec<Fragment<'a>> {
-    let mut fragments: Vec<Fragment<'a>> = Vec::new();
-
-    for beamable in group {
-        match fragments.last_mut() {
-            Some(fragment) if fragment.key == beamable.key => fragment.chords.push(beamable.chord),
-            _ => fragments.push(Fragment {
-                key: beamable.key,
-                chords: vec![beamable.chord],
-                cut: Cut::default(),
-            }),
-        }
-    }
-
-    // A fragment is cut wherever another fragment of the same group lies: every
-    // one but the first arrives from a break, every one but the last runs out
-    // into one.
-    let last = fragments.len().saturating_sub(1);
-    for (i, fragment) in fragments.iter_mut().enumerate() {
-        fragment.cut = Cut {
-            left: i > 0,
-            right: i < last,
-        };
-    }
-
-    fragments
-}
-
-/// Which way the beam stack grows for a whole group: away from the stems when
-/// they all point the same way, and towards the odd one out when they do not
-/// (a cross-staff group, where the stems of one staff point up and the other's
-/// down).
-pub fn infer_direction(group: &[Beamable<'_>]) -> Option<UpDown> {
-    let stems: Vec<&Stem> = group.iter().filter_map(|b| b.chord.stem.as_ref()).collect();
-
-    if stems.is_empty() {
-        return None;
-    }
-
-    let first_dir = stems[0].direction;
-    if stems.len() == 1 {
-        return Some(first_dir.invert());
-    }
-
-    let mut is_cross = false;
-    for stem in &stems {
-        if stem.direction != first_dir {
-            is_cross = true;
-            break;
-        }
-    }
-
-    if !is_cross {
-        Some(first_dir.invert())
-    } else {
-        Some(first_dir)
-    }
 }
 
 fn create_ray(
@@ -550,65 +374,6 @@ fn create_beams(
     }
 
     beams
-}
-
-/// Where a beam level opened at `start` stops within the fragment.
-///
-/// Two outcomes that used to be one `Option`, and the caller has to be able to
-/// tell them apart: a level that is *closed* here is finished, while a level
-/// still *open* at the fragment's edge may be running out to the next system.
-#[derive(Copy, Clone)]
-pub enum LevelEnd<'a> {
-    /// The stem declaring [`BeamType::End`] for this level.
-    ClosedAt(&'a Stem),
-    /// No `End` in this fragment: the last stem carrying the level, if any at
-    /// all.
-    OpenAt(Option<&'a Stem>),
-}
-
-/// Where a beam level opened at `start` stops: the stem declaring
-/// [`BeamType::End`] for it, or -- failing that -- the last stem that carries it.
-///
-/// A document can open a level and never close it -- `<beam number="2">` running
-/// `begin`, `continue`, `continue` with no `end` -- and it survives the rebeam
-/// pass whenever each note still declares as many beams as its duration warrants,
-/// since that pass compares counts rather than types. Validation reports the
-/// defect (see `BeamGroupVisitor`); here the level is taken to run to the last
-/// stem that carries it.
-///
-/// Stopping at the last carrier rather than at the fragment's last stem matters
-/// when the run is genuinely shorter than the group: a pair of sixteenths
-/// followed by an eighth describes level 2 on the first two notes only, and
-/// extending the secondary beam over the eighth would be wrong in a way the
-/// document gave us the information to avoid.
-///
-/// Since this only ever looks inside one fragment, an [`OpenAt`](LevelEnd::OpenAt)
-/// is now ambiguous on its own: either the document left the level unclosed, or
-/// the level closes on the far side of a system break. Only the caller knows
-/// which, because only the caller knows whether the fragment was cut.
-pub fn beam_level_ends_at<'a>(
-    chords: &'a [&mut Chord],
-    start: usize,
-    beam_idx: &u32,
-) -> LevelEnd<'a> {
-    let mut last_carrier = None;
-
-    for chord in chords.iter().skip(start + 1) {
-        let Some(stem) = chord.stem.as_ref() else {
-            continue;
-        };
-        let Some(beam) = stem.beams.get(beam_idx) else {
-            continue;
-        };
-
-        last_carrier = Some(stem);
-
-        if let BeamType::End = beam {
-            return LevelEnd::ClosedAt(stem);
-        }
-    }
-
-    LevelEnd::OpenAt(last_carrier)
 }
 
 /// The point `dx` to the side of `from` measured along `ray`, so a horizontal

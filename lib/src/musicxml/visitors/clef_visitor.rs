@@ -110,7 +110,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ClefVisitor {
     /// `ContentVisitor` drops a note with no `default-x`, exactly as it does for
     /// a tie endpoint. A change naming a note that never made it into the tree
     /// finds no anchor and is discarded by
-    /// [`arrange_clef_changes`](crate::score::visual::clef_change_arranger::arrange_clef_changes).
+    /// [`ClefChangeArranger`](crate::score::visual::clef_change_arranger::ClefChangeArranger).
     fn enter_note(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx: StaffIdx = ctx.cursor.staff.number;
 

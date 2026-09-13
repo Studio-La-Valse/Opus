@@ -18,13 +18,16 @@ mod tests {
     use lib::score::core::note_kind::NoteKind;
     use lib::score::engrave::engrave;
     use lib::score::user_layout::UserLayout;
-    use lib::score::visual::beam_arranger::{
+    use lib::score::visual::beam::{
         Beamable, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
         split_at_system_breaks,
     };
+    use lib::score::visual::beam_arranger::BeamArranger;
     use lib::score::visual::chord::Chord;
+    use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::note_scale::NoteScale;
     use lib::score::visual::score::Score;
+    use lib::score::visual::score_arranger::ScoreArranger;
     use lib::score::visual::stem::{BeamType, Stem, UpDown};
     use lib::score::visual::system::SystemKey;
     use lib::smufl::smufl_font::SmuflFont;
@@ -562,5 +565,87 @@ mod tests {
         }
 
         assert_eq!(systems, 4, "two systems on each of two pages");
+    }
+
+    // ------------------------------------------------------------ idempotency
+
+    fn engrave_crazy_beams() -> lib::score::engrave::EngravedScore {
+        let path = format!(
+            "{}/../assets/xmlfixtures/crazy-beams.musicxml",
+            env!("CARGO_MANIFEST_DIR")
+        );
+        let source = read_musicxml(&path);
+        let options = roxmltree::ParsingOptions {
+            allow_dtd: true,
+            ..roxmltree::ParsingOptions::default()
+        };
+        let document =
+            roxmltree::Document::parse_with_options(&source, options).expect("fixture parses");
+
+        engrave(
+            &document,
+            font(),
+            &UserLayout::default(),
+            &AppDefaults::default(),
+            &mut |_| {},
+        )
+    }
+
+    /// Every stem length and beam span in the score, in document order, so a
+    /// second arrange can be compared point-for-point against the first.
+    fn stems_and_beams(score: &Score) -> (Vec<f32>, Vec<Vec<(f32, f32)>>) {
+        let mut lengths = Vec::new();
+        for page in score.pages.values() {
+            for system in page.systems.values() {
+                for section in system.sections.values() {
+                    for group in section.part_groups.values() {
+                        for part in group.parts.values() {
+                            for measure in part.measures.values() {
+                                for chord in measure.chords.values().flatten() {
+                                    if let Some(stem) = chord.stem.as_ref() {
+                                        lengths.push(stem.length);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let spans = system_beams(score).into_iter().map(|s| s.spans).collect();
+
+        (lengths, spans)
+    }
+
+    /// The wasm render path re-runs `BeamArranger` on a cached, already-beamed
+    /// `Score` for every frame -- so unlike `TieArranger` and
+    /// `ClefChangeArranger`, which never move anything they read, `BeamArranger`
+    /// has to actively undo the stem lengths it wrote last time before it fits
+    /// a ray again. See the `# Idempotency` note on `beam_arranger`.
+    #[test]
+    fn re_arranging_does_not_move_beams_or_stems() {
+        let engraved = engrave_crazy_beams();
+        let mut score = engraved.score;
+
+        let user_layout = UserLayout::default();
+        let app_defaults = AppDefaults::default();
+        let params = LayoutParams {
+            score_defaults: &engraved.layout,
+            user_layout: &user_layout,
+            app_defaults: &app_defaults,
+            font: font(),
+            abbreviate_names: false,
+        };
+
+        let first = stems_and_beams(&score);
+        assert!(!first.0.is_empty(), "fixture has stemmed chords");
+        assert!(!first.1.is_empty(), "fixture has beams");
+
+        BeamArranger.arrange(&mut score, params);
+
+        let second = stems_and_beams(&score);
+        assert_eq!(second.0, first.0, "stem lengths moved on a second arrange");
+        assert_eq!(second.1, first.1, "beam spans moved on a second arrange");
     }
 }

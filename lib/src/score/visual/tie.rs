@@ -1,11 +1,14 @@
 //! Ties: the pairing recorded during the content walk, and the pure geometry
 //! that turns a pair of endpoints into a drawable arc.
 //!
-//! Nothing here touches the score tree -- [`arrange_ties`] in
-//! [`tie_arranger`](crate::score::visual::tie_arranger) does that. Keeping the
-//! geometry as free functions over [`XY`] is what lets the cross-system case be
-//! tested without a multi-system fixture, and is the seam a future slur
-//! implementation reuses: a slur is the same arc between different anchors.
+//! Nothing here touches the score tree --
+//! [`TieArranger`](crate::score::visual::tie_arranger::TieArranger) does that.
+//! Keeping the geometry as free functions over [`XY`] is what lets the
+//! cross-system case be tested without a multi-system fixture, and is the seam
+//! a future slur implementation reuses: a slur is the same arc between
+//! different anchors.
+
+use std::collections::HashMap;
 
 use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
@@ -13,8 +16,9 @@ use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::layoutable::LayoutParams;
-use crate::score::visual::note::NoteId;
+use crate::score::visual::note::{NoteAnchor, NoteId};
 use crate::score::visual::stem::UpDown;
+use crate::score::visual::system::{SystemExtent, SystemKey};
 
 /// How many points each of the arc's two edges is sampled at. Bumping this
 /// trades output size for smoothness; see the note on flattening in
@@ -100,7 +104,7 @@ impl TieSide {
 ///
 /// Purely a pairing -- it holds no geometry. The drawn arcs are derived after
 /// the pages are arranged, by
-/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties), because
+/// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger), because
 /// that is the first moment both endpoints have absolute coordinates.
 pub struct Tie {
     pub start: NoteId,
@@ -195,8 +199,7 @@ impl TieMetrics {
 /// This one builder serves both the unbroken case and each half of a tie split
 /// across a system or page break, because a broken tie is engraved as **two
 /// complete arcs** -- each tapered at both of its own ends -- rather than as one
-/// arc sliced at its apex. See
-/// [`split_tie`](crate::score::visual::tie_arranger::split_tie).
+/// arc sliced at its apex. See [`split_tie`].
 ///
 /// `scale` is the endpoint note's own scale factor.
 ///
@@ -290,6 +293,135 @@ pub fn tie_arc(
         stroke_color: None,
         stroke_width: None,
     }
+}
+
+/// The arcs one tie contributes, each tagged with the system it belongs to.
+///
+/// One segment when both endpoints share a system; two when they do not -- an
+/// *opening* fragment leaving the start note and running out to the end of its
+/// measure, and a short *closing* fragment (the "courtesy tie") arriving at the
+/// end note from the left. The asymmetry is intentional: the opening fragment
+/// takes the space available to it, the closing one is a fixed stub.
+///
+/// Each fragment is a **complete tie shape**, tapered to a point at both of its
+/// own ends, which is how printed music engraves a broken tie. It is tempting to
+/// instead slice one long arc at its apex and let the two blunt halves line up
+/// across the break, but that is not what the convention looks like on the page.
+/// Because both fragments are ordinary arcs between two tapered endpoints at the
+/// same height, [`tie_arc`] needs no notion of a cut end and serves the unbroken
+/// and broken cases identically.
+///
+/// Takes anchors and extents rather than a `&Score` on purpose: it keeps the
+/// split rule a pure function, testable without building a multi-system
+/// document, and reusable as-is when slurs arrive.
+///
+/// Returns nothing at all for a tie that cannot be drawn: an endpoint with no
+/// anchor (its note was skipped for lacking `default-x`), an end that sorts
+/// before its start, or a same-system pair whose end is not to the right of its
+/// start.
+pub fn split_tie(
+    tie: &Tie,
+    anchors: &HashMap<NoteId, NoteAnchor>,
+    extents: &HashMap<SystemKey, SystemExtent>,
+    metrics: &TieMetrics,
+) -> Vec<(SystemKey, TieSegment)> {
+    let (Some(start), Some(end)) = (anchors.get(&tie.start), anchors.get(&tie.end)) else {
+        return Vec::new();
+    };
+
+    if end.key < start.key {
+        return Vec::new();
+    }
+
+    let side = tie
+        .side
+        .unwrap_or_else(|| TieSide::infer(start.stem, start.staff_line));
+
+    let p0 = tip_right(start, side, metrics);
+    let p1 = tip_left(end, side, metrics);
+
+    if start.key == end.key {
+        if p1.x <= p0.x {
+            return Vec::new();
+        }
+
+        let shape = tie_arc(p0, p1, side, start.scale, metrics, start.color);
+        return vec![(start.key, TieSegment { shape })];
+    }
+
+    let (Some(start_system), Some(end_system)) = (extents.get(&start.key), extents.get(&end.key))
+    else {
+        return Vec::new();
+    };
+
+    let mut segments = Vec::with_capacity(2);
+
+    // Opening fragment: a complete arc leaving the note and taking up the space
+    // available to it, which is the rest of its own measure less a margin so it
+    // clears the barline. It ends level with the note it left, not raised to the
+    // apex, because it is a whole tie shape in its own right.
+    //
+    // The two fragments are deliberately not the same length: this one spans
+    // what is left of the measure, while the closing one below is short and
+    // fixed. Floored at `break_fragment` so a note falling right at the end of a
+    // measure still gets a visible arc rather than a sliver.
+    //
+    // The cap at the system's right edge is a *typographic* limit, not a
+    // technical one -- there is plenty of real page past the final barline (the
+    // right margin, and nothing clips before the page edge), but a tie reaching
+    // into the margin reads as a mistake. The trade-off it forces: for a note
+    // crowded against the last barline of a system, the cap wins over the floor
+    // and the fragment comes out shorter than `break_fragment`. Lifting the cap
+    // is the alternative if that ever looks worse than the overhang would.
+    let measure_end = start.measure_right.min(start_system.right) - metrics.break_inset;
+    let out_x = measure_end
+        .max(p0.x + metrics.break_fragment)
+        .min(start_system.right);
+    if out_x > p0.x {
+        let shape = tie_arc(
+            p0,
+            XY { x: out_x, y: p0.y },
+            side,
+            start.scale,
+            metrics,
+            start.color,
+        );
+        segments.push((start.key, TieSegment { shape }));
+    }
+
+    // Closing fragment: likewise a complete arc, arriving at the note from the
+    // left. Its length is fixed rather than "back to the system edge", because
+    // the next system opens with a clef and key signature it must not run
+    // through.
+    let in_x = (p1.x - metrics.break_fragment).max(end_system.left);
+    if p1.x > in_x {
+        let shape = tie_arc(
+            XY { x: in_x, y: p1.y },
+            p1,
+            side,
+            end.scale,
+            metrics,
+            end.color,
+        );
+        segments.push((end.key, TieSegment { shape }));
+    }
+
+    segments
+}
+
+/// Where a tie leaving `anchor` to the right begins.
+fn tip_right(anchor: &NoteAnchor, side: TieSide, metrics: &TieMetrics) -> XY {
+    anchor.left.mv(
+        anchor.width + metrics.note_gap,
+        side.sign() * metrics.vertical_offset,
+    )
+}
+
+/// Where a tie arriving at `anchor` from the left ends.
+fn tip_left(anchor: &NoteAnchor, side: TieSide, metrics: &TieMetrics) -> XY {
+    anchor
+        .left
+        .mv(-metrics.note_gap, side.sign() * metrics.vertical_offset)
 }
 
 /// A point on the cubic Bezier through `p0 -> c0 -> c1 -> p1` at `t`.

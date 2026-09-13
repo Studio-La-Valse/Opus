@@ -27,10 +27,17 @@ use std::collections::BTreeMap;
 ///
 /// Lives beside [`System`] rather than with either pass that keys on it: it
 /// addresses a `System`, and both
-/// [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams) and
-/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) file their
+/// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger) and
+/// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger) file their
 /// output under it.
 pub type SystemKey = (u32, u32);
+
+/// A system's horizontal extent, all a broken tie needs to know about it.
+#[derive(Copy, Clone, Debug)]
+pub struct SystemExtent {
+    pub left: f32,
+    pub right: f32,
+}
 
 #[derive(Default)]
 pub struct System {
@@ -48,7 +55,7 @@ pub struct System {
     pub measures: BTreeMap<u32, SystemMeasure>,
 
     /// The tie arcs that fall inside this system, rebuilt from `Score::ties` by
-    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) once
+    /// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger) once
     /// the pages have been arranged.
     ///
     /// A tie broken across a system break contributes one segment here and one
@@ -58,7 +65,7 @@ pub struct System {
 
     /// The beam segments that fall inside this system, rebuilt from the chords
     /// in the tree by
-    /// [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams)
+    /// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
     /// once the pages have been arranged.
     ///
     /// A beam group is a run of consecutive chords, so unlike a tie it does not
@@ -69,7 +76,7 @@ pub struct System {
 
     /// The mid-measure clef changes that fall inside this system, rebuilt from
     /// `Score::clef_changes` by
-    /// [`arrange_clef_changes`](crate::score::visual::clef_change_arranger::arrange_clef_changes)
+    /// [`ClefChangeArranger`](crate::score::visual::clef_change_arranger::ClefChangeArranger)
     /// once the pages have been arranged.
     ///
     /// Unlike a tie or a beam group a clef change cannot straddle a break -- it

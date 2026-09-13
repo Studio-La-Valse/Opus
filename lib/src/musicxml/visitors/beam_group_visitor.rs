@@ -11,17 +11,16 @@ use std::collections::BTreeMap;
 /// `end`. A level that never ends leaves the renderer with a beam that has a
 /// left edge and no right one, which used to be a panic and is now inferred --
 /// the level is taken to run to the last note that carries it (see
-/// `beam_level_ends_at` in
-/// [`beam_arranger`](crate::score::visual::beam_arranger)). Since the document
-/// is repairable rather than un-renderable, this is a `Warning` and not an
-/// `Error`.
+/// [`beam_level_ends_at`](crate::score::visual::beam::beam_level_ends_at)).
+/// Since the document is repairable rather than un-renderable, this is a
+/// `Warning` and not an `Error`.
 ///
 /// Notably *not* caught by the rebeam pass: that compares how many beams a note
 /// declares against how many its duration warrants, so a group whose counts are
 /// right but whose types are inconsistent passes straight through it.
 ///
 /// Levels are tracked per voice, and separately for grace notes, because that is
-/// how [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams)
+/// how [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
 /// groups the chords it beams. A group also ends at a note carrying no `<beam>`
 /// at all.
 ///
@@ -38,7 +37,7 @@ pub struct BeamGroupVisitor {
     open: BTreeMap<GroupKey, BTreeMap<u32, usize>>,
 }
 
-/// What [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams)
+/// What [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
 /// beams together: one voice's notes, with grace notes kept apart from the rest.
 type GroupKey = (u32, bool);
 

@@ -1,4 +1,5 @@
 pub mod accidental;
+pub mod beam;
 pub mod beam_arranger;
 pub mod chord;
 pub mod clef;
@@ -23,6 +24,7 @@ pub mod render_fonts;
 pub mod render_pass;
 pub mod rest;
 pub mod score;
+pub mod score_arranger;
 pub mod section;
 pub mod section_measure;
 pub mod staff;

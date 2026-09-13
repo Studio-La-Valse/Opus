@@ -209,7 +209,7 @@ impl Layoutable for StaffMeasure {
     /// [`System::arrange_measure_starts`](crate::score::visual::system::System),
     /// which runs once the staves have been placed -- the same way a tie, whose
     /// two ends may be systems apart, is left to
-    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties).
+    /// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger).
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
