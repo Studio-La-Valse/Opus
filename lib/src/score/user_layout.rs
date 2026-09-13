@@ -42,7 +42,6 @@ pub struct UserLayout {
 
     pub dot_radius: Option<f32>,
     pub dot_spacing: Option<f32>,
-    pub dot_color: Option<Color>,
 
     /// Overrides for the tie knobs of the same name on
     /// [`AppDefaults`](crate::score::app_defaults::AppDefaults), all in tenths

@@ -28,7 +28,7 @@ impl Layoutable for SectionMeasure {
         self.line_width = user_layout
             .light_barline
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.barline_light)
+            .unwrap_or(app_defaults.light_barline)
     }
 
     fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {

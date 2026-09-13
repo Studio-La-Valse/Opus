@@ -151,17 +151,17 @@ impl Layoutable for Staff {
         self.line_thickness = user_layout
             .staff
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_thickness);
+            .unwrap_or(app_defaults.staff);
 
         self.barline_thickness_light = user_layout
             .light_barline
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.barline_light);
+            .unwrap_or(app_defaults.light_barline);
 
         self.barline_thickness_heavy = user_layout
             .heavy_barline
             .or(score_defaults.appearance.heavy_barline)
-            .unwrap_or(app_defaults.barline_heavy);
+            .unwrap_or(app_defaults.heavy_barline);
 
         for measure in self.measures.values_mut() {
             measure.resolve_layout(params);

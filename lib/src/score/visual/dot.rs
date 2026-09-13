@@ -50,8 +50,7 @@ impl Layoutable for Dot {
         self.scale = self.size.resolve(params);
 
         self.color = user_layout
-            .dot_color
-            .or(user_layout.foreground_color)
+            .foreground_color
             .unwrap_or(app_defaults.foreground_color);
         self.radius = user_layout.dot_radius.unwrap_or(app_defaults.dot_radius) * self.scale;
     }

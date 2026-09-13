@@ -98,6 +98,65 @@ pub struct RenderArgs {
     #[arg(long)]
     vertical_gutter: Option<f32>,
 
+    #[arg(long)]
+    staff: Option<f32>,
+
+    #[arg(long)]
+    light_barline: Option<f32>,
+
+    #[arg(long)]
+    heavy_barline: Option<f32>,
+
+    #[arg(long)]
+    beam_thickness: Option<f32>,
+
+    #[arg(long)]
+    beam_spacing: Option<f32>,
+
+    #[arg(long)]
+    stem_thickness: Option<f32>,
+
+    /// Fraction of full size a grace note is drawn at.
+    #[arg(long)]
+    note_size_grace: Option<f32>,
+
+    /// Fraction of full size a cue note is drawn at.
+    #[arg(long)]
+    note_size_cue: Option<f32>,
+
+    #[arg(long)]
+    dot_radius: Option<f32>,
+
+    #[arg(long)]
+    dot_spacing: Option<f32>,
+
+    #[arg(long)]
+    tie_endpoint_thickness: Option<f32>,
+
+    #[arg(long)]
+    tie_midpoint_thickness: Option<f32>,
+
+    #[arg(long)]
+    tie_height_ratio: Option<f32>,
+
+    #[arg(long)]
+    tie_height_min: Option<f32>,
+
+    #[arg(long)]
+    tie_height_max: Option<f32>,
+
+    #[arg(long)]
+    tie_note_gap: Option<f32>,
+
+    #[arg(long)]
+    tie_vertical_offset: Option<f32>,
+
+    #[arg(long)]
+    tie_break_inset: Option<f32>,
+
+    #[arg(long)]
+    tie_break_fragment: Option<f32>,
+
     /// Force one symbol on every section / part-group / part in the score,
     /// overriding whatever its `<part-group>` declared: `none`, `brace`,
     /// `bracket`, `line` or `square`. A part has no symbol of its own in
@@ -184,6 +243,25 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
+        staff,
+        light_barline,
+        heavy_barline,
+        beam_thickness,
+        beam_spacing,
+        stem_thickness,
+        note_size_grace,
+        note_size_cue,
+        dot_radius,
+        dot_spacing,
+        tie_endpoint_thickness,
+        tie_midpoint_thickness,
+        tie_height_ratio,
+        tie_height_min,
+        tie_height_max,
+        tie_note_gap,
+        tie_vertical_offset,
+        tie_break_inset,
+        tie_break_fragment,
         section_symbol,
         part_group_symbol,
         part_symbol,
@@ -237,6 +315,25 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
+        staff,
+        light_barline,
+        heavy_barline,
+        beam_thickness,
+        beam_spacing,
+        stem_thickness,
+        note_size_grace,
+        note_size_cue,
+        dot_radius,
+        dot_spacing,
+        tie_endpoint_thickness,
+        tie_midpoint_thickness,
+        tie_height_ratio,
+        tie_height_min,
+        tie_height_max,
+        tie_note_gap,
+        tie_vertical_offset,
+        tie_break_inset,
+        tie_break_fragment,
         section_symbol,
         part_group_symbol,
         part_symbol,
@@ -249,7 +346,6 @@ pub fn run(format: RenderCommand) {
         group_square_arm,
         group_name_size,
         group_name_padding,
-        ..Default::default()
     };
     let app_defaults: AppDefaults = Default::default();
 

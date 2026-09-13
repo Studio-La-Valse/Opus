@@ -301,12 +301,12 @@ impl Layoutable for System {
         self.line_width = user_layout
             .light_barline
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.barline_light);
+            .unwrap_or(app_defaults.light_barline);
 
         self.staff_line_width = user_layout
             .staff
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_thickness);
+            .unwrap_or(app_defaults.staff);
 
         // The first system names its parts and part-groups in full; every later
         // one uses the abbreviation. Re-stamped here so the whole subtree below

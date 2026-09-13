@@ -191,9 +191,7 @@ impl PartMeasure {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
-        self.ledger_thickness = user_layout
-            .staff
-            .unwrap_or(app_defaults.staff_line_thickness);
+        self.ledger_thickness = user_layout.staff.unwrap_or(app_defaults.staff);
 
         for chord in self.chords.values_mut().flatten() {
             chord.resolve_layout(params);
