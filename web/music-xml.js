@@ -115,7 +115,7 @@ const LAYOUT_OPTIONS = [
   "horizontalGutterEven",
   "horizontalGutterUneven",
   "verticalGutter",
-  "staff",
+  "staffLineWidth",
   "lightBarline",
   "heavyBarline",
   "beamThickness",

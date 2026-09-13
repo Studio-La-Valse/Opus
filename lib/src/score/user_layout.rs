@@ -1,7 +1,7 @@
 use crate::geometry::color::Color;
 use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::page_orientation::PageOrientation;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Caller-supplied overrides, each falling back to
 /// [`AppDefaults`](crate::score::app_defaults::AppDefaults) when `None`.
@@ -11,7 +11,10 @@ use serde::Deserialize;
 /// the wasm bindings today -- exposes a new knob by nothing more than the field
 /// being added here. Don't mirror it into a parallel options struct somewhere
 /// else; that only creates two lists to keep in step.
-#[derive(Copy, Clone, Default, Deserialize)]
+///
+/// `Serialize` is derived only so a test can enumerate its field names by
+/// serializing a default instance; nothing serializes a real `UserLayout`.
+#[derive(Copy, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct UserLayout {
     pub page_color: Option<Color>,
