@@ -160,8 +160,8 @@ mod tests {
             &note("", 80),
         ));
 
-        assert_eq!(defaults.appearance.note_size_grace, Some(0.5));
-        assert_eq!(defaults.appearance.note_size_cue, Some(0.7));
+        assert_eq!(defaults.appearance.grace, Some(0.5));
+        assert_eq!(defaults.appearance.cue, Some(0.7));
     }
 
     /// MusicXML also defines "grace-cue" and "large"; neither is drawn, and an
@@ -173,8 +173,8 @@ mod tests {
             &note("", 80),
         ));
 
-        assert_eq!(defaults.appearance.note_size_grace, None);
-        assert_eq!(defaults.appearance.note_size_cue, None);
+        assert_eq!(defaults.appearance.grace, None);
+        assert_eq!(defaults.appearance.cue, None);
     }
 
     /// The walk records what the note *is*, never the factor that stands for --

@@ -159,15 +159,21 @@ pub struct ResolvedPage {
     pub margins: PageMargins,
 }
 
+/// `<defaults><appearance>`'s `<line-width>` types and `<note-size>` types,
+/// each field named after its `type` attribute's value rather than after the
+/// matching [`AppDefaults`](crate::score::app_defaults::AppDefaults) /
+/// [`UserLayout`](crate::score::user_layout::UserLayout) field -- this struct
+/// exists to hold what the document said, verbatim, so it stays spelled the
+/// document's way even where that diverges from the app's own option names.
 #[derive(Default, Clone)]
 pub struct Appearance {
-    pub staff_line_thickness: Option<f32>,
+    pub staff: Option<f32>,
     pub light_barline: Option<f32>,
     pub heavy_barline: Option<f32>,
-    pub beam_thickness: Option<f32>,
-    pub stem_thickness: Option<f32>,
-    pub note_size_grace: Option<f32>,
-    pub note_size_cue: Option<f32>,
+    pub beam: Option<f32>,
+    pub stem: Option<f32>,
+    pub grace: Option<f32>,
+    pub cue: Option<f32>,
 }
 
 #[derive(Clone)]

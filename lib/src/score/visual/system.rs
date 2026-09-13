@@ -300,7 +300,7 @@ impl Layoutable for System {
 
         self.staff_line_thickness = user_layout
             .staff
-            .or(score_defaults.appearance.staff_line_thickness)
+            .or(score_defaults.appearance.staff)
             .unwrap_or(app_defaults.staff_line_thickness);
 
         self.light_barline = user_layout

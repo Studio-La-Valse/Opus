@@ -66,7 +66,7 @@ impl BeamMetrics {
         Self {
             thickness: user_layout
                 .beam_thickness
-                .or(score_defaults.appearance.beam_thickness)
+                .or(score_defaults.appearance.beam)
                 .unwrap_or(app_defaults.beam_thickness),
             spacing: user_layout
                 .beam_spacing

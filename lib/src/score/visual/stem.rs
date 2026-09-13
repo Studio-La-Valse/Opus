@@ -191,7 +191,7 @@ impl Layoutable for Stem {
 
         self.thickness = user_layout
             .stem_thickness
-            .or(score_defaults.appearance.stem_thickness)
+            .or(score_defaults.appearance.stem)
             .unwrap_or(app_defaults.stem_thickness);
         self.color = user_layout
             .foreground_color

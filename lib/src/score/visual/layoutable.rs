@@ -51,12 +51,12 @@ impl LayoutParams<'_> {
             NoteKind::Grace => self
                 .user_layout
                 .note_size_grace
-                .or(self.score_defaults.appearance.note_size_grace)
+                .or(self.score_defaults.appearance.grace)
                 .unwrap_or(self.app_defaults.note_size_grace),
             NoteKind::Cue => self
                 .user_layout
                 .note_size_cue
-                .or(self.score_defaults.appearance.note_size_cue)
+                .or(self.score_defaults.appearance.cue)
                 .unwrap_or(self.app_defaults.note_size_cue),
         }
     }
