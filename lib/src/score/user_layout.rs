@@ -46,6 +46,12 @@ pub struct UserLayout {
     pub dot_radius: Option<f32>,
     pub dot_spacing: Option<f32>,
 
+    /// Overrides for the measure-start knobs of the same name on
+    /// [`AppDefaults`](crate::score::app_defaults::AppDefaults), all in tenths.
+    pub measure_start_clef_padding: Option<f32>,
+    pub measure_start_key_signature_padding: Option<f32>,
+    pub measure_start_time_signature_padding: Option<f32>,
+
     /// Overrides for the tie knobs of the same name on
     /// [`AppDefaults`](crate::score::app_defaults::AppDefaults), all in tenths
     /// except `tie_height_ratio`.

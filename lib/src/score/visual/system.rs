@@ -10,7 +10,7 @@ use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::section::Section;
 use crate::score::visual::staff::Staff;
-use crate::score::visual::staff_measure::StaffMeasure;
+use crate::score::visual::staff_measure::{MeasureStartPaddings, StaffMeasure};
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::score::visual::tie::TieSegment;
 use std::collections::BTreeMap;
@@ -211,7 +211,7 @@ impl System {
     /// once the staves have been placed and the measures have the left edge
     /// these offsets are measured from. Only drawn staves take part, which is
     /// also all the compositor visits.
-    pub fn arrange_measure_starts(&mut self) {
+    pub fn arrange_measure_starts(&mut self, paddings: &MeasureStartPaddings) {
         let mut by_measure: BTreeMap<u32, Vec<&mut StaffMeasure>> = BTreeMap::new();
         for staff in self.visible_staves_mut() {
             for (number, measure) in staff.measures.iter_mut() {
@@ -226,15 +226,22 @@ impl System {
             // the widest staff.
             let mut edges = vec![0.; measures.len()];
 
-            arrange_column(measures, &mut edges, StaffMeasure::arrange_clef_start);
             arrange_column(
                 measures,
                 &mut edges,
+                paddings.clef,
+                StaffMeasure::arrange_clef_start,
+            );
+            arrange_column(
+                measures,
+                &mut edges,
+                paddings.key_signature,
                 StaffMeasure::arrange_key_signature_start,
             );
             arrange_column(
                 measures,
                 &mut edges,
+                paddings.time_signature,
                 StaffMeasure::arrange_time_signature_start,
             );
         }
@@ -383,12 +390,13 @@ impl Layoutable for System {
 fn arrange_column(
     measures: &mut [&mut StaffMeasure],
     edges: &mut [f32],
+    padding: f32,
     place: fn(&mut StaffMeasure, f32) -> Option<f32>,
 ) {
     let column = measures
         .iter()
         .zip(edges.iter())
-        .map(|(measure, edge)| edge + measure.padding())
+        .map(|(measure, edge)| edge + padding * measure.scale)
         .fold(0., f32::max);
 
     for (measure, edge) in measures.iter_mut().zip(edges.iter_mut()) {

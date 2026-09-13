@@ -13,6 +13,7 @@ use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
 use crate::score::visual::score::Score;
+use crate::score::visual::staff_measure::MeasureStartPaddings;
 use crate::score::visual::system::System;
 
 /// Rebuilds every content element's position from the containers the
@@ -28,10 +29,12 @@ use crate::score::visual::system::System;
 pub struct ContentArranger;
 
 impl ScoreArranger for ContentArranger {
-    fn arrange(&self, score: &mut Score, _params: LayoutParams<'_>) {
+    fn arrange(&self, score: &mut Score, params: LayoutParams<'_>) {
+        let paddings = MeasureStartPaddings::resolve(params);
+
         for page in score.pages.values_mut() {
             for system in page.systems.values_mut() {
-                walk_system(system);
+                walk_system(system, &paddings);
             }
         }
     }
@@ -39,7 +42,7 @@ impl ScoreArranger for ContentArranger {
 
 // ---- internals ----
 
-fn walk_system(system: &mut System) {
+fn walk_system(system: &mut System, paddings: &MeasureStartPaddings) {
     for section in system.sections.values_mut() {
         for group in section.part_groups.values_mut() {
             for part in group.parts.values_mut() {
@@ -49,7 +52,7 @@ fn walk_system(system: &mut System) {
     }
 
     // Last: the shared opening columns need every staff measure placed.
-    system.arrange_measure_starts();
+    system.arrange_measure_starts(paddings);
 }
 
 fn walk_part(part: &mut Part) {

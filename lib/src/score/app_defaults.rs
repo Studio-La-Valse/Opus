@@ -26,6 +26,21 @@ pub struct AppDefaults {
     /// between successive dots.
     pub dot_spacing: f32,
 
+    /// Padding in tenths between a measure's left edge and the opening clef,
+    /// when the measure opens with one. Scaled by the staff measure's own
+    /// `scale`, and the column is settled from the widest contribution across
+    /// the system's drawn staves.
+    pub measure_start_clef_padding: f32,
+    /// Padding in tenths between the opening clef column and the key
+    /// signature. Scaled by the staff measure's own `scale`, and the column is
+    /// settled from the widest contribution across the system's drawn staves.
+    pub measure_start_key_signature_padding: f32,
+    /// Padding in tenths between the key signature column and the time
+    /// signature, when the measure opens with one. Scaled by the staff
+    /// measure's own `scale`, and the column is settled from the widest
+    /// contribution across the system's drawn staves.
+    pub measure_start_time_signature_padding: f32,
+
     /// Tie thickness at a notehead end, in tenths. Bravura's
     /// `tieEndpointThickness` is 0.1 staff spaces; one space is
     /// [`Staff::DEFAULT_SPACE_SIZE`](crate::score::visual::staff::Staff) = 10
@@ -150,6 +165,9 @@ impl Default for AppDefaults {
             note_size_cue: 0.66,
             dot_radius: 2.,
             dot_spacing: 5.,
+            measure_start_clef_padding: 5.,
+            measure_start_key_signature_padding: 5.,
+            measure_start_time_signature_padding: 5.,
             tie_endpoint_thickness: 1.,
             tie_midpoint_thickness: 2.2,
             tie_height_ratio: 0.15,

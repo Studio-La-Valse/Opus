@@ -20,6 +20,7 @@
 export const OPTION_GROUPS = [
   "Page",
   "Staff & barlines",
+  "Measure starts",
   "Beams & stems",
   "Note sizes & dots",
   "Ties",
@@ -135,6 +136,44 @@ export const OPTIONS = [
     unit: "tenths",
     label: "Heavy barline thickness",
     help: "Thickness of a final/heavy barline stroke.",
+  },
+
+  // --- Measure starts ---------------------------------------------------------
+  {
+    group: "Measure starts",
+    name: "measureStartClefPadding",
+    kind: "number",
+    default: 5,
+    min: 0,
+    max: 40,
+    step: 0.5,
+    unit: "tenths",
+    label: "Clef padding",
+    help: "Gap between the measure's left edge and the opening clef.",
+  },
+  {
+    group: "Measure starts",
+    name: "measureStartKeySignaturePadding",
+    kind: "number",
+    default: 5,
+    min: 0,
+    max: 40,
+    step: 0.5,
+    unit: "tenths",
+    label: "Key signature padding",
+    help: "Gap between the opening clef column and the key signature.",
+  },
+  {
+    group: "Measure starts",
+    name: "measureStartTimeSignaturePadding",
+    kind: "number",
+    default: 5,
+    min: 0,
+    max: 40,
+    step: 0.5,
+    unit: "tenths",
+    label: "Time signature padding",
+    help: "Gap between the key signature column and the opening time signature.",
   },
 
   // --- Beams & stems --------------------------------------------------------
