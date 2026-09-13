@@ -24,6 +24,8 @@ mod tests {
 
     const TREBLE: &str = "<clef><sign>G</sign><line>2</line></clef>";
     const BASS: &str = "<clef><sign>F</sign><line>4</line></clef>";
+    const TREBLE_HALF_SIZE: &str = "<clef><sign>G</sign><line>2</line></clef>\
+        <staff-details><staff-size>50</staff-size></staff-details>";
 
     fn asset(relative_path: &str) -> String {
         read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
@@ -72,12 +74,12 @@ mod tests {
         )
     }
 
-    fn engrave(xml: &str) -> Score {
+    fn engrave(xml: &str, layout: &UserLayout) -> Score {
         let document = Document::parse(xml).expect("test document does not parse");
         let (mut score, defaults, _messages) = walk_document(
             &document,
             font(),
-            &UserLayout::default(),
+            layout,
             &AppDefaults::default(),
             &mut |_stage| {},
         );
@@ -86,7 +88,7 @@ mod tests {
             &mut score,
             &defaults,
             font(),
-            &UserLayout::default(),
+            layout,
             &AppDefaults::default(),
             &mut |_stage| {},
         );
@@ -134,7 +136,10 @@ mod tests {
     /// offsets really does line them up on the page.
     #[test]
     fn staff_measures_of_one_measure_share_a_left_edge() {
-        let score = engrave(&score_xml(&[(-7, TREBLE), (-5, TREBLE), (0, TREBLE)]));
+        let score = engrave(
+            &score_xml(&[(-7, TREBLE), (-5, TREBLE), (0, TREBLE)]),
+            &UserLayout::default(),
+        );
         let measures = staff_measures(&score, 1);
         assert_eq!(measures.len(), 3);
 
@@ -148,7 +153,10 @@ mod tests {
     /// at the same place.
     #[test]
     fn unequal_key_signatures_do_not_move_the_time_signature() {
-        let score = engrave(&score_xml(&[(-7, TREBLE), (-5, TREBLE), (0, TREBLE)]));
+        let score = engrave(
+            &score_xml(&[(-7, TREBLE), (-5, TREBLE), (0, TREBLE)]),
+            &UserLayout::default(),
+        );
         let measures = staff_measures(&score, 1);
         assert_eq!(measures.len(), 3);
 
@@ -185,7 +193,10 @@ mod tests {
     /// moving right for somebody else.
     #[test]
     fn key_signatures_clear_the_widest_clef() {
-        let score = engrave(&score_xml(&[(-3, TREBLE), (-3, BASS)]));
+        let score = engrave(
+            &score_xml(&[(-3, TREBLE), (-3, BASS)]),
+            &UserLayout::default(),
+        );
         let measures = staff_measures(&score, 1);
         assert_eq!(measures.len(), 2);
 
@@ -202,7 +213,8 @@ mod tests {
         );
 
         let widest = widths[0].max(widths[1]);
-        let padding = measures[0].padding();
+        let padding =
+            AppDefaults::default().measure_start_key_signature_padding * measures[0].scale;
         assert_eq!(
             key_x(measures[0]),
             clef_x(measures[0]) + widest + padding,
@@ -214,21 +226,119 @@ mod tests {
     /// columns: padding, clef, padding, key signature, padding, time signature.
     #[test]
     fn a_single_staff_still_follows_its_own_spacing() {
-        let score = engrave(&score_xml(&[(-3, TREBLE)]));
+        let score = engrave(&score_xml(&[(-3, TREBLE)]), &UserLayout::default());
         let measures = staff_measures(&score, 1);
         assert_eq!(measures.len(), 1);
 
         let measure = measures[0];
-        let padding = measure.padding();
+        let defaults = AppDefaults::default();
+        let clef_padding = defaults.measure_start_clef_padding * measure.scale;
+        let key_padding = defaults.measure_start_key_signature_padding * measure.scale;
+        let time_padding = defaults.measure_start_time_signature_padding * measure.scale;
 
-        assert_eq!(clef_x(measure) - measure.xy.x, padding);
+        assert_eq!(clef_x(measure) - measure.xy.x, clef_padding);
         assert_eq!(
             key_x(measure),
-            clef_x(measure) + clef_width(measure) + padding
+            clef_x(measure) + clef_width(measure) + key_padding
         );
         assert_eq!(
             time_x(measure),
-            key_x(measure) + measure.key_signature_start.width + padding
+            key_x(measure) + measure.key_signature_start.width + time_padding
+        );
+    }
+
+    /// The point of the split: three independent knobs, each moving only the
+    /// column it names.
+    #[test]
+    fn each_padding_moves_only_its_own_column() {
+        let layout = UserLayout {
+            measure_start_clef_padding: Some(3.),
+            measure_start_key_signature_padding: Some(11.),
+            measure_start_time_signature_padding: Some(23.),
+            ..UserLayout::default()
+        };
+        let score = engrave(&score_xml(&[(-3, TREBLE)]), &layout);
+        let measures = staff_measures(&score, 1);
+        assert_eq!(measures.len(), 1);
+
+        let measure = measures[0];
+        assert_eq!(clef_x(measure) - measure.xy.x, 3.);
+        assert_eq!(key_x(measure), clef_x(measure) + clef_width(measure) + 11.);
+        assert_eq!(
+            time_x(measure),
+            key_x(measure) + measure.key_signature_start.width + 23.
+        );
+    }
+
+    /// Before the split, opening the clef away from the barline would also have
+    /// pushed the key signature off the clef -- they shared one constant. Now
+    /// raising only the clef padding shifts every column right by the same
+    /// amount, leaving the gaps between them untouched.
+    #[test]
+    fn clef_padding_does_not_move_the_key_signature_off_the_clef() {
+        let default_score = engrave(&score_xml(&[(-3, TREBLE)]), &UserLayout::default());
+        let default_measures = staff_measures(&default_score, 1);
+        let default_measure = default_measures[0];
+        let default_clef_to_key =
+            key_x(default_measure) - clef_x(default_measure) - clef_width(default_measure);
+        let default_key_to_time = time_x(default_measure)
+            - key_x(default_measure)
+            - default_measure.key_signature_start.width;
+
+        let raised_layout = UserLayout {
+            measure_start_clef_padding: Some(25.),
+            ..UserLayout::default()
+        };
+        let raised_score = engrave(&score_xml(&[(-3, TREBLE)]), &raised_layout);
+        let raised_measures = staff_measures(&raised_score, 1);
+        let raised_measure = raised_measures[0];
+
+        assert_eq!(clef_x(raised_measure) - raised_measure.xy.x, 25.);
+        assert_eq!(
+            key_x(raised_measure) - clef_x(raised_measure) - clef_width(raised_measure),
+            default_clef_to_key,
+            "the clef-to-key gap is untouched"
+        );
+        assert_eq!(
+            time_x(raised_measure)
+                - key_x(raised_measure)
+                - raised_measure.key_signature_start.width,
+            default_key_to_time,
+            "the key-to-time gap is untouched"
+        );
+    }
+
+    /// Each staff's contribution to a shared column is its own padding scaled
+    /// by its own `scale` -- and the widest contribution still wins the column,
+    /// so a reduced staff opens at the same offset as its full-size neighbour
+    /// rather than at its own smaller one.
+    #[test]
+    fn paddings_scale_with_the_staff() {
+        let layout = UserLayout {
+            measure_start_clef_padding: Some(20.),
+            ..UserLayout::default()
+        };
+
+        let solo = engrave(&score_xml(&[(0, TREBLE_HALF_SIZE)]), &layout);
+        let solo_measures = staff_measures(&solo, 1);
+        assert_eq!(solo_measures.len(), 1);
+        assert_eq!(solo_measures[0].scale, 0.5, "the part drew at half size");
+        assert_eq!(
+            clef_x(solo_measures[0]) - solo_measures[0].xy.x,
+            10.,
+            "alone, the reduced staff only asks for half the padding"
+        );
+
+        let score = engrave(&score_xml(&[(0, TREBLE), (0, TREBLE_HALF_SIZE)]), &layout);
+        let measures = staff_measures(&score, 1);
+        assert_eq!(measures.len(), 2);
+        assert_eq!(measures[1].scale, 0.5);
+
+        assert_eq!(clef_x(measures[0]) - measures[0].xy.x, 20.);
+        assert_eq!(
+            clef_x(measures[1]) - measures[1].xy.x,
+            clef_x(measures[0]) - measures[0].xy.x,
+            "the full-size staff's wider contribution wins the shared column"
         );
     }
 }

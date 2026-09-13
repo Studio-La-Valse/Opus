@@ -105,6 +105,18 @@ pub struct RenderArgs {
     #[arg(long)]
     dot_spacing: Option<f32>,
 
+    /// Padding in tenths between a measure's left edge and the opening clef,
+    /// between the clef column and the key signature, and between the key
+    /// signature column and the time signature.
+    #[arg(long)]
+    measure_start_clef_padding: Option<f32>,
+
+    #[arg(long)]
+    measure_start_key_signature_padding: Option<f32>,
+
+    #[arg(long)]
+    measure_start_time_signature_padding: Option<f32>,
+
     #[arg(long)]
     tie_endpoint_thickness: Option<f32>,
 
@@ -248,6 +260,9 @@ pub fn run(format: RenderCommand) {
         note_size_cue,
         dot_radius,
         dot_spacing,
+        measure_start_clef_padding,
+        measure_start_key_signature_padding,
+        measure_start_time_signature_padding,
         tie_endpoint_thickness,
         tie_midpoint_thickness,
         tie_height_ratio,
@@ -325,6 +340,9 @@ pub fn run(format: RenderCommand) {
         note_size_cue,
         dot_radius,
         dot_spacing,
+        measure_start_clef_padding,
+        measure_start_key_signature_padding,
+        measure_start_time_signature_padding,
         tie_endpoint_thickness,
         tie_midpoint_thickness,
         tie_height_ratio,
