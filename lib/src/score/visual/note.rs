@@ -8,6 +8,8 @@ use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::placed::Placed;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
+use crate::score::visual::stem::UpDown;
+use crate::score::visual::system::SystemKey;
 use crate::smufl::glyphs::notehead::Notehead;
 
 /// Identifies one [`Note`] -- or one [`Rest`](crate::score::visual::rest::Rest),
@@ -41,6 +43,33 @@ impl From<u32> for NoteId {
     fn from(value: u32) -> Self {
         NoteId(value)
     }
+}
+
+/// A note's finished geometry, copied out of the tree so a whole-score pass
+/// can borrow the score immutably while it resolves relations between notes,
+/// then mutably while it writes the result back onto the tree. Built by
+/// [`Score::note_anchors`](crate::score::visual::score::Score::note_anchors);
+/// the only consumer today is
+/// [`split_tie`](crate::score::visual::tie::split_tie), but nothing here is
+/// tie-specific.
+#[derive(Copy, Clone, Debug)]
+pub struct NoteAnchor {
+    pub key: SystemKey,
+    /// Left edge of the notehead at its vertical centre -- exactly what
+    /// `Note::xy` is, per `Note::arrange_ctx` and `PartMeasure::ledger_lines`.
+    pub left: XY,
+    pub width: f32,
+    /// Right edge of the `PartMeasure` this note sits in. A tie broken across a
+    /// system runs its opening fragment out to here, since "the space available
+    /// to the tie" is the remainder of its own measure.
+    pub measure_right: f32,
+    /// The note's own scale factor, so grace notes get proportionate ties.
+    pub scale: f32,
+    pub staff_line: i32,
+    /// The owning chord's stem direction, for
+    /// [`TieSide::infer`](crate::score::visual::tie::TieSide::infer).
+    pub stem: Option<UpDown>,
+    pub color: Color,
 }
 
 pub struct Note {

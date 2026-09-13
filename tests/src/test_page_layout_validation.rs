@@ -3,7 +3,7 @@ mod tests {
     use lib::musicxml::validate::ValidationCtx;
     use lib::musicxml::validation_issue::Severity;
     use lib::musicxml::visitor::{DefaultVisitor, Visitor};
-    use lib::musicxml::visitors::page_layout_visitor::PageLayoutVisitor;
+    use lib::musicxml::visitors::validators::page_layout_visitor::PageLayoutVisitor;
     use lib::musicxml::walker::Walker;
     use lib::score::score_defaults::PageLayout;
     use roxmltree::Document;

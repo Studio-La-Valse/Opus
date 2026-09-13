@@ -26,7 +26,7 @@ use std::collections::BTreeMap;
 ///   the note or rest that follows instead. It belongs to a staff but can only
 ///   be positioned against something in a `PartMeasure`, so it goes flat on
 ///   `Score::clef_changes` and is placed by
-///   [`clef_change_arranger`](crate::score::visual::clef_change_arranger); see
+///   [`ClefChangeArranger`](crate::score::visual::arranger::ClefChangeArranger); see
 ///   [`ClefChange`].
 ///
 /// Kept out of `ContentVisitor`, which builds the notes and rests themselves,
@@ -110,7 +110,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ClefVisitor {
     /// `ContentVisitor` drops a note with no `default-x`, exactly as it does for
     /// a tie endpoint. A change naming a note that never made it into the tree
     /// finds no anchor and is discarded by
-    /// [`arrange_clef_changes`](crate::score::visual::clef_change_arranger::arrange_clef_changes).
+    /// [`ClefChangeArranger`](crate::score::visual::arranger::ClefChangeArranger).
     fn enter_note(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx: StaffIdx = ctx.cursor.staff.number;
 

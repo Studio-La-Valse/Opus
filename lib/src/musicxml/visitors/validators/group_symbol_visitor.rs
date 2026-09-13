@@ -18,7 +18,7 @@ use roxmltree::Node;
 ///
 /// Only the vocabulary is checked here. Whether the `<part-group>`s that carry
 /// these symbols are balanced, and whether the parts they name exist, is
-/// [`PartConsistencyVisitor`](crate::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor)'s
+/// [`PartConsistencyVisitor`](crate::musicxml::visitors::validators::part_consistency_visitor::PartConsistencyVisitor)'s
 /// business; the two walk the same `<part-list>` and share nothing else.
 #[derive(Default)]
 pub struct GroupSymbolVisitor {}

@@ -11,13 +11,10 @@ mod tests {
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
     use lib::score::visual::layoutable::LayoutParams;
-    use lib::score::visual::note::NoteId;
+    use lib::score::visual::note::{NoteAnchor, NoteId};
     use lib::score::visual::stem::UpDown;
-    use lib::score::visual::system::SystemKey;
-    use lib::score::visual::tie::{Tie, TieMetrics, TieSide, tie_arc};
-    use lib::score::visual::tie_arranger::{
-        NoteAnchor, SystemExtent, collect_note_anchors, split_tie,
-    };
+    use lib::score::visual::system::{SystemExtent, SystemKey};
+    use lib::score::visual::tie::{Tie, TieMetrics, TieSide, split_tie, tie_arc};
     use lib::smufl::smufl_font::SmuflFont;
 
     const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
@@ -489,7 +486,7 @@ mod tests {
     #[test]
     fn engraving_a_real_score_matches_ties_and_resolves_both_endpoints() {
         let engraved = engrave_actor_prelude();
-        let anchors = collect_note_anchors(&engraved.score);
+        let anchors = engraved.score.note_anchors();
 
         assert!(
             !engraved.score.ties.is_empty(),
@@ -514,7 +511,7 @@ mod tests {
     #[test]
     fn every_tie_contributes_one_segment_per_system_it_touches() {
         let engraved = engrave_actor_prelude();
-        let anchors = collect_note_anchors(&engraved.score);
+        let anchors = engraved.score.note_anchors();
 
         let mut expected = 0;
         let mut broken = 0;

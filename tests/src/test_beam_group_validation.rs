@@ -3,7 +3,7 @@ mod tests {
     use lib::musicxml::validate::ValidationCtx;
     use lib::musicxml::validation_issue::Severity;
     use lib::musicxml::visitor::{DefaultVisitor, Visitor};
-    use lib::musicxml::visitors::beam_group_visitor::BeamGroupVisitor;
+    use lib::musicxml::visitors::validators::beam_group_visitor::BeamGroupVisitor;
     use lib::musicxml::walker::Walker;
     use roxmltree::Document;
 
@@ -168,7 +168,7 @@ mod tests {
         assert!(warnings(&[&m]).is_empty());
     }
 
-    /// A beam group may span a barline: `arrange_beams` builds its runs from a
+    /// A beam group may span a barline: `BeamArranger` builds its runs from a
     /// whole part, so a level opened at the end of one measure and closed at the
     /// start of the next is well formed, not stranded.
     #[test]

@@ -25,27 +25,23 @@ use roxmltree::Document;
 use crate::geometry::xy::XY;
 use crate::musicxml::validation_issue::ValidationIssue;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
-use crate::musicxml::visitors::build_logging_visitor::BuildLoggingVisitor;
-use crate::musicxml::visitors::clef_visitor::ClefVisitor;
-use crate::musicxml::visitors::content_visitor::ContentVisitor;
-use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
-use crate::musicxml::visitors::print_layout_visitor::PrintLayoutVisitor;
-use crate::musicxml::visitors::setup_visitor::SetupVisitor;
-use crate::musicxml::visitors::tie_visitor::TieVisitor;
-use crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor;
+use crate::musicxml::visitors::builders::build_logging_visitor::BuildLoggingVisitor;
+use crate::musicxml::visitors::builders::clef_visitor::ClefVisitor;
+use crate::musicxml::visitors::builders::content_visitor::ContentVisitor;
+use crate::musicxml::visitors::builders::layout_visitor::LayoutVisitor;
+use crate::musicxml::visitors::builders::print_layout_visitor::PrintLayoutVisitor;
+use crate::musicxml::visitors::builders::setup_visitor::SetupVisitor;
+use crate::musicxml::visitors::builders::tie_visitor::TieVisitor;
+use crate::musicxml::visitors::builders::walk_cursor_visitor::WalkCursorVisitor;
 use crate::musicxml::walker::Walker;
 use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::app_defaults::AppDefaults;
-use crate::score::page_orientation::PageOrientation;
 use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
-use crate::score::visual::beam_arranger::arrange_beams;
-use crate::score::visual::clef_change_arranger::arrange_clef_changes;
-use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
+use crate::score::visual::arranger::SCORE_ARRANGERS;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::tie_arranger::arrange_ties;
 use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
 
@@ -55,7 +51,7 @@ pub struct EngravedScore {
     pub score: Score,
     pub layout: ScoreDefaults,
     /// What the walk had to say for itself, from
-    /// [`crate::musicxml::visitors::build_logging_visitor`]. Informational only;
+    /// [`crate::musicxml::visitors::builders::build_logging_visitor`]. Informational only;
     /// a caller is free to print or drop them.
     pub messages: Vec<ValidationIssue>,
 }
@@ -207,40 +203,13 @@ pub fn arrange_score(
     progress(Stage::ResolveLayout);
 
     score.measure(&XY::INFINITE, params);
-    page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);
 
-    // Last, and in this order: a beam group's chords and a tie's two endpoints
-    // can be measures, systems or pages apart, so neither can be arranged until
-    // every note in the score has its final position. Beams first because they
-    // move stem tips, and nothing in the tie geometry reads a stem's length.
-    //
-    // A clef change has only one anchor and so could be placed as soon as that
-    // note has its position, but it is here for the same structural reason: what
-    // it needs is spread across the tree, so nothing below the score owns it.
-    // Order among the three does not matter to it -- it reads noteheads and
-    // staves, neither of which the other two touch.
-    arrange_beams(score, params);
-    arrange_ties(score, params);
-    arrange_clef_changes(score, params);
+    // Placing the pages has to come first: every other pass here needs an
+    // absolute coordinate to work with, and nothing in the tree has one until
+    // then. See `SCORE_ARRANGERS` for the full ordering.
+    for arranger in SCORE_ARRANGERS {
+        arranger.arrange(score, params);
+    }
 
     progress(Stage::LayoutPass);
-}
-
-/// Picks the page-layout engine for the effective [`PageOrientation`], resolving
-/// each gutter against `user` then `defaults`.
-fn page_layout_engine(user: &UserLayout, defaults: &AppDefaults) -> Box<dyn LayoutEngine> {
-    let orientation = user.page_orientation.unwrap_or(defaults.page_orientation);
-    match orientation {
-        PageOrientation::Horizontal => Box::new(HorizontalPageLayout {
-            gutter_even: user
-                .horizontal_gutter_even
-                .unwrap_or(defaults.horizontal_gutter_even),
-            gutter_uneven: user
-                .horizontal_gutter_uneven
-                .unwrap_or(defaults.horizontal_gutter_uneven),
-        }),
-        PageOrientation::Vertical => Box::new(VerticalPageLayout {
-            gutter: user.vertical_gutter.unwrap_or(defaults.vertical_gutter),
-        }),
-    }
 }

@@ -95,7 +95,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for TieVisitor {
     /// No attempt is made here to check that the note will actually be built
     /// (`ContentVisitor` also drops notes with no `default-x`). A tie naming a
     /// note that never made it into the tree is discarded later by
-    /// [`split_tie`](crate::score::visual::tie_arranger::split_tie), which has
+    /// [`split_tie`](crate::score::visual::tie::split_tie), which has
     /// to be defensive about that anyway.
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
         let Some(pitch) = tie_pitch(node) else {

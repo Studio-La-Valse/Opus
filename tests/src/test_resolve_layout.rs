@@ -170,7 +170,7 @@ mod tests {
                     assert_red(measure.color, "system measure");
                 }
 
-                // Built by `arrange_clef_changes` rather than by the downward
+                // Built by `ClefChangeArranger` rather than by the downward
                 // `resolve_layout` pass, so this is the arranger being checked
                 // for resolving the colour itself.
                 for (i, clef) in system.clef_changes.iter().enumerate() {

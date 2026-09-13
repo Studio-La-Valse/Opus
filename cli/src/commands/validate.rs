@@ -2,12 +2,12 @@ use crate::commands::{print_issues, read_musicxml};
 use clap::Args;
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
-use lib::musicxml::visitors::beam_group_visitor::BeamGroupVisitor;
-use lib::musicxml::visitors::group_symbol_visitor::GroupSymbolVisitor;
-use lib::musicxml::visitors::page_layout_visitor::PageLayoutVisitor;
-use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
-use lib::musicxml::visitors::position_visitor::PositionVisitor;
-use lib::musicxml::visitors::staff_details_visitor::StaffDetailsVisitor;
+use lib::musicxml::visitors::validators::beam_group_visitor::BeamGroupVisitor;
+use lib::musicxml::visitors::validators::group_symbol_visitor::GroupSymbolVisitor;
+use lib::musicxml::visitors::validators::page_layout_visitor::PageLayoutVisitor;
+use lib::musicxml::visitors::validators::part_consistency_visitor::PartConsistencyVisitor;
+use lib::musicxml::visitors::validators::position_visitor::PositionVisitor;
+use lib::musicxml::visitors::validators::staff_details_visitor::StaffDetailsVisitor;
 use lib::musicxml::walker::Walker;
 use roxmltree::{Document, ParsingOptions};
 

@@ -1,15 +1,15 @@
 //! Resolves [`ClefChange`]s into drawn clefs, after the pages have been
 //! arranged.
 //!
-//! The third of the passes that see the whole score at once, beside
-//! [`tie_arranger`](crate::score::visual::tie_arranger) and
-//! [`beam_arranger`](crate::score::visual::beam_arranger), and there for a
-//! variation on their reason. A tie's two endpoints may be systems apart; a
-//! mid-measure clef change has only one anchor, but that anchor is in the wrong
-//! branch of the tree. The change belongs to a *staff* -- it is a fact about how
-//! the staff is read from that point on -- while the only thing that can say
-//! where on the page it goes is the note or rest it precedes, and notes hang off
-//! a `PartMeasure`, not off a `Staff`. Nothing owns both.
+//! The third of the passes that see the whole score at once; see
+//! [`ScoreArranger`](crate::score::visual::arranger::ScoreArranger). It
+//! is here for a variation on the other two's reason. A tie's two endpoints may
+//! be systems apart; a mid-measure clef change has only one anchor, but that
+//! anchor is in the wrong branch of the tree. The change belongs to a *staff*
+//! -- it is a fact about how the staff is read from that point on -- while the
+//! only thing that can say where on the page it goes is the note or rest it
+//! precedes, and notes hang off a `PartMeasure`, not off a `Staff`. Nothing
+//! owns both.
 //!
 //! The clefs used to be stored on the anchors themselves: a
 //! `BTreeMap<StaffIdx, Clef>` on every `Chord` and an `Option<Clef>` on every
@@ -21,6 +21,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::clef::{Clef, ClefAnchor, ClefChange};
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::NoteId;
@@ -31,29 +32,34 @@ use crate::score::visual::system::SystemKey;
 use crate::score::walk_cursor::Visibility;
 
 /// Rebuilds every system's mid-measure clef changes from `score.clef_changes`.
-///
-/// Runs after `LayoutEngine::arrange_pages`, and assigns rather than appends, so
-/// calling it repeatedly is idempotent -- the same property
-/// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties) and
-/// [`arrange_beams`](crate::score::visual::beam_arranger::arrange_beams) have,
-/// and the reason the wasm render path can re-arrange a cached score for a new
-/// `UserLayout`.
-pub fn arrange_clef_changes(score: &mut Score, params: LayoutParams<'_>) {
-    let mut out = place_clef_changes(score, params);
+pub struct ClefChangeArranger;
 
-    for (page_key, page) in score.pages.iter_mut() {
-        for (system_key, system) in page.systems.iter_mut() {
-            system.clef_changes = out.remove(&(*page_key, *system_key)).unwrap_or_default();
+impl ScoreArranger for ClefChangeArranger {
+    /// Assigns rather than appends, so calling it repeatedly is idempotent --
+    /// the same property
+    /// [`TieArranger`](crate::score::visual::arranger::TieArranger) and
+    /// [`BeamArranger`](crate::score::visual::arranger::BeamArranger)
+    /// have, and the reason the wasm render path can re-arrange a cached score
+    /// for a new `UserLayout`.
+    fn arrange(&self, score: &mut Score, params: LayoutParams<'_>) {
+        let mut out = place_clef_changes(score, params);
+
+        for (page_key, page) in score.pages.iter_mut() {
+            for (system_key, system) in page.systems.iter_mut() {
+                system.clef_changes = out.remove(&(*page_key, *system_key)).unwrap_or_default();
+            }
         }
     }
 }
+
+// ---- internals ----
 
 /// Every clef change that has an anchor on the page, placed and filed under the
 /// system it lands in.
 ///
 /// Walks the tree looking for the anchors rather than indexing them first, which
 /// is where this parts company with
-/// [`collect_note_anchors`](crate::score::visual::tie_arranger::collect_note_anchors).
+/// [`Score::note_anchors`](crate::score::visual::score::Score::note_anchors).
 /// A tie's geometry needs nothing but its two notes, so an index of notes is
 /// enough; a clef change also needs the staff it names -- where its top line
 /// sits and what it is scaled by -- and that is a fact about the anchor's

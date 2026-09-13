@@ -5,7 +5,7 @@ use crate::musicxml::visitor::Visitor;
 use roxmltree::Node;
 
 /// Reports, on the validation walk, every malformed `<staff-details>` that
-/// [`WalkCursorVisitor::enter_staff_details`](crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor)
+/// [`WalkCursorVisitor::enter_staff_details`](crate::musicxml::visitors::builders::walk_cursor_visitor::WalkCursorVisitor)
 /// panics on when the render walk reaches it.
 ///
 /// That reader is strict for the same reason the page-layout one is: a staff it

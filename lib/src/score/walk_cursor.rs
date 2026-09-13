@@ -131,7 +131,7 @@ pub struct WalkCursor {
     pub cue: bool,
 
     /// Identity of the `<note>` currently being visited, handed out by
-    /// [`WalkCursorVisitor`](crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor)
+    /// [`WalkCursorVisitor`](crate::musicxml::visitors::builders::walk_cursor_visitor::WalkCursorVisitor)
     /// on `enter_note`.
     ///
     /// Lives here rather than inside one visitor because more than one visitor

@@ -141,6 +141,18 @@ impl StaffMeasure {
             rest.arrange_ctx(&glyph_origin, &staff_ctx);
         }
     }
+
+    /// Places everything this measure carries other than its three opening
+    /// columns, which
+    /// [`System::arrange_measure_starts`](crate::score::visual::system::System)
+    /// places once every staff measure of the system is placed. Run by
+    /// [`ContentArranger`](crate::score::visual::arranger::ContentArranger)
+    /// after the container pass has placed this measure itself.
+    pub fn arrange_content(&mut self) {
+        self.arrange_time_signature_end();
+        self.arrange_clef_end();
+        self.arrange_rests();
+    }
 }
 impl Layoutable for StaffMeasure {
     fn resolve_layout(&mut self, params: LayoutParams<'_>) {
@@ -203,18 +215,13 @@ impl Layoutable for StaffMeasure {
         }
     }
 
-    /// Places everything this measure can place on its own. The three opening
-    /// elements are not among them: where they go is decided across the whole
-    /// system by
-    /// [`System::arrange_measure_starts`](crate::score::visual::system::System),
-    /// which runs once the staves have been placed -- the same way a tie, whose
-    /// two ends may be systems apart, is left to
-    /// [`arrange_ties`](crate::score::visual::tie_arranger::arrange_ties).
+    /// Places this measure's own position. Everything it draws is placed
+    /// afterwards by [`arrange_content`](Self::arrange_content), which the
+    /// container pass does not call: content placement is
+    /// [`ContentArranger`](crate::score::visual::arranger::ContentArranger)'s
+    /// job, run once every container in the tree -- this measure's opening
+    /// columns included -- has its final position.
     fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
-
-        self.arrange_time_signature_end();
-        self.arrange_clef_end();
-        self.arrange_rests();
     }
 }
