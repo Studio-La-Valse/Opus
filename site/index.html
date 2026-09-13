@@ -1,0 +1,89 @@
+<title>Opus</title>
+<meta name="description" content="A MusicXML engraving engine written in Rust, rendered live in the browser." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="/css/style.css" />
+
+<header id="site-nav" class="site-nav"></header>
+
+<!-- No sample document is banner-shaped, so there's no live hero render here
+     yet - see the "hero score" finding for the follow-up. -->
+<main class="landing-main">
+  <h1>Opus</h1>
+  <p class="tagline">A MusicXML engraving engine written in Rust.</p>
+
+  <section>
+    <h2>What it is</h2>
+    <p>
+      Opus parses MusicXML, lays the music out into pages, and renders the result to SVG, PDF, or - as
+      above - a canvas via WebAssembly in the browser.
+    </p>
+  </section>
+
+  <section>
+    <h2>Why this exists</h2>
+    <p>
+      Score rendering today tends to be scattered: a web renderer, a desktop app, a PDF exporter and a
+      mobile app usually end up as separate codebases with separate engraving logic, each with its own bugs
+      and its own ceiling on quality. Opus is one engraving pipeline, written once in Rust, that every
+      platform draws from, so improving the engraving benefits all of them at once instead of one at a time.
+    </p>
+    <p>
+      Built on that shared pipeline, output can be reshaped without touching the underlying music: larger
+      notation for someone with limited vision, a softer, lower-contrast palette for someone sensitive to
+      glare - as presentation settings layered over one accurate rendering, rather than a fixed image. A
+      baked PDF page cannot offer that; the pane on the <a href="/render/">render page</a> is this idea made
+      concrete, not a demo of unrelated settings.
+    </p>
+  </section>
+
+  <section>
+    <h2>What is actually happening on this page</h2>
+    <p>Every render on this site - including the pane on the render page - goes through the same pipeline:</p>
+    <ol>
+      <li>MusicXML text, parsed and validated.</li>
+      <li>Engraved into pages by the layout engine.</li>
+      <li>Flattened into a tagged <code>Float32Array</code> of geometry - not SVG, not DOM.</li>
+      <li>~200 lines of JavaScript decode that stream into <code>Canvas2D</code> calls.</li>
+    </ol>
+    <p>
+      Six record tags carry the whole stream:
+      <span class="record-tags"
+        >TAG_LINE, TAG_RECT, TAG_TEXT, TAG_POLYGON, TAG_CIRCLE, TAG_GLYPH</span
+      >. Text is drawn with the Bravura music font, force-loaded through the Font Loading API before the
+      first render, because canvas text rasterizes synchronously and never repaints once a font arrives
+      late.
+    </p>
+  </section>
+
+  <section>
+    <h2>Status</h2>
+    <p>
+      Work in progress. Beaming across measures and systems, tuplets, dynamics, lyrics, articulations,
+      slurs and repeats are incomplete or absent. See the
+      <a href="https://github.com/Studio-La-Valse/Opus/blob/main/ROADMAP.md" target="_blank" rel="noopener"
+        >roadmap</a
+      >
+      for what is known, planned, or intentionally left unfinished.
+    </p>
+  </section>
+
+  <section>
+    <h2>Using it</h2>
+    <p>Build the wasm bindings, then drop the component on a page that keeps its runtime files together:</p>
+    <pre><code>rustup target add wasm32-unknown-unknown
+./scripts/build-wasm.sh</code></pre>
+    <pre><code>&lt;script type="module" src="/path/to/web/music-xml.js"&gt;&lt;/script&gt;
+&lt;music-xml file="score.musicxml"&gt;&lt;/music-xml&gt;</code></pre>
+    <div class="cta-links">
+      <a href="/render/">Try the render page</a>
+      <a href="https://github.com/Studio-La-Valse/Opus" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="/js/nav.js"></script>

@@ -1,6 +1,6 @@
 use crate::musicxml::utils::NodeUtils;
 use roxmltree::Node;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
@@ -21,8 +21,11 @@ use std::str::FromStr;
 /// three levels can differ. A bare `GroupSymbol::default()` would have to pick
 /// one of them and be wrong for the other two.
 ///
+/// `Serialize` is derived only so [`UserLayout`](crate::score::user_layout::UserLayout)
+/// can derive it in turn; nothing relies on its (plain variant name) output.
+///
 /// [`PageOrientation`]: crate::score::page_orientation::PageOrientation
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "String")]
 pub enum GroupSymbol {
     /// Drawn as nothing. Distinct from an *absent* `<group-symbol>`, which is

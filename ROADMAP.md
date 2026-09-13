@@ -122,6 +122,16 @@ Defects in what is already built, not missing features.
   attribute for a note is supplied - then we may skip in content visitor after all. 
   Notes without pitch (purcussive notes) should in fact be handled like any other.
 
+- **The browser path cannot read UTF-16 MusicXML.** `web/music-xml.js`'s
+  `_loadFile` does `await response.text()`, which decodes as UTF-8;
+  `assets/xmlsamples/MozaChloSample.musicxml` is UTF-16BE and
+  `MozaVeilSample.musicxml` is UTF-16LE, so both fail to parse in the browser
+  — they render fine through the CLI, which sniffs the BOM in `read_musicxml`
+  (`cli/src/commands/mod.rs`) — and are excluded from the exhibition site's
+  sample set (`scripts/build-site.sh`) for the same reason. Affects any
+  consumer feeding the component a Finale export, not just the site. Fix is
+  roughly `arrayBuffer()` + BOM sniff + `TextDecoder`, ~15 lines.
+
 ---
 
 ## 3. Fixes
@@ -138,6 +148,18 @@ Small and well-specified. Each is a single change and none depend on each other.
 
 - Scale grace and cue notes' accidental, flag and beam group. Decide how to
   handle vecs of chords with mixed grace, cue and normal notes: validation is a must.
+
+- `assets/xmlsamples/__MACOSX/` holds 18 tracked `._*.musicxml` AppleDouble
+  resource forks, left over from extracting a zip on macOS. Harmless, but
+  every glob that walks `assets/xmlsamples/` — including the exhibition
+  site's sample generator (`scripts/lib/generate-samples-json.py`) — has to
+  know to exclude them. Delete the directory instead.
+
+- `wasm/pkg/` is not listed in the root `.gitignore`. It is a build artifact,
+  today ignored only by its own `wasm/pkg/.gitignore`, which `wasm-pack`
+  writes on first build — so a fresh clone that has never run
+  `scripts/build-wasm.sh` has no ignore rule for it in place yet. Add an
+  explicit `/wasm/pkg/` entry to the root `.gitignore`.
 
 ## 4. Features
 

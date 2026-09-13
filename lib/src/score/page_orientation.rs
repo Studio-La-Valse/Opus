@@ -1,11 +1,12 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
 /// Deserializes from the same `"horizontal"` / `"vertical"` strings [`FromStr`]
 /// accepts, so a CLI flag, a CSS custom property and a JSON option all spell it
-/// the same way.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+/// the same way. `Serialize` is derived only so [`UserLayout`](crate::score::user_layout::UserLayout)
+/// can derive it in turn; nothing relies on its (plain variant name) output.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
 #[serde(try_from = "String")]
 pub enum PageOrientation {
     #[default]
