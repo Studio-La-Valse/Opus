@@ -132,6 +132,18 @@ Defects in what is already built, not missing features.
   consumer feeding the component a Finale export, not just the site. Fix is
   roughly `arrayBuffer()` + BOM sniff + `TextDecoder`, ~15 lines.
 
+- **A long enough score comes out as a blank canvas in the browser.**
+  `MAX_CANVAS_PIXELS` in `wasm/src/lib.rs` caps the canvas at 12 megapixels of
+  *area* and nothing else, so `render_scale` shrinks the score until it fits but
+  never looks at either dimension on its own. With the site's vertical page
+  orientation the pages stack into one column, and a 12 MP canvas of that aspect
+  is roughly `4016 * sqrt(pages)` physical pixels tall — past about seventeen
+  pages that crosses the ~16,384 px per-side limit Safari and iOS enforce, and a
+  canvas over the limit renders as nothing at all rather than being scaled down.
+  No sample in `assets/xmlsamples/` is long enough to trip it today, which is
+  the only reason it has not been seen. A per-side clamp would paper over it;
+  the per-page canvases in section 4 remove the shape entirely.
+
 ---
 
 ## 3. Fixes
@@ -264,6 +276,34 @@ consecutive feature impact.
   adds is that its endpoints are not pinned down by pitch the way a tie's are, so
   choosing the anchors — and the collision avoidance that follows from it — is
   the actual work.
+
+- **One canvas per page in the browser renderer, painted visible-first.**
+  `web/music-xml.js` draws the whole score into a single canvas, and
+  `wasm/src/lib.rs` scales the geometry down to keep that canvas inside a
+  12-megapixel budget. Because the budget covers the entire document, per-page
+  quality falls off as `1 / sqrt(pages)`: `ActorPreludeSample`'s four pages get
+  1504 physical pixels across a page, sixteen pages would get 752, and no amount
+  of zooming recovers detail that was never rasterized. The same single canvas
+  is what produces the blank-canvas bug in section 2.
+
+  The fix is to give each page its own canvas and paint only the pages on
+  screen, which makes quality a function of the page rather than of the
+  document's length and keeps every backing store small. The seam for it is
+  already in place and deliberately unused: `FlatBuffer::page_table`
+  (`lib/src/drawable/canvas/flat_buffer/mod.rs`) records
+  `[geometry_start_index, origin_x, origin_y, width, height]` per page, and both
+  `RenderOutput::page_table` and the constants block in `web/music-xml.js` note
+  that the current single-canvas renderer ignores it. Two things it does not yet
+  carry: a per-page start index into `text_blob`, without which a page's slice
+  cannot be drawn in isolation, and — once the browser sizes each canvas from
+  the page's own displayed size — any reason for the pixel budget and
+  `render_scale` to stay on the Rust side at all, since only the browser knows
+  how large a page is actually shown.
+
+  Not urgent. The render page's option editing was real-time again after
+  `de16565` memoized the last rendered option set and switched the site's
+  controls from a trailing debounce to a rAF throttle, so what is left here is
+  render quality and the section 2 bug, not responsiveness.
 
 ---
 
