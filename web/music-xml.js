@@ -155,8 +155,8 @@ function cssPropertyFor(option) {
 
 // These are CSS custom properties only (`--page-color`, etc. - via an inline
 // `style="--page-color: ..."`, a class, or a plain stylesheet rule targeting
-// the tag), not HTML attributes - see `_cssVar`. `file` and `debug` are the
-// only real HTML attributes this element has.
+// the tag), not HTML attributes - see `_renderOptions`. `file` and `debug`
+// are the only real HTML attributes this element has.
 const OBSERVED_ATTRIBUTES = [
   "file",
   "debug",
@@ -210,6 +210,12 @@ export class MusicXmlElement extends HTMLElement {
     this._loadSeq = 0;
     this._renderDebounce = undefined;
     this._connected = false;
+    // The JSON snapshot of the options used for the most recent completed
+    // render, and (between _scheduleRender building them and _render
+    // consuming them) the not-yet-rendered options a debounced render is
+    // waiting on. See _renderOptions / _scheduleRender / _render.
+    this._lastOptionsJson = undefined;
+    this._pendingOptions = undefined;
     this._resetStyleCache();
   }
 
@@ -288,26 +294,29 @@ export class MusicXmlElement extends HTMLElement {
     this._canvas.width = 0;
     this._canvas.height = 0;
     this._resetStyleCache();
+    this._lastOptionsJson = undefined;
   }
 
   _setStatus(message) {
     this._statusEl.textContent = message ?? "";
   }
 
-  // Reads the CSS custom property `--${name}` off this element's own
-  // computed style, so it picks up whatever a stylesheet rule, class, or
-  // inline `style="--page-color: ..."` on the tag resolves to.
-  _cssVar(name) {
-    const value = getComputedStyle(this).getPropertyValue(`--${name}`).trim();
-    return value === "" ? undefined : value;
-  }
+  // The full render() options object: debug, DPI, the three font
+  // properties, and every LAYOUT_OPTIONS entry this element actually sets -
+  // all read off this element's CSS custom properties (a stylesheet rule,
+  // class, or inline `style="--page-color: ..."`), via a single
+  // getComputedStyle() call reused for all 39 lookups rather than one call
+  // per property.
+  _renderOptions() {
+    const computed = getComputedStyle(this);
+    const cssVar = (name) => {
+      const value = computed.getPropertyValue(`--${name}`).trim();
+      return value === "" ? undefined : value;
+    };
 
-  // The `layout` half of a render's options: every LAYOUT_OPTIONS entry that
-  // this element actually sets, read off its CSS custom property.
-  _layoutOptions() {
     const layout = {};
     for (const option of LAYOUT_OPTIONS) {
-      const value = this._cssVar(cssPropertyFor(option));
+      const value = cssVar(cssPropertyFor(option));
       if (value === undefined) continue;
       // CSS custom properties are always strings, but the Rust side wants a
       // number for the numeric knobs - so send a number whenever the value is
@@ -316,19 +325,37 @@ export class MusicXmlElement extends HTMLElement {
       const asNumber = Number(value);
       layout[option] = Number.isFinite(asNumber) ? asNumber : value;
     }
-    return layout;
+
+    return {
+      debug: this.hasAttribute("debug"),
+      devicePixelRatio: window.devicePixelRatio || 1,
+      titleFont: cssVar("title-font"),
+      lyricFont: cssVar("lyric-font"),
+      groupNameFont: cssVar("group-name-font"),
+      layout,
+    };
   }
 
   // Public escape hatch: re-renders using the current attributes/CSS custom
   // properties, for the cases attributeChangedCallback can't observe on its
   // own (a custom property changing via an external stylesheet rule or an
-  // ancestor's class toggle).
+  // ancestor's class toggle). Clears the memoized option snapshot first, so
+  // it still forces a render even though nothing this element can see has
+  // actually changed.
   refresh() {
+    this._lastOptionsJson = undefined;
     this._render();
   }
 
   _scheduleRender() {
     if (!this._score) return;
+    const options = this._renderOptions();
+    // A render this element has already produced pixel-for-identical output
+    // for - most commonly a `style` mutation that doesn't touch any of the
+    // CSS custom properties above (e.g. the zoom slider's width) - has
+    // nothing to gain from repainting, so skip it.
+    if (JSON.stringify(options) === this._lastOptionsJson) return;
+    this._pendingOptions = options;
     // Coalesces bursts of attribute changes (e.g. a host page driving a
     // color picker's `input` event) into a single render.
     clearTimeout(this._renderDebounce);
@@ -338,18 +365,17 @@ export class MusicXmlElement extends HTMLElement {
   _render() {
     if (!this._score) return;
 
+    // _scheduleRender already built these; a direct call (from _loadFile or
+    // refresh()) has not, so build them now.
+    const options = this._pendingOptions ?? this._renderOptions();
+    this._pendingOptions = undefined;
+
     let output;
     try {
-      output = this._score.render({
-        debug: this.hasAttribute("debug"),
-        devicePixelRatio: window.devicePixelRatio || 1,
-        titleFont: this._cssVar("title-font"),
-        lyricFont: this._cssVar("lyric-font"),
-        groupNameFont: this._cssVar("group-name-font"),
-        layout: this._layoutOptions(),
-      });
+      output = this._score.render(options);
       this._draw(output);
       this._setStatus("");
+      this._lastOptionsJson = JSON.stringify(options);
     } catch (err) {
       this._setStatus(String(err));
       this.dispatchEvent(new CustomEvent("error", { detail: err }));

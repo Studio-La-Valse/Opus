@@ -4,15 +4,26 @@
 import "/web/music-xml.js";
 import { OPTIONS, OPTION_GROUPS, cssPropertyFor } from "/js/options.js";
 
-// Coalesces bursts of "input" events (a slider drag, a color picker drag)
-// into one write, so dragging a slider across a 1.2 MB orchestral score
-// doesn't queue a full re-layout per pixel. "change" (commit) writes through
-// immediately - see each build*Control function below.
-function debounce(fn, delay) {
-  let timer;
+// Coalesces bursts of "input" events (a slider drag, a color picker drag) to
+// one write per animation frame, always carrying the latest value, so
+// dragging a slider across a 1.2 MB orchestral score can't queue a write per
+// pixel but still updates continuously rather than only once the drag
+// pauses. "change" (commit) writes through immediately - see each
+// build*Control function below; <music-xml>'s own option memoization
+// (web/music-xml.js) makes that immediate extra write free when it lands on
+// the same value the last queued frame already wrote.
+function rafThrottle(fn) {
+  let queued = null;
+  let frame = 0;
   return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
+    queued = args;
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      const latest = queued;
+      queued = null;
+      fn(...latest);
+    });
   };
 }
 
@@ -84,17 +95,17 @@ function buildNumberControl(scoreEl, cssState, option) {
     const value = Number(raw);
     applyCssVar(scoreEl, cssState, prop, String(value), value === option.default);
   };
-  const debouncedWrite = debounce(write, 80);
+  const throttledWrite = rafThrottle(write);
 
   range.addEventListener("input", () => {
     number.value = range.value;
-    debouncedWrite(range.value);
+    throttledWrite(range.value);
   });
   range.addEventListener("change", () => write(range.value));
 
   number.addEventListener("input", () => {
     range.value = number.value === "" ? String(option.default) : number.value;
-    debouncedWrite(number.value);
+    throttledWrite(number.value);
   });
   number.addEventListener("change", () => write(number.value));
 
@@ -146,16 +157,16 @@ function buildColorControl(scoreEl, cssState, option) {
     const isDefault = Number(alpha.value) >= 100 && value.toLowerCase() === option.default.toLowerCase();
     applyCssVar(scoreEl, cssState, prop, value, isDefault);
   };
-  const debouncedWrite = debounce(write, 80);
+  const throttledWrite = rafThrottle(write);
 
   swatch.addEventListener("input", () => {
     currentValue();
-    debouncedWrite();
+    throttledWrite();
   });
   swatch.addEventListener("change", write);
   alpha.addEventListener("input", () => {
     currentValue();
-    debouncedWrite();
+    throttledWrite();
   });
   alpha.addEventListener("change", write);
 
@@ -205,8 +216,8 @@ function buildFontControl(scoreEl, cssState, option) {
     const value = input.value.trim();
     applyCssVar(scoreEl, cssState, prop, value, value === "");
   };
-  const debouncedWrite = debounce(write, 80);
-  input.addEventListener("input", debouncedWrite);
+  const throttledWrite = rafThrottle(write);
+  input.addEventListener("input", throttledWrite);
   input.addEventListener("change", write);
 
   controls.append(input);
@@ -322,10 +333,14 @@ function wirePanelChrome(resets, cssState) {
 }
 
 // Pure CSS: width on the element scales the canvas (which is
-// width:100%/height:auto inside the component's shadow root) without
-// triggering a re-render. A block element's auto width already fills its
-// container, so max-width could only ever shrink it - an explicit width is
-// what lets it grow past 100% and overflow into .stage's own scrollbars.
+// width:100%/height:auto inside the component's shadow root). A block
+// element's auto width already fills its container, so max-width could only
+// ever shrink it - an explicit width is what lets it grow past 100% and
+// overflow into .stage's own scrollbars. This mutates the element's `style`
+// attribute, which the component does observe and re-evaluate - but its
+// option memoization (web/music-xml.js) recognizes that no CSS custom
+// property the component reads has actually changed, and skips the repaint
+// that would otherwise imply.
 function wireZoom(scoreEl) {
   const zoom = document.getElementById("zoom");
   const zoomValue = document.getElementById("zoom-value");
