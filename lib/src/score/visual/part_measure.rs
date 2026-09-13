@@ -182,6 +182,7 @@ impl PartMeasure {
 impl PartMeasure {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
+            score_defaults,
             user_layout,
             app_defaults,
             ..
@@ -192,8 +193,9 @@ impl PartMeasure {
             .unwrap_or(app_defaults.foreground_color);
 
         self.ledger_thickness = user_layout
-            .staff
-            .unwrap_or(app_defaults.staff_line_thickness);
+            .staff_line_width
+            .or(score_defaults.appearance.staff)
+            .unwrap_or(app_defaults.staff_line_width);
 
         for chord in self.chords.values_mut().flatten() {
             chord.resolve_layout(params);

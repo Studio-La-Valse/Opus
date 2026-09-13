@@ -20,9 +20,9 @@ pub struct Staff {
     pub measures: BTreeMap<u32, StaffMeasure>,
 
     pub color: Color,
-    pub line_thickness: f32,
-    pub barline_thickness_light: f32,
-    pub barline_thickness_heavy: f32,
+    pub line_width: f32,
+    pub light_barline: f32,
+    pub heavy_barline: f32,
 
     pub hidden: bool,
 
@@ -44,9 +44,9 @@ impl Default for Staff {
             measures: Default::default(),
 
             color: Default::default(),
-            line_thickness: Default::default(),
-            barline_thickness_heavy: Default::default(),
-            barline_thickness_light: Default::default(),
+            line_width: Default::default(),
+            light_barline: Default::default(),
+            heavy_barline: Default::default(),
 
             hidden: Default::default(),
 
@@ -148,20 +148,20 @@ impl Layoutable for Staff {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
-        self.line_thickness = user_layout
-            .staff
+        self.line_width = user_layout
+            .staff_line_width
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_thickness);
+            .unwrap_or(app_defaults.staff_line_width);
 
-        self.barline_thickness_light = user_layout
+        self.light_barline = user_layout
             .light_barline
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.barline_light);
+            .unwrap_or(app_defaults.light_barline);
 
-        self.barline_thickness_heavy = user_layout
+        self.heavy_barline = user_layout
             .heavy_barline
             .or(score_defaults.appearance.heavy_barline)
-            .unwrap_or(app_defaults.barline_heavy);
+            .unwrap_or(app_defaults.heavy_barline);
 
         for measure in self.measures.values_mut() {
             measure.resolve_layout(params);

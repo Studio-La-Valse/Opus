@@ -32,8 +32,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
                     "staff" => ctx.layout.appearance.staff = Some(v),
                     "light barline" => ctx.layout.appearance.light_barline = Some(v),
                     "heavy barline" => ctx.layout.appearance.heavy_barline = Some(v),
-                    "beam" => ctx.layout.appearance.beam_thickness = Some(v),
-                    "stem" => ctx.layout.appearance.stem_thickness = Some(v),
+                    "beam" => ctx.layout.appearance.beam = Some(v),
+                    "stem" => ctx.layout.appearance.stem = Some(v),
                     _ => {}
                 }
             }
@@ -48,8 +48,8 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
                 let v: f32 = note_size.req_parse();
 
                 match t {
-                    "grace" => ctx.layout.appearance.note_size_grace = Some(v / 100.),
-                    "cue" => ctx.layout.appearance.note_size_cue = Some(v / 100.),
+                    "grace" => ctx.layout.appearance.grace = Some(v / 100.),
+                    "cue" => ctx.layout.appearance.cue = Some(v / 100.),
                     _ => {}
                 }
             }

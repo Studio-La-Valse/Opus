@@ -22,7 +22,7 @@ pub struct UserLayout {
     pub horizontal_gutter_uneven: Option<f32>,
     pub vertical_gutter: Option<f32>,
 
-    pub staff: Option<f32>,
+    pub staff_line_width: Option<f32>,
     pub light_barline: Option<f32>,
     pub heavy_barline: Option<f32>,
 
@@ -42,7 +42,6 @@ pub struct UserLayout {
 
     pub dot_radius: Option<f32>,
     pub dot_spacing: Option<f32>,
-    pub dot_color: Option<Color>,
 
     /// Overrides for the tie knobs of the same name on
     /// [`AppDefaults`](crate::score::app_defaults::AppDefaults), all in tenths

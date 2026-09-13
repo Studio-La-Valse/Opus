@@ -52,31 +52,6 @@ pub struct RenderArgs {
     #[arg(long)]
     glyphs: String,
 
-    /// Font family for titles / work-level text. Defaults to the app default
-    /// (`serif`). For `render pdf` this family is resolved against the installed
-    /// system fonts and embedded.
-    #[arg(long)]
-    title_font: Option<String>,
-
-    /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
-    /// and embedded like `--title-font` for `render pdf`.
-    #[arg(long)]
-    lyric_font: Option<String>,
-
-    /// Font family for part / part-group names. Defaults to the app default
-    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
-    #[arg(long)]
-    group_name_font: Option<String>,
-
-    /// Font size in tenths for a part / part-group name.
-    #[arg(long)]
-    group_name_size: Option<f32>,
-
-    /// Padding in tenths between a part / part-group name's right edge and the
-    /// symbol it sits beside.
-    #[arg(long)]
-    group_name_padding: Option<f32>,
-
     #[arg(long, short, action)]
     debug: bool,
 
@@ -97,6 +72,65 @@ pub struct RenderArgs {
 
     #[arg(long)]
     vertical_gutter: Option<f32>,
+
+    #[arg(long)]
+    staff_line: Option<f32>,
+
+    #[arg(long)]
+    light_barline: Option<f32>,
+
+    #[arg(long)]
+    heavy_barline: Option<f32>,
+
+    #[arg(long)]
+    beam_thickness: Option<f32>,
+
+    #[arg(long)]
+    beam_spacing: Option<f32>,
+
+    #[arg(long)]
+    stem_thickness: Option<f32>,
+
+    /// Fraction of full size a grace note is drawn at.
+    #[arg(long)]
+    note_size_grace: Option<f32>,
+
+    /// Fraction of full size a cue note is drawn at.
+    #[arg(long)]
+    note_size_cue: Option<f32>,
+
+    #[arg(long)]
+    dot_radius: Option<f32>,
+
+    #[arg(long)]
+    dot_spacing: Option<f32>,
+
+    #[arg(long)]
+    tie_endpoint_thickness: Option<f32>,
+
+    #[arg(long)]
+    tie_midpoint_thickness: Option<f32>,
+
+    #[arg(long)]
+    tie_height_ratio: Option<f32>,
+
+    #[arg(long)]
+    tie_height_min: Option<f32>,
+
+    #[arg(long)]
+    tie_height_max: Option<f32>,
+
+    #[arg(long)]
+    tie_note_gap: Option<f32>,
+
+    #[arg(long)]
+    tie_vertical_offset: Option<f32>,
+
+    #[arg(long)]
+    tie_break_inset: Option<f32>,
+
+    #[arg(long)]
+    tie_break_fragment: Option<f32>,
 
     /// Force one symbol on every section / part-group / part in the score,
     /// overriding whatever its `<part-group>` declared: `none`, `brace`,
@@ -137,6 +171,31 @@ pub struct RenderArgs {
     /// How far a square symbol's arms reach toward the system, in tenths.
     #[arg(long)]
     group_square_arm: Option<f32>,
+
+    /// Font family for titles / work-level text. Defaults to the app default
+    /// (`serif`). For `render pdf` this family is resolved against the installed
+    /// system fonts and embedded.
+    #[arg(long)]
+    title_font: Option<String>,
+
+    /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
+    /// and embedded like `--title-font` for `render pdf`.
+    #[arg(long)]
+    lyric_font: Option<String>,
+
+    /// Font family for part / part-group names. Defaults to the app default
+    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
+    #[arg(long)]
+    group_name_font: Option<String>,
+
+    /// Font size in tenths for a part / part-group name.
+    #[arg(long)]
+    group_name_size: Option<f32>,
+
+    /// Padding in tenths between a part / part-group name's right edge and the
+    /// symbol it sits beside.
+    #[arg(long)]
+    group_name_padding: Option<f32>,
 }
 
 /// Output format for `opus render`, chosen as a subcommand: `render svg` or
@@ -172,11 +231,6 @@ pub fn run(format: RenderCommand) {
         overwrite,
         meta,
         glyphs: glyph_names,
-        title_font,
-        lyric_font,
-        group_name_font,
-        group_name_size,
-        group_name_padding,
         debug,
         page_color,
         foreground_color,
@@ -184,6 +238,25 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
+        staff_line,
+        light_barline,
+        heavy_barline,
+        beam_thickness,
+        beam_spacing,
+        stem_thickness,
+        note_size_grace,
+        note_size_cue,
+        dot_radius,
+        dot_spacing,
+        tie_endpoint_thickness,
+        tie_midpoint_thickness,
+        tie_height_ratio,
+        tie_height_min,
+        tie_height_max,
+        tie_note_gap,
+        tie_vertical_offset,
+        tie_break_inset,
+        tie_break_fragment,
         section_symbol,
         part_group_symbol,
         part_symbol,
@@ -194,6 +267,11 @@ pub fn run(format: RenderCommand) {
         group_line_thickness,
         group_square_thickness,
         group_square_arm,
+        title_font,
+        lyric_font,
+        group_name_font,
+        group_name_size,
+        group_name_padding,
     } = args;
 
     let mut time = Instant::now();
@@ -237,6 +315,25 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
+        staff_line_width: staff_line,
+        light_barline,
+        heavy_barline,
+        beam_thickness,
+        beam_spacing,
+        stem_thickness,
+        note_size_grace,
+        note_size_cue,
+        dot_radius,
+        dot_spacing,
+        tie_endpoint_thickness,
+        tie_midpoint_thickness,
+        tie_height_ratio,
+        tie_height_min,
+        tie_height_max,
+        tie_note_gap,
+        tie_vertical_offset,
+        tie_break_inset,
+        tie_break_fragment,
         section_symbol,
         part_group_symbol,
         part_symbol,
@@ -249,7 +346,6 @@ pub fn run(format: RenderCommand) {
         group_square_arm,
         group_name_size,
         group_name_padding,
-        ..Default::default()
     };
     let app_defaults: AppDefaults = Default::default();
 
