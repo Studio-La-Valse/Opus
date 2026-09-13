@@ -22,7 +22,7 @@ pub struct UserLayout {
     pub horizontal_gutter_uneven: Option<f32>,
     pub vertical_gutter: Option<f32>,
 
-    pub staff: Option<f32>,
+    pub staff_line_width: Option<f32>,
     pub light_barline: Option<f32>,
     pub heavy_barline: Option<f32>,
 

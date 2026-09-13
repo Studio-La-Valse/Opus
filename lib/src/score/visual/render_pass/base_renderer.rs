@@ -159,7 +159,7 @@ impl RenderPass for BaseRenderer {
         };
 
         let stroke_color = staff.color;
-        let stroke_width = staff.staff_line_thickness * staff.scale;
+        let stroke_width = staff.line_width * staff.scale;
 
         for _i in 0..staff.lines {
             let line = Line {

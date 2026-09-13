@@ -74,7 +74,7 @@ pub struct RenderArgs {
     vertical_gutter: Option<f32>,
 
     #[arg(long)]
-    staff: Option<f32>,
+    staff_line: Option<f32>,
 
     #[arg(long)]
     light_barline: Option<f32>,
@@ -238,7 +238,7 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
-        staff,
+        staff_line,
         light_barline,
         heavy_barline,
         beam_thickness,
@@ -315,7 +315,7 @@ pub fn run(format: RenderCommand) {
         horizontal_gutter_even,
         horizontal_gutter_uneven,
         vertical_gutter,
-        staff,
+        staff_line_width: staff_line,
         light_barline,
         heavy_barline,
         beam_thickness,

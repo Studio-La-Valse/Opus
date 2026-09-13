@@ -299,9 +299,9 @@ impl Layoutable for System {
             .unwrap_or(app_defaults.foreground_color);
 
         self.staff_line_thickness = user_layout
-            .staff
+            .staff_line_width
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_thickness);
+            .unwrap_or(app_defaults.staff_line_width);
 
         self.light_barline = user_layout
             .light_barline

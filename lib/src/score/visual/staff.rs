@@ -20,7 +20,7 @@ pub struct Staff {
     pub measures: BTreeMap<u32, StaffMeasure>,
 
     pub color: Color,
-    pub staff_line_thickness: f32,
+    pub line_width: f32,
     pub light_barline: f32,
     pub heavy_barline: f32,
 
@@ -44,7 +44,7 @@ impl Default for Staff {
             measures: Default::default(),
 
             color: Default::default(),
-            staff_line_thickness: Default::default(),
+            line_width: Default::default(),
             light_barline: Default::default(),
             heavy_barline: Default::default(),
 
@@ -148,10 +148,10 @@ impl Layoutable for Staff {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
-        self.staff_line_thickness = user_layout
-            .staff
+        self.line_width = user_layout
+            .staff_line_width
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_thickness);
+            .unwrap_or(app_defaults.staff_line_width);
 
         self.light_barline = user_layout
             .light_barline
