@@ -56,7 +56,8 @@ welcome.
 | [assets/](assets) | SMuFL font metadata, MusicXML sample and fixture files used by the tests, and scratch render output. |
 | [platforms/](platforms) | Reserved boundaries for native desktop, iOS, and Android apps. None are started yet; see the README in each. |
 | [packaging/](packaging) | npm package manifest for the `web`/`wasm` component. |
-| [scripts/](scripts) | Build and packaging scripts (`build-wasm.sh`, `stage-package.sh`). |
+| [site/](site) | Source of the exhibition site deployed to [opus.lavalse.net](https://opus.lavalse.net). |
+| [scripts/](scripts) | Build and packaging scripts (`build-wasm.sh`, `stage-package.sh`, `build-site.sh`). |
 
 ## Building
 
@@ -119,6 +120,9 @@ This produces `wasm/pkg/`. From a page that keeps `web/`, `wasm/pkg/`, and
 <script type="module" src="/path/to/web/music-xml.js"></script>
 <music-xml file="score.musicxml"></music-xml>
 ```
+
+[opus.lavalse.net/render/](https://opus.lavalse.net/render/) exercises every
+option the component exposes against the current sample set; see [site/](site).
 
 ## License
 

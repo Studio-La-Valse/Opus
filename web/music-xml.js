@@ -107,7 +107,8 @@ function rgba(r, g, b, a) {
 // A name that no UserLayout field matches is silently ignored rather than
 // reported (serde-wasm-bindgen only looks up the fields it expects), so a typo
 // here shows up as an option that quietly does nothing rather than an error -
-// worth a look at assets/web_test after adding one.
+// worth a look at the exhibition site's render page after adding one
+// (site/render/index.html, built by scripts/build-site.sh).
 const LAYOUT_OPTIONS = [
   "pageColor",
   "foregroundColor",

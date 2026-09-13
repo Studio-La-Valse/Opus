@@ -1,0 +1,49 @@
+<title>Render - Opus</title>
+<link
+  href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="/css/style.css" />
+
+<header id="site-nav" class="site-nav"></header>
+
+<main class="render-main">
+  <div class="stage-wrap">
+    <div class="stage-header">
+      <h1 id="doc-title"></h1>
+      <span id="doc-bytes" class="doc-bytes"></span>
+      <span id="doc-status" class="doc-status" role="status" aria-live="polite"></span>
+      <label class="zoom-control">
+        Zoom
+        <input type="range" id="zoom" min="25" max="200" value="100" step="5" />
+        <span id="zoom-value">100%</span>
+      </label>
+    </div>
+
+    <div class="stage" id="stage">
+      <div id="empty-state" class="empty-state" hidden>
+        <p>No sample named "<span id="empty-doc-name"></span>".</p>
+        <ul id="empty-sample-list"></ul>
+      </div>
+      <music-xml id="score"></music-xml>
+    </div>
+  </div>
+
+  <button id="panel-tab" class="panel-tab" type="button" aria-expanded="false" aria-controls="panel">
+    Options
+  </button>
+
+  <aside id="panel" class="panel" aria-hidden="true">
+    <div class="panel-inner">
+      <div class="panel-actions">
+        <button id="reset-all" type="button">Reset all</button>
+        <button id="copy-css" type="button">Copy CSS</button>
+        <span id="copy-status" class="copy-status"></span>
+      </div>
+      <div id="panel-groups"></div>
+    </div>
+  </aside>
+</main>
+
+<script type="module" src="/js/nav.js"></script>
+<script type="module" src="/js/render.js"></script>
