@@ -53,8 +53,12 @@ export const OPTIONS = [
     group: "Page",
     name: "pageOrientation",
     kind: "enum",
-    values: ["horizontal", "vertical"],
-    default: "horizontal",
+    values: ["vertical", "horizontal"],
+    // The site's own default (site/css/style.css sets --page-orientation:
+    // vertical), not the engine's (AppDefaults defaults to Horizontal) - so
+    // this has to match that rule for "at its default writes nothing" to
+    // stay true here.
+    default: "vertical",
     label: "Page orientation",
     help: "Portrait (vertical) or landscape (horizontal) pages.",
   },
