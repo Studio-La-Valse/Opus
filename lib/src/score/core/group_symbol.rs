@@ -64,7 +64,7 @@ impl GroupSymbol {
     /// [`GroupSymbolVisitor`] reports the same cause in plain words on the
     /// validation walk that runs first.
     ///
-    /// [`GroupSymbolVisitor`]: crate::musicxml::visitors::group_symbol_visitor::GroupSymbolVisitor
+    /// [`GroupSymbolVisitor`]: crate::musicxml::visitors::validators::group_symbol_visitor::GroupSymbolVisitor
     pub fn from_mxml(node: &Node) -> Option<GroupSymbol> {
         let symbol = node.get_child("group-symbol")?;
         let text = symbol.text().unwrap_or("").trim();

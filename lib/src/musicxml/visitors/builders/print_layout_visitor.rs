@@ -17,7 +17,7 @@ use roxmltree::Node;
 /// so that `Page::resolve_layout` asks one question and gets one answer.
 ///
 /// Must be chained after
-/// [`WalkCursorVisitor`](crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor),
+/// [`WalkCursorVisitor`](crate::musicxml::visitors::builders::walk_cursor_visitor::WalkCursorVisitor),
 /// which is what advances the page number: a `<print new-page="yes">` carrying a
 /// `<page-layout>` describes the page it opens, not the one it closes.
 pub struct PrintLayoutVisitor {}

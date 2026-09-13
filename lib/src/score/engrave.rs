@@ -25,14 +25,14 @@ use roxmltree::Document;
 use crate::geometry::xy::XY;
 use crate::musicxml::validation_issue::ValidationIssue;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
-use crate::musicxml::visitors::build_logging_visitor::BuildLoggingVisitor;
-use crate::musicxml::visitors::clef_visitor::ClefVisitor;
-use crate::musicxml::visitors::content_visitor::ContentVisitor;
-use crate::musicxml::visitors::layout_visitor::LayoutVisitor;
-use crate::musicxml::visitors::print_layout_visitor::PrintLayoutVisitor;
-use crate::musicxml::visitors::setup_visitor::SetupVisitor;
-use crate::musicxml::visitors::tie_visitor::TieVisitor;
-use crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor;
+use crate::musicxml::visitors::builders::build_logging_visitor::BuildLoggingVisitor;
+use crate::musicxml::visitors::builders::clef_visitor::ClefVisitor;
+use crate::musicxml::visitors::builders::content_visitor::ContentVisitor;
+use crate::musicxml::visitors::builders::layout_visitor::LayoutVisitor;
+use crate::musicxml::visitors::builders::print_layout_visitor::PrintLayoutVisitor;
+use crate::musicxml::visitors::builders::setup_visitor::SetupVisitor;
+use crate::musicxml::visitors::builders::tie_visitor::TieVisitor;
+use crate::musicxml::visitors::builders::walk_cursor_visitor::WalkCursorVisitor;
 use crate::musicxml::walker::Walker;
 use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::app_defaults::AppDefaults;
@@ -51,7 +51,7 @@ pub struct EngravedScore {
     pub score: Score,
     pub layout: ScoreDefaults,
     /// What the walk had to say for itself, from
-    /// [`crate::musicxml::visitors::build_logging_visitor`]. Informational only;
+    /// [`crate::musicxml::visitors::builders::build_logging_visitor`]. Informational only;
     /// a caller is free to print or drop them.
     pub messages: Vec<ValidationIssue>,
 }

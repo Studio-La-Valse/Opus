@@ -5,8 +5,8 @@ mod tests {
     use lib::musicxml::validate::ValidationCtx;
     use lib::musicxml::validation_issue::{Severity, ValidationIssue};
     use lib::musicxml::visitor::{DefaultVisitor, Visitor};
-    use lib::musicxml::visitors::part_consistency_visitor::PartConsistencyVisitor;
-    use lib::musicxml::visitors::position_visitor::PositionVisitor;
+    use lib::musicxml::visitors::validators::part_consistency_visitor::PartConsistencyVisitor;
+    use lib::musicxml::visitors::validators::position_visitor::PositionVisitor;
     use lib::musicxml::walker::Walker;
     use lib::score::app_defaults::AppDefaults;
     use lib::score::core::group_symbol::GroupSymbol;

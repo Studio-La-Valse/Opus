@@ -11,7 +11,7 @@ mod tests {
     use lib::musicxml::validate::ValidationCtx;
     use lib::musicxml::validation_issue::Severity;
     use lib::musicxml::visitor::{DefaultVisitor, Visitor};
-    use lib::musicxml::visitors::staff_details_visitor::StaffDetailsVisitor;
+    use lib::musicxml::visitors::validators::staff_details_visitor::StaffDetailsVisitor;
     use lib::musicxml::walker::Walker;
     use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::walk_document;
