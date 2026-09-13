@@ -73,9 +73,15 @@ impl PartMeasure {
         }
     }
 
-    pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.origin = *origin;
+    }
 
+    /// Places everything this measure draws: run by
+    /// [`ContentArranger`](crate::score::visual::arranger::ContentArranger)
+    /// once every measure in the part has its own `origin` from
+    /// [`arrange`](Self::arrange).
+    pub fn arrange_content(&mut self, staff_ctx: &BTreeMap<StaffIdx, StaffCtx>) {
         self.arrange_chords(staff_ctx);
         self.arrange_ledgers(staff_ctx);
     }

@@ -270,11 +270,9 @@ impl Part {
             _origin = _origin.mv(0., staff.height());
         }
 
-        let staff_ctx = self.create_staff_ctx();
-
         let mut _origin = self.xy;
         for measure in self.measures.values_mut() {
-            measure.arrange_ctx(&_origin, &staff_ctx);
+            measure.arrange(&_origin);
             _origin = _origin.mv(measure.width, 0.);
         }
 

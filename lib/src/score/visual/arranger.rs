@@ -6,11 +6,13 @@
 
 mod beam_arranger;
 mod clef_change_arranger;
+mod content_arranger;
 mod page_arranger;
 mod tie_arranger;
 
 pub use beam_arranger::BeamArranger;
 pub use clef_change_arranger::ClefChangeArranger;
+pub use content_arranger::ContentArranger;
 pub use page_arranger::PageArranger;
 pub use tie_arranger::TieArranger;
 
@@ -39,11 +41,16 @@ pub trait ScoreArranger {
 /// order.
 ///
 /// Page layout first, because nothing else has an absolute coordinate before
-/// it. Beams next because they move stem tips, and nothing in the tie
-/// geometry reads a stem's length. Clef changes read noteheads and staves,
-/// which neither of the others touch, so their position in the list is free.
-pub const SCORE_ARRANGERS: [&dyn ScoreArranger; 4] = [
+/// it. Content placement next, because every note, rest and opening column
+/// needs its container's final position and nothing downstream can run
+/// without them: beams move stem tips, ties and clef changes read noteheads
+/// and staves. Beams before ties because they move stem tips and nothing in
+/// the tie geometry reads a stem's length. Clef changes read noteheads and
+/// staves, which neither of the others touch, so their position in the list is
+/// free.
+pub const SCORE_ARRANGERS: [&dyn ScoreArranger; 5] = [
     &PageArranger,
+    &ContentArranger,
     &BeamArranger,
     &TieArranger,
     &ClefChangeArranger,
