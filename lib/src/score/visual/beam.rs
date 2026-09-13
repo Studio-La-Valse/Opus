@@ -3,7 +3,7 @@
 //! [`tie`](crate::score::visual::tie) for the other whole-score pass.
 //!
 //! Nothing here touches the score tree;
-//! [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger) does
+//! [`BeamArranger`](crate::score::visual::arranger::BeamArranger) does
 //! that. Keeping the grouping and fragmenting as pure functions over slices is
 //! what lets them be unit-tested without an arranged score.
 

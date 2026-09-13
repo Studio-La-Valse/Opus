@@ -53,7 +53,7 @@ impl Chord {
     ///
     /// Called once from [`arrange_ctx`](Self::arrange_ctx) during the ordinary
     /// arrange, and a second time by
-    /// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
+    /// [`BeamArranger`](crate::score::visual::arranger::BeamArranger)
     /// before it fits a beam ray: resetting the stem to this natural length
     /// undoes whatever an earlier beam pass adjusted it to, which is what
     /// keeps beaming idempotent. Pure in the notes and the staff context, so

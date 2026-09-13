@@ -20,7 +20,7 @@ use std::collections::BTreeMap;
 /// right but whose types are inconsistent passes straight through it.
 ///
 /// Levels are tracked per voice, and separately for grace notes, because that is
-/// how [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
+/// how [`BeamArranger`](crate::score::visual::arranger::BeamArranger)
 /// groups the chords it beams. A group also ends at a note carrying no `<beam>`
 /// at all.
 ///
@@ -37,7 +37,7 @@ pub struct BeamGroupVisitor {
     open: BTreeMap<GroupKey, BTreeMap<u32, usize>>,
 }
 
-/// What [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
+/// What [`BeamArranger`](crate::score::visual::arranger::BeamArranger)
 /// beams together: one voice's notes, with grace notes kept apart from the rest.
 type GroupKey = (u32, bool);
 

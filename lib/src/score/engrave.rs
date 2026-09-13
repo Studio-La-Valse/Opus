@@ -36,14 +36,12 @@ use crate::musicxml::visitors::walk_cursor_visitor::WalkCursorVisitor;
 use crate::musicxml::walker::Walker;
 use crate::musicxml::walker_ctx::WalkerCtx;
 use crate::score::app_defaults::AppDefaults;
-use crate::score::page_orientation::PageOrientation;
 use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
-use crate::score::visual::layout_engine::{HorizontalPageLayout, LayoutEngine, VerticalPageLayout};
+use crate::score::visual::arranger::SCORE_ARRANGERS;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::score_arranger::SCORE_ARRANGERS;
 use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
 
@@ -205,33 +203,13 @@ pub fn arrange_score(
     progress(Stage::ResolveLayout);
 
     score.measure(&XY::INFINITE, params);
-    page_layout_engine(user_layout, app_defaults).arrange_pages(score, &XY::ZERO);
 
-    // Last: every coordinate in the tree is now absolute, which is what beams,
-    // ties and mid-measure clef changes need. See `SCORE_ARRANGERS` for why
-    // they run in this order.
+    // Placing the pages has to come first: every other pass here needs an
+    // absolute coordinate to work with, and nothing in the tree has one until
+    // then. See `SCORE_ARRANGERS` for the full ordering.
     for arranger in SCORE_ARRANGERS {
         arranger.arrange(score, params);
     }
 
     progress(Stage::LayoutPass);
-}
-
-/// Picks the page-layout engine for the effective [`PageOrientation`], resolving
-/// each gutter against `user` then `defaults`.
-fn page_layout_engine(user: &UserLayout, defaults: &AppDefaults) -> Box<dyn LayoutEngine> {
-    let orientation = user.page_orientation.unwrap_or(defaults.page_orientation);
-    match orientation {
-        PageOrientation::Horizontal => Box::new(HorizontalPageLayout {
-            gutter_even: user
-                .horizontal_gutter_even
-                .unwrap_or(defaults.horizontal_gutter_even),
-            gutter_uneven: user
-                .horizontal_gutter_uneven
-                .unwrap_or(defaults.horizontal_gutter_uneven),
-        }),
-        PageOrientation::Vertical => Box::new(VerticalPageLayout {
-            gutter: user.vertical_gutter.unwrap_or(defaults.vertical_gutter),
-        }),
-    }
 }

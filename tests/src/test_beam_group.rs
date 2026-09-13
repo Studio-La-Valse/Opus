@@ -18,16 +18,15 @@ mod tests {
     use lib::score::core::note_kind::NoteKind;
     use lib::score::engrave::engrave;
     use lib::score::user_layout::UserLayout;
+    use lib::score::visual::arranger::{BeamArranger, ScoreArranger};
     use lib::score::visual::beam::{
         Beamable, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
         split_at_system_breaks,
     };
-    use lib::score::visual::beam_arranger::BeamArranger;
     use lib::score::visual::chord::Chord;
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::note_scale::NoteScale;
     use lib::score::visual::score::Score;
-    use lib::score::visual::score_arranger::ScoreArranger;
     use lib::score::visual::stem::{BeamType, Stem, UpDown};
     use lib::score::visual::system::SystemKey;
     use lib::smufl::smufl_font::SmuflFont;

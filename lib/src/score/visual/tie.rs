@@ -2,7 +2,7 @@
 //! that turns a pair of endpoints into a drawable arc.
 //!
 //! Nothing here touches the score tree --
-//! [`TieArranger`](crate::score::visual::tie_arranger::TieArranger) does that.
+//! [`TieArranger`](crate::score::visual::arranger::TieArranger) does that.
 //! Keeping the geometry as free functions over [`XY`] is what lets the
 //! cross-system case be tested without a multi-system fixture, and is the seam
 //! a future slur implementation reuses: a slur is the same arc between
@@ -104,7 +104,7 @@ impl TieSide {
 ///
 /// Purely a pairing -- it holds no geometry. The drawn arcs are derived after
 /// the pages are arranged, by
-/// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger), because
+/// [`TieArranger`](crate::score::visual::arranger::TieArranger), because
 /// that is the first moment both endpoints have absolute coordinates.
 pub struct Tie {
     pub start: NoteId,

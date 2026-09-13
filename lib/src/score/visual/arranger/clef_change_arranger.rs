@@ -2,7 +2,7 @@
 //! arranged.
 //!
 //! The third of the passes that see the whole score at once; see
-//! [`ScoreArranger`](crate::score::visual::score_arranger::ScoreArranger). It
+//! [`ScoreArranger`](crate::score::visual::arranger::ScoreArranger). It
 //! is here for a variation on the other two's reason. A tie's two endpoints may
 //! be systems apart; a mid-measure clef change has only one anchor, but that
 //! anchor is in the wrong branch of the tree. The change belongs to a *staff*
@@ -21,12 +21,12 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::clef::{Clef, ClefAnchor, ClefChange};
 use crate::score::visual::layoutable::{LayoutParams, Layoutable};
 use crate::score::visual::note::NoteId;
 use crate::score::visual::part::Part;
 use crate::score::visual::score::Score;
-use crate::score::visual::score_arranger::ScoreArranger;
 use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::system::SystemKey;
 use crate::score::walk_cursor::Visibility;
@@ -37,8 +37,8 @@ pub struct ClefChangeArranger;
 impl ScoreArranger for ClefChangeArranger {
     /// Assigns rather than appends, so calling it repeatedly is idempotent --
     /// the same property
-    /// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger) and
-    /// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
+    /// [`TieArranger`](crate::score::visual::arranger::TieArranger) and
+    /// [`BeamArranger`](crate::score::visual::arranger::BeamArranger)
     /// have, and the reason the wasm render path can re-arrange a cached score
     /// for a new `UserLayout`.
     fn arrange(&self, score: &mut Score, params: LayoutParams<'_>) {

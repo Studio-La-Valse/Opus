@@ -35,7 +35,7 @@ pub struct Score {
     /// Populated by the content walk and left alone by `arrange`; the drawn arcs
     /// live on [`System::ties`](crate::score::visual::system::System) and are
     /// rebuilt from this list by
-    /// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger).
+    /// [`TieArranger`](crate::score::visual::arranger::TieArranger).
     pub ties: Vec<Tie>,
 
     /// Every mid-measure clef change in the document, as a flat list.
@@ -50,7 +50,7 @@ pub struct Score {
     /// clefs live on
     /// [`System::clef_changes`](crate::score::visual::system::System) and are
     /// rebuilt from this list by
-    /// [`ClefChangeArranger`](crate::score::visual::clef_change_arranger::ClefChangeArranger).
+    /// [`ClefChangeArranger`](crate::score::visual::arranger::ClefChangeArranger).
     pub clef_changes: Vec<ClefChange>,
 }
 
@@ -174,7 +174,7 @@ impl Score {
     }
 
     /// Sizes every page. Page *placement* is a separate pass -- see
-    /// [`LayoutEngine::arrange_pages`](crate::score::visual::layout_engine::LayoutEngine::arrange_pages),
+    /// [`PageArranger`](crate::score::visual::arranger::PageArranger),
     /// which is why `Score` has no `arrange`.
     pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         for page in self.pages.values_mut() {

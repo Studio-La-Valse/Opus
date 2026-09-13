@@ -27,8 +27,8 @@ use std::collections::BTreeMap;
 ///
 /// Lives beside [`System`] rather than with either pass that keys on it: it
 /// addresses a `System`, and both
-/// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger) and
-/// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger) file their
+/// [`BeamArranger`](crate::score::visual::arranger::BeamArranger) and
+/// [`TieArranger`](crate::score::visual::arranger::TieArranger) file their
 /// output under it.
 pub type SystemKey = (u32, u32);
 
@@ -55,7 +55,7 @@ pub struct System {
     pub measures: BTreeMap<u32, SystemMeasure>,
 
     /// The tie arcs that fall inside this system, rebuilt from `Score::ties` by
-    /// [`TieArranger`](crate::score::visual::tie_arranger::TieArranger) once
+    /// [`TieArranger`](crate::score::visual::arranger::TieArranger) once
     /// the pages have been arranged.
     ///
     /// A tie broken across a system break contributes one segment here and one
@@ -65,7 +65,7 @@ pub struct System {
 
     /// The beam segments that fall inside this system, rebuilt from the chords
     /// in the tree by
-    /// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
+    /// [`BeamArranger`](crate::score::visual::arranger::BeamArranger)
     /// once the pages have been arranged.
     ///
     /// A beam group is a run of consecutive chords, so unlike a tie it does not
@@ -76,7 +76,7 @@ pub struct System {
 
     /// The mid-measure clef changes that fall inside this system, rebuilt from
     /// `Score::clef_changes` by
-    /// [`ClefChangeArranger`](crate::score::visual::clef_change_arranger::ClefChangeArranger)
+    /// [`ClefChangeArranger`](crate::score::visual::arranger::ClefChangeArranger)
     /// once the pages have been arranged.
     ///
     /// Unlike a tie or a beam group a clef change cannot straddle a break -- it

@@ -5,7 +5,7 @@
 //! grouped them and emitted the segments into itself. That works right up to the
 //! barline and no further -- a group cannot outlive the sequence it was built
 //! from, and that sequence was one measure long. So the pass moved out here,
-//! beside [`tie_arranger`](crate::score::visual::tie_arranger), and runs on the
+//! beside [`TieArranger`](crate::score::visual::arranger::TieArranger), and runs on the
 //! whole score at once for the same reason ties do: once the pages are arranged
 //! every coordinate in the tree is absolute, so a group whose ends sit in
 //! different measures -- or different systems, or different pages -- is just
@@ -42,6 +42,7 @@ use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
 use crate::score::core::voice::Voice;
+use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::beam::{
     BeamMetrics, Beamable, Cut, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
     split_at_system_breaks,
@@ -49,7 +50,6 @@ use crate::score::visual::beam::{
 use crate::score::visual::chord::Chord;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::score_arranger::ScoreArranger;
 use crate::score::visual::stem::{BeamType, UpDown};
 use crate::score::visual::system::SystemKey;
 use crate::score::walk_cursor::Visibility;

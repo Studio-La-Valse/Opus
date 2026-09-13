@@ -2,7 +2,7 @@
 //! pages have been arranged.
 //!
 //! One of the three passes that have to see the whole score at once; see
-//! [`ScoreArranger`](crate::score::visual::score_arranger::ScoreArranger).
+//! [`ScoreArranger`](crate::score::visual::arranger::ScoreArranger).
 //! Every step before this is local: a `StaffMeasure` places its own clef from
 //! its own left edge. But a tie's two endpoints may sit in different measures,
 //! different systems or different pages, and a note's absolute position does
@@ -17,9 +17,9 @@
 
 use std::collections::HashMap;
 
+use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::score_arranger::ScoreArranger;
 use crate::score::visual::system::SystemKey;
 use crate::score::visual::tie::{TieMetrics, TieSegment, split_tie};
 
@@ -29,7 +29,7 @@ pub struct TieArranger;
 impl ScoreArranger for TieArranger {
     /// Assigns rather than appends, so calling it repeatedly is idempotent --
     /// the same property
-    /// [`BeamArranger`](crate::score::visual::beam_arranger::BeamArranger)
+    /// [`BeamArranger`](crate::score::visual::arranger::BeamArranger)
     /// gets by resetting every stem before it fits a beam ray, and the reason
     /// the wasm render path can re-arrange a cached score for a new
     /// `UserLayout`.
