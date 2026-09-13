@@ -1,6 +1,5 @@
 /* Opus exhibition site - a deliberately boring, hand-written page. Light
-   paper/ink palette; dark mode only recolors the chrome (nav, panel), not
-   the page content or the score itself. */
+   paper/ink palette, always - no dark mode. */
 
 :root {
   --paper: #fbfaf7;
@@ -18,16 +17,6 @@
 
   --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --nav-bg: #1c1a17;
-    --nav-ink: #f2ede4;
-    --panel-bg: #211f1b;
-    --panel-ink: #f2ede4;
-    --code-bg: #2a2823;
-  }
 }
 
 * {
@@ -90,6 +79,15 @@ pre code {
 button {
   font: inherit;
   cursor: pointer;
+}
+
+/* The site's own default, distinct from the engine's (AppDefaults defaults to
+   Horizontal): an explicit stylesheet rule rather than a JS-set property, so
+   it composes with the render pane the same way a host page's own CSS would
+   - removeProperty (an "unset"/reset control) falls back to this rule, not
+   past it to the engine default. */
+music-xml {
+  --page-orientation: vertical;
 }
 
 /* --- Nav ------------------------------------------------------------- */
