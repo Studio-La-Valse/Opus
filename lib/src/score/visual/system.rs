@@ -91,8 +91,8 @@ pub struct System {
     pub height: f32,
 
     pub color: Color,
-    pub line_width: f32,
-    pub staff_line_width: f32,
+    pub staff_line_thickness: f32,
+    pub light_barline: f32,
 
     pub m_left: f32,
     pub m_right: f32,
@@ -298,15 +298,15 @@ impl Layoutable for System {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
-        self.line_width = user_layout
+        self.staff_line_thickness = user_layout
+            .staff
+            .or(score_defaults.appearance.staff_line_thickness)
+            .unwrap_or(app_defaults.staff_line_thickness);
+
+        self.light_barline = user_layout
             .light_barline
             .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.light_barline);
-
-        self.staff_line_width = user_layout
-            .staff
-            .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff);
 
         // The first system names its parts and part-groups in full; every later
         // one uses the abbreviation. Re-stamped here so the whole subtree below

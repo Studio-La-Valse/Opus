@@ -9,7 +9,7 @@ pub struct SectionMeasure {
     pub height: f32,
 
     pub color: Color,
-    pub line_width: f32,
+    pub light_barline: f32,
 }
 
 impl Layoutable for SectionMeasure {
@@ -25,7 +25,7 @@ impl Layoutable for SectionMeasure {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
 
-        self.line_width = user_layout
+        self.light_barline = user_layout
             .light_barline
             .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.light_barline)

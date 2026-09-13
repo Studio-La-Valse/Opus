@@ -53,7 +53,7 @@ impl RenderPass for BaseRenderer {
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let stroke_color = system.color;
-        let stroke_width = system.line_width;
+        let stroke_width = system.light_barline;
 
         let (top, bottom) = system.barline_span();
         let left_line = Line {
@@ -150,16 +150,16 @@ impl RenderPass for BaseRenderer {
         // middle and is drawn two spaces down. See `Staff::top_line_offset`.
         let top = staff.xy.y + staff.top_line_offset();
         let mut start = XY {
-            x: staff.xy.x - (staff.barline_thickness_light / 2.),
+            x: staff.xy.x - (staff.light_barline / 2.),
             y: top,
         };
         let mut end = XY {
-            x: staff.xy.x + staff.width + (staff.barline_thickness_light / 2.),
+            x: staff.xy.x + staff.width + (staff.light_barline / 2.),
             y: top,
         };
 
         let stroke_color = staff.color;
-        let stroke_width = staff.line_thickness * staff.scale;
+        let stroke_width = staff.staff_line_thickness * staff.scale;
 
         for _i in 0..staff.lines {
             let line = Line {
@@ -182,7 +182,7 @@ impl RenderPass for BaseRenderer {
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let stroke_color = section_measure.color;
-        let stroke_width = section_measure.line_width;
+        let stroke_width = section_measure.light_barline;
 
         let right_line = Line {
             start: section_measure.xy.mv(section_measure.width, 0.),

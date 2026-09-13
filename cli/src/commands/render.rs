@@ -52,31 +52,6 @@ pub struct RenderArgs {
     #[arg(long)]
     glyphs: String,
 
-    /// Font family for titles / work-level text. Defaults to the app default
-    /// (`serif`). For `render pdf` this family is resolved against the installed
-    /// system fonts and embedded.
-    #[arg(long)]
-    title_font: Option<String>,
-
-    /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
-    /// and embedded like `--title-font` for `render pdf`.
-    #[arg(long)]
-    lyric_font: Option<String>,
-
-    /// Font family for part / part-group names. Defaults to the app default
-    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
-    #[arg(long)]
-    group_name_font: Option<String>,
-
-    /// Font size in tenths for a part / part-group name.
-    #[arg(long)]
-    group_name_size: Option<f32>,
-
-    /// Padding in tenths between a part / part-group name's right edge and the
-    /// symbol it sits beside.
-    #[arg(long)]
-    group_name_padding: Option<f32>,
-
     #[arg(long, short, action)]
     debug: bool,
 
@@ -196,6 +171,31 @@ pub struct RenderArgs {
     /// How far a square symbol's arms reach toward the system, in tenths.
     #[arg(long)]
     group_square_arm: Option<f32>,
+
+    /// Font family for titles / work-level text. Defaults to the app default
+    /// (`serif`). For `render pdf` this family is resolved against the installed
+    /// system fonts and embedded.
+    #[arg(long)]
+    title_font: Option<String>,
+
+    /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
+    /// and embedded like `--title-font` for `render pdf`.
+    #[arg(long)]
+    lyric_font: Option<String>,
+
+    /// Font family for part / part-group names. Defaults to the app default
+    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
+    #[arg(long)]
+    group_name_font: Option<String>,
+
+    /// Font size in tenths for a part / part-group name.
+    #[arg(long)]
+    group_name_size: Option<f32>,
+
+    /// Padding in tenths between a part / part-group name's right edge and the
+    /// symbol it sits beside.
+    #[arg(long)]
+    group_name_padding: Option<f32>,
 }
 
 /// Output format for `opus render`, chosen as a subcommand: `render svg` or
@@ -231,11 +231,6 @@ pub fn run(format: RenderCommand) {
         overwrite,
         meta,
         glyphs: glyph_names,
-        title_font,
-        lyric_font,
-        group_name_font,
-        group_name_size,
-        group_name_padding,
         debug,
         page_color,
         foreground_color,
@@ -272,6 +267,11 @@ pub fn run(format: RenderCommand) {
         group_line_thickness,
         group_square_thickness,
         group_square_arm,
+        title_font,
+        lyric_font,
+        group_name_font,
+        group_name_size,
+        group_name_padding,
     } = args;
 
     let mut time = Instant::now();

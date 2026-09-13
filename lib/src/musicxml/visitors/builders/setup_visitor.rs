@@ -29,7 +29,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
                 let v: f32 = lw.req_parse();
 
                 match t {
-                    "staff" => ctx.layout.appearance.staff = Some(v),
+                    "staff" => ctx.layout.appearance.staff_line_thickness = Some(v),
                     "light barline" => ctx.layout.appearance.light_barline = Some(v),
                     "heavy barline" => ctx.layout.appearance.heavy_barline = Some(v),
                     "beam" => ctx.layout.appearance.beam_thickness = Some(v),
