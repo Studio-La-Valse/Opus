@@ -219,6 +219,10 @@ export class MusicXmlElement extends HTMLElement {
     // waiting on. See _renderOptions / _scheduleRender / _render.
     this._lastOptionsJson = undefined;
     this._pendingOptions = undefined;
+    // JSON snapshot of the options that last caused a wasm trap (a Rust
+    // panic), or undefined if none has. See _render's catch and
+    // _scheduleRender's recovery branch.
+    this._failedOptionsJson = undefined;
     this._resetStyleCache();
   }
 
@@ -289,7 +293,11 @@ export class MusicXmlElement extends HTMLElement {
   // finalized on GC, if ever, so an element that goes away without this leaks a
   // whole engraved score.
   _freeScore() {
-    this._score?.free();
+    try {
+      this._score?.free();
+    } catch {
+      // Already trapped (see _render's catch) - the leak beats a second throw.
+    }
     this._score = undefined;
   }
 
@@ -298,6 +306,7 @@ export class MusicXmlElement extends HTMLElement {
     this._canvas.height = 0;
     this._resetStyleCache();
     this._lastOptionsJson = undefined;
+    this._failedOptionsJson = undefined;
   }
 
   _setStatus(message) {
@@ -347,12 +356,23 @@ export class MusicXmlElement extends HTMLElement {
   // actually changed.
   refresh() {
     this._lastOptionsJson = undefined;
+    if (!this._score) {
+      this._failedOptionsJson = undefined;
+      this._loadFile();
+      return;
+    }
     this._render();
   }
 
   _scheduleRender() {
-    if (!this._score) return;
     const options = this._renderOptions();
+    if (!this._score) {
+      if (this._failedOptionsJson === undefined) return; // no file loaded
+      if (JSON.stringify(options) === this._failedOptionsJson) return; // same failing set
+      this._failedOptionsJson = undefined;
+      this._loadFile(); // refetch + rebuild; ends in _render() with the new options
+      return;
+    }
     // A render this element has already produced pixel-for-identical output
     // for - most commonly a `style` mutation that doesn't touch any of the
     // CSS custom properties above (e.g. the zoom slider's width) - has
@@ -382,6 +402,18 @@ export class MusicXmlElement extends HTMLElement {
     } catch (err) {
       this._setStatus(String(err));
       this.dispatchEvent(new CustomEvent("error", { detail: err }));
+      // panic = "abort" on wasm32 means a Rust panic traps without unwinding, so
+      // the RefMut wasm-bindgen takes around this &mut self export never drops
+      // and the Score stays flagged as borrowed - every later render() on it
+      // would throw "recursive use of an object detected" instead of the real
+      // error. Drop it and let the next *different* option set rebuild a clean
+      // one. WebAssembly.RuntimeError is what distinguishes a trap from an
+      // ordinary Err(JsValue) (e.g. an unknown option or unparseable color),
+      // which returns normally through the glue and leaves the Score usable.
+      if (err instanceof WebAssembly.RuntimeError) {
+        this._failedOptionsJson = JSON.stringify(options);
+        this._freeScore();
+      }
     } finally {
       output?.free();
     }

@@ -32,8 +32,11 @@ mod tests {
     }
 
     fn metrics() -> TieMetrics {
+        metrics_with(UserLayout::default())
+    }
+
+    fn metrics_with(user_layout: UserLayout) -> TieMetrics {
         let score_defaults = ScoreDefaults::default();
-        let user_layout = UserLayout::default();
         let app_defaults = AppDefaults::default();
 
         TieMetrics::resolve(LayoutParams {
@@ -152,6 +155,39 @@ mod tests {
             "expected {middle}, got {}",
             m.height(dx)
         );
+    }
+
+    /// A min/max pair given backwards -- a slider dragged past its partner --
+    /// must not panic; it should read as the band between the two values.
+    #[test]
+    fn inverted_height_bounds_are_ordered() {
+        let m = metrics_with(UserLayout {
+            tie_height_min: Some(30.),
+            tie_height_max: Some(16.),
+            ..Default::default()
+        });
+
+        assert_eq!(m.height_min, 16.);
+        assert_eq!(m.height_max, 30.);
+
+        assert!(m.height(1.).is_finite());
+        assert!(m.height(1000.).is_finite());
+        assert!(m.height(20.).is_finite());
+    }
+
+    /// A non-finite bound -- `NaN` from a malformed `--tie-height-min` -- falls
+    /// back to the app default rather than poisoning the clamp.
+    #[test]
+    fn non_finite_height_bounds_fall_back_to_defaults() {
+        let app_defaults = AppDefaults::default();
+        let m = metrics_with(UserLayout {
+            tie_height_min: Some(f32::NAN),
+            ..Default::default()
+        });
+
+        assert_eq!(m.height_min, app_defaults.tie_height_min);
+        assert!(m.height(1.).is_finite());
+        assert!(m.height(1000.).is_finite());
     }
 
     #[test]

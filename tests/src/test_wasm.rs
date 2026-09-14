@@ -261,6 +261,25 @@ mod tests {
         assert!(bad_color.is_err(), "an unparseable colour must be rejected");
     }
 
+    /// Inverted tie height bounds used to panic inside `f32::clamp` during
+    /// `arrange_score`, and on `wasm32` that panic traps without unwinding --
+    /// see `TieMetrics::from_sources` / `ordered_bounds` in `tie.rs`. This
+    /// pins the fix at the same boundary JS calls through: `render_with` must
+    /// return rather than abort when `tieHeightMin` > `tieHeightMax`.
+    #[test]
+    fn render_survives_inverted_tie_height_bounds() {
+        let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
+
+        let output = score.render_with(&RenderOptions {
+            layout: serde_json::from_str(r#"{ "tieHeightMin": 30, "tieHeightMax": 16 }"#)
+                .expect("layout options failed to deserialize"),
+            ..Default::default()
+        });
+
+        assert!(output.bounds_width() > 0.0);
+        assert!(output.bounds_height() > 0.0);
+    }
+
     /// The group-symbol overrides come through the same route, which is what
     /// lets a page re-draw a score's brackets as braces without re-parsing it.
     /// Their values are the MusicXML spellings, so a CSS custom property, a CLI
