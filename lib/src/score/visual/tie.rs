@@ -134,12 +134,29 @@ pub struct TieMetrics {
     pub endpoint_thickness: f32,
     pub midpoint_thickness: f32,
     pub height_ratio: f32,
+    /// Well-ordered by construction (`height_min <= height_max`) -- see
+    /// [`ordered_bounds`], which every `TieMetrics` built via [`from_sources`]
+    /// is folded through.
     pub height_min: f32,
     pub height_max: f32,
     pub note_gap: f32,
     pub vertical_offset: f32,
     pub break_inset: f32,
     pub break_fragment: f32,
+}
+
+/// Orders a caller-supplied `(min, max)` pair, substituting the app default for a
+/// non-finite bound.
+///
+/// Both values arrive straight from user input -- a slider in the options pane
+/// dragged past its partner, or `--tie-height-min NaN` on the CLI -- and
+/// `f32::clamp` panics outright on `min > max` or on a NaN bound. Folding that here
+/// is what keeps `height()` total: an inverted pair simply reads as the band between
+/// the two values, whichever way round they were given.
+fn ordered_bounds(min: f32, max: f32, default_min: f32, default_max: f32) -> (f32, f32) {
+    let min = if min.is_finite() { min } else { default_min };
+    let max = if max.is_finite() { max } else { default_max };
+    (min.min(max), min.max(max))
 }
 
 impl TieMetrics {
@@ -154,6 +171,13 @@ impl TieMetrics {
     }
 
     fn from_sources(user: &UserLayout, app: &AppDefaults) -> Self {
+        let (height_min, height_max) = ordered_bounds(
+            user.tie_height_min.unwrap_or(app.tie_height_min),
+            user.tie_height_max.unwrap_or(app.tie_height_max),
+            app.tie_height_min,
+            app.tie_height_max,
+        );
+
         TieMetrics {
             endpoint_thickness: user
                 .tie_endpoint_thickness
@@ -162,8 +186,8 @@ impl TieMetrics {
                 .tie_midpoint_thickness
                 .unwrap_or(app.tie_midpoint_thickness),
             height_ratio: user.tie_height_ratio.unwrap_or(app.tie_height_ratio),
-            height_min: user.tie_height_min.unwrap_or(app.tie_height_min),
-            height_max: user.tie_height_max.unwrap_or(app.tie_height_max),
+            height_min,
+            height_max,
             note_gap: user.tie_note_gap.unwrap_or(app.tie_note_gap),
             vertical_offset: user.tie_vertical_offset.unwrap_or(app.tie_vertical_offset),
             break_inset: user.tie_break_inset.unwrap_or(app.tie_break_inset),
@@ -174,6 +198,10 @@ impl TieMetrics {
     /// This tie's arc height for a span of `dx` tenths, clamped so very short
     /// ties still read as curves and very long ones do not balloon.
     pub fn height(&self, dx: f32) -> f32 {
+        debug_assert!(
+            self.height_min <= self.height_max,
+            "tie height bounds must be ordered"
+        );
         (dx.abs() * self.height_ratio).clamp(self.height_min, self.height_max)
     }
 
