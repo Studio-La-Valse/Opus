@@ -6,7 +6,7 @@ mod tests {
     use lib::score::core::time_signature::TimeSignature as TimeSignatureCore;
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
-    use lib::score::visual::arranger::{ArrangeMachine, ScoreMeasurement};
+    use lib::score::visual::arranger::{ContentArranger, ScoreMeasurement};
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::time_signature::TimeSignature;
     use lib::smufl::smufl_font::SmuflFont;
@@ -113,7 +113,7 @@ mod tests {
                 y: staff_height,
             },
         );
-        ArrangeMachine.arrange_time_signature(&mut time_signature, &XY::ZERO);
+        ContentArranger.arrange_time_signature(&mut time_signature, &XY::ZERO);
 
         time_signature
     }

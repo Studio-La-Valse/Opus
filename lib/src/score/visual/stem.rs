@@ -186,3 +186,39 @@ impl Stem {
         }
     }
 }
+
+// ---- placement ----
+
+impl Stem {
+    /// Puts the stem against the notehead anchor at `origin`, shifted half its
+    /// thickness so the stem's own edge, rather than its centre line, lies on it.
+    pub fn place(&mut self, origin: &XY) {
+        let thickness = self.thickness * self.scale;
+        let canvas_offset = match self.direction {
+            UpDown::Down => thickness / 2.,
+            UpDown::Up => -thickness / 2.,
+        };
+
+        self.xy = XY {
+            x: origin.x + canvas_offset,
+            y: origin.y,
+        }
+    }
+
+    /// Positions the flag (if any) against this stem's own terminal corner.
+    /// Must be called once `length` is finalized - stem geometry is only
+    /// complete once the caller
+    /// ([`place_stem`](crate::score::visual::chord::Chord::place_stem)) has
+    /// computed and set `length`, so this can't happen inside
+    /// [`place`](Self::place), which runs before `length` is known.
+    pub fn place_flag(&mut self) {
+        let anchor = match self.direction {
+            UpDown::Up => self.nw(),
+            UpDown::Down => self.sw(),
+        };
+
+        if let Some(flag) = self.flag.as_mut() {
+            flag.place(&anchor);
+        }
+    }
+}

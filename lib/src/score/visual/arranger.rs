@@ -4,7 +4,6 @@
 //! otherwise a small, self-contained module easy to lose among `visual`'s
 //! other, purely structural ones.
 
-mod arrange_machine;
 mod beam_arranger;
 mod clef_change_arranger;
 mod content_arranger;
@@ -12,7 +11,6 @@ mod page_arranger;
 mod score_measurement;
 mod tie_arranger;
 
-pub use arrange_machine::ArrangeMachine;
 pub use beam_arranger::BeamArranger;
 pub use clef_change_arranger::ClefChangeArranger;
 pub use content_arranger::ContentArranger;

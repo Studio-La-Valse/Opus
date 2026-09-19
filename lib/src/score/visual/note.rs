@@ -54,8 +54,8 @@ impl From<u32> for NoteId {
 pub struct NoteAnchor {
     pub key: SystemKey,
     /// Left edge of the notehead at its vertical centre -- exactly what
-    /// `Note::xy` is, per `ArrangeMachine::arrange_note_ctx` and
-    /// `ArrangeMachine::part_measure_ledger_lines`.
+    /// `Note::xy` is, per `ContentArranger::arrange_note_ctx` and
+    /// `ContentArranger::part_measure_ledger_lines`.
     pub left: XY,
     pub width: f32,
     /// Right edge of the `PartMeasure` this note sits in. A tie broken across a

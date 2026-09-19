@@ -1,8 +1,12 @@
 //! Runs the page-layout pass: placing every page -- and so every system
 //! beneath it -- at its own, page-local origin.
 
+use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::xy::XY;
-use crate::score::visual::arranger::{ArrangeMachine, ScoreArranger};
+use crate::score::core::group_symbol::GroupSymbol as Kind;
+use crate::score::visual::arranger::ScoreArranger;
+use crate::score::visual::group_name::GroupName;
+use crate::score::visual::group_symbol::{Glyphs, GroupSymbol};
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;
@@ -36,6 +40,74 @@ impl ScoreArranger for PageArranger {
         }
     }
 }
+
+// ---- group symbol and name placement ----
+
+impl PageArranger {
+    /// `origin.x` is the left edge this symbol sits clear of, and `origin.y` the
+    /// top line of the first staff it spans. Neither is a position for the
+    /// symbol itself: it steps left by its own gap from there.
+    ///
+    /// What that edge is depends on the level. A section's is the system's own
+    /// left edge, since a section symbol is the innermost of the three. A
+    /// part-group's is whatever its section drew, and a part's is whatever its
+    /// part-group drew, so the three stack outward without any of them knowing
+    /// how wide the others are -- which they could not know, a brace's width
+    /// following the span it covers.
+    pub fn arrange_group_symbol(&self, symbol: &mut GroupSymbol, origin: &XY) {
+        symbol.anchor = origin.mv(-symbol.gap, 0.);
+
+        // One statement for both, so the box always describes the ink.
+        let (shape, bounds) = if symbol.span <= 0. {
+            symbol.empty_shape()
+        } else {
+            match (&symbol.glyphs, symbol.kind) {
+                (Glyphs::Brace(glyph), Kind::Brace) => symbol.brace_shape(glyph),
+                (Glyphs::Bracket(top, bottom), Kind::Bracket) => symbol.bracket_shape(top, bottom),
+                (_, Kind::Line) => symbol.line_shape(),
+                (_, Kind::Square) => symbol.square_shape(),
+                // `None`, and any shape whose glyphs failed to resolve.
+                _ => symbol.empty_shape(),
+            }
+        };
+
+        symbol.shape = shape;
+        symbol.bounds = bounds;
+    }
+
+    /// Places the box in one statement, so it always describes what is reserved.
+    ///
+    /// `top` is the top line of the first staff the name covers, `right` the
+    /// left edge of the level's symbol (or where that symbol would have been,
+    /// when nothing is drawn), and `margin_left` the page's left margin. The
+    /// box's right edge is always `right` less the padding -- that is where a
+    /// right-aligned run ends. Its left edge is the margin when there is room,
+    /// and the right edge itself when there is not: a name with no room to its
+    /// left still ends in the right place and simply overflows past the margin,
+    /// since nothing in the horizontal layout moves to make space for it.
+    pub fn arrange_group_name_between(
+        &self,
+        name: &mut GroupName,
+        top: XY,
+        right: f32,
+        margin_left: f32,
+    ) {
+        let box_right = right - name.padding;
+        let box_left = margin_left.min(box_right);
+        name.bounds = BoundingBox {
+            xy: XY {
+                x: box_left,
+                y: top.y,
+            },
+            size: XY {
+                x: box_right - box_left,
+                y: name.span,
+            },
+        };
+    }
+}
+
+// ---- internals ----
 
 impl PageArranger {
     /// Places this page's systems below its margins.
@@ -115,7 +187,7 @@ impl PageArranger {
         // symbols depends on how far left this one reached. A section's symbol
         // is the innermost of the three, so it is the only one measured from
         // the system itself.
-        ArrangeMachine.arrange_group_symbol(
+        self.arrange_group_symbol(
             &mut section.symbol,
             &section.xy.mv(0., first_visible_staff_distance),
         );
@@ -161,15 +233,10 @@ impl PageArranger {
             x: clear_of,
             y: group.xy.y + first_visible_staff_distance,
         };
-        ArrangeMachine.arrange_group_symbol(&mut group.symbol, &symbol_top);
+        self.arrange_group_symbol(&mut group.symbol, &symbol_top);
         let clear_of = self.part_group_symbol_left_edge(group, clear_of);
 
-        ArrangeMachine.arrange_group_name_between(
-            &mut group.name,
-            symbol_top,
-            clear_of,
-            margin_left,
-        );
+        self.arrange_group_name_between(&mut group.name, symbol_top, clear_of, margin_left);
 
         let mut _origin = group.xy;
         for part in group.parts.values_mut() {
@@ -212,15 +279,10 @@ impl PageArranger {
             x: clear_of,
             y: part.xy.y + first_visible_staff_distance,
         };
-        ArrangeMachine.arrange_group_symbol(&mut part.symbol, &symbol_top);
+        self.arrange_group_symbol(&mut part.symbol, &symbol_top);
 
         let name_right = self.part_symbol_left_edge(part, clear_of);
-        ArrangeMachine.arrange_group_name_between(
-            &mut part.name,
-            symbol_top,
-            name_right,
-            margin_left,
-        );
+        self.arrange_group_name_between(&mut part.name, symbol_top, name_right, margin_left);
     }
 
     fn arrange_part_measure(&self, measure: &mut PartMeasure, origin: &XY) {
@@ -240,7 +302,7 @@ impl PageArranger {
 
     /// Places this measure's own position. Everything it draws is placed
     /// afterwards by
-    /// [`arrange_staff_measure_content`](ArrangeMachine::arrange_staff_measure_content),
+    /// [`arrange_staff_measure_content`](crate::score::visual::arranger::ContentArranger::arrange_staff_measure_content),
     /// which this pass does not call: content placement is
     /// [`ContentArranger`](crate::score::visual::arranger::ContentArranger)'s
     /// job, run once every container in the tree -- this measure's opening

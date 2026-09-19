@@ -49,7 +49,7 @@ impl Flag {
     }
 
     /// World-space position of the glyph's own SMuFL stem-attachment anchor.
-    /// After `arrange_flag`, this coincides exactly with the stem corner it was
+    /// After [`place`](Self::place), this coincides exactly with the stem corner it was
     /// aligned to.
     pub fn stem_anchor_world(&self) -> XY {
         self.scale_pt(&self.glyph.stem_anchor)
@@ -69,5 +69,19 @@ impl Flag {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
+    }
+}
+
+// ---- placement ----
+
+impl Flag {
+    /// Supplied origin is the point on the stem (its nw/sw corner) that the
+    /// flag's own SMuFL stem-attachment anchor should land on - not the
+    /// flag's own top-left corner.
+    pub fn place(&mut self, origin: &XY) {
+        // The offset from the glyph's origin to its stem-attachment anchor,
+        // subtracted to put the origin where the anchor lands on the stem.
+        let anchor_offset = self.glyph.stem_anchor.scale(self.unit());
+        self.xy = *origin - anchor_offset;
     }
 }

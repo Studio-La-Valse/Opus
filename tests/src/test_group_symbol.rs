@@ -16,7 +16,7 @@ mod tests {
     use lib::score::engrave::{arrange_score, walk_document};
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
-    use lib::score::visual::arranger::{ArrangeMachine, ScoreMeasurement};
+    use lib::score::visual::arranger::{PageArranger, ScoreMeasurement};
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::render_fonts::RenderFonts;
@@ -83,7 +83,7 @@ mod tests {
                 y: span,
             },
         );
-        ArrangeMachine.arrange_group_symbol(&mut symbol, &ORIGIN);
+        PageArranger.arrange_group_symbol(&mut symbol, &ORIGIN);
 
         symbol
     }
@@ -490,7 +490,7 @@ mod tests {
                     y: SPAN,
                 },
             );
-            ArrangeMachine.arrange_group_symbol(symbol, &ORIGIN);
+            PageArranger.arrange_group_symbol(symbol, &ORIGIN);
         };
 
         lay_out(&mut symbol, &UserLayout::default());
