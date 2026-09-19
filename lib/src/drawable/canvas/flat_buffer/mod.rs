@@ -54,14 +54,18 @@ pub const FONT_STYLE_ITALIC: u32 = 2;
 pub struct FlatBuffer {
     pub bounds: (f32, f32, f32, f32), // min_x, min_y, width, height
     pub geometry: Vec<f32>,
-    /// Parallel page table, 5 `f32`s per page:
-    /// `[geometry_start_index, origin_x, origin_y, width, height]`. Page `i`'s
-    /// records span `geometry[page_table[5i] .. page_table[5(i+1)]]`, with the
-    /// last page running to `geometry.len()`. Empty when the buffer was built
-    /// via [`CanvasPainter::paint`](crate::drawable::canvas::CanvasPainter::paint)
+    /// Parallel page table, 4 `f32`s per page:
+    /// `[geometry_start_index, text_start_index, width, height]`. Page `i`'s
+    /// geometry records span `geometry[page_table[4i] .. page_table[4(i+1)]]`,
+    /// with the last page running to `geometry.len()`. `text_start_index` is
+    /// the number of `text_blob` entries emitted by earlier pages: `TAG_TEXT`
+    /// and `TAG_GLYPH` records pull from `text_blob` in stream order, so a
+    /// renderer painting page `i` in isolation needs to know how many entries
+    /// to skip to land on that page's own strings. Empty when the buffer was
+    /// built via [`CanvasPainter::paint`](crate::drawable::canvas::CanvasPainter::paint)
     /// rather than
     /// [`paint_pages`](crate::drawable::canvas::CanvasPainter::paint_pages).
-    /// Coordinates are in the same space as `geometry`.
+    /// Page dimensions are page-local, in the same space as `geometry`.
     pub page_table: Vec<f32>,
     pub text_blob: String,
     /// The distinct font families every `TAG_TEXT` record's `fontIndex` points
@@ -77,11 +81,14 @@ pub struct FlatBuffer {
 pub struct FlatBufferCanvas {
     bounds: (f32, f32, f32, f32),
     geometry: Vec<f32>,
-    /// See [`FlatBuffer::page_table`]. Grows by one 5-`f32` record per
+    /// See [`FlatBuffer::page_table`]. Grows by one 4-`f32` record per
     /// [`Canvas::begin_page`] call; stays empty for a non-paged paint.
     page_table: Vec<f32>,
     text_blob: String,
     has_text: bool,
+    /// Number of entries pushed into `text_blob` so far, i.e. the
+    /// `text_start_index` the next [`Canvas::begin_page`] call would record.
+    text_count: usize,
     /// `(family, style-flags)` for every distinct font seen, in first-seen order.
     fonts: Vec<(String, u32)>,
 }
@@ -113,6 +120,7 @@ impl FlatBufferCanvas {
         }
         self.has_text = true;
         self.text_blob.push_str(content);
+        self.text_count += 1;
     }
 }
 
@@ -124,11 +132,10 @@ impl Canvas for FlatBufferCanvas {
         self.bounds = (min_x, min_y, max_x - min_x, max_y - min_y);
     }
 
-    fn begin_page(&mut self, origin_x: f32, origin_y: f32, width: f32, height: f32) {
+    fn begin_page(&mut self, width: f32, height: f32) {
         self.page_table.extend_from_slice(&[
             self.geometry.len() as f32,
-            origin_x,
-            origin_y,
+            self.text_count as f32,
             width,
             height,
         ]);

@@ -9,9 +9,10 @@ use crate::drawable::elements::text::Text;
 /// A [`Canvas`] that renders elements into an SVG document string sized to an
 /// explicit view box -- the page rectangle -- rather than to the elements'
 /// own bounds. This keeps page margins and trailing whitespace in the output
-/// and matches what the PDF canvas does; a non-zero view-box origin carries the
-/// page's global offset natively, so elements are still emitted at their global
-/// coordinates with no per-element translation.
+/// and matches what the PDF canvas does. Elements are page-local, so callers
+/// rendering a [`RenderedPage`](crate::score::visual::render_compositor::RenderedPage)
+/// pass a `(0, 0)` view-box origin; the origin stays a caller-supplied field
+/// rather than being hardcoded here so a non-score caller can still offset it.
 pub struct SvgCanvas {
     /// `(origin_x, origin_y, width, height)` -- emitted verbatim as the SVG
     /// `viewBox` / `width` / `height`.

@@ -13,7 +13,6 @@ use lib::musicxml::walker::Walker;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::core::group_symbol::GroupSymbol;
 use lib::score::engrave::{EngravedScore, Stage, engrave};
-use lib::score::page_orientation::PageOrientation;
 use lib::score::user_layout::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
@@ -60,18 +59,6 @@ pub struct RenderArgs {
 
     #[arg(long)]
     foreground_color: Option<Color>,
-
-    #[arg(long)]
-    page_orientation: Option<PageOrientation>,
-
-    #[arg(long)]
-    horizontal_gutter_even: Option<f32>,
-
-    #[arg(long)]
-    horizontal_gutter_uneven: Option<f32>,
-
-    #[arg(long)]
-    vertical_gutter: Option<f32>,
 
     #[arg(long)]
     staff_line: Option<f32>,
@@ -246,10 +233,6 @@ pub fn run(format: RenderCommand) {
         debug,
         page_color,
         foreground_color,
-        page_orientation,
-        horizontal_gutter_even,
-        horizontal_gutter_uneven,
-        vertical_gutter,
         staff_line,
         light_barline,
         heavy_barline,
@@ -326,10 +309,6 @@ pub fn run(format: RenderCommand) {
     let user_layout = UserLayout {
         page_color,
         foreground_color,
-        page_orientation,
-        horizontal_gutter_even,
-        horizontal_gutter_uneven,
-        vertical_gutter,
         staff_line_width: staff_line,
         light_barline,
         heavy_barline,
@@ -415,8 +394,8 @@ pub fn run(format: RenderCommand) {
     let time = Instant::now();
 
     // One walk feeds every format: the score's pages, each carrying its
-    // elements in global tenths. `fonts` must outlive `pages`, which borrows
-    // glyph data from it.
+    // elements in page-local tenths. `fonts` must outlive `pages`, which
+    // borrows glyph data from it.
     let fonts = RenderFonts::create(&font, title_font, lyric_font, group_name_font);
     let pages = RenderCompositor::compose(&visual, &fonts, debug);
 

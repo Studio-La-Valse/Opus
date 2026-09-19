@@ -17,7 +17,6 @@ pub struct Page {
 
     pub number: u32,
 
-    pub xy: XY,
     pub width: f32,
     pub height: f32,
 
@@ -124,8 +123,6 @@ impl Layoutable for Page {
     }
 
     fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-
         let m_left = self.margins.left;
         let m_top = self.margins.top;
 

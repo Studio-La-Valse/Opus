@@ -213,7 +213,7 @@ mod tests {
     fn the_box_reaches_left_to_the_page_margin() {
         let score = engrave(&score_xml(NAMED_GROUP, &["P1", "P2"], 1));
         let page = score.pages.values().next().expect("a page");
-        let margin_left = page.xy.x + page.margins.left;
+        let margin_left = page.margins.left;
 
         let system = system(&score, 1);
         close(

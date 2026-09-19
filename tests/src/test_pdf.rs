@@ -54,12 +54,12 @@ mod tests {
         SmuflFont::load(&fixture_string(BRAVURA_META), &fixture_string(GLYPH_NAMES))
     }
 
-    /// Renders one page's worth of elements through [`PdfPageCanvas`] with a
-    /// 0.45 pt/tenth scale and a page pinned at the origin, and hands back the
-    /// content stream as a lossy string for operator assertions.
+    /// Renders one page's worth of (already page-local) elements through
+    /// [`PdfPageCanvas`] at a 0.45 pt/tenth scale, and hands back the content
+    /// stream as a lossy string for operator assertions.
     fn paint_page(font_bytes: &[u8], elements: &[DrawableElement<'_>]) -> (PdfPage, String) {
         let fonts = bravura_font_set(font_bytes);
-        let canvas = PdfPageCanvas::new(XY::ZERO, (100.0, 200.0), 0.45, &fonts);
+        let canvas = PdfPageCanvas::new((100.0, 200.0), 0.45, &fonts);
         let page = CanvasPainter::new(canvas).paint(elements);
         let content = String::from_utf8_lossy(&page.content).into_owned();
         (page, content)
@@ -277,13 +277,11 @@ mod tests {
         let mut score = Score::default();
         {
             let page = score.page_or_insert(1);
-            page.xy = XY { x: 0.0, y: 0.0 };
             page.width = 1360.0;
             page.height = 1760.0;
         }
         {
             let page = score.page_or_insert(2);
-            page.xy = XY { x: 1400.0, y: 0.0 };
             page.width = 1360.0;
             page.height = 1760.0;
         }
@@ -294,9 +292,8 @@ mod tests {
         let pages = compositor.walk_pages(&score, &fonts);
         assert_eq!(pages.len(), 2);
         assert_eq!((pages[0].number, pages[1].number), (1, 2));
-        assert_eq!((pages[0].origin.x, pages[0].origin.y), (0.0, 0.0));
-        assert_eq!((pages[1].origin.x, pages[1].origin.y), (1400.0, 0.0));
         assert_eq!(pages[0].width, 1360.0);
+        assert_eq!(pages[1].width, 1360.0);
         // BaseRenderer::render_page emits exactly the page background rect.
         assert_eq!(pages[0].elements.len(), 1);
         assert_eq!(pages[1].elements.len(), 1);
@@ -307,10 +304,12 @@ mod tests {
         let font_bytes = fixture_bytes(BRAVURA_OTF);
         let fonts = bravura_font_set(&font_bytes);
 
-        let make_page = |origin: XY| {
+        // Every page is page-local, so both pages draw the same page-local
+        // elements -- there is no per-page global offset to bake in any more.
+        let make_page = || {
             let elements: Vec<DrawableElement<'_>> = vec![
                 Rect {
-                    xy: origin,
+                    xy: XY::ZERO,
                     width: 100.0,
                     height: 200.0,
                     color: Color::WHITE,
@@ -323,24 +322,18 @@ mod tests {
                     color: Color::BLACK,
                     font_size: 40.0,
                     font: FontSpec::plain("Bravura"),
-                    bounds: BoundingBox::point(XY {
-                        x: origin.x + 10.0,
-                        y: origin.y + 40.0,
-                    }),
+                    bounds: BoundingBox::point(XY { x: 10.0, y: 40.0 }),
                     vertical_alignment: VerticalAlign::Bottom,
                     horizontal_alignment: HorizontalAlign::Left,
                     background: None,
                 }
                 .into(),
             ];
-            let canvas = PdfPageCanvas::new(origin, (100.0, 200.0), 0.45, &fonts);
+            let canvas = PdfPageCanvas::new((100.0, 200.0), 0.45, &fonts);
             CanvasPainter::new(canvas).paint(&elements)
         };
 
-        let pages = vec![
-            make_page(XY { x: 0.0, y: 0.0 }),
-            make_page(XY { x: 120.0, y: 0.0 }),
-        ];
+        let pages = vec![make_page(), make_page()];
 
         let bytes = write_pdf(&pages, &fonts);
         let text = String::from_utf8_lossy(&bytes);

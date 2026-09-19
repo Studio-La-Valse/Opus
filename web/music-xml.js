@@ -1,5 +1,5 @@
 // <music-xml> - a self-contained web component that renders a MusicXML
-// document to a canvas via the `wasm` crate.
+// document, one <canvas> per page, stacked by CSS.
 //
 // Usage:
 //   <script type="module" src="/path/to/music-xml.js"></script>
@@ -18,12 +18,25 @@ const TAG_TEXT = 2;
 const TAG_POLYGON = 3;
 const TAG_CIRCLE = 4;
 const TAG_GLYPH = 5;
-// `output.page_table` (from wasm) is a parallel table of 5 f32s per page -
-// [geometryStartIndex, originX, originY, width, height] - letting a consumer
-// slice `geometry` per page (page i runs geometry[table[5i] .. table[5(i+1)]],
-// the last page to geometry.length). This single-canvas renderer draws the
-// whole stream at once and ignores it; a per-page-canvas renderer would use it.
-const TEXT_DELIMITER = "";
+// `output.page_table` (from wasm) is a parallel table of 4 f32s per page -
+// [geometryStartIndex, textStartIndex, width, height]. Every page is
+// engraved page-local (there is no page origin any more: the engine no
+// longer arranges pages relative to each other, this component does), so
+// `width`/`height` in tenths is all a page needs to be painted on its own.
+// `textStartIndex` is how many `text_blob` entries (split on
+// TEXT_DELIMITER) precede this page's own: TAG_TEXT/TAG_GLYPH records pull
+// from that blob in stream order, so painting a page in isolation means
+// skipping that many entries first. See _decode, which slices both
+// `geometry` and the decoded `texts` array per page from this table.
+// U+001F UNIT SEPARATOR, matching TEXT_DELIMITER in
+// lib/src/drawable/canvas/flat_buffer/mod.rs. Built from its code point in
+// plain ASCII rather than written as a literal control character, which is
+// invisible in every editor and diff and so does not reliably survive a file
+// being rewritten. Losing it is silent but total: the separator becomes "",
+// String.split("") splits into single characters, and from there every font
+// family resolves to its own first letter (so Bravura falls back to serif and
+// no notation renders) while every glyph draws the wrong code point.
+const TEXT_DELIMITER = String.fromCharCode(31);
 const H_ALIGN = ["left", "center", "right"];
 const V_ALIGN = ["hanging", "middle", "alphabetic"];
 // Bits in a `font_styles` entry (see the flat-buffer module).
@@ -31,6 +44,21 @@ const FONT_STYLE_BOLD = 1;
 const FONT_STYLE_ITALIC = 2;
 // Generic fallback appended after every resolved family.
 const FONT_FALLBACK = "serif";
+
+// Upper bound on one page canvas's physical pixel count (width * height in
+// device pixels). Moved here from wasm/src/lib.rs's MAX_CANVAS_PIXELS: now
+// that every page is engraved page-local, only the browser knows how large a
+// page is actually displayed, so the budget belongs to the thing that decides
+// the backing-store size. Chosen the same way it was there: roughly "one big
+// native display's worth of pixels" - a page that already fits renders at
+// full native sharpness, only an oversized one gets scaled down.
+const MAX_CANVAS_PIXELS = 12_000_000;
+// Per-side cap, roughly Safari's ~16,384px backing-store limit per axis. The
+// area cap alone can miss a very tall or very wide page that stays under the
+// pixel budget while still exceeding this - which used to be the ROADMAP §2
+// blank-canvas bug. Per-page, the two caps together are cheap to state and
+// pages never approach either.
+const MAX_CANVAS_SIDE_PX = 16_384;
 
 const WASM_JS_URL = new URL("../wasm/pkg/wasm.js", import.meta.url).href;
 const BRAVURA_METADATA_URL = new URL(
@@ -104,6 +132,13 @@ function rgba(r, g, b, a) {
 // adding its name here; the value's type is worked out at read time, so there
 // is nothing else on this side to keep in step.
 //
+// Page arrangement (`--page-orientation`) is deliberately not here: it is a
+// component-level CSS knob this element reads separately in the paint path
+// (see _applyPageOrientation and the `.pages` stylesheet rule below), not a
+// `UserLayout` field - the engine no longer arranges pages relative to each
+// other, so there is nothing on the Rust side left for it to configure. The
+// gap between pages is a fixed 10px in that same stylesheet, not a knob.
+//
 // A name that no UserLayout field matches is silently ignored rather than
 // reported (serde-wasm-bindgen only looks up the fields it expects), so a typo
 // here shows up as an option that quietly does nothing rather than an error -
@@ -112,10 +147,6 @@ function rgba(r, g, b, a) {
 const LAYOUT_OPTIONS = [
   "pageColor",
   "foregroundColor",
-  "pageOrientation",
-  "horizontalGutterEven",
-  "horizontalGutterUneven",
-  "verticalGutter",
   "staffLineWidth",
   "lightBarline",
   "heavyBarline",
@@ -184,13 +215,35 @@ export class MusicXmlElement extends HTMLElement {
     shadow.innerHTML = `
       <style>
         :host { display: block; }
-        /* width:100% + height:auto (rather than a fixed pixel height) lets
-           the canvas fill its container width while the browser derives the
-           displayed height from the backing store's width/height *attribute*
-           ratio (bounds_width*dpr : bounds_height*dpr, which reduces to the
-           same ratio as the logical bounds) - so it scales without
-           distorting, the same way a plain <img> does. */
-        canvas { display: block; width: 100%; height: auto; }
+        /* Pages stack along --page-orientation (vertical -> column, the
+           default; horizontal -> row - see _applyPageOrientation), separated
+           by a fixed 10px gap. Deliberately not configurable: the gap is
+           chrome between pages, not a property of the engraving, and the
+           tenth-valued gutters the engine used to arrange with are gone. */
+        .pages {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        /* width:100% + height:auto lets each canvas fill its container width
+           while the browser derives the displayed height from the CSS
+           aspect-ratio _reconcilePages sets per page (the page's own tenths
+           width/height ratio) - so it scales without distorting, the same
+           way a plain <img> does, even while the canvas is unpainted
+           (width/height attributes both 0) between IntersectionObserver
+           visits.
+
+           flex: 0 0 auto is load-bearing in row mode. A flex item's default
+           min-width is auto, which for a canvas resolves to its backing
+           store's width: a painted page refuses to shrink while its unpainted
+           neighbours collapse to nothing, so only the first page stays
+           visible - and being zero-wide, the others never intersect enough to
+           get painted, which makes the collapse self-sustaining. */
+        .pages canvas { display: block; width: 100%; height: auto; flex: 0 0 auto; }
+        /* Row mode: one page per container width, scrolled horizontally,
+           rather than N pages crushed side by side into one screen. */
+        .pages[data-flow="row"] { overflow-x: auto; align-items: flex-start; }
+        .pages[data-flow="row"] canvas { flex: 0 0 100%; }
         .status {
           font: 0.85rem/1.4 -apple-system, BlinkMacSystemFont, sans-serif;
           color: #a00;
@@ -200,11 +253,10 @@ export class MusicXmlElement extends HTMLElement {
         .status:empty { display: none; }
       </style>
       <div part="status" class="status"></div>
-      <canvas part="canvas"></canvas>
+      <div part="pages" class="pages"></div>
     `;
     this._statusEl = shadow.querySelector(".status");
-    this._canvas = shadow.querySelector("canvas");
-    this._ctx = this._canvas.getContext("2d");
+    this._pagesEl = shadow.querySelector(".pages");
 
     // The wasm `Score` for this element's document, or undefined when nothing
     // is loaded. Each element owns its own - the wasm module is shared, the
@@ -213,6 +265,42 @@ export class MusicXmlElement extends HTMLElement {
     this._loadSeq = 0;
     this._renderDebounce = undefined;
     this._connected = false;
+
+    // One entry per laid-out page, parallel to the decoded page metadata in
+    // `_pages` (see _decode / _reconcilePages): `{ el, ctx, style, painted,
+    // intersecting, backingWidth, backingHeight }`. `style` is this page's
+    // own 2D-context style cache - each canvas has its own context state, so
+    // this can't be shared across pages the way a single-canvas cache could.
+    this._pageEls = [];
+    this._pageIndexByEl = new Map();
+    // Decoded page metadata: `{ geomStart, geomEnd, textStart, textEnd,
+    // width, height }` per page, set by _decode. `_geometry`/`_texts`/
+    // `_fontFamilies`/`_fontStyles` are the whole score's flat buffers those
+    // records slice into.
+    this._pages = [];
+    this._geometry = undefined;
+    this._texts = undefined;
+    this._fontFamilies = undefined;
+    this._fontStyles = undefined;
+
+    // Painted visible-first: a page's canvas gets its backing store only
+    // while it (or its ~1-viewport margin) is on screen, and gives it back
+    // when it scrolls away - seventeen full-resolution pages held at once
+    // would blow well past any reasonable memory budget. rootMargin covers
+    // roughly one viewport on every side so a page already has pixels by the
+    // time it's actually visible.
+    this._pageObserver = new IntersectionObserver((entries) => this._onPageIntersect(entries), {
+      rootMargin: "100% 100% 100% 100%",
+    });
+    // Repaints a visible page at its new displayed size - a window resize,
+    // the host page's zoom slider, or a --page-orientation flip that changes
+    // how wide a page is laid out. Never re-enters wasm: it redraws from the
+    // buffers _decode already cached, which is what makes the zoom slider
+    // sharpen the notation instead of upscaling stale pixels.
+    this._resizeObserver = new ResizeObserver((entries) => this._onPageResize(entries));
+    this._pendingResizeTargets = new Set();
+    this._resizeRaf = undefined;
+
     // The JSON snapshot of the options used for the most recent completed
     // render, and (between _scheduleRender building them and _render
     // consuming them) the not-yet-rendered options a debounced render is
@@ -223,11 +311,11 @@ export class MusicXmlElement extends HTMLElement {
     // panic), or undefined if none has. See _render's catch and
     // _scheduleRender's recovery branch.
     this._failedOptionsJson = undefined;
-    this._resetStyleCache();
   }
 
   connectedCallback() {
     this._connected = true;
+    this._applyPageOrientation();
     if (this.hasAttribute("file")) {
       this._loadFile();
     }
@@ -237,7 +325,12 @@ export class MusicXmlElement extends HTMLElement {
     this._connected = false;
     this._loadSeq++; // invalidates any fetch/bootstrap still in flight
     clearTimeout(this._renderDebounce);
+    if (this._resizeRaf !== undefined) {
+      cancelAnimationFrame(this._resizeRaf);
+      this._resizeRaf = undefined;
+    }
     this._freeScore();
+    this._clearPages();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -249,7 +342,33 @@ export class MusicXmlElement extends HTMLElement {
     if (name === "file") {
       this._loadFile();
     } else {
+      // --page-orientation is component-level, not a UserLayout field, so a
+      // style-only change applies it directly here - a pure CSS re-layout,
+      // never a reason to re-enter wasm. _scheduleRender still runs after in
+      // case a real UserLayout knob also changed.
+      this._applyPageOrientation();
       this._scheduleRender();
+    }
+  }
+
+  // Translates `--page-orientation: vertical | horizontal` (the same spelling
+  // a CLI flag or a `<group-symbol>` would use, kept for the exhibition
+  // site's existing `music-xml { --page-orientation: vertical; }` rule) into
+  // the `.pages` container's flex-direction. Anything other than exactly
+  // "horizontal" - unset included - leaves the stylesheet's own `column`
+  // default in place.
+  // Drives the `.pages` flex direction from --page-orientation. Sets a
+  // `data-flow` attribute rather than flexDirection directly, because row
+  // mode needs more than the direction: the stylesheet keys its sizing and
+  // overflow rules off the same attribute.
+  _applyPageOrientation() {
+    const orientation = getComputedStyle(this).getPropertyValue("--page-orientation").trim();
+    const row = orientation === "horizontal";
+    this._pagesEl.style.flexDirection = row ? "row" : "";
+    if (row) {
+      this._pagesEl.dataset.flow = "row";
+    } else {
+      delete this._pagesEl.dataset.flow;
     }
   }
 
@@ -258,7 +377,7 @@ export class MusicXmlElement extends HTMLElement {
     const fileUrl = this.getAttribute("file");
 
     this._freeScore();
-    this._clearCanvas();
+    this._clearPages();
 
     if (!fileUrl) {
       this._setStatus("");
@@ -301,10 +420,22 @@ export class MusicXmlElement extends HTMLElement {
     this._score = undefined;
   }
 
-  _clearCanvas() {
-    this._canvas.width = 0;
-    this._canvas.height = 0;
-    this._resetStyleCache();
+  // Tears down every page canvas: unobserves it from both observers, drops it
+  // from the DOM, and forgets the decoded buffers it was painted from.
+  _clearPages() {
+    for (const pageEl of this._pageEls) {
+      this._pageObserver.unobserve(pageEl.el);
+      this._resizeObserver.unobserve(pageEl.el);
+      this._pageIndexByEl.delete(pageEl.el);
+      pageEl.el.remove();
+    }
+    this._pageEls = [];
+    this._pendingResizeTargets.clear();
+    this._pages = [];
+    this._geometry = undefined;
+    this._texts = undefined;
+    this._fontFamilies = undefined;
+    this._fontStyles = undefined;
     this._lastOptionsJson = undefined;
     this._failedOptionsJson = undefined;
   }
@@ -313,12 +444,11 @@ export class MusicXmlElement extends HTMLElement {
     this._statusEl.textContent = message ?? "";
   }
 
-  // The full render() options object: debug, DPI, the three font
-  // properties, and every LAYOUT_OPTIONS entry this element actually sets -
-  // all read off this element's CSS custom properties (a stylesheet rule,
-  // class, or inline `style="--page-color: ..."`), via a single
-  // getComputedStyle() call reused for all 39 lookups rather than one call
-  // per property.
+  // The full render() options object: debug, the three font properties, and
+  // every LAYOUT_OPTIONS entry this element actually sets - all read off this
+  // element's CSS custom properties (a stylesheet rule, class, or inline
+  // `style="--page-color: ..."`), via a single getComputedStyle() call reused
+  // for all lookups rather than one call per property.
   _renderOptions() {
     const computed = getComputedStyle(this);
     const cssVar = (name) => {
@@ -333,14 +463,13 @@ export class MusicXmlElement extends HTMLElement {
       // CSS custom properties are always strings, but the Rust side wants a
       // number for the numeric knobs - so send a number whenever the value is
       // one. That keeps this loop from having to know which option is which:
-      // "20" parses, "#ffffff" and "horizontal" don't.
+      // "20" parses, "#ffffff" and "bracket" don't.
       const asNumber = Number(value);
       layout[option] = Number.isFinite(asNumber) ? asNumber : value;
     }
 
     return {
       debug: this.hasAttribute("debug"),
-      devicePixelRatio: window.devicePixelRatio || 1,
       titleFont: cssVar("title-font"),
       lyricFont: cssVar("lyric-font"),
       groupNameFont: cssVar("group-name-font"),
@@ -356,6 +485,7 @@ export class MusicXmlElement extends HTMLElement {
   // actually changed.
   refresh() {
     this._lastOptionsJson = undefined;
+    this._applyPageOrientation();
     if (!this._score) {
       this._failedOptionsJson = undefined;
       this._loadFile();
@@ -376,7 +506,7 @@ export class MusicXmlElement extends HTMLElement {
     // A render this element has already produced pixel-for-identical output
     // for - most commonly a `style` mutation that doesn't touch any of the
     // CSS custom properties above (e.g. the zoom slider's width) - has
-    // nothing to gain from repainting, so skip it.
+    // nothing to gain from re-entering wasm, so skip it.
     if (JSON.stringify(options) === this._lastOptionsJson) return;
     this._pendingOptions = options;
     // Coalesces bursts of attribute changes (e.g. a host page driving a
@@ -396,7 +526,9 @@ export class MusicXmlElement extends HTMLElement {
     let output;
     try {
       output = this._score.render(options);
-      this._draw(output);
+      this._decode(output);
+      this._reconcilePages();
+      this._repaintVisiblePages();
       this._setStatus("");
       this._lastOptionsJson = JSON.stringify(options);
     } catch (err) {
@@ -419,13 +551,209 @@ export class MusicXmlElement extends HTMLElement {
     }
   }
 
-  _resetStyleCache() {
-    // Assigning to ctx properties is expensive even when the new value
-    // equals the current one (ctx.font in particular forces font
-    // re-resolution), and adjacent drawable records very often share style
-    // with their neighbor, so every _setXStyle() below compares against
-    // this cache first instead of writing unconditionally.
-    this._style = {
+  // Reads every RenderOutput getter exactly once (each is a wasm-bindgen
+  // mem::take - a second read comes back empty) and caches the buffers, plus
+  // a derived per-page slice table, on the element. Decode is deliberately
+  // separate from painting: a page can be repainted from these cached buffers
+  // (on scroll, on resize) without going back to wasm.
+  _decode(output) {
+    const textBlob = output.text_blob;
+    const texts = textBlob === "" ? [] : textBlob.split(TEXT_DELIMITER);
+    const geometry = output.geometry;
+    const fontBlob = output.font_blob;
+    const fontFamilies = fontBlob === "" ? [] : fontBlob.split(TEXT_DELIMITER);
+    const fontStyles = output.font_styles;
+    const pageTable = output.page_table;
+
+    const pages = [];
+    for (let i = 0; i < pageTable.length; i += 4) {
+      const geomStart = pageTable[i];
+      const textStart = pageTable[i + 1];
+      const width = pageTable[i + 2];
+      const height = pageTable[i + 3];
+      const hasNext = i + 4 < pageTable.length;
+      pages.push({
+        geomStart,
+        geomEnd: hasNext ? pageTable[i + 4] : geometry.length,
+        textStart,
+        textEnd: hasNext ? pageTable[i + 5] : texts.length,
+        width,
+        height,
+      });
+    }
+
+    this._geometry = geometry;
+    this._texts = texts;
+    this._fontFamilies = fontFamilies;
+    this._fontStyles = fontStyles;
+    this._pages = pages;
+  }
+
+  // Adds/removes canvases so there is exactly one per decoded page, sizes
+  // each one's CSS box via `aspect-ratio` so the layout is correct before
+  // anything is rasterized, and marks every page unpainted - whatever a
+  // reused canvas showed before belongs to geometry _decode just replaced.
+  _reconcilePages() {
+    const pages = this._pages;
+
+    while (this._pageEls.length < pages.length) {
+      const canvas = document.createElement("canvas");
+      const index = this._pageEls.length;
+      const pageEl = {
+        el: canvas,
+        ctx: canvas.getContext("2d"),
+        style: this._blankStyle(),
+        painted: false,
+        intersecting: false,
+        backingWidth: undefined,
+        backingHeight: undefined,
+      };
+      this._pagesEl.appendChild(canvas);
+      this._pageIndexByEl.set(canvas, index);
+      this._pageObserver.observe(canvas);
+      this._resizeObserver.observe(canvas);
+      this._pageEls.push(pageEl);
+    }
+
+    while (this._pageEls.length > pages.length) {
+      const pageEl = this._pageEls.pop();
+      this._pageObserver.unobserve(pageEl.el);
+      this._resizeObserver.unobserve(pageEl.el);
+      this._pageIndexByEl.delete(pageEl.el);
+      pageEl.el.remove();
+    }
+
+    for (let index = 0; index < pages.length; index++) {
+      const page = pages[index];
+      const pageEl = this._pageEls[index];
+      pageEl.el.style.aspectRatio = `${page.width} / ${page.height}`;
+      pageEl.painted = false;
+      pageEl.backingWidth = undefined;
+      pageEl.backingHeight = undefined;
+    }
+  }
+
+  // Repaints every page the IntersectionObserver currently considers visible
+  // (or near-visible, within its rootMargin). Called after _decode /
+  // _reconcilePages, since a page already on screen won't get a fresh
+  // IntersectionObserver callback on its own - only a visibility *change*
+  // fires one - even though the geometry underneath it just changed.
+  _repaintVisiblePages() {
+    for (let index = 0; index < this._pageEls.length; index++) {
+      if (this._pageEls[index].intersecting) {
+        this._paintPage(index);
+      }
+    }
+  }
+
+  _onPageIntersect(entries) {
+    for (const entry of entries) {
+      const index = this._pageIndexByEl.get(entry.target);
+      if (index === undefined) continue;
+
+      const pageEl = this._pageEls[index];
+      pageEl.intersecting = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        this._paintPage(index);
+      } else {
+        this._releasePage(index);
+      }
+    }
+  }
+
+  // rAF-coalesced: a resize storm (dragging a splitter, a flex re-layout from
+  // an orientation flip) can fire many ResizeObserver callbacks before the
+  // next frame, and only the final size in each one matters.
+  _onPageResize(entries) {
+    for (const entry of entries) {
+      this._pendingResizeTargets.add(entry.target);
+    }
+    if (this._resizeRaf !== undefined) return;
+
+    this._resizeRaf = requestAnimationFrame(() => {
+      this._resizeRaf = undefined;
+      const targets = this._pendingResizeTargets;
+      this._pendingResizeTargets = new Set();
+
+      for (const target of targets) {
+        const index = this._pageIndexByEl.get(target);
+        if (index === undefined) continue;
+        // Only a currently-visible page has anything to redraw; an
+        // off-screen page is already released and repaints when it next
+        // intersects, at whatever size is current by then.
+        if (this._pageEls[index]?.intersecting) {
+          this._paintPage(index);
+        }
+      }
+    });
+  }
+
+  // Gives a released page's backing store back. The CSS aspect-ratio box set
+  // by _reconcilePages holds its place in the stack either way, so nothing
+  // about the surrounding layout moves.
+  _releasePage(index) {
+    const pageEl = this._pageEls[index];
+    if (!pageEl) return;
+    pageEl.el.width = 0;
+    pageEl.el.height = 0;
+    pageEl.painted = false;
+    pageEl.backingWidth = undefined;
+    pageEl.backingHeight = undefined;
+  }
+
+  // Sizes page `index`'s backing store to its current displayed width and
+  // paints it from the buffers _decode cached - no wasm involved. A no-op if
+  // the computed backing store would be unchanged from what's already there,
+  // which is what lets a resize that doesn't actually change a page's pixel
+  // size (most of them, in a page-per-canvas layout) skip repainting.
+  _paintPage(index) {
+    const page = this._pages[index];
+    const pageEl = this._pageEls[index];
+    if (!page || !pageEl) return;
+
+    const canvas = pageEl.el;
+    const cssWidth = canvas.clientWidth;
+    if (cssWidth <= 0) return; // not laid out yet (e.g. a hidden ancestor)
+
+    const dpr = window.devicePixelRatio || 1;
+    let scale = (cssWidth * dpr) / page.width;
+    // Two clamps replacing wasm's old render_scale, now evaluated per page
+    // instead of once over every page's combined bounds: an area cap and a
+    // per-side cap.
+    const areaScale = Math.sqrt(MAX_CANVAS_PIXELS / (page.width * page.height));
+    const sideScale = Math.min(MAX_CANVAS_SIDE_PX / page.width, MAX_CANVAS_SIDE_PX / page.height);
+    scale = Math.min(scale, areaScale, sideScale);
+
+    const backingWidth = Math.max(1, Math.round(page.width * scale));
+    const backingHeight = Math.max(1, Math.round(page.height * scale));
+
+    if (
+      pageEl.painted &&
+      pageEl.backingWidth === backingWidth &&
+      pageEl.backingHeight === backingHeight
+    ) {
+      return;
+    }
+
+    canvas.width = backingWidth;
+    canvas.height = backingHeight;
+    pageEl.backingWidth = backingWidth;
+    pageEl.backingHeight = backingHeight;
+    // Setting canvas.width/height resets the entire 2D context state
+    // (fillStyle, font, ...) back to browser defaults, so this page's cached
+    // "current" style values would otherwise go stale.
+    this._resetPageStyleCache(pageEl);
+
+    const ctx = pageEl.ctx;
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.clearRect(0, 0, page.width, page.height);
+
+    this._paintRecords(pageEl, page);
+    pageEl.painted = true;
+  }
+
+  _blankStyle() {
+    return {
       fillR: undefined,
       fillG: undefined,
       fillB: undefined,
@@ -441,10 +769,14 @@ export class MusicXmlElement extends HTMLElement {
     };
   }
 
-  _setFillStyle(r, g, b, a) {
-    const s = this._style;
+  _resetPageStyleCache(pageEl) {
+    pageEl.style = this._blankStyle();
+  }
+
+  _setFillStyle(pageEl, r, g, b, a) {
+    const s = pageEl.style;
     if (s.fillR !== r || s.fillG !== g || s.fillB !== b || s.fillA !== a) {
-      this._ctx.fillStyle = rgba(r, g, b, a);
+      pageEl.ctx.fillStyle = rgba(r, g, b, a);
       s.fillR = r;
       s.fillG = g;
       s.fillB = b;
@@ -452,10 +784,10 @@ export class MusicXmlElement extends HTMLElement {
     }
   }
 
-  _setStrokeStyle(r, g, b, a) {
-    const s = this._style;
+  _setStrokeStyle(pageEl, r, g, b, a) {
+    const s = pageEl.style;
     if (s.strokeR !== r || s.strokeG !== g || s.strokeB !== b || s.strokeA !== a) {
-      this._ctx.strokeStyle = rgba(r, g, b, a);
+      pageEl.ctx.strokeStyle = rgba(r, g, b, a);
       s.strokeR = r;
       s.strokeG = g;
       s.strokeB = b;
@@ -463,80 +795,52 @@ export class MusicXmlElement extends HTMLElement {
     }
   }
 
-  _setLineWidth(width) {
-    if (this._style.lineWidth !== width) {
-      this._ctx.lineWidth = width;
-      this._style.lineWidth = width;
+  _setLineWidth(pageEl, width) {
+    if (pageEl.style.lineWidth !== width) {
+      pageEl.ctx.lineWidth = width;
+      pageEl.style.lineWidth = width;
     }
   }
 
-  _setFont(fontSize, family, styleFlags) {
+  _setFont(pageEl, fontSize, family, styleFlags) {
     const prefix =
       (styleFlags & FONT_STYLE_ITALIC ? "italic " : "") +
       (styleFlags & FONT_STYLE_BOLD ? "bold " : "");
     const font = `${prefix}${fontSize}px ${family}, ${FONT_FALLBACK}`;
-    if (this._style.font !== font) {
-      this._ctx.font = font;
-      this._style.font = font;
+    if (pageEl.style.font !== font) {
+      pageEl.ctx.font = font;
+      pageEl.style.font = font;
     }
   }
 
-  _setTextAlign(align) {
-    if (this._style.textAlign !== align) {
-      this._ctx.textAlign = align;
-      this._style.textAlign = align;
+  _setTextAlign(pageEl, align) {
+    if (pageEl.style.textAlign !== align) {
+      pageEl.ctx.textAlign = align;
+      pageEl.style.textAlign = align;
     }
   }
 
-  _setTextBaseline(baseline) {
-    if (this._style.textBaseline !== baseline) {
-      this._ctx.textBaseline = baseline;
-      this._style.textBaseline = baseline;
+  _setTextBaseline(pageEl, baseline) {
+    if (pageEl.style.textBaseline !== baseline) {
+      pageEl.ctx.textBaseline = baseline;
+      pageEl.style.textBaseline = baseline;
     }
   }
 
-  _draw(output) {
-    const ctx = this._ctx;
-    const canvas = this._canvas;
+  // The tag-record switch, bounded to one page's slice of the shared
+  // `geometry` stream (`page.geomStart .. page.geomEnd`) and seeded with
+  // `page.textStart` so TAG_TEXT/TAG_GLYPH pull the right strings out of the
+  // shared `texts` array even though painting starts partway through it.
+  _paintRecords(pageEl, page) {
+    const ctx = pageEl.ctx;
+    const geometry = this._geometry;
+    const texts = this._texts;
+    const fontFamilies = this._fontFamilies;
+    const fontStyles = this._fontStyles;
 
-    // Each property read below is a wasm-bindgen getter call that takes
-    // (mem::take) rather than clones the underlying buffer, so it must be
-    // read exactly once - a second read would come back empty.
-    const textBlob = output.text_blob;
-    const texts = textBlob === "" ? [] : textBlob.split(TEXT_DELIMITER);
-    const geometry = output.geometry;
-
-    // Font table: families joined by TEXT_DELIMITER, parallel style-flag array.
-    // A TAG_TEXT record's trailing fontIndex points into both.
-    const fontBlob = output.font_blob;
-    const fontFamilies = fontBlob === "" ? [] : fontBlob.split(TEXT_DELIMITER);
-    const fontStyles = output.font_styles;
-
-    // The wasm side already scales elements down (see the devicePixelRatio
-    // option in wasm/src/lib.rs) so that bounds_width/height
-    // times dpr stays within its canvas pixel budget - this is a plain,
-    // budget-agnostic consumer of whatever bounds it's given.
-    const dpr = window.devicePixelRatio || 1;
-    const width = output.bounds_width * dpr;
-    const height = output.bounds_height * dpr;
-    if (canvas.width !== width || canvas.height !== height) {
-      // Only the backing-store attributes are set here - the displayed size
-      // comes from the CSS `width: 100%; height: auto;` rule above, which
-      // derives its aspect ratio from these same attributes.
-      canvas.width = width;
-      canvas.height = height;
-      // Setting canvas.width/height resets the entire 2D context state
-      // (fillStyle, font, ...) back to browser defaults, so the cached
-      // "current" style values above would otherwise go stale.
-      this._resetStyleCache();
-    }
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, output.bounds_width, output.bounds_height);
-    ctx.translate(-output.bounds_min_x, -output.bounds_min_y);
-
-    let i = 0;
-    let textIndex = 0;
+    let i = page.geomStart;
+    const end = page.geomEnd;
+    let textIndex = page.textStart;
 
     // Adjacent TAG_LINE records overwhelmingly share the same stroke style
     // (five staff lines, a run of beam/ledger segments, ...), so instead of
@@ -554,7 +858,7 @@ export class MusicXmlElement extends HTMLElement {
       }
     };
 
-    while (i < geometry.length) {
+    while (i < end) {
       const tag = geometry[i++];
 
       if (tag !== TAG_LINE) {
@@ -583,8 +887,8 @@ export class MusicXmlElement extends HTMLElement {
 
           if (styleChanged) {
             flushLine();
-            this._setStrokeStyle(r, g, b, a);
-            this._setLineWidth(strokeWidth);
+            this._setStrokeStyle(pageEl, r, g, b, a);
+            this._setLineWidth(pageEl, strokeWidth);
             ctx.beginPath();
             lineOpen = true;
             lineR = r;
@@ -613,11 +917,11 @@ export class MusicXmlElement extends HTMLElement {
           const sb = geometry[i++];
           const sa = geometry[i++];
 
-          this._setFillStyle(r, g, b, a);
+          this._setFillStyle(pageEl, r, g, b, a);
           ctx.fillRect(x, y, w, h);
           if (strokeWidth >= 0) {
-            this._setStrokeStyle(sr, sg, sb, sa);
-            this._setLineWidth(strokeWidth);
+            this._setStrokeStyle(pageEl, sr, sg, sb, sa);
+            this._setLineWidth(pageEl, strokeWidth);
             ctx.strokeRect(x, y, w, h);
           }
           break;
@@ -639,11 +943,11 @@ export class MusicXmlElement extends HTMLElement {
 
           ctx.beginPath();
           ctx.arc(x, y, radius, 0, 2 * Math.PI);
-          this._setFillStyle(r, g, b, a);
+          this._setFillStyle(pageEl, r, g, b, a);
           ctx.fill();
           if (strokeWidth >= 0) {
-            this._setStrokeStyle(sr, sg, sb, sa);
-            this._setLineWidth(strokeWidth);
+            this._setStrokeStyle(pageEl, sr, sg, sb, sa);
+            this._setLineWidth(pageEl, strokeWidth);
             ctx.stroke();
           }
           break;
@@ -661,14 +965,15 @@ export class MusicXmlElement extends HTMLElement {
           const vAlign = geometry[i++];
           const fontIndex = geometry[i++];
 
-          this._setFillStyle(r, g, b, a);
+          this._setFillStyle(pageEl, r, g, b, a);
           this._setFont(
+            pageEl,
             fontSize,
             fontFamilies[fontIndex] ?? "Bravura",
             fontStyles[fontIndex] ?? 0,
           );
-          this._setTextAlign(H_ALIGN[hAlign]);
-          this._setTextBaseline(V_ALIGN[vAlign]);
+          this._setTextAlign(pageEl, H_ALIGN[hAlign]);
+          this._setTextBaseline(pageEl, V_ALIGN[vAlign]);
           ctx.fillText(texts[textIndex++] ?? "", x, y);
           break;
         }
@@ -683,16 +988,17 @@ export class MusicXmlElement extends HTMLElement {
           const a = geometry[i++];
           const fontIndex = geometry[i++];
 
-          this._setFillStyle(r, g, b, a);
+          this._setFillStyle(pageEl, r, g, b, a);
           this._setFont(
+            pageEl,
             fontSize,
             fontFamilies[fontIndex] ?? "Bravura",
             fontStyles[fontIndex] ?? 0,
           );
           // A glyph is placed on its own origin, so it always draws from the
           // left on the alphabetic baseline - no alignment to decode.
-          this._setTextAlign("left");
-          this._setTextBaseline("alphabetic");
+          this._setTextAlign(pageEl, "left");
+          this._setTextBaseline(pageEl, "alphabetic");
           ctx.fillText(texts[textIndex++] ?? "", x, y);
           break;
         }
@@ -720,11 +1026,11 @@ export class MusicXmlElement extends HTMLElement {
             }
           }
           ctx.closePath();
-          this._setFillStyle(r, g, b, a);
+          this._setFillStyle(pageEl, r, g, b, a);
           ctx.fill();
           if (strokeWidth >= 0) {
-            this._setStrokeStyle(sr, sg, sb, sa);
-            this._setLineWidth(strokeWidth);
+            this._setStrokeStyle(pageEl, sr, sg, sb, sa);
+            this._setLineWidth(pageEl, strokeWidth);
             ctx.stroke();
           }
           break;

@@ -217,14 +217,12 @@ mod tests {
         let pages = [
             RenderedPage {
                 number: 1,
-                origin: XY { x: 0.0, y: 0.0 },
                 width: 100.0,
                 height: 50.0,
                 elements: vec![line(0.0)],
             },
             RenderedPage {
                 number: 2,
-                origin: XY { x: 100.0, y: 0.0 },
                 width: 100.0,
                 height: 50.0,
                 elements: vec![line(100.0), rect()],
@@ -239,11 +237,75 @@ mod tests {
         assert_eq!(&flat.geometry[..10], &line_record(0.0));
         assert_eq!(&flat.geometry[10..20], &line_record(100.0));
 
-        // page_table: [start_index, origin_x, origin_y, width, height] per page.
-        // Page 0 starts at 0; page 1 starts after page 0's 10 f32s.
+        // page_table: [start_index, text_start_index, width, height] per page.
+        // Page 0 starts at geometry index 0 with no text emitted yet; page 1
+        // starts after page 0's 10 f32s, still with no text emitted anywhere.
         assert_eq!(
             flat.page_table,
-            vec![0.0, 0.0, 0.0, 100.0, 50.0, 10.0, 100.0, 0.0, 100.0, 50.0]
+            vec![0.0, 0.0, 100.0, 50.0, 10.0, 0.0, 100.0, 50.0]
+        );
+    }
+
+    /// A page painted in isolation has to know how many `text_blob` entries
+    /// precede its own: `TAG_TEXT` / `TAG_GLYPH` records pull from the blob in
+    /// stream order, so a renderer starting at page 2 needs `text_start_index`
+    /// to skip page 1's strings, not read them by mistake.
+    #[test]
+    fn page_table_text_start_index_locates_each_pages_own_strings() {
+        use lib::drawable::canvas::flat_buffer::TEXT_DELIMITER;
+
+        let text = |content: &'static str| {
+            DrawableElement::from(Text {
+                text: content,
+                color: Color::BLACK,
+                font_size: 12.0,
+                font: FontSpec::plain("Bravura"),
+                bounds: BoundingBox::point(XY::ZERO),
+                vertical_alignment: VerticalAlign::Top,
+                horizontal_alignment: HorizontalAlign::Left,
+                background: None,
+            })
+        };
+
+        let pages = [
+            RenderedPage {
+                number: 1,
+                width: 100.0,
+                height: 50.0,
+                elements: vec![text("page one"), text("still page one")],
+            },
+            RenderedPage {
+                number: 2,
+                width: 100.0,
+                height: 50.0,
+                elements: vec![text("page two")],
+            },
+        ];
+
+        let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint_pages(&pages);
+
+        // 4 f32s per page: [geometry_start, text_start, width, height].
+        assert_eq!(flat.page_table.len(), 8);
+        let page1_text_start = flat.page_table[1] as usize;
+        let page2_text_start = flat.page_table[5] as usize;
+
+        assert_eq!(
+            page1_text_start, 0,
+            "page 1 is first, so nothing precedes its strings"
+        );
+        assert_eq!(
+            page2_text_start, 2,
+            "page 1 emitted two text entries before page 2's own"
+        );
+
+        let entries: Vec<&str> = flat.text_blob.split(TEXT_DELIMITER).collect();
+        assert_eq!(
+            &entries[page1_text_start..page2_text_start],
+            &["page one", "still page one"]
+        );
+        assert_eq!(
+            entries[page2_text_start], "page two",
+            "decoding page 2 from its own text_start must yield page 2's strings, not page 1's"
         );
     }
 

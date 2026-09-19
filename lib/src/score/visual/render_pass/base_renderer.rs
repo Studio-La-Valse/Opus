@@ -36,7 +36,7 @@ impl RenderPass for BaseRenderer {
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let rect = Rect {
-            xy: page.xy,
+            xy: XY::ZERO,
             width: page.width,
             height: page.height,
             color: page.color,

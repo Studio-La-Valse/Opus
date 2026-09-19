@@ -8,8 +8,6 @@
 
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
-use lib::drawable::drawable_element::{Scale, compute_bounds};
-use lib::geometry::xy::XY;
 use lib::score::app_defaults::AppDefaults;
 use lib::score::engrave::{arrange_score, walk_document};
 use lib::score::score_defaults::ScoreDefaults;
@@ -33,18 +31,16 @@ fn init() {
 /// [`lib::drawable::canvas::flat_buffer::FlatBuffer`] for the exact record layout.
 #[wasm_bindgen]
 pub struct RenderOutput {
-    bounds_min_x: f32,
-    bounds_min_y: f32,
-    bounds_width: f32,
-    bounds_height: f32,
     geometry: Vec<f32>,
-    /// Parallel page table: 5 f32s per page --
-    /// `[geometry_start_index, origin_x, origin_y, width, height]`. Page `i`'s
-    /// records span `geometry[page_table[5i] .. page_table[5(i+1)]]` (the last
-    /// page runs to `geometry.len()`). Coordinates are in the same space as
-    /// `geometry` (global tenths, already `render_scale`-adjusted). JS may use
-    /// this to slice the stream per page; the current single-canvas renderer
-    /// ignores it.
+    /// Parallel page table: 4 f32s per page --
+    /// `[geometry_start_index, text_start_index, width, height]`. Page `i`'s
+    /// geometry records span `geometry[page_table[4i] .. page_table[4(i+1)]]`
+    /// (the last page runs to `geometry.len()`). `text_start_index` is the
+    /// number of `text_blob` entries emitted by earlier pages: `TAG_TEXT` and
+    /// `TAG_GLYPH` records pull from `text_blob` in stream order, so painting
+    /// page `i` on its own means skipping that many entries first. `width` /
+    /// `height` are that page's own size, in tenths -- pages are engraved
+    /// page-local, so there is no page origin to record.
     page_table: Vec<f32>,
     text_blob: String,
     font_blob: String,
@@ -53,26 +49,6 @@ pub struct RenderOutput {
 
 #[wasm_bindgen]
 impl RenderOutput {
-    #[wasm_bindgen(getter)]
-    pub fn bounds_min_x(&self) -> f32 {
-        self.bounds_min_x
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn bounds_min_y(&self) -> f32 {
-        self.bounds_min_y
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn bounds_width(&self) -> f32 {
-        self.bounds_width
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn bounds_height(&self) -> f32 {
-        self.bounds_height
-    }
-
     // Takes ownership of the buffer instead of cloning it: `_draw()` in
     // music-xml.js reads each property exactly once per RenderOutput before
     // calling `output.free()`, so there's no reason to pay for a second copy on
@@ -122,15 +98,11 @@ impl RenderOutput {
 /// this struct doesn't declare is never seen, let alone rejected. It still
 /// holds for any other deserializer (the native tests use serde_json), and it
 /// keeps the intent on record.
-#[derive(Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RenderOptions {
     /// Overlay the debug pass (bounding boxes, anchors, guides).
     pub debug: bool,
-    /// The browser's `window.devicePixelRatio`, used only to decide whether the
-    /// result needs scaling down to stay within [`MAX_CANVAS_PIXELS`]. Absent,
-    /// non-finite or non-positive values are treated as 1.0.
-    pub device_pixel_ratio: f32,
     /// Font family for titles / work-level text; falls back to the app default.
     pub title_font: Option<String>,
     /// Font family for lyrics; falls back to the app default.
@@ -140,32 +112,6 @@ pub struct RenderOptions {
     pub group_name_font: Option<String>,
     pub layout: UserLayout,
 }
-
-impl Default for RenderOptions {
-    fn default() -> Self {
-        RenderOptions {
-            debug: false,
-            // Not 0.0: an omitted ratio must mean "unscaled", and a zero would
-            // otherwise divide the pixel budget into an infinite render scale.
-            device_pixel_ratio: 1.0,
-            title_font: None,
-            lyric_font: None,
-            group_name_font: None,
-            layout: UserLayout::default(),
-        }
-    }
-}
-
-/// Upper bound on the canvas's physical pixel count (`width * height` in
-/// device pixels). A score's logical bounds can span many pages laid out
-/// side by side, which at a high `device_pixel_ratio` produces a canvas far
-/// larger than any viewport - and canvas raster/composite cost scales with
-/// physical pixel count, not element count. Chosen as roughly "one big
-/// native display's worth of pixels": scores that already fit render at full
-/// native sharpness, only oversized ones get scaled down. Purely a
-/// browser-canvas concern, so it lives here rather than in `lib`, which also
-/// backs non-canvas consumers (e.g. SVG export) that shouldn't be capped.
-pub const MAX_CANVAS_PIXELS: f32 = 12_000_000.0;
 
 // Adding a `render_pdf` method
 //
@@ -292,49 +238,13 @@ impl WasmScore {
 
         // One page-preserving walk; the flat buffer concatenates the pages into
         // its single stream but records each page's boundary in `page_table`.
-        let mut pages = RenderCompositor::compose(&self.score, &fonts, options.debug);
-
-        // A ratio JS couldn't supply sensibly (absent, NaN, zero) means
-        // "unscaled" rather than an unbounded scale factor.
-        let device_pixel_ratio =
-            if options.device_pixel_ratio.is_finite() && options.device_pixel_ratio > 0.0 {
-                options.device_pixel_ratio
-            } else {
-                1.0
-            };
-
-        let (min_x, min_y, max_x, max_y) = compute_bounds(pages.iter().flat_map(|p| &p.elements));
-        let physical_width = (max_x - min_x) * device_pixel_ratio;
-        let physical_height = (max_y - min_y) * device_pixel_ratio;
-        let render_scale = if physical_width > 0.0 && physical_height > 0.0 {
-            (MAX_CANVAS_PIXELS / (physical_width * physical_height))
-                .sqrt()
-                .min(1.0)
-        } else {
-            1.0
-        };
-
-        // Scale each page's elements *and* its origin/size, so the page table
-        // stays consistent with the down-scaled geometry.
-        if render_scale < 1.0 {
-            for page in &mut pages {
-                page.elements = page
-                    .elements
-                    .iter()
-                    .map(|el| el.scale(render_scale, XY::ZERO))
-                    .collect();
-                page.origin = page.origin.scale(render_scale);
-                page.width *= render_scale;
-                page.height *= render_scale;
-            }
-        }
+        // Each page is already sized and positioned page-local, so there's no
+        // pixel budget to enforce here -- the browser decides how large a page
+        // is displayed, and so how large a backing store it needs.
+        let pages = RenderCompositor::compose(&self.score, &fonts, options.debug);
 
         let flat = CanvasPainter::new(FlatBufferCanvas::new()).paint_pages(&pages);
         RenderOutput {
-            bounds_min_x: flat.bounds.0,
-            bounds_min_y: flat.bounds.1,
-            bounds_width: flat.bounds.2,
-            bounds_height: flat.bounds.3,
             geometry: flat.geometry,
             page_table: flat.page_table,
             text_blob: flat.text_blob,

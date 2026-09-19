@@ -1,14 +1,9 @@
 ﻿use crate::geometry::color::Color;
 use crate::score::core::group_symbol::GroupSymbol;
-use crate::score::page_orientation::PageOrientation;
 
 pub struct AppDefaults {
     pub page_color: Color,
     pub foreground_color: Color,
-    pub page_orientation: PageOrientation,
-    pub horizontal_gutter_even: f32,
-    pub horizontal_gutter_uneven: f32,
-    pub vertical_gutter: f32,
     pub staff_line_width: f32,
     pub light_barline: f32,
     pub heavy_barline: f32,
@@ -151,10 +146,6 @@ impl Default for AppDefaults {
         AppDefaults {
             page_color: Color::WHITE,
             foreground_color: Color::BLACK,
-            page_orientation: PageOrientation::Horizontal,
-            horizontal_gutter_even: 200.,
-            horizontal_gutter_uneven: 200.,
-            vertical_gutter: 200.,
             staff_line_width: 1.1,
             light_barline: 1.875,
             heavy_barline: 5.,

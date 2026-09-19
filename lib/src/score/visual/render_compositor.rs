@@ -1,6 +1,5 @@
 use crate::{
     drawable::drawable_element::DrawableElement,
-    geometry::xy::XY,
     score::{
         visual::{
             chord::Chord,
@@ -24,14 +23,12 @@ pub struct RenderCompositor {
 }
 
 /// One page's slice of [`RenderCompositor::walk_pages`] output: the page's
-/// drawable elements together with where the page sits and how large it is.
+/// drawable elements together with how large the page is.
 ///
-/// Every value here -- `origin`, `width`, `height`, and the coordinates inside
-/// `elements` -- is in MusicXML tenths and in the score's global coordinate
-/// space: each page is placed at its own global offset and the elements carry
-/// absolute coordinates, not page-local ones. A sink that emits one physical
-/// page at a time (PDF) must therefore translate `elements` by `-origin` to
-/// bring the page back to its own origin.
+/// Every value here -- `width`, `height`, and the coordinates inside
+/// `elements` -- is in MusicXML tenths and page-local: every page is engraved
+/// at its own origin, so `elements` is already exactly what a sink needs to
+/// draw this page in isolation, with no translation to apply.
 pub struct RenderedPage<'a> {
     /// 1-based position of this page in the walk, for page-numbered output
     /// (filenames, the flat-buffer page table). This is the page's position in
@@ -39,7 +36,6 @@ pub struct RenderedPage<'a> {
     /// agree for a document whose pages run 1..n without gaps, which is the only
     /// shape the cursor produces today, but only this one is guaranteed dense.
     pub number: u32,
-    pub origin: XY,
     pub width: f32,
     pub height: f32,
     pub elements: Vec<DrawableElement<'a>>,
@@ -109,7 +105,6 @@ impl RenderCompositor {
 
                 RenderedPage {
                     number: index as u32 + 1,
-                    origin: page.xy,
                     width: page.width,
                     height: page.height,
                     elements,

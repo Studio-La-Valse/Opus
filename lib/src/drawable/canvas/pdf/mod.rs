@@ -19,7 +19,7 @@
 //!
 //! 1. [`RenderCompositor::walk_pages`](crate::score::visual::render_compositor::RenderCompositor::walk_pages)
 //!    hands you one [`RenderedPage`](crate::score::visual::render_compositor::RenderedPage)
-//!    per physical page (elements still in global tenths).
+//!    per physical page (elements already page-local, in tenths).
 //! 2. For each page, run `CanvasPainter::new(PdfPageCanvas::new(..)).paint(..)`
 //!    to get a [`PdfPage`] (a media box + a content stream).
 //! 3. Pass the whole `Vec<PdfPage>` and the [`FontSet`] to [`write_pdf`], which
@@ -48,14 +48,14 @@
 //!
 //! # Coordinate system
 //!
-//! Score coordinates are MusicXML tenths, x-right / y-down, with every page
-//! placed at its global `origin`. PDF user space is points, x-right / y-up, with
-//! each page's media box starting at `(0, 0)`. [`PdfPageCanvas::begin`] emits a
-//! single CTM (`cm`) that folds all three differences -- tenths->points scale,
-//! the page's global offset, and the y-flip -- into one matrix, so every
-//! `draw_*` method can then emit raw score coordinates with no per-element math.
-//! Text additionally carries a y-flip in its text matrix so glyphs come out
-//! upright after the CTM flips the page.
+//! Score coordinates are MusicXML tenths, x-right / y-down, page-local: every
+//! page is engraved at its own origin. PDF user space is points, x-right /
+//! y-up, with each page's media box starting at `(0, 0)`.
+//! [`PdfPageCanvas::begin`] emits a single CTM (`cm`) that folds the two
+//! remaining differences -- tenths->points scale and the y-flip -- into one
+//! matrix, so every `draw_*` method can then emit raw score coordinates with
+//! no per-element math. Text additionally carries a y-flip in its text matrix
+//! so glyphs come out upright after the CTM flips the page.
 
 mod document;
 
@@ -76,7 +76,6 @@ use crate::drawable::elements::text::{
     FontSpec, FontStyle, FontWeight, HorizontalAlign, Text, VerticalAlign,
 };
 use crate::geometry::color::Color;
-use crate::geometry::xy::XY;
 
 /// One embeddable font: a parsed face for measurement plus the raw program
 /// bytes [`write_pdf`] subsets and embeds.
@@ -147,8 +146,6 @@ pub struct PdfPageCanvas<'f> {
 
     /// Points per tenth: the MusicXML `scaling` ratio times 72/25.4.
     pt_per_tenth: f32,
-    /// The page's global top-left in tenths, subtracted out by the CTM.
-    origin: XY,
     /// Page height in points, the y-flip pivot in the CTM.
     page_height_pt: f32,
     page_width_pt: f32,
@@ -164,23 +161,16 @@ pub struct PdfPageCanvas<'f> {
 }
 
 impl<'f> PdfPageCanvas<'f> {
-    /// * `origin` / `size_tenths` -- the page's global placement and size, in
-    ///   tenths, straight from
+    /// * `size_tenths` -- the page's size, in tenths, straight from
     ///   [`RenderedPage`](crate::score::visual::render_compositor::RenderedPage).
     /// * `pt_per_tenth` -- `scaling_millimeters / scaling_tenths * 72.0 / 25.4`.
     /// * `fonts` -- the same [`FontSet`] [`write_pdf`] will embed; used here to
     ///   measure glyph advances and vertical metrics for text alignment.
-    pub fn new(
-        origin: XY,
-        size_tenths: (f32, f32),
-        pt_per_tenth: f32,
-        fonts: &'f FontSet<'f>,
-    ) -> Self {
+    pub fn new(size_tenths: (f32, f32), pt_per_tenth: f32, fonts: &'f FontSet<'f>) -> Self {
         Self {
             content: Content::new(),
             fonts,
             pt_per_tenth,
-            origin,
             page_width_pt: size_tenths.0 * pt_per_tenth,
             page_height_pt: size_tenths.1 * pt_per_tenth,
             used_glyphs: BTreeMap::new(),
@@ -220,18 +210,12 @@ impl Canvas for PdfPageCanvas<'_> {
 
     fn begin(&mut self, _bounds: (f32, f32, f32, f32)) {
         // score (x, y)  ->  device (x', y'):
-        //   x' = (x - origin.x) * s
-        //   y' = page_height_pt - (y - origin.y) * s
+        //   x' = x * s
+        //   y' = page_height_pt - y * s
         // as a PDF matrix [a b c d e f]:
         let s = self.pt_per_tenth;
-        self.content.transform([
-            s,
-            0.0,
-            0.0,
-            -s,
-            -self.origin.x * s,
-            self.page_height_pt + self.origin.y * s,
-        ]);
+        self.content
+            .transform([s, 0.0, 0.0, -s, 0.0, self.page_height_pt]);
     }
 
     fn draw_line(&mut self, l: &Line) {

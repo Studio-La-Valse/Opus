@@ -114,7 +114,7 @@ pub struct Tie {
     pub side: Option<TieSide>,
 }
 
-/// One drawn arc, in absolute (global tenths) coordinates.
+/// One drawn arc, in absolute (page-local tenths) coordinates.
 ///
 /// A tie whose endpoints share a system produces one of these; a tie broken
 /// across a system -- or page -- break produces two, one filed under each

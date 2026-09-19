@@ -1,7 +1,13 @@
 // The option manifest for the render page's pane: one descriptor per knob the
 // <music-xml> element exposes, mirroring lib/src/score/user_layout.rs field
-// for field. Adding a knob here is the only change needed to add it to the
-// pane - render.js builds the whole thing by iterating this array, the same
+// for field - with three exceptions, each noted at its own entry below:
+// titleFont/lyricFont/groupNameFont (UserLayout is Copy, so it excludes font
+// families) and pageOrientation (page arrangement is a component-level, CSS
+// concern now that the engine no longer arranges pages relative to each other
+// at all - there is no UserLayout field for it; the gap between pages is a
+// fixed 10px in the component and is not exposed here at all). Adding a
+// UserLayout knob here is the only change needed to add it to the pane -
+// render.js builds the whole thing by iterating this array, the same
 // data-driven intent UserLayout's own doc comment asks for ("Don't mirror it
 // into a parallel options struct").
 //
@@ -52,52 +58,20 @@ export const OPTIONS = [
   },
   {
     group: "Page",
+    // Component-level, not a UserLayout field: music-xml.js's own
+    // _applyPageOrientation reads --page-orientation to flex-direction the
+    // stacked page canvases, the CSS layout problem the engine used to solve
+    // by arranging pages relative to each other.
     name: "pageOrientation",
     kind: "enum",
     values: ["vertical", "horizontal"],
     // The site's own default (site/css/style.css sets --page-orientation:
-    // vertical), not the engine's (AppDefaults defaults to Horizontal) - so
-    // this has to match that rule for "at its default writes nothing" to
-    // stay true here.
+    // vertical), not "unset" (the component's own default, absent the custom
+    // property, is also column/vertical - see music-xml.js) - so this has to
+    // match that rule for "at its default writes nothing" to stay true here.
     default: "vertical",
     label: "Page orientation",
     help: "Portrait (vertical) or landscape (horizontal) pages.",
-  },
-  {
-    group: "Page",
-    name: "horizontalGutterEven",
-    kind: "number",
-    default: 200,
-    min: 0,
-    max: 600,
-    step: 5,
-    unit: "tenths",
-    label: "Horizontal gutter (even pages)",
-    help: "Left/right page margin on even-numbered pages.",
-  },
-  {
-    group: "Page",
-    name: "horizontalGutterUneven",
-    kind: "number",
-    default: 200,
-    min: 0,
-    max: 600,
-    step: 5,
-    unit: "tenths",
-    label: "Horizontal gutter (odd pages)",
-    help: "Left/right page margin on odd-numbered pages.",
-  },
-  {
-    group: "Page",
-    name: "verticalGutter",
-    kind: "number",
-    default: 200,
-    min: 0,
-    max: 600,
-    step: 5,
-    unit: "tenths",
-    label: "Vertical gutter",
-    help: "Top/bottom page margin.",
   },
 
   // --- Staff & barlines -----------------------------------------------------
