@@ -6,7 +6,7 @@ use crate::score::score_defaults::ScorePart;
 use crate::score::visual::clef::ClefChange;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::{NoteAnchor, NoteId};
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;

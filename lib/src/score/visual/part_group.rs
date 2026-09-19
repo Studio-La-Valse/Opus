@@ -3,7 +3,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group_measure::PartGroupMeasure;
 use crate::score::visual::part_measure::PartMeasure;
@@ -193,8 +193,8 @@ impl PartGroup {
         }
     }
 }
-impl Layoutable for PartGroup {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl PartGroup {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         for part in self.parts.values_mut() {
             part.resolve_layout(params);
         }
@@ -207,7 +207,7 @@ impl Layoutable for PartGroup {
         self.name.resolve_layout(params);
     }
 
-    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -239,10 +239,10 @@ impl Layoutable for PartGroup {
         self.name.measure(&available);
     }
 
-    /// Places this group as [`arrange`](Layoutable::arrange) does, with its
+    /// Places this group as `arrange` normally does, with its
     /// enclosing section's symbol already at `clear_of`. Used on its own when
     /// there is nothing to keep clear of.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.arrange_clear_of(origin, origin.x, origin.x);
     }
 }

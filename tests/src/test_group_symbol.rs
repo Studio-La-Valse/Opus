@@ -17,7 +17,7 @@ mod tests {
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
-    use lib::score::visual::layoutable::{LayoutParams, Layoutable};
+    use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::{BaseRenderer, RenderPass};
     use lib::score::visual::score::Score;

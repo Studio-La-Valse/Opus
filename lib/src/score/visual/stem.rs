@@ -4,7 +4,7 @@ use crate::geometry::xy::XY;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::flag::Flag;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note_scale::NoteScale;
 use std::collections::BTreeMap;
 
@@ -178,8 +178,8 @@ impl Stem {
     }
 }
 
-impl Layoutable for Stem {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Stem {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
@@ -202,13 +202,13 @@ impl Layoutable for Stem {
         }
     }
 
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         if let Some(flag) = self.flag.as_mut() {
             flag.measure(available, params);
         }
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         let thickness = self.thickness * self.scale;
         let canvas_offset = match self.direction {
             UpDown::Down => thickness / 2.,

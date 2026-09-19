@@ -5,7 +5,7 @@ use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::clef::Clef as DrawableClef;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
@@ -288,11 +288,11 @@ impl Part {
             .arrange_between(symbol_top, name_right, margin_left);
     }
 }
-impl Layoutable for Part {
+impl Part {
     /// Recurses into every child unconditionally, a hidden part included: it
     /// still has a colour and a symbol to resolve, even though `measure` will
     /// leave its size at zero and nothing ends up drawing them.
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         for staff in self.staves.values_mut() {
             staff.resolve_layout(params);
         }
@@ -305,7 +305,7 @@ impl Layoutable for Part {
         self.name.resolve_layout(params);
     }
 
-    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -350,7 +350,7 @@ impl Layoutable for Part {
 
     /// Places this part as [`arrange_clear_of`](Part::arrange_clear_of) does,
     /// with nothing to its left to keep clear of.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.arrange_clear_of(origin, origin.x, origin.x);
     }
 }

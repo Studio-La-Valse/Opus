@@ -1,6 +1,6 @@
 //! Every element in the tree resolves its own appearance, and the recursion
 //! that reaches it has to be kept in step with the recursion `measure` uses --
-//! see `Layoutable::resolve_layout`. A container that forgets to forward
+//! see each element's `resolve_layout`. A container that forgets to forward
 //! `resolve_layout` to a new child leaves that child at whatever colour it was
 //! constructed with, rather than the one the layout actually asked for.
 

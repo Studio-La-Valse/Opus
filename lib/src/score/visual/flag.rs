@@ -1,6 +1,6 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::placed::Placed;
 use crate::smufl::glyphs::flag::Flag as SmuflFlag;
@@ -72,8 +72,8 @@ impl Flag {
     }
 }
 
-impl Layoutable for Flag {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Flag {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -87,14 +87,14 @@ impl Layoutable for Flag {
             .unwrap_or(app_defaults.foreground_color);
     }
 
-    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
         self.measure_size();
     }
 
     /// Supplied origin is the point on the stem (its nw/sw corner) that the
     /// flag's own SMuFL stem-attachment anchor should land on - not the
     /// flag's own top-left corner.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin - self.scaled_stem_anchor();
     }
 }

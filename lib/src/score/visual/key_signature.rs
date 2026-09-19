@@ -1,6 +1,6 @@
 use crate::geometry::xy::XY;
 use crate::score::visual::accidental::Accidental;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::staff::Staff;
 
 /// Gap between two neighbouring accidentals of a signature, in tenths.
@@ -57,14 +57,14 @@ impl KeySignature {
     }
 }
 
-impl Layoutable for KeySignature {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl KeySignature {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         for (_, accidental) in self.accidentals.iter_mut() {
             accidental.resolve_layout(params);
         }
     }
 
-    fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         for (_, accidental) in self.accidentals.iter_mut() {
             accidental.measure(_available, params);
@@ -76,7 +76,7 @@ impl Layoutable for KeySignature {
         }
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
         let origin = self.xy;

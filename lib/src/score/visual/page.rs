@@ -3,7 +3,7 @@ use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::PageMargins;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff_measure::StaffMeasure;
@@ -93,8 +93,8 @@ impl Page {
     }
 }
 
-impl Layoutable for Page {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Page {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
@@ -116,13 +116,13 @@ impl Layoutable for Page {
         }
     }
 
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         for system in self.systems.values_mut() {
             system.measure(available, params);
         }
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         let m_left = self.margins.left;
         let m_top = self.margins.top;
 

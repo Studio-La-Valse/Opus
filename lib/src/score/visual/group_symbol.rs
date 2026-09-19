@@ -3,7 +3,7 @@ use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::group_symbol::{GroupLevel, GroupSymbol as Kind};
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::brace::Brace as SmuflBrace;
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
@@ -33,7 +33,7 @@ const BRACKET_STROKE_SEAM: f32 = 1.;
 /// same walked score.
 ///
 /// [`shape`](Self::shape) and [`bounds`](Self::bounds) are written by the same
-/// statement in [`arrange`](Layoutable::arrange) and readable but not writable,
+/// statement in [`arrange`](Self::arrange) and readable but not writable,
 /// so ink that falls outside the reported box is unconstructible. That is the
 /// arrangement [`Glyph`](crate::drawable::elements::glyph::Glyph) uses for a
 /// single glyph, kept for a composite of several pieces -- and the box has to be
@@ -124,7 +124,7 @@ impl GroupSymbol {
     }
 
     /// The shape resolved for this layout pass. `None` until the first
-    /// [`measure`](Layoutable::measure).
+    /// [`measure`](Self::measure).
     pub fn kind(&self) -> Kind {
         self.kind
     }
@@ -319,8 +319,8 @@ fn stroke_box(rect: &Rect) -> BoundingBox {
     }
 }
 
-impl Layoutable for GroupSymbol {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl GroupSymbol {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -349,7 +349,7 @@ impl Layoutable for GroupSymbol {
     /// `available.y` is how tall a run of staves this symbol binds; `available.x`
     /// is ignored, because a symbol's width follows from its shape rather than
     /// being granted to it.
-    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.span = available.y.max(0.);
     }
 
@@ -363,7 +363,7 @@ impl Layoutable for GroupSymbol {
     /// part-group drew, so the three stack outward without any of them knowing
     /// how wide the others are -- which they could not know, a brace's width
     /// following the span it covers.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.anchor = origin.mv(-self.gap, 0.);
 
         // One statement for both, so the box always describes the ink.

@@ -23,7 +23,7 @@ use std::collections::{BTreeMap, HashMap};
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::clef::{Clef, ClefAnchor, ClefChange};
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::NoteId;
 use crate::score::visual::part::Part;
 use crate::score::visual::score::Score;

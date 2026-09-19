@@ -6,7 +6,7 @@ mod tests {
     use lib::score::core::time_signature::TimeSignature as TimeSignatureCore;
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
-    use lib::score::visual::layoutable::{LayoutParams, Layoutable};
+    use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::time_signature::TimeSignature;
     use lib::smufl::smufl_font::SmuflFont;
     use std::fs::read_to_string;

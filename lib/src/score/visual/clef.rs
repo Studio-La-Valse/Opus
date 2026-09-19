@@ -2,7 +2,7 @@ use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::NoteId;
 use crate::score::visual::placed::Placed;
 use crate::score::visual::staff::Staff;
@@ -155,8 +155,8 @@ impl Clef {
     }
 }
 
-impl Layoutable for Clef {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Clef {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -168,12 +168,12 @@ impl Layoutable for Clef {
             .unwrap_or(app_defaults.foreground_color);
     }
 
-    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
         self.measure_size();
     }
 
     /// Supplied origin x coordinate is left of clef, y coordinate is the line in the staff.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
     }
 }

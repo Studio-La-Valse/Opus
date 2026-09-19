@@ -1,7 +1,7 @@
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::accidental::Accidental as SmuflAccidental;
 
@@ -164,8 +164,8 @@ impl Accidental {
     }
 }
 
-impl Layoutable for Accidental {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Accidental {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -177,12 +177,12 @@ impl Layoutable for Accidental {
             .unwrap_or(app_defaults.foreground_color);
     }
 
-    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
         self.measure_size();
     }
 
     /// Provided origin is the right origin of the accidental.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = origin.mv(-self.width, 0.);
     }
 }

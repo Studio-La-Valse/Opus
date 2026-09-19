@@ -15,7 +15,7 @@ mod tests {
     use lib::score::visual::arranger::{PageArranger, ScoreArranger};
     use lib::score::visual::group_name::GroupName;
     use lib::score::visual::group_symbol::GroupSymbol;
-    use lib::score::visual::layoutable::{LayoutParams, Layoutable};
+    use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::part::Part;
     use lib::score::visual::part_group::PartGroup;
     use lib::score::visual::part_group_measure::PartGroupMeasure;
