@@ -25,14 +25,6 @@ pub struct LayoutParams<'a> {
     pub user_layout: &'a UserLayout,
     pub app_defaults: &'a AppDefaults,
     pub font: &'a SmuflFont,
-
-    /// Whether group and part names in this subtree draw their abbreviation
-    /// rather than their full name. The one positional fact in an otherwise
-    /// pure-config struct: it is `false` where the params are first built, and
-    /// [`System::resolve_layout`](crate::score::visual::system::System)
-    /// re-stamps it from the system's own index -- the first system of the
-    /// score names in full, every later one abbreviates.
-    pub abbreviate_names: bool,
 }
 
 impl LayoutParams<'_> {

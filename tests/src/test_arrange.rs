@@ -46,7 +46,7 @@ mod tests {
     /// An unnamed name: these tests are about child placement, and a name with
     /// nothing to draw draws nothing.
     fn name() -> GroupName {
-        GroupName::new(String::new(), String::new())
+        GroupName::new(String::new(), String::new(), false)
     }
 
     /// Measures tile left to right, so each one starts where the previous one
@@ -185,7 +185,6 @@ mod tests {
             user_layout: &user_layout,
             app_defaults: &app_defaults,
             font: font(),
-            abbreviate_names: false,
         };
 
         PageArranger.arrange(&mut score, params);

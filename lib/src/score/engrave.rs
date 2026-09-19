@@ -194,9 +194,6 @@ pub fn arrange_score(
         user_layout,
         app_defaults,
         font,
-        // The first system of the score names in full; `System::resolve_layout`
-        // re-stamps this from each system's own index.
-        abbreviate_names: false,
     };
     score.resolve_layout(params);
 

@@ -315,15 +315,6 @@ impl System {
             .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.light_barline);
 
-        // The first system names its parts and part-groups in full; every later
-        // one uses the abbreviation. Re-stamped here so the whole subtree below
-        // resolves against it. The first system of the score is index 1 (see
-        // `index`), so anything past it abbreviates.
-        let params = LayoutParams {
-            abbreviate_names: self.index > 1,
-            ..params
-        };
-
         for section in self.sections.values_mut() {
             section.resolve_layout(params);
         }
