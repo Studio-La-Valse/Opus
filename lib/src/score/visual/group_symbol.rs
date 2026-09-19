@@ -34,7 +34,7 @@ const BRACKET_STROKE_SEAM: f32 = 1.;
 ///
 /// [`shape`](Self::shape) and [`bounds`](Self::bounds) are written by the same
 /// statement in
-/// [`arrange_group_symbol`](crate::score::visual::arrange_machine::ArrangeMachine::arrange_group_symbol)
+/// [`arrange_group_symbol`](crate::score::visual::arranger::ArrangeMachine::arrange_group_symbol)
 /// so the arrange pass cannot produce ink that falls outside the reported box.
 /// That is the arrangement [`Glyph`](crate::drawable::elements::glyph::Glyph)
 /// uses for a single glyph, kept for a composite of several pieces -- and the
@@ -125,7 +125,7 @@ impl GroupSymbol {
     }
 
     /// The shape resolved for this layout pass. `None` until the first
-    /// [`measure_group_symbol`](crate::score::visual::measure_machine::MeasureMachine::measure_group_symbol).
+    /// [`measure_group_symbol`](crate::score::visual::arranger::ScoreMeasurement::measure_group_symbol).
     pub fn kind(&self) -> Kind {
         self.kind
     }

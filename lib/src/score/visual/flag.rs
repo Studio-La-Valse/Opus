@@ -34,7 +34,7 @@ impl Placed for Flag {
 
 impl Flag {
     pub fn new(glyph: SmuflFlag, size: NoteScale) -> Self {
-        let mut result = Flag {
+        Flag {
             xy: XY::ZERO,
             width: 0.,
             height: 0.,
@@ -45,11 +45,7 @@ impl Flag {
             color: Color::BLACK,
 
             glyph,
-        };
-
-        result.measure_size();
-
-        result
+        }
     }
 
     /// World-space position of the glyph's own SMuFL stem-attachment anchor.
@@ -57,12 +53,6 @@ impl Flag {
     /// aligned to.
     pub fn stem_anchor_world(&self) -> XY {
         self.scale_pt(&self.glyph.stem_anchor)
-    }
-
-    pub fn measure_size(&mut self) {
-        let bbox = self.scale_box(&self.glyph.bbox);
-        self.width = bbox.width();
-        self.height = bbox.height();
     }
 }
 

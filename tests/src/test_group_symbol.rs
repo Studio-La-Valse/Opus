@@ -16,10 +16,9 @@ mod tests {
     use lib::score::engrave::{arrange_score, walk_document};
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
-    use lib::score::visual::arrange_machine::ArrangeMachine;
+    use lib::score::visual::arranger::{ArrangeMachine, ScoreMeasurement};
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
     use lib::score::visual::layoutable::LayoutParams;
-    use lib::score::visual::measure_machine::MeasureMachine;
     use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::{BaseRenderer, RenderPass};
     use lib::score::visual::score::Score;
@@ -77,7 +76,7 @@ mod tests {
             font: font(),
         };
         symbol.resolve_layout(params);
-        MeasureMachine.measure_group_symbol(
+        ScoreMeasurement.measure_group_symbol(
             &mut symbol,
             &XY {
                 x: f32::INFINITY,
@@ -484,7 +483,7 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            MeasureMachine.measure_group_symbol(
+            ScoreMeasurement.measure_group_symbol(
                 symbol,
                 &XY {
                     x: f32::INFINITY,
@@ -531,7 +530,7 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            MeasureMachine.measure_group_symbol(
+            ScoreMeasurement.measure_group_symbol(
                 &mut symbol,
                 &XY {
                     x: f32::INFINITY,

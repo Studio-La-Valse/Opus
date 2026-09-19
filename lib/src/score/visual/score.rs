@@ -173,8 +173,8 @@ impl Score {
     }
 
     /// Resolves every page's appearance from `params`. Run once over the whole
-    /// tree ahead of
-    /// [`measure_score`](crate::score::visual::measure_machine::MeasureMachine::measure_score)
+    /// tree ahead of the
+    /// [`ScoreMeasurement`](crate::score::visual::arranger::ScoreMeasurement)
     /// -- see [`arrange_score`](crate::score::engrave::arrange_score).
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         for page in self.pages.values_mut() {
@@ -207,7 +207,7 @@ impl Score {
                             }
 
                             for measure in part.measures.values() {
-                                // `ArrangeMachine::arrange_part` walks its measures left to
+                                // `PageArranger::arrange_part_clear_of` walks its measures left to
                                 // right, advancing the origin by each
                                 // measure's width, so these two are the
                                 // measure's own span.

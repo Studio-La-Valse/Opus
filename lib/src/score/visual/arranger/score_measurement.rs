@@ -1,5 +1,6 @@
 use crate::geometry::xy::XY;
 use crate::score::visual::accidental::Accidental;
+use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::chord::Chord;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::dot::Dot;
@@ -7,6 +8,7 @@ use crate::score::visual::flag::Flag;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
 use crate::score::visual::key_signature::KeySignature;
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::Note;
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;
@@ -33,19 +35,24 @@ use crate::score::walk_cursor::Visibility;
 /// One method per element, each delegating to the methods of the elements it
 /// owns, so measuring a [`Chord`] measures its notes and so on down to the
 /// dots. Holds no state: sizing is settled by the elements' own resolved
-/// appearance, so it takes no [`LayoutParams`](crate::score::visual::layoutable::LayoutParams).
-pub struct MeasureMachine;
+/// appearance, so it ignores the [`LayoutParams`] its
+/// [`ScoreArranger`] impl is handed.
+///
+/// The first of [`SCORE_ARRANGERS`](crate::score::visual::arranger::SCORE_ARRANGERS):
+/// page *placement* is a separate pass, [`PageArranger`](crate::score::visual::arranger::PageArranger).
+pub struct ScoreMeasurement;
 
-impl MeasureMachine {
-    /// Sizes every page. Page *placement* is a separate pass -- see
-    /// [`PageArranger`](crate::score::visual::arranger::PageArranger),
-    /// which is why there is no `arrange_score`.
-    pub fn measure_score(&self, score: &mut Score, available: &XY) {
+impl ScoreArranger for ScoreMeasurement {
+    /// Sizes every page.
+    fn arrange(&self, score: &mut Score, _params: LayoutParams<'_>) {
+        let available = XY::INFINITE;
         for page in score.pages.values_mut() {
-            self.measure_page(page, available);
+            self.measure_page(page, &available);
         }
     }
+}
 
+impl ScoreMeasurement {
     pub fn measure_page(&self, page: &mut Page, available: &XY) {
         for system in page.systems.values_mut() {
             self.measure_system(system, available);
@@ -308,17 +315,24 @@ impl MeasureMachine {
     }
 
     pub fn measure_flag(&self, flag: &mut Flag, _available: &XY) {
-        flag.measure_size();
+        let bbox = flag.scale_box(&flag.glyph.bbox);
+        flag.width = bbox.width();
+        flag.height = bbox.height();
     }
 
     pub fn measure_dot(&self, _dot: &mut Dot, _available: &XY) {}
 
     pub fn measure_accidental(&self, accidental: &mut Accidental, _available: &XY) {
-        accidental.measure_size();
+        let bbox = accidental.glyph_bbox(&accidental.glyph.bbox);
+
+        accidental.width = bbox.width();
+        accidental.height = bbox.height();
     }
 
     pub fn measure_clef(&self, clef: &mut Clef, _available: &XY) {
-        clef.measure_size();
+        let bbox = clef.scale_box(&clef.clef.bbox);
+        clef.width = bbox.width();
+        clef.height = bbox.height();
     }
 
     pub fn measure_key_signature(&self, key_signature: &mut KeySignature, available: &XY) {
@@ -336,7 +350,10 @@ impl MeasureMachine {
 
     pub fn measure_time_signature(&self, time_signature: &mut TimeSignature, available: &XY) {
         time_signature.height = available.y;
-        time_signature.measure_width();
+
+        let unit = time_signature.unit();
+        time_signature.width =
+            (time_signature.num.advance() * unit).max(time_signature.denom.advance() * unit);
     }
 
     /// `available.y` is how tall a run of staves this symbol binds; `available.x`

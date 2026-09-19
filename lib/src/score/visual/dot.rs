@@ -8,7 +8,7 @@ use crate::score::visual::note_scale::NoteScale;
 /// per dot; the owner computes each dot's centre during its arrange pass
 /// (horizontal spacing, plus the half-space vertical nudge that keeps a dot off
 /// a staff line) and hands it here through
-/// [`arrange_dot`](crate::score::visual::arrange_machine::ArrangeMachine::arrange_dot).
+/// [`arrange_dot`](crate::score::visual::arranger::ArrangeMachine::arrange_dot).
 pub struct Dot {
     pub xy: XY,
 

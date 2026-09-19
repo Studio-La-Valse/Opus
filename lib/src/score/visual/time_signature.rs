@@ -30,7 +30,7 @@ impl Placed for TimeSignature {
 
 impl TimeSignature {
     pub fn new(num: Number, denom: Number) -> TimeSignature {
-        let mut result = TimeSignature {
+        TimeSignature {
             xy: XY::ZERO,
             height: 0.,
             width: 0.,
@@ -38,11 +38,7 @@ impl TimeSignature {
             color: Color::BLACK,
             num,
             denom,
-        };
-
-        result.measure_width();
-
-        result
+        }
     }
 
     /// World-space bounding box of one digit drawn at `at`, for callers that
@@ -107,17 +103,13 @@ impl TimeSignature {
         })
     }
 
-    pub fn measure_width(&mut self) {
-        let unit = self.unit();
-        self.width = (self.num.advance() * unit).max(self.denom.advance() * unit);
-    }
-
-    /// Sets the scale and re-derives width from it, so callers that rescale
-    /// a time signature after construction don't position against a stale,
-    /// pre-rescale size.
+    /// Sets the scale. The width is not re-derived here: it is the measure
+    /// pass's to settle, so a caller that positions against it straight after
+    /// rescaling has to
+    /// [`measure_time_signature`](crate::score::visual::arranger::ScoreMeasurement::measure_time_signature)
+    /// first.
     pub fn rescale(&mut self, scale: f32) {
         self.scale = scale;
-        self.measure_width();
     }
 }
 

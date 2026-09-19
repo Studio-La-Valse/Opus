@@ -9,8 +9,7 @@
 //! completion on its own, and content placement can be pulled out into its own
 //! pass rather than being threaded through the container one.
 
-use crate::score::visual::arrange_machine::ArrangeMachine;
-use crate::score::visual::arranger::ScoreArranger;
+use crate::score::visual::arranger::{ArrangeMachine, ScoreArranger};
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
 use crate::score::visual::score::Score;
@@ -70,7 +69,7 @@ fn walk_part(part: &mut Part) {
     }
 
     // Not filtered on visibility, unlike every other content walk: a hidden
-    // part's measures are still arranged today (`ArrangeMachine::arrange_part_clear_of` has
+    // part's measures are still arranged today (`PageArranger::arrange_part_clear_of` has
     // no such check) and nothing draws them, so this pass must keep leaving
     // them arranged rather than stale.
     for measure in part.measures.values_mut() {

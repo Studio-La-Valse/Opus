@@ -6,9 +6,8 @@ mod tests {
     use lib::score::core::time_signature::TimeSignature as TimeSignatureCore;
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
-    use lib::score::visual::arrange_machine::ArrangeMachine;
+    use lib::score::visual::arranger::{ArrangeMachine, ScoreMeasurement};
     use lib::score::visual::layoutable::LayoutParams;
-    use lib::score::visual::measure_machine::MeasureMachine;
     use lib::score::visual::time_signature::TimeSignature;
     use lib::smufl::smufl_font::SmuflFont;
     use std::fs::read_to_string;
@@ -107,7 +106,7 @@ mod tests {
             font: font(),
         };
         time_signature.resolve_layout(params);
-        MeasureMachine.measure_time_signature(
+        ScoreMeasurement.measure_time_signature(
             &mut time_signature,
             &XY {
                 x: 0.,

@@ -181,7 +181,7 @@ impl Part {
     /// rests, which hang off a `PartMeasure` and only name their staff by index.
     ///
     /// Walks the staves the same way
-    /// [`arrange_part`](crate::score::visual::arrange_machine::ArrangeMachine::arrange_part)
+    /// [`PageArranger`](crate::score::visual::arranger::PageArranger)
     /// does, hidden ones
     /// included in the map but contributing no distance of their own. If they
     /// contributed here but not there, every staff below a hidden one would have

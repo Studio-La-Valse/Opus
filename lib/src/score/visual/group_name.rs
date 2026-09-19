@@ -19,7 +19,7 @@ use crate::score::visual::layoutable::LayoutParams;
 /// the left and nothing in the horizontal layout moves for it.
 ///
 /// [`bounds`](Self::bounds) is written by a single statement in
-/// [`arrange_group_name_between`](crate::score::visual::arrange_machine::ArrangeMachine::arrange_group_name_between)
+/// [`arrange_group_name_between`](crate::score::visual::arranger::ArrangeMachine::arrange_group_name_between)
 /// so it always describes what is reserved.
 ///
 /// [`GroupSymbol`]: crate::score::visual::group_symbol::GroupSymbol

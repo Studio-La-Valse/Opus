@@ -7,21 +7,16 @@ mod tests {
     use std::fs::read_to_string;
     use std::sync::OnceLock;
 
-    use lib::geometry::xy::XY;
     use lib::score::app_defaults::AppDefaults;
     use lib::score::core::group_symbol::GroupLevel;
     use lib::score::score_defaults::{PageMargins, ScoreDefaults};
     use lib::score::user_layout::UserLayout;
-    use lib::score::visual::arrange_machine::ArrangeMachine;
     use lib::score::visual::arranger::{PageArranger, ScoreArranger};
     use lib::score::visual::group_name::GroupName;
     use lib::score::visual::group_symbol::GroupSymbol;
     use lib::score::visual::layoutable::LayoutParams;
-    use lib::score::visual::part::Part;
-    use lib::score::visual::part_group::PartGroup;
     use lib::score::visual::part_group_measure::PartGroupMeasure;
     use lib::score::visual::score::Score;
-    use lib::score::visual::system::System;
     use lib::score::visual::system_measure::SystemMeasure;
     use lib::smufl::smufl_font::SmuflFont;
 
@@ -50,20 +45,51 @@ mod tests {
         GroupName::new(String::new(), String::new(), false)
     }
 
+    /// A score of one page with no margins, so that a system's own `m_left` and
+    /// `top` are exactly the origin it is arranged at.
+    fn score_with_a_bare_page() -> Score {
+        let mut score = Score::default();
+        score.page_or_insert(1).margins = PageMargins {
+            left: 0.,
+            right: 0.,
+            top: 0.,
+            bottom: 0.,
+        };
+        score
+    }
+
+    fn arrange_pages(score: &mut Score) {
+        let score_defaults = ScoreDefaults::default();
+        let user_layout = UserLayout::default();
+        let app_defaults = AppDefaults::default();
+        let params = LayoutParams {
+            score_defaults: &score_defaults,
+            user_layout: &user_layout,
+            app_defaults: &app_defaults,
+            font: font(),
+        };
+
+        PageArranger.arrange(score, params);
+    }
+
     /// Measures tile left to right, so each one starts where the previous one
     /// ended. Passing the container's own origin to every measure instead would
     /// stack them all at x = 0.
     #[test]
     fn system_measures_are_laid_out_left_to_right() {
-        let mut system = System::default();
+        let mut score = score_with_a_bare_page();
+        let system = score.page_or_insert(1).system_or_insert(1);
+        system.m_left = 100.;
+        system.top = 5.;
         for (number, width) in [(1u32, 30.), (2, 50.), (3, 20.)] {
             let mut measure = SystemMeasure::new(number);
             measure.width = width;
             system.measures.insert(number, measure);
         }
 
-        ArrangeMachine.arrange_system(&mut system, &XY { x: 100., y: 5. });
+        arrange_pages(&mut score);
 
+        let system = &score.pages[&1].systems[&1];
         let x_of = |n: u32| system.measures[&n].xy.x;
         assert_eq!(x_of(1), 100.);
         assert_eq!(x_of(2), 130.);
@@ -75,7 +101,11 @@ mod tests {
 
     #[test]
     fn part_group_measures_are_laid_out_left_to_right() {
-        let mut group = PartGroup::new(symbol(GroupLevel::PartGroup), name());
+        let mut score = score_with_a_bare_page();
+        let system = score.page_or_insert(1).system_or_insert(1);
+        system.m_left = 10.;
+        let section = system.section_or_insert(1, symbol(GroupLevel::Section));
+        let group = section.part_group_or_insert(1, symbol(GroupLevel::PartGroup), name());
         for (number, width) in [(1u32, 40.), (2, 60.)] {
             let measure = PartGroupMeasure {
                 width,
@@ -84,19 +114,24 @@ mod tests {
             group.measures.insert(number, measure);
         }
 
-        ArrangeMachine.arrange_part_group(&mut group, &XY { x: 10., y: 0. });
+        arrange_pages(&mut score);
 
+        let group = &score.pages[&1].systems[&1].sections[&1].part_groups[&1];
         assert_eq!(group.measures[&1].xy.x, 10.);
         assert_eq!(group.measures[&2].xy.x, 50.);
     }
 
     /// `create_staff_ctx` is what positions notes and rests, which hang off a
     /// `PartMeasure` and only name their staff by index. It has to walk the
-    /// staves exactly the way `arrange_part` places them, or the notes on a
+    /// staves exactly the way `PageArranger` places them, or the notes on a
     /// staff drift away from its own staff lines.
     #[test]
     fn staff_context_offsets_match_where_arrange_puts_the_staves() {
-        let mut part = Part::new(symbol(GroupLevel::Part), name());
+        let mut score = score_with_a_bare_page();
+        let system = score.page_or_insert(1).system_or_insert(1);
+        let section = system.section_or_insert(1, symbol(GroupLevel::Section));
+        let group = section.part_group_or_insert(1, symbol(GroupLevel::PartGroup), name());
+        let part = group.part_or_insert("P1".to_string(), symbol(GroupLevel::Part), name());
         for idx in [1u32, 2, 3] {
             let staff = part.staff_or_insert(&idx.into());
             staff.distance_final = 80.;
@@ -106,7 +141,9 @@ mod tests {
         part.staff_or_insert(&2.into()).hidden = true;
         part.staff_or_insert(&2.into()).height = 0.;
 
-        ArrangeMachine.arrange_part(&mut part, &XY::ZERO);
+        arrange_pages(&mut score);
+
+        let part = &score.pages[&1].systems[&1].sections[&1].part_groups[&1].parts["P1"];
         let ctx = part.create_staff_ctx();
 
         for (idx, staff) in part.staves.iter() {
@@ -147,7 +184,7 @@ mod tests {
     /// heights or gutters. `Page` has no field left to assert a page's own
     /// position against (that was the point of removing it: every page is
     /// engraved at `XY::ZERO`, definitionally, by `PageArranger`'s `for page in
-    /// score.pages.values_mut() { page.arrange(&XY::ZERO) }` loop) -- so this
+    /// score.pages.values_mut() { self.arrange_page(page, &XY::ZERO) }` loop) -- so this
     /// test's only way to observe cross-page drift is indirectly, through
     /// where a page's own content actually lands. Distinct, nonzero
     /// margins/width/height per page is what makes that observable: were
@@ -178,17 +215,7 @@ mod tests {
             system.m_left = 5.;
         }
 
-        let score_defaults = ScoreDefaults::default();
-        let user_layout = UserLayout::default();
-        let app_defaults = AppDefaults::default();
-        let params = LayoutParams {
-            score_defaults: &score_defaults,
-            user_layout: &user_layout,
-            app_defaults: &app_defaults,
-            font: font(),
-        };
-
-        PageArranger.arrange(&mut score, params);
+        arrange_pages(&mut score);
 
         for page in score.pages.values() {
             let system = &page.systems[&1];

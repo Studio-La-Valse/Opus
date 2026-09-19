@@ -100,18 +100,13 @@ impl Clef {
         self.scale_box(&self.clef.bbox)
     }
 
-    pub fn measure_size(&mut self) {
-        let bbox = self.scale_box(&self.clef.bbox);
-        self.width = bbox.width();
-        self.height = bbox.height();
-    }
-
-    /// Sets the scale and re-derives width/height from it, so callers that
-    /// rescale a clef after construction (e.g. courtesy clefs at 0.8x) don't
-    /// end up positioning against a stale, pre-rescale size.
+    /// Sets the scale (e.g. courtesy clefs at 0.8x). The width and height are
+    /// not re-derived here: they are the measure pass's to settle, so a caller
+    /// that positions against them straight after rescaling has to
+    /// [`measure_clef`](crate::score::visual::arranger::ScoreMeasurement::measure_clef)
+    /// first, or it positions against a stale, pre-rescale size.
     pub fn rescale(&mut self, scale: f32) {
         self.scale = scale;
-        self.measure_size();
     }
 }
 
