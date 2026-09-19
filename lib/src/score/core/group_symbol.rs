@@ -14,7 +14,8 @@ use std::str::FromStr;
 ///
 /// Deserializes from, and parses out of, the strings MusicXML itself uses, so a
 /// `<group-symbol>`, a CLI flag, a JSON option and a CSS custom property all
-/// spell it the same way -- the arrangement [`PageOrientation`] already uses.
+/// spell it the same way -- the same one spelling [`Self::from_mxml`] reads
+/// back out of the document.
 ///
 /// Deliberately not [`Default`]: which symbol stands in for one the document
 /// never named is a per-level decision, and it lives on `AppDefaults` where the
@@ -23,8 +24,6 @@ use std::str::FromStr;
 ///
 /// `Serialize` is derived only so [`UserLayout`](crate::score::user_layout::UserLayout)
 /// can derive it in turn; nothing relies on its (plain variant name) output.
-///
-/// [`PageOrientation`]: crate::score::page_orientation::PageOrientation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "String")]
 pub enum GroupSymbol {

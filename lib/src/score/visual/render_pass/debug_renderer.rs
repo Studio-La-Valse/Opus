@@ -33,32 +33,56 @@ impl RenderPass for DebugRenderer {
         let stroke_color = Color::RED;
         let stroke_width = 1.;
         let left = Line {
-            start: page.xy.mv(page.margins.left, 0.),
-            end: page.xy.mv(page.margins.left, page.height),
+            start: XY {
+                x: page.margins.left,
+                y: 0.,
+            },
+            end: XY {
+                x: page.margins.left,
+                y: page.height,
+            },
             stroke_width,
             stroke_color,
         };
         out.push(left.into());
 
         let right = Line {
-            start: page.xy.mv(page.width - page.margins.right, 0.),
-            end: page.xy.mv(page.width - page.margins.right, page.height),
+            start: XY {
+                x: page.width - page.margins.right,
+                y: 0.,
+            },
+            end: XY {
+                x: page.width - page.margins.right,
+                y: page.height,
+            },
             stroke_width,
             stroke_color,
         };
         out.push(right.into());
 
         let top = Line {
-            start: page.xy.mv(0., page.margins.top),
-            end: page.xy.mv(page.width, page.margins.top),
+            start: XY {
+                x: 0.,
+                y: page.margins.top,
+            },
+            end: XY {
+                x: page.width,
+                y: page.margins.top,
+            },
             stroke_width,
             stroke_color,
         };
         out.push(top.into());
 
         let bottom = Line {
-            start: page.xy.mv(0., page.height - page.margins.bottom),
-            end: page.xy.mv(page.width, page.height - page.margins.bottom),
+            start: XY {
+                x: 0.,
+                y: page.height - page.margins.bottom,
+            },
+            end: XY {
+                x: page.width,
+                y: page.height - page.margins.bottom,
+            },
             stroke_width,
             stroke_color,
         };

@@ -1,7 +1,6 @@
 pub mod app_defaults;
 pub mod core;
 pub mod engrave;
-pub mod page_orientation;
 pub mod part_list;
 pub mod rebeam_strategy;
 pub mod score_defaults;

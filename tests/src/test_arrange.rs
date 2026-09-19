@@ -4,17 +4,38 @@
 
 #[cfg(test)]
 mod tests {
+    use std::fs::read_to_string;
+    use std::sync::OnceLock;
+
     use lib::geometry::xy::XY;
+    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::group_symbol::GroupLevel;
+    use lib::score::score_defaults::{PageMargins, ScoreDefaults};
+    use lib::score::user_layout::UserLayout;
+    use lib::score::visual::arranger::{PageArranger, ScoreArranger};
     use lib::score::visual::group_name::GroupName;
     use lib::score::visual::group_symbol::GroupSymbol;
-    use lib::score::visual::layoutable::Layoutable;
+    use lib::score::visual::layoutable::{LayoutParams, Layoutable};
     use lib::score::visual::part::Part;
     use lib::score::visual::part_group::PartGroup;
     use lib::score::visual::part_group_measure::PartGroupMeasure;
     use lib::score::visual::score::Score;
     use lib::score::visual::system::System;
     use lib::score::visual::system_measure::SystemMeasure;
+    use lib::smufl::smufl_font::SmuflFont;
+
+    const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
+    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
+
+    fn fixture(relative: &str) -> String {
+        read_to_string(format!("{}/../{relative}", env!("CARGO_MANIFEST_DIR")))
+            .unwrap_or_else(|e| panic!("failed to read {relative}: {e}"))
+    }
+
+    fn font() -> &'static SmuflFont {
+        static FONT: OnceLock<SmuflFont> = OnceLock::new();
+        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES)))
+    }
 
     /// An unmeasured symbol: these tests are about where a container puts its
     /// children, and a symbol that never measures draws nothing.
@@ -116,5 +137,75 @@ mod tests {
         // Re-fetching an existing page leaves its number alone.
         assert_eq!(score.page_or_insert(2).number, 2);
         assert_eq!(score.pages.len(), 3);
+    }
+
+    /// Pages no longer sit relative to each other -- the browser arranges
+    /// them, not the engine -- so every page in a multi-page score must arrange
+    /// as if it were the only page: its first system lands at that page's own
+    /// margins, not at an offset accumulated from earlier pages' widths,
+    /// heights or gutters. `Page` has no field left to assert a page's own
+    /// position against (that was the point of removing it: every page is
+    /// engraved at `XY::ZERO`, definitionally, by `PageArranger`'s `for page in
+    /// score.pages.values_mut() { page.arrange(&XY::ZERO) }` loop) -- so this
+    /// test's only way to observe cross-page drift is indirectly, through
+    /// where a page's own content actually lands. Distinct, nonzero
+    /// margins/width/height per page is what makes that observable: were
+    /// `PageArranger` to regress into arranging pages one after another again
+    /// (summing widths and gutters as it used to), a later page's system would
+    /// land past its own margin rather than exactly on it.
+    #[test]
+    fn page_arranger_lands_each_pages_first_system_at_that_pages_own_margins() {
+        let mut score = Score::default();
+
+        for (number, left, top, width, height) in [
+            (1u32, 30., 20., 300., 400.),
+            (2, 50., 40., 500., 600.),
+            (3, 10., 5., 200., 250.),
+        ] {
+            let page = score.page_or_insert(number);
+            page.margins = PageMargins {
+                left,
+                right: 0.,
+                top,
+                bottom: 0.,
+            };
+            page.width = width;
+            page.height = height;
+
+            let system = page.system_or_insert(1);
+            system.top = 15.;
+            system.m_left = 5.;
+        }
+
+        let score_defaults = ScoreDefaults::default();
+        let user_layout = UserLayout::default();
+        let app_defaults = AppDefaults::default();
+        let params = LayoutParams {
+            score_defaults: &score_defaults,
+            user_layout: &user_layout,
+            app_defaults: &app_defaults,
+            font: font(),
+            abbreviate_names: false,
+        };
+
+        PageArranger.arrange(&mut score, params);
+
+        for page in score.pages.values() {
+            let system = &page.systems[&1];
+            assert_eq!(
+                system.xy.x,
+                page.margins.left + system.m_left,
+                "page {}'s first system must land at that page's own left margin, \
+                 not one drifted by an earlier page's width",
+                page.number,
+            );
+            assert_eq!(
+                system.xy.y,
+                page.margins.top + system.top,
+                "page {}'s first system must land at that page's own top margin, \
+                 not one drifted by an earlier page's height",
+                page.number,
+            );
+        }
     }
 }

@@ -65,12 +65,7 @@ pub(super) fn write(
     let pdf_pages: Vec<PdfPage> = pages
         .iter()
         .map(|page| {
-            let canvas = PdfPageCanvas::new(
-                page.origin,
-                (page.width, page.height),
-                pt_per_tenth,
-                &font_set,
-            );
+            let canvas = PdfPageCanvas::new((page.width, page.height), pt_per_tenth, &font_set);
             CanvasPainter::new(canvas).paint(&page.elements)
         })
         .collect();

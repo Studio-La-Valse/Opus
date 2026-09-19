@@ -27,10 +27,8 @@ mod tests {
             self.calls.push(format!("begin{bounds:?}"));
         }
 
-        fn begin_page(&mut self, origin_x: f32, origin_y: f32, width: f32, height: f32) {
-            self.calls.push(format!(
-                "begin_page({origin_x}, {origin_y}, {width}, {height})"
-            ));
+        fn begin_page(&mut self, width: f32, height: f32) {
+            self.calls.push(format!("begin_page({width}, {height})"));
         }
 
         fn draw_line(&mut self, _line: &Line) {
@@ -203,36 +201,35 @@ mod tests {
 
     #[test]
     fn paint_pages_brackets_each_page_between_begin_and_finish() {
-        let page = |number, origin: XY| RenderedPage {
+        // Every page is page-local, so two pages' elements can legitimately
+        // occupy the same coordinates -- there is no cross-page offset to
+        // keep them apart.
+        let page = |number| RenderedPage {
             number,
-            origin,
             width: 100.0,
             height: 50.0,
             elements: vec![
                 Line {
-                    start: origin,
-                    end: origin.mv(10.0, 4.0),
+                    start: XY { x: 0.0, y: 0.0 },
+                    end: XY { x: 10.0, y: 4.0 },
                     stroke_color: Color::BLACK,
                     stroke_width: 1.0,
                 }
                 .into(),
             ],
         };
-        let pages = [
-            page(1, XY { x: 0.0, y: 0.0 }),
-            page(2, XY { x: 200.0, y: 0.0 }),
-        ];
+        let pages = [page(1), page(2)];
 
         let calls = CanvasPainter::new(RecordingCanvas::default()).paint_pages(&pages);
 
         assert_eq!(
             calls,
             vec![
-                // begin's bounds span every page's elements.
-                "begin(0.0, 0.0, 210.0, 4.0)",
-                "begin_page(0, 0, 100, 50)",
+                // begin's bounds span every page's (superimposed) elements.
+                "begin(0.0, 0.0, 10.0, 4.0)",
+                "begin_page(100, 50)",
                 "line",
-                "begin_page(200, 0, 100, 50)",
+                "begin_page(100, 50)",
                 "line",
                 "finish",
             ]

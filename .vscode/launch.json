@@ -58,8 +58,6 @@
                 "--out", "assets/xmltest", "--overwrite",
                 "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
                 "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--page-orientation", "vertical",
-                "--vertical-gutter", "10",
                 "--debug"
             ],
             "cwd": "${workspaceRoot}",

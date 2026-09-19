@@ -1,6 +1,5 @@
 use crate::geometry::color::Color;
 use crate::score::core::group_symbol::GroupSymbol;
-use crate::score::page_orientation::PageOrientation;
 use serde::{Deserialize, Serialize};
 
 /// Caller-supplied overrides, each falling back to
@@ -19,11 +18,6 @@ use serde::{Deserialize, Serialize};
 pub struct UserLayout {
     pub page_color: Option<Color>,
     pub foreground_color: Option<Color>,
-
-    pub page_orientation: Option<PageOrientation>,
-    pub horizontal_gutter_even: Option<f32>,
-    pub horizontal_gutter_uneven: Option<f32>,
-    pub vertical_gutter: Option<f32>,
 
     pub staff_line_width: Option<f32>,
     pub light_barline: Option<f32>,

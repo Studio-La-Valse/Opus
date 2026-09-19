@@ -28,12 +28,12 @@ pub trait Canvas {
     fn begin(&mut self, bounds: (f32, f32, f32, f32));
 
     /// Called once before each page's elements when driven via
-    /// [`CanvasPainter::paint_pages`], with the page's global origin and size in
-    /// the same coordinate space as the elements. Default: no-op. Sinks that
-    /// track page boundaries within one continuous stream (the flat buffer)
-    /// override this; SVG and PDF ignore it because they build one surface per
-    /// page instead.
-    fn begin_page(&mut self, _origin_x: f32, _origin_y: f32, _width: f32, _height: f32) {}
+    /// [`CanvasPainter::paint_pages`], with the page's size in the same
+    /// (page-local) coordinate space as the elements. Default: no-op. Sinks
+    /// that track page boundaries within one continuous stream (the flat
+    /// buffer) override this; SVG and PDF ignore it because they build one
+    /// surface per page instead.
+    fn begin_page(&mut self, _width: f32, _height: f32) {}
 
     fn draw_line(&mut self, line: &Line);
     fn draw_rect(&mut self, rect: &Rect);
@@ -83,16 +83,15 @@ impl<C: Canvas> CanvasPainter<C> {
     /// Drives the canvas over a sequence of [`RenderedPage`]s: one
     /// [`Canvas::begin`] with the bounds over every page's elements, then per
     /// page a [`Canvas::begin_page`] followed by that page's elements, then one
-    /// [`Canvas::finish`]. Elements keep their global coordinates; the page
-    /// origin/size passed to [`Canvas::begin_page`] is what lets a sink recover
-    /// page boundaries from the otherwise-continuous stream.
+    /// [`Canvas::finish`]. Elements are already page-local; the page size
+    /// passed to [`Canvas::begin_page`] is what lets a sink recover page
+    /// boundaries from the otherwise-continuous stream.
     pub fn paint_pages(mut self, pages: &[RenderedPage<'_>]) -> C::Output {
         self.canvas
             .begin(compute_bounds(pages.iter().flat_map(|p| &p.elements)));
 
         for page in pages {
-            self.canvas
-                .begin_page(page.origin.x, page.origin.y, page.width, page.height);
+            self.canvas.begin_page(page.width, page.height);
             for el in &page.elements {
                 draw_one(&mut self.canvas, el);
             }
