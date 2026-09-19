@@ -16,8 +16,10 @@ mod tests {
     use lib::score::engrave::{arrange_score, walk_document};
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
+    use lib::score::visual::arrange_machine::ArrangeMachine;
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
     use lib::score::visual::layoutable::LayoutParams;
+    use lib::score::visual::measure_machine::MeasureMachine;
     use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::{BaseRenderer, RenderPass};
     use lib::score::visual::score::Score;
@@ -75,14 +77,14 @@ mod tests {
             font: font(),
         };
         symbol.resolve_layout(params);
-        symbol.measure(
+        MeasureMachine.measure_group_symbol(
+            &mut symbol,
             &XY {
                 x: f32::INFINITY,
                 y: span,
             },
-            params,
         );
-        symbol.arrange(&ORIGIN);
+        ArrangeMachine.arrange_group_symbol(&mut symbol, &ORIGIN);
 
         symbol
     }
@@ -482,14 +484,14 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            symbol.measure(
+            MeasureMachine.measure_group_symbol(
+                symbol,
                 &XY {
                     x: f32::INFINITY,
                     y: SPAN,
                 },
-                params,
             );
-            symbol.arrange(&ORIGIN);
+            ArrangeMachine.arrange_group_symbol(symbol, &ORIGIN);
         };
 
         lay_out(&mut symbol, &UserLayout::default());
@@ -529,12 +531,12 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            symbol.measure(
+            MeasureMachine.measure_group_symbol(
+                &mut symbol,
                 &XY {
                     x: f32::INFINITY,
                     y: SPAN,
                 },
-                params,
             );
             symbol.kind()
         };

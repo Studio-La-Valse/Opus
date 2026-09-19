@@ -7,7 +7,8 @@ use crate::score::visual::note_scale::NoteScale;
 /// [`Rest`](super::rest::Rest). Notes and rests own a `Vec<Dot>` with one entry
 /// per dot; the owner computes each dot's centre during its arrange pass
 /// (horizontal spacing, plus the half-space vertical nudge that keeps a dot off
-/// a staff line) and hands it here through [`arrange`](Dot::arrange).
+/// a staff line) and hands it here through
+/// [`arrange_dot`](crate::score::visual::arrange_machine::ArrangeMachine::arrange_dot).
 pub struct Dot {
     pub xy: XY,
 
@@ -53,13 +54,5 @@ impl Dot {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
         self.radius = user_layout.dot_radius.unwrap_or(app_defaults.dot_radius) * self.scale;
-    }
-
-    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {}
-
-    /// `origin` is the fully-resolved centre of this dot, worked out by the
-    /// owning note or rest.
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
     }
 }

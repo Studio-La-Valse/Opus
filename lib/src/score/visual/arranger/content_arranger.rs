@@ -9,6 +9,7 @@
 //! completion on its own, and content placement can be pulled out into its own
 //! pass rather than being threaded through the container one.
 
+use crate::score::visual::arrange_machine::ArrangeMachine;
 use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
@@ -52,7 +53,7 @@ fn walk_system(system: &mut System, paddings: &MeasureStartPaddings) {
     }
 
     // Last: the shared opening columns need every staff measure placed.
-    system.arrange_measure_starts(paddings);
+    ArrangeMachine.arrange_system_measure_starts(system, paddings);
 }
 
 fn walk_part(part: &mut Part) {
@@ -64,15 +65,15 @@ fn walk_part(part: &mut Part) {
         }
 
         for measure in staff.measures.values_mut() {
-            measure.arrange_content();
+            ArrangeMachine.arrange_staff_measure_content(measure);
         }
     }
 
     // Not filtered on visibility, unlike every other content walk: a hidden
-    // part's measures are still arranged today (`Part::arrange_clear_of` has
+    // part's measures are still arranged today (`ArrangeMachine::arrange_part_clear_of` has
     // no such check) and nothing draws them, so this pass must keep leaving
     // them arranged rather than stale.
     for measure in part.measures.values_mut() {
-        measure.arrange_content(&staff_ctx);
+        ArrangeMachine.arrange_part_measure_content(measure, &staff_ctx);
     }
 }

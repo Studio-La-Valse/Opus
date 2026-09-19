@@ -48,11 +48,11 @@ impl KeySignature {
         }
     }
 
-    fn line_space(&self) -> f32 {
+    pub fn line_space(&self) -> f32 {
         Staff::DEFAULT_SPACE_SIZE * self.scale
     }
 
-    fn accidental_spacing(&self) -> f32 {
+    pub fn accidental_spacing(&self) -> f32 {
         ACCIDENTAL_SPACING * self.scale
     }
 }
@@ -61,35 +61,6 @@ impl KeySignature {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         for (_, accidental) in self.accidentals.iter_mut() {
             accidental.resolve_layout(params);
-        }
-    }
-
-    pub fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
-        self.width = 0.;
-        for (_, accidental) in self.accidentals.iter_mut() {
-            accidental.measure(_available, params);
-            self.width += accidental.width;
-        }
-
-        if self.accidentals.len() > 1 {
-            self.width += (self.accidentals.len() - 1) as f32 * self.accidental_spacing();
-        }
-    }
-
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-
-        let origin = self.xy;
-        let spacing = self.accidental_spacing();
-        let half_space = self.line_space() / 2.;
-
-        let mut x = origin.x;
-        for (line, acc) in self.accidentals.iter_mut() {
-            let y = origin.y + half_space * (*line as f32);
-            let xy = XY { x, y }.mv(acc.width, 0.);
-            acc.arrange(&xy);
-
-            x += acc.width + spacing;
         }
     }
 }

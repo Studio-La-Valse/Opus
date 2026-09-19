@@ -85,7 +85,7 @@ impl Section {
             .find_map(|group| group.locate_staff_measure_mut(part_id, staff_number, measure_number))
     }
 
-    fn first_visible_staff_distance(&self) -> f32 {
+    pub fn first_visible_staff_distance(&self) -> f32 {
         self.part_groups
             .values()
             .next()
@@ -119,51 +119,6 @@ impl Section {
     pub fn shows_symbol(&self) -> bool {
         self.part_groups.len() > 1 && self.symbol.is_drawn()
     }
-
-    /// How far left this section's own ink reaches, which is what the symbols
-    /// inside it keep clear of. The system's left edge when nothing is drawn --
-    /// an undrawn symbol must not push its part-groups outward by a gap that
-    /// nothing occupies.
-    fn symbol_left_edge(&self) -> f32 {
-        if self.shows_symbol() {
-            self.symbol.bounds().x_min()
-        } else {
-            self.xy.x
-        }
-    }
-
-    /// Places this section, additionally carrying the page's left margin
-    /// (`margin_left`) down the chain so a part / part-group name knows how far
-    /// left its box reaches. A section has no name of its own -- it is the
-    /// (usually unnamed) bracket around a run of part-groups.
-    ///
-    /// [`arrange`](Self::arrange) delegates here with `origin.x` for the margin,
-    /// the way each level's `arrange` delegates today.
-    pub fn arrange_within(&mut self, origin: &XY, margin_left: f32) {
-        self.xy = *origin;
-
-        let first_visible_staff_distance = self.first_visible_staff_distance();
-        let mut measure_origin = self.xy.mv(0., first_visible_staff_distance);
-
-        for measure in self.measures.values_mut() {
-            measure.arrange(&measure_origin);
-            measure_origin = measure_origin.mv(measure.width, 0.);
-        }
-
-        // Arranged before the part-groups, because where they put their own
-        // symbols depends on how far left this one reached. A section's symbol
-        // is the innermost of the three, so it is the only one measured from
-        // the system itself.
-        self.symbol
-            .arrange(&self.xy.mv(0., first_visible_staff_distance));
-        let clear_of = self.symbol_left_edge();
-
-        let mut part_group_origin = self.xy;
-        for part_group in self.part_groups.values_mut() {
-            part_group.arrange_clear_of(&part_group_origin, clear_of, margin_left);
-            part_group_origin = part_group_origin.mv(0., part_group.height);
-        }
-    }
 }
 impl Section {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
@@ -176,42 +131,5 @@ impl Section {
         }
 
         self.symbol.resolve_layout(params);
-    }
-
-    pub fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
-        self.width = 0.;
-        self.height = 0.;
-
-        for pg in self.part_groups.values_mut() {
-            let available = XY::INFINITE;
-            pg.measure(&available, params);
-            self.height += pg.height;
-        }
-
-        let first_visible_staff_distance = self.first_visible_staff_distance();
-        let staves_height = self.height - first_visible_staff_distance;
-
-        for measure in self.measures.values_mut() {
-            let available = XY {
-                x: f32::INFINITY,
-                y: staves_height,
-            };
-            measure.measure(&available, params);
-            self.width += measure.width;
-        }
-
-        // Measured whatever it turns out to draw: a symbol that has been sized
-        // and placed on every pass cannot go stale, and `shows_symbol` is then
-        // a question about the current pass rather than about which branch last
-        // ran. Only the compositor decides whether to draw it.
-        let avail = XY {
-            x: f32::INFINITY,
-            y: staves_height,
-        };
-        self.symbol.measure(&avail, params);
-    }
-
-    pub fn arrange(&mut self, origin: &XY) {
-        self.arrange_within(origin, origin.x);
     }
 }

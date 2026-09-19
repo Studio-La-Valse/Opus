@@ -41,6 +41,7 @@ use crate::score::score_defaults::ScoreDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::arranger::SCORE_ARRANGERS;
 use crate::score::visual::layoutable::LayoutParams;
+use crate::score::visual::measure_machine::MeasureMachine;
 use crate::score::visual::score::Score;
 use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
@@ -199,7 +200,7 @@ pub fn arrange_score(
 
     progress(Stage::ResolveLayout);
 
-    score.measure(&XY::INFINITE, params);
+    MeasureMachine.measure_score(score, &XY::INFINITE);
 
     // Placing the pages has to come first: every other pass here needs an
     // absolute coordinate to work with, and nothing in the tree has one until

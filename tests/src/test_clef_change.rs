@@ -17,6 +17,7 @@ mod tests {
     use lib::score::core::staff_idx::StaffIdx;
     use lib::score::engrave::{EngravedScore, engrave};
     use lib::score::user_layout::UserLayout;
+    use lib::score::visual::arrange_machine::ArrangeMachine;
     use lib::score::visual::clef::{Clef, ClefAnchor};
     use lib::score::visual::note::NoteId;
     use lib::score::visual::score::Score;
@@ -125,7 +126,7 @@ mod tests {
     #[test]
     fn a_clef_anchored_before_something_grows_leftwards_from_the_gap() {
         let mut clef = clef(lib::score::core::clef::Clef::Bass);
-        clef.place(ClefAnchor::GapBefore(400.), 1000., 1.0);
+        ArrangeMachine.place_clef(&mut clef, ClefAnchor::GapBefore(400.), 1000., 1.0);
 
         assert!(clef.width > 0., "a zero-wide clef would prove nothing here");
         assert_eq!(
@@ -145,7 +146,7 @@ mod tests {
     #[test]
     fn a_clef_anchored_at_a_column_grows_rightwards_from_it() {
         let mut clef = clef(lib::score::core::clef::Clef::Bass);
-        clef.place(ClefAnchor::LeftEdgeAt(400.), 1000., 1.0);
+        ArrangeMachine.place_clef(&mut clef, ClefAnchor::LeftEdgeAt(400.), 1000., 1.0);
 
         assert!(clef.width > 0., "a zero-wide clef would prove nothing here");
         assert_eq!(clef.xy.x, 400., "the clef's left edge should be the anchor");
@@ -160,11 +161,11 @@ mod tests {
     #[test]
     fn the_line_a_clef_sits_on_scales_with_the_staff_not_the_glyph() {
         let mut full = clef(lib::score::core::clef::Clef::Bass);
-        full.place(ClefAnchor::LeftEdgeAt(0.), 0., 1.0);
+        ArrangeMachine.place_clef(&mut full, ClefAnchor::LeftEdgeAt(0.), 0., 1.0);
 
         let mut courtesy = clef(lib::score::core::clef::Clef::Bass);
         courtesy.rescale(Clef::COURTESY_SCALE);
-        courtesy.place(ClefAnchor::LeftEdgeAt(0.), 0., 1.0);
+        ArrangeMachine.place_clef(&mut courtesy, ClefAnchor::LeftEdgeAt(0.), 0., 1.0);
 
         assert!(courtesy.width < full.width, "the courtesy clef is narrower");
         assert_eq!(
@@ -180,11 +181,11 @@ mod tests {
     fn a_narrower_clef_still_meets_its_gap_exactly() {
         let mut full = clef(lib::score::core::clef::Clef::Treble);
         full.rescale(Clef::COURTESY_SCALE);
-        full.place(ClefAnchor::GapBefore(400.), 0., 1.0);
+        ArrangeMachine.place_clef(&mut full, ClefAnchor::GapBefore(400.), 0., 1.0);
 
         let mut half = clef(lib::score::core::clef::Clef::Treble);
         half.rescale(Clef::COURTESY_SCALE * 0.5);
-        half.place(ClefAnchor::GapBefore(400.), 0., 0.5);
+        ArrangeMachine.place_clef(&mut half, ClefAnchor::GapBefore(400.), 0., 0.5);
 
         assert!(
             half.width < full.width,

@@ -30,12 +30,4 @@ impl SectionMeasure {
             .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.light_barline)
     }
-
-    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
-        self.height = available.y;
-    }
-
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-    }
 }

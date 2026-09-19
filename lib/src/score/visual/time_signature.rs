@@ -107,7 +107,7 @@ impl TimeSignature {
         })
     }
 
-    fn measure_width(&mut self) {
+    pub fn measure_width(&mut self) {
         let unit = self.unit();
         self.width = (self.num.advance() * unit).max(self.denom.advance() * unit);
     }
@@ -132,14 +132,5 @@ impl TimeSignature {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
-    }
-
-    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
-        self.height = available.y;
-        self.measure_width();
-    }
-
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
     }
 }

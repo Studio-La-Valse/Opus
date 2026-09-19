@@ -42,12 +42,4 @@ impl SystemMeasure {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
-
-    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
-        self.height = available.y;
-    }
-
-    pub fn arrange(&mut self, _origin: &XY) {
-        self.xy = *_origin;
-    }
 }

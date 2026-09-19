@@ -21,6 +21,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::visual::arrange_machine::ArrangeMachine;
 use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::clef::{Clef, ClefAnchor, ClefChange};
 use crate::score::visual::layoutable::LayoutParams;
@@ -119,7 +120,7 @@ fn place_part_clef_changes(
     params: LayoutParams<'_>,
     out: &mut Vec<Clef>,
 ) {
-    // Where each staff of this part sits, as `Part::arrange_clear_of` worked it
+    // Where each staff of this part sits, as `ArrangeMachine::arrange_part_clear_of` worked it
     // out. Read from here rather than from `Staff::xy` so that a clef change on
     // a hidden staff lands where it always did: a hidden staff is left
     // unarranged, but it is still in this map.
@@ -173,9 +174,10 @@ fn place_clef_change(
     clef.resolve_layout(params);
 
     // Built here rather than during the measure pass, so it has to size itself
-    // before `place` can read the width back off it.
+    // before `place_clef` can read the width back off it.
     clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
-    clef.place(
+    ArrangeMachine.place_clef(
+        &mut clef,
         ClefAnchor::GapBefore(left),
         part_top + ctx.distance_from_top,
         ctx.scaling,

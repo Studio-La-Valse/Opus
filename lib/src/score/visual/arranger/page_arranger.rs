@@ -2,6 +2,7 @@
 //! beneath it -- at its own, page-local origin.
 
 use crate::geometry::xy::XY;
+use crate::score::visual::arrange_machine::ArrangeMachine;
 use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
@@ -21,7 +22,7 @@ pub struct PageArranger;
 impl ScoreArranger for PageArranger {
     fn arrange(&self, score: &mut Score, _params: LayoutParams<'_>) {
         for page in score.pages.values_mut() {
-            page.arrange(&XY::ZERO);
+            ArrangeMachine.arrange_page(page, &XY::ZERO);
         }
     }
 }

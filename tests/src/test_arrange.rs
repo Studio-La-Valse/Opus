@@ -12,6 +12,7 @@ mod tests {
     use lib::score::core::group_symbol::GroupLevel;
     use lib::score::score_defaults::{PageMargins, ScoreDefaults};
     use lib::score::user_layout::UserLayout;
+    use lib::score::visual::arrange_machine::ArrangeMachine;
     use lib::score::visual::arranger::{PageArranger, ScoreArranger};
     use lib::score::visual::group_name::GroupName;
     use lib::score::visual::group_symbol::GroupSymbol;
@@ -61,7 +62,7 @@ mod tests {
             system.measures.insert(number, measure);
         }
 
-        system.arrange(&XY { x: 100., y: 5. });
+        ArrangeMachine.arrange_system(&mut system, &XY { x: 100., y: 5. });
 
         let x_of = |n: u32| system.measures[&n].xy.x;
         assert_eq!(x_of(1), 100.);
@@ -83,7 +84,7 @@ mod tests {
             group.measures.insert(number, measure);
         }
 
-        group.arrange(&XY { x: 10., y: 0. });
+        ArrangeMachine.arrange_part_group(&mut group, &XY { x: 10., y: 0. });
 
         assert_eq!(group.measures[&1].xy.x, 10.);
         assert_eq!(group.measures[&2].xy.x, 50.);
@@ -91,7 +92,7 @@ mod tests {
 
     /// `create_staff_ctx` is what positions notes and rests, which hang off a
     /// `PartMeasure` and only name their staff by index. It has to walk the
-    /// staves exactly the way `Part::arrange` places them, or the notes on a
+    /// staves exactly the way `arrange_part` places them, or the notes on a
     /// staff drift away from its own staff lines.
     #[test]
     fn staff_context_offsets_match_where_arrange_puts_the_staves() {
@@ -105,7 +106,7 @@ mod tests {
         part.staff_or_insert(&2.into()).hidden = true;
         part.staff_or_insert(&2.into()).height = 0.;
 
-        part.arrange(&XY::ZERO);
+        ArrangeMachine.arrange_part(&mut part, &XY::ZERO);
         let ctx = part.create_staff_ctx();
 
         for (idx, staff) in part.staves.iter() {

@@ -1,4 +1,5 @@
 pub mod accidental;
+pub mod arrange_machine;
 pub mod arranger;
 pub mod beam;
 pub mod chord;
@@ -9,6 +10,7 @@ pub mod group_name;
 pub mod group_symbol;
 pub mod key_signature;
 pub mod layoutable;
+pub mod measure_machine;
 pub mod note;
 pub mod note_scale;
 pub mod page;

@@ -167,33 +167,4 @@ impl Staff {
             measure.resolve_layout(params);
         }
     }
-
-    pub fn measure(&mut self, _available: &XY, params: LayoutParams<'_>) {
-        self.height = self.height();
-        self.width = 0.;
-
-        if self.hidden {
-            self.height = 0.;
-        }
-
-        for measure in self.measures.values_mut() {
-            let available = &XY {
-                x: f32::INFINITY,
-                y: self.height,
-            };
-            measure.measure(available, params);
-            self.width += measure.width;
-        }
-    }
-
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-
-        let mut _origin = self.xy;
-        for measure in self.measures.values_mut() {
-            measure.arrange(&_origin);
-
-            _origin = _origin.mv(measure.width, 0.)
-        }
-    }
 }

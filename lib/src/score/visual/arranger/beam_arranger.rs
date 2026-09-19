@@ -27,9 +27,9 @@
 //! so fitting a ray from a stem this pass already adjusted would fit against
 //! the wrong tip. [`collect_runs`] avoids that by resetting every beamable
 //! chord's stem to its natural length -- via
-//! [`Chord::arrange_stem`](crate::score::visual::chord::Chord::arrange_stem),
-//! the same pure function `Part::arrange_clear_of` calls during the ordinary
-//! arrange -- before the chord is ever handed to a group. Every ray is
+//! [`ArrangeMachine::arrange_chord_stem`](crate::score::visual::arrange_machine::ArrangeMachine::arrange_chord_stem),
+//! the same pure function `ArrangeMachine::arrange_part_clear_of` calls during
+//! the ordinary arrange -- before the chord is ever handed to a group. Every ray is
 //! therefore always fitted from the same tips, however many times
 //! `arrange_score` runs on a cached score, which is what the wasm render path
 //! depends on.
@@ -42,6 +42,7 @@ use crate::geometry::color::Color;
 use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
 use crate::score::core::voice::Voice;
+use crate::score::visual::arrange_machine::ArrangeMachine;
 use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::beam::{
     BeamMetrics, Beamable, Cut, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
@@ -173,7 +174,7 @@ fn collect_runs(score: &mut Score) -> BTreeMap<RunKey, Vec<Beamable<'_>>> {
                         for measure in part.measures.values_mut() {
                             for (voice, chords) in measure.chords.iter_mut() {
                                 for chord in chords.iter_mut() {
-                                    chord.arrange_stem(&staff_ctx);
+                                    ArrangeMachine.arrange_chord_stem(chord, &staff_ctx);
 
                                     let run = (part_id.clone(), *voice, chord.grace);
                                     runs.entry(run).or_default().push(Beamable { key, chord });

@@ -40,7 +40,7 @@ impl Accidental {
         self.measure_size();
     }
 
-    fn measure_size(&mut self) {
+    pub fn measure_size(&mut self) {
         let bbox = self.glyph_bbox(&self.glyph.bbox);
 
         self.width = bbox.width();
@@ -175,14 +175,5 @@ impl Accidental {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
-    }
-
-    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
-        self.measure_size();
-    }
-
-    /// Provided origin is the right origin of the accidental.
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = origin.mv(-self.width, 0.);
     }
 }

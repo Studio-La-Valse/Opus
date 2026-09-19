@@ -10,7 +10,7 @@ use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::section::Section;
 use crate::score::visual::staff::Staff;
-use crate::score::visual::staff_measure::{MeasureStartPaddings, StaffMeasure};
+use crate::score::visual::staff_measure::StaffMeasure;
 use crate::score::visual::system_measure::SystemMeasure;
 use crate::score::visual::tie::TieSegment;
 use std::collections::BTreeMap;
@@ -187,66 +187,6 @@ impl System {
         }
     }
 
-    /// Lines the elements that open a measure -- the clef, the key signature and
-    /// the time signature -- up into three columns shared by every drawn staff
-    /// of this system.
-    ///
-    /// Left to itself a staff places these one after the other from its own left
-    /// edge, so a staff whose key signature is narrower than its neighbour's
-    /// starts its time signature further left than theirs. That shows in any
-    /// score with transposing instruments: a score in C flat major carries seven
-    /// flats, the trumpets in B flat five, and an unpitched percussion staff
-    /// none at all, which is three different time-signature positions down one
-    /// system.
-    ///
-    /// A column, like a measure width, is a fact about the whole system that no
-    /// single staff can work out on its own -- so, like
-    /// [`consolidate_measure_width`](Self::consolidate_measure_width), the
-    /// system settles it. Only the *start* of each column is shared: what a
-    /// staff draws there is still its own, so a narrower key signature simply
-    /// leaves more air before the next column.
-    ///
-    /// Run by
-    /// [`ContentArranger`](crate::score::visual::arranger::ContentArranger),
-    /// once the staves have been placed and the measures have the left edge
-    /// these offsets are measured from. Only drawn staves take part, which is
-    /// also all the compositor visits.
-    pub fn arrange_measure_starts(&mut self, paddings: &MeasureStartPaddings) {
-        let mut by_measure: BTreeMap<u32, Vec<&mut StaffMeasure>> = BTreeMap::new();
-        for staff in self.visible_staves_mut() {
-            for (number, measure) in staff.measures.iter_mut() {
-                by_measure.entry(*number).or_default().push(measure);
-            }
-        }
-
-        for measures in by_measure.values_mut() {
-            // How far right each staff has reached so far, from the measure's
-            // own left edge. The columns resolve outwards from here, one at a
-            // time, because each is measured from where the previous one left
-            // the widest staff.
-            let mut edges = vec![0.; measures.len()];
-
-            arrange_column(
-                measures,
-                &mut edges,
-                paddings.clef,
-                StaffMeasure::arrange_clef_start,
-            );
-            arrange_column(
-                measures,
-                &mut edges,
-                paddings.key_signature,
-                StaffMeasure::arrange_key_signature_start,
-            );
-            arrange_column(
-                measures,
-                &mut edges,
-                paddings.time_signature,
-                StaffMeasure::arrange_time_signature_start,
-            );
-        }
-    }
-
     /// Every staff of this system that is drawn, top to bottom.
     pub fn visible_staves(&self) -> impl Iterator<Item = &Staff> {
         self.sections
@@ -281,7 +221,7 @@ impl System {
     /// the top of the system. The mutable twin of
     /// [`find_first_visible_staff`](Self::find_first_visible_staff), and `None`
     /// for a system with nothing drawn in it at all.
-    fn first_visible_staff(&mut self) -> Option<&mut Staff> {
+    pub fn first_visible_staff(&mut self) -> Option<&mut Staff> {
         self.visible_staves_mut().next()
     }
 
@@ -321,78 +261,6 @@ impl System {
 
         for measure in self.measures.values_mut() {
             measure.resolve_layout(params);
-        }
-    }
-
-    pub fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
-        self.width = 0.;
-        self.height = 0.;
-
-        if let Some(staff) = self.first_visible_staff() {
-            staff.distance_final = 0.;
-        }
-
-        for section in self.sections.values_mut() {
-            let available = XY::INFINITE;
-            section.measure(&available, params);
-            self.height += section.height;
-        }
-
-        for measure in self.measures.values_mut() {
-            let available = XY {
-                x: f32::INFINITY,
-                y: self.height,
-            };
-            measure.measure(&available, params);
-            self.width += measure.width;
-        }
-    }
-
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
-
-        let mut _origin = self.xy;
-        for measure in self.measures.values_mut() {
-            measure.arrange(&_origin);
-            _origin = _origin.mv(measure.width, 0.);
-        }
-
-        // The page's left margin, in world coordinates: `page.rs` places a
-        // system at `page_margin + system.m_left`, so undoing the system's own
-        // margin lands back on it. This is where a name's box reaches left to.
-        let margin_left = self.xy.x - self.m_left;
-
-        let mut _origin = self.xy;
-        for section in self.sections.values_mut() {
-            section.arrange_within(&_origin, margin_left);
-            _origin = _origin.mv(0., section.height);
-        }
-    }
-}
-
-/// Places one of the three opening columns across the staves of a single
-/// measure.
-///
-/// Every staff draws at the same offset -- a padding clear of the furthest
-/// right any of them has reached -- and `edges` then advances to wherever each
-/// staff's own element ended. A staff with nothing to draw in this column
-/// answers `None` and keeps the edge it had, so it neither widens the column nor
-/// carries a gap for an element it does not have.
-fn arrange_column(
-    measures: &mut [&mut StaffMeasure],
-    edges: &mut [f32],
-    padding: f32,
-    place: fn(&mut StaffMeasure, f32) -> Option<f32>,
-) {
-    let column = measures
-        .iter()
-        .zip(edges.iter())
-        .map(|(measure, edge)| edge + padding * measure.scale)
-        .fold(0., f32::max);
-
-    for (measure, edge) in measures.iter_mut().zip(edges.iter_mut()) {
-        if let Some(right) = place(measure, column) {
-            *edge = right;
         }
     }
 }

@@ -6,8 +6,6 @@ use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::NoteId;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::placed::Placed;
-use crate::score::visual::staff::Staff;
-use crate::score::visual::staff_ctx::StaffCtx;
 use crate::smufl::glyphs::rest::Rest as SmuflRest;
 
 pub struct Rest {
@@ -95,38 +93,6 @@ impl Rest {
             color: Color::default(),
         }
     }
-
-    /// here, origin is the origin of the staff measure, so adjust y coordinate for staff distance.
-    pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
-        self.arrange_glyph(origin, staff_ctx);
-        self.arrange_dots(staff_ctx);
-    }
-
-    /// Rests carry no stem, so a dot landing on a staff line is nudged up (the
-    /// default direction per engraving convention).
-    fn arrange_dots(&mut self, staff_ctx: &StaffCtx) {
-        let on_staff_line = self.staff_line.rem_euclid(2) == 0;
-        let dy = if on_staff_line {
-            -(Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling
-        } else {
-            0.
-        };
-
-        let base = self.xy.mv(self.width, dy);
-        for (i, dot) in self.dots.iter_mut().enumerate() {
-            let center = base.mv((i as f32 + 1.) * self.dot_spacing, 0.);
-            dot.arrange(&center);
-        }
-    }
-
-    fn arrange_glyph(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
-        let mut dy = staff_ctx.distance_from_top;
-        dy += self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling);
-        self.xy = XY {
-            x: origin.x,
-            y: origin.y + dy,
-        };
-    }
 }
 
 impl Placed for Rest {
@@ -157,20 +123,5 @@ impl Rest {
         for dot in self.dots.iter_mut() {
             dot.resolve_layout(params);
         }
-    }
-}
-
-impl Rest {
-    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
-
-        let glyph = &self.glyph;
-        let bbox = self.scale_box(&glyph.bbox);
-
-        for dot in &mut self.dots {
-            dot.measure(available, params);
-        }
-
-        self.width = bbox.width();
     }
 }
