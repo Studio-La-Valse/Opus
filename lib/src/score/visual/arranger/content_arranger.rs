@@ -1,5 +1,5 @@
 //! Places every note, rest, ledger line and opening/closing clef, key and
-//! time signature in the tree, once the container pass ([`PageArranger`])
+//! time signature in the tree, once the container pass (PageArranger)
 //! has placed every page, system, section, part-group, part, staff and
 //! measure.
 //!
