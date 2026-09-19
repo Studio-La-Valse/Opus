@@ -249,6 +249,7 @@ impl BeamArranger {
         Some(Ray::from_pts(left, right))
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn create_beams(
         &self,
         chords: &[&mut Chord],
