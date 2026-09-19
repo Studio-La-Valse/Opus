@@ -76,13 +76,7 @@ mod tests {
             font: font(),
         };
         symbol.resolve_layout(params);
-        ScoreMeasurement.measure_group_symbol(
-            &mut symbol,
-            &XY {
-                x: f32::INFINITY,
-                y: span,
-            },
-        );
+        ScoreMeasurement.measure_group_symbol(&mut symbol, span);
         PageArranger.arrange_group_symbol(&mut symbol, &ORIGIN);
 
         symbol
@@ -483,13 +477,7 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            ScoreMeasurement.measure_group_symbol(
-                symbol,
-                &XY {
-                    x: f32::INFINITY,
-                    y: SPAN,
-                },
-            );
+            ScoreMeasurement.measure_group_symbol(symbol, SPAN);
             PageArranger.arrange_group_symbol(symbol, &ORIGIN);
         };
 
@@ -530,13 +518,7 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            ScoreMeasurement.measure_group_symbol(
-                &mut symbol,
-                &XY {
-                    x: f32::INFINITY,
-                    y: SPAN,
-                },
-            );
+            ScoreMeasurement.measure_group_symbol(&mut symbol, SPAN);
             symbol.kind()
         };
 

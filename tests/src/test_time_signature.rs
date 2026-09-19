@@ -106,13 +106,7 @@ mod tests {
             font: font(),
         };
         time_signature.resolve_layout(params);
-        ScoreMeasurement.measure_time_signature(
-            &mut time_signature,
-            &XY {
-                x: 0.,
-                y: staff_height,
-            },
-        );
+        ScoreMeasurement.measure_time_signature(&mut time_signature, staff_height);
         ContentArranger.arrange_time_signature(&mut time_signature, &XY::ZERO);
 
         time_signature

@@ -13,7 +13,6 @@ mod tests {
     use std::fs::read_to_string;
     use std::sync::OnceLock;
 
-    use lib::geometry::xy::XY;
     use lib::score::app_defaults::AppDefaults;
     use lib::score::core::staff_idx::StaffIdx;
     use lib::score::engrave::{EngravedScore, engrave};
@@ -120,7 +119,7 @@ mod tests {
     fn clef(which: lib::score::core::clef::Clef) -> Clef {
         let mut clef = Clef::new(font().clef(&which, 5));
         clef.rescale(1.0);
-        ScoreMeasurement.measure_clef(&mut clef, &XY::INFINITE);
+        ScoreMeasurement.measure_clef(&mut clef);
         clef
     }
 
@@ -168,7 +167,7 @@ mod tests {
 
         let mut courtesy = clef(lib::score::core::clef::Clef::Bass);
         courtesy.rescale(Clef::COURTESY_SCALE);
-        ScoreMeasurement.measure_clef(&mut courtesy, &XY::INFINITE);
+        ScoreMeasurement.measure_clef(&mut courtesy);
         courtesy.place(ClefAnchor::LeftEdgeAt(0.), 0., 1.0);
 
         assert!(courtesy.width < full.width, "the courtesy clef is narrower");
@@ -185,12 +184,12 @@ mod tests {
     fn a_narrower_clef_still_meets_its_gap_exactly() {
         let mut full = clef(lib::score::core::clef::Clef::Treble);
         full.rescale(Clef::COURTESY_SCALE);
-        ScoreMeasurement.measure_clef(&mut full, &XY::INFINITE);
+        ScoreMeasurement.measure_clef(&mut full);
         full.place(ClefAnchor::GapBefore(400.), 0., 1.0);
 
         let mut half = clef(lib::score::core::clef::Clef::Treble);
         half.rescale(Clef::COURTESY_SCALE * 0.5);
-        ScoreMeasurement.measure_clef(&mut half, &XY::INFINITE);
+        ScoreMeasurement.measure_clef(&mut half);
         half.place(ClefAnchor::GapBefore(400.), 0., 0.5);
 
         assert!(

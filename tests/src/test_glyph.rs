@@ -153,7 +153,7 @@ mod tests {
         let mut clef = Clef::new(smufl_clef.clone());
         clef.xy = XY { x: 40.0, y: 60.0 };
         clef.rescale(Clef::COURTESY_SCALE);
-        ScoreMeasurement.measure_clef(&mut clef, &XY::INFINITE);
+        ScoreMeasurement.measure_clef(&mut clef);
 
         let expected = clef.scaled_box();
         let actual = smufl_clef

@@ -20,7 +20,6 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::arranger::{ScoreArranger, ScoreMeasurement};
 use crate::score::visual::clef::{Clef, ClefAnchor, ClefChange};
@@ -185,7 +184,7 @@ impl ClefChangeArranger {
         // Built here rather than during the measure pass, so it has to size itself
         // before `Clef::place` can read the width back off it.
         clef.rescale(ctx.scaling * Clef::COURTESY_SCALE);
-        ScoreMeasurement.measure_clef(&mut clef, &XY::INFINITE);
+        ScoreMeasurement.measure_clef(&mut clef);
         clef.place(
             ClefAnchor::GapBefore(left),
             part_top + ctx.distance_from_top,

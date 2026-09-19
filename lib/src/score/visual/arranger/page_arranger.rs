@@ -222,10 +222,10 @@ impl PageArranger {
 
         let first_visible_staff_distance = group.first_visible_staff_distance();
 
-        let mut _origin = group.xy;
+        let mut measure_origin = group.xy.mv(0., first_visible_staff_distance);
         for measure in group.measures.values_mut() {
-            self.arrange_part_group_measure(measure, &_origin);
-            _origin = _origin.mv(measure.width, 0.);
+            self.arrange_part_group_measure(measure, &measure_origin);
+            measure_origin = measure_origin.mv(measure.width, 0.);
         }
 
         // Before the parts, whose own symbols keep clear of this one.
