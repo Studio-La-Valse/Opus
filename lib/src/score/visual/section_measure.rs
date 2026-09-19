@@ -1,6 +1,6 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 
 #[derive(Default)]
 pub struct SectionMeasure {
@@ -12,8 +12,8 @@ pub struct SectionMeasure {
     pub light_barline: f32,
 }
 
-impl Layoutable for SectionMeasure {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl SectionMeasure {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
@@ -31,11 +31,11 @@ impl Layoutable for SectionMeasure {
             .unwrap_or(app_defaults.light_barline)
     }
 
-    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
     }
 }

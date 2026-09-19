@@ -3,7 +3,7 @@ use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::PageMargins;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::staff_measure::StaffMeasure;
@@ -28,7 +28,8 @@ pub struct Page {
 impl Page {
     /// The system under `system_id`, creating it if it isn't there yet. The
     /// created system is stamped with its own index, which
-    /// [`System::resolve_layout`] needs to decide whether names abbreviate.
+    /// [`Score::locate_or_create_part`](crate::score::visual::score::Score::locate_or_create_part)
+    /// needs to decide whether names abbreviate.
     pub fn system_or_insert(&mut self, system_id: u32) -> &mut System {
         self.systems.entry(system_id).or_insert_with(|| System {
             index: system_id,
@@ -93,8 +94,8 @@ impl Page {
     }
 }
 
-impl Layoutable for Page {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Page {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
@@ -116,13 +117,13 @@ impl Layoutable for Page {
         }
     }
 
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         for system in self.systems.values_mut() {
             system.measure(available, params);
         }
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         let m_left = self.margins.left;
         let m_top = self.margins.top;
 

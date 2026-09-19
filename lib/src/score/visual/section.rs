@@ -3,7 +3,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_group::PartGroup;
 use crate::score::visual::part_measure::PartMeasure;
@@ -137,7 +137,7 @@ impl Section {
     /// left its box reaches. A section has no name of its own -- it is the
     /// (usually unnamed) bracket around a run of part-groups.
     ///
-    /// [`Layoutable::arrange`] delegates here with `origin.x` for the margin,
+    /// [`arrange`](Self::arrange) delegates here with `origin.x` for the margin,
     /// the way each level's `arrange` delegates today.
     pub fn arrange_within(&mut self, origin: &XY, margin_left: f32) {
         self.xy = *origin;
@@ -165,8 +165,8 @@ impl Section {
         }
     }
 }
-impl Layoutable for Section {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Section {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         for pg in self.part_groups.values_mut() {
             pg.resolve_layout(params);
         }
@@ -178,7 +178,7 @@ impl Layoutable for Section {
         self.symbol.resolve_layout(params);
     }
 
-    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -211,7 +211,7 @@ impl Layoutable for Section {
         self.symbol.measure(&avail, params);
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.arrange_within(origin, origin.x);
     }
 }

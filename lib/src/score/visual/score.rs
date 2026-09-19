@@ -6,7 +6,7 @@ use crate::score::score_defaults::ScorePart;
 use crate::score::visual::clef::ClefChange;
 use crate::score::visual::group_name::GroupName;
 use crate::score::visual::group_symbol::GroupSymbol;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::{NoteAnchor, NoteId};
 use crate::score::visual::page::Page;
 use crate::score::visual::part::Part;
@@ -82,6 +82,10 @@ impl Score {
         assignment: &ScorePart,
         part_id: &str,
     ) -> &mut Part {
+        // The first system of the score names in full, every later one draws
+        // the abbreviation; see `System::index`.
+        let abbreviate_names = system_index > 1;
+
         let system = self
             .page_or_insert(page_number)
             .system_or_insert(system_index);
@@ -96,6 +100,7 @@ impl Score {
             GroupName::new(
                 assignment.part_group_name.clone(),
                 assignment.part_group_abbr.clone(),
+                abbreviate_names,
             ),
         );
 
@@ -104,7 +109,11 @@ impl Score {
         part_group.part_or_insert(
             part_id.to_string(),
             GroupSymbol::new(GroupLevel::Part, None),
-            GroupName::new(assignment.name.clone(), assignment.abbr.clone()),
+            GroupName::new(
+                assignment.name.clone(),
+                assignment.abbr.clone(),
+                abbreviate_names,
+            ),
         )
     }
 

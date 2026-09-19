@@ -44,7 +44,6 @@ mod tests {
             user_layout: &user_layout,
             app_defaults: &app_defaults,
             font: font(),
-            abbreviate_names: false,
         })
     }
 

@@ -1,13 +1,13 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note_scale::NoteScale;
 
 /// A single augmentation dot belonging to a [`Note`](super::note::Note) or
 /// [`Rest`](super::rest::Rest). Notes and rests own a `Vec<Dot>` with one entry
 /// per dot; the owner computes each dot's centre during its arrange pass
 /// (horizontal spacing, plus the half-space vertical nudge that keeps a dot off
-/// a staff line) and hands it here through [`arrange`](Layoutable::arrange).
+/// a staff line) and hands it here through [`arrange`](Dot::arrange).
 pub struct Dot {
     pub xy: XY,
 
@@ -39,8 +39,8 @@ impl Dot {
     }
 }
 
-impl Layoutable for Dot {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl Dot {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -55,11 +55,11 @@ impl Layoutable for Dot {
         self.radius = user_layout.dot_radius.unwrap_or(app_defaults.dot_radius) * self.scale;
     }
 
-    fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {}
+    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {}
 
     /// `origin` is the fully-resolved centre of this dot, worked out by the
     /// owning note or rest.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
     }
 }

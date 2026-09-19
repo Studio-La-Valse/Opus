@@ -173,7 +173,7 @@ pub fn walk_document(
 ///
 /// Emits [`Stage::Rebeam`], [`Stage::ResolveLayout`] and [`Stage::LayoutPass`].
 /// Appearance resolution is its own downward pass ahead of measuring -- see
-/// [`Layoutable::resolve_layout`](crate::score::visual::layoutable::Layoutable::resolve_layout).
+/// [`Score::resolve_layout`](crate::score::visual::score::Score::resolve_layout).
 pub fn arrange_score(
     score: &mut Score,
     score_defaults: &ScoreDefaults,
@@ -194,9 +194,6 @@ pub fn arrange_score(
         user_layout,
         app_defaults,
         font,
-        // The first system of the score names in full; `System::resolve_layout`
-        // re-stamps this from each system's own index.
-        abbreviate_names: false,
     };
     score.resolve_layout(params);
 

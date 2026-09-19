@@ -41,14 +41,18 @@ pub struct GroupName {
 impl GroupName {
     /// A name that will draw `name` in full, or `abbr` on systems past the
     /// first. Either may be empty: a part with no `<part-name>` draws nothing.
-    pub fn new(name: String, abbr: String) -> Self {
+    /// `abbreviate` is fixed at construction -- which system this name belongs
+    /// to never changes -- and comes from the walk cursor's system index, the
+    /// way [`System::index`](crate::score::visual::system::System::index)
+    /// itself does.
+    pub fn new(name: String, abbr: String, abbreviate: bool) -> Self {
         Self {
             name,
             abbr,
             color: Color::BLACK,
             font_size: 0.,
             padding: 0.,
-            abbreviated: false,
+            abbreviated: abbreviate,
             span: 0.,
             bounds: BoundingBox::ZERO,
         }
@@ -105,8 +109,9 @@ impl GroupName {
         !self.text().is_empty()
     }
 
-    /// Resolves the name's appearance from `params`: colour, size, padding, and
-    /// whether this system draws the abbreviation. Mirrors
+    /// Resolves the name's appearance from `params`: colour, size and padding.
+    /// Whether this name draws its abbreviation is settled at construction, not
+    /// here -- see [`new`](Self::new). Mirrors
     /// [`GroupSymbol::resolve_layout`](crate::score::visual::group_symbol::GroupSymbol).
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         self.color = params
@@ -115,7 +120,6 @@ impl GroupName {
             .unwrap_or(params.app_defaults.foreground_color);
         self.font_size = params.group_name_size();
         self.padding = params.group_name_padding();
-        self.abbreviated = params.abbreviate_names;
     }
 
     /// Sizes the name against a run of staves: `available.y` is how tall that

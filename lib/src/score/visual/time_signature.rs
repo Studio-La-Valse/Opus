@@ -1,7 +1,7 @@
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::placed::Placed;
 use crate::smufl::glyphs::number::{Number, NumberDigit};
 
@@ -121,8 +121,8 @@ impl TimeSignature {
     }
 }
 
-impl Layoutable for TimeSignature {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl TimeSignature {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             user_layout,
             app_defaults,
@@ -134,12 +134,12 @@ impl Layoutable for TimeSignature {
             .unwrap_or(app_defaults.foreground_color);
     }
 
-    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
         self.measure_width();
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
     }
 }

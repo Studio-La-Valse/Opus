@@ -3,7 +3,7 @@ use crate::score::app_defaults::AppDefaults;
 use crate::score::user_layout::UserLayout;
 use crate::score::visual::clef::{Clef, ClefAnchor};
 use crate::score::visual::key_signature::KeySignature;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::rest::Rest;
 use crate::score::visual::staff::Staff;
 use crate::score::visual::staff_ctx::StaffCtx;
@@ -191,8 +191,8 @@ impl StaffMeasure {
         self.arrange_rests();
     }
 }
-impl Layoutable for StaffMeasure {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl StaffMeasure {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         if let Some(ref mut clef) = self.clef_start {
             clef.resolve_layout(params);
         }
@@ -221,7 +221,7 @@ impl Layoutable for StaffMeasure {
     /// right size *here*, because its width is what the system's shared opening
     /// columns are worked out from, and a stale one would put every staff's
     /// elements in the wrong place rather than just its own.
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
         self.height = available.y;
 
         if let Some(ref mut clef) = self.clef_start {
@@ -258,7 +258,7 @@ impl Layoutable for StaffMeasure {
     /// [`ContentArranger`](crate::score::visual::arranger::ContentArranger)'s
     /// job, run once every container in the tree -- this measure's opening
     /// columns included -- has its final position.
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
     }
 }

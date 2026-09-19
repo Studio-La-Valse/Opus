@@ -1,4 +1,3 @@
-use crate::geometry::xy::XY;
 use crate::score::app_defaults::AppDefaults;
 use crate::score::core::group_symbol::{GroupLevel, GroupSymbol};
 use crate::score::core::note_kind::NoteKind;
@@ -7,7 +6,7 @@ use crate::score::user_layout::UserLayout;
 use crate::smufl::smufl_font::SmuflFont;
 
 /// What every element resolves its own appearance and size from, threaded
-/// through the [`Layoutable::measure`] pass.
+/// through each element's `measure` pass.
 ///
 /// Three of these are layout config, in falling precedence: the caller's
 /// overrides, the document's declared defaults, and the hard-coded fallbacks.
@@ -26,14 +25,6 @@ pub struct LayoutParams<'a> {
     pub user_layout: &'a UserLayout,
     pub app_defaults: &'a AppDefaults,
     pub font: &'a SmuflFont,
-
-    /// Whether group and part names in this subtree draw their abbreviation
-    /// rather than their full name. The one positional fact in an otherwise
-    /// pure-config struct: it is `false` where the params are first built, and
-    /// [`System::resolve_layout`](crate::score::visual::system::System)
-    /// re-stamps it from the system's own index -- the first system of the
-    /// score names in full, every later one abbreviates.
-    pub abbreviate_names: bool,
 }
 
 impl LayoutParams<'_> {
@@ -154,21 +145,4 @@ impl LayoutParams<'_> {
             .group_name_padding
             .unwrap_or(self.app_defaults.group_name_padding)
     }
-}
-
-pub trait Layoutable {
-    /// Resolves this element's appearance from `params` -- colour, thickness,
-    /// which glyph it draws -- and recurses into every child `measure` forwards
-    /// to. Its own downward pass, ahead of `measure`, so that an element's
-    /// appearance is settled from the top of the tree down before any element is
-    /// sized; see [`arrange_score`](crate::score::engrave::arrange_score).
-    fn resolve_layout(&mut self, params: LayoutParams<'_>);
-
-    /// Sizes this element and its children against `available`. Appearance is
-    /// already resolved by this point -- see
-    /// [`resolve_layout`](Layoutable::resolve_layout) -- so this pass is sizing
-    /// only.
-    fn measure(&mut self, available: &XY, params: LayoutParams<'_>);
-
-    fn arrange(&mut self, origin: &XY);
 }

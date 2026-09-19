@@ -634,7 +634,6 @@ mod tests {
             user_layout: &user_layout,
             app_defaults: &app_defaults,
             font: font(),
-            abbreviate_names: false,
         };
 
         let first = stems_and_beams(&score);

@@ -5,7 +5,7 @@ use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::group_symbol::GroupSymbol;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::part::Part;
 use crate::score::visual::part_measure::PartMeasure;
 use crate::score::visual::section::Section;
@@ -292,8 +292,8 @@ impl System {
     }
 }
 
-impl Layoutable for System {
-    fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+impl System {
+    pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         let LayoutParams {
             score_defaults,
             user_layout,
@@ -315,15 +315,6 @@ impl Layoutable for System {
             .or(score_defaults.appearance.light_barline)
             .unwrap_or(app_defaults.light_barline);
 
-        // The first system names its parts and part-groups in full; every later
-        // one uses the abbreviation. Re-stamped here so the whole subtree below
-        // resolves against it. The first system of the score is index 1 (see
-        // `index`), so anything past it abbreviates.
-        let params = LayoutParams {
-            abbreviate_names: self.index > 1,
-            ..params
-        };
-
         for section in self.sections.values_mut() {
             section.resolve_layout(params);
         }
@@ -333,7 +324,7 @@ impl Layoutable for System {
         }
     }
 
-    fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
+    pub fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
         self.width = 0.;
         self.height = 0.;
 
@@ -357,7 +348,7 @@ impl Layoutable for System {
         }
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
 
         let mut _origin = self.xy;

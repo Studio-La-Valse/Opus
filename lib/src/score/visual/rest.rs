@@ -2,7 +2,7 @@ use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::dot::Dot;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::NoteId;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::placed::Placed;

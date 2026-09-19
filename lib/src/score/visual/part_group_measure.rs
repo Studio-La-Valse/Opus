@@ -1,5 +1,5 @@
 use crate::geometry::xy::XY;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 
 #[derive(Default)]
 pub struct PartGroupMeasure {
@@ -8,14 +8,14 @@ pub struct PartGroupMeasure {
     pub height: f32,
 }
 
-impl Layoutable for PartGroupMeasure {
-    fn resolve_layout(&mut self, _params: LayoutParams<'_>) {}
+impl PartGroupMeasure {
+    pub fn resolve_layout(&mut self, _params: LayoutParams<'_>) {}
 
-    fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
+    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
         self.height = available.y;
     }
 
-    fn arrange(&mut self, origin: &XY) {
+    pub fn arrange(&mut self, origin: &XY) {
         self.xy = *origin;
     }
 }

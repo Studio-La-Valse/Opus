@@ -3,7 +3,7 @@
 
 use crate::geometry::xy::XY;
 use crate::score::visual::arranger::ScoreArranger;
-use crate::score::visual::layoutable::{LayoutParams, Layoutable};
+use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
 
 /// Places every page -- and so every system, measure and note beneath it -- at

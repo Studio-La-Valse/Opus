@@ -17,7 +17,7 @@ mod tests {
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
-    use lib::score::visual::layoutable::{LayoutParams, Layoutable};
+    use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::{BaseRenderer, RenderPass};
     use lib::score::visual::score::Score;
@@ -73,7 +73,6 @@ mod tests {
             user_layout: &user_layout,
             app_defaults: &app_defaults,
             font: font(),
-            abbreviate_names: false,
         };
         symbol.resolve_layout(params);
         symbol.measure(
@@ -171,7 +170,6 @@ mod tests {
             user_layout: &user_layout,
             app_defaults: &app_defaults,
             font: font(),
-            abbreviate_names: false,
         }
         .group_symbol_gap(level)
     }
@@ -482,7 +480,6 @@ mod tests {
                 user_layout,
                 app_defaults: &app_defaults,
                 font: font(),
-                abbreviate_names: false,
             };
             symbol.resolve_layout(params);
             symbol.measure(
@@ -530,7 +527,6 @@ mod tests {
                 user_layout: &user_layout,
                 app_defaults: &app_defaults,
                 font: font(),
-                abbreviate_names: false,
             };
             symbol.resolve_layout(params);
             symbol.measure(
