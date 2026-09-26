@@ -238,7 +238,7 @@ impl System {
         let LayoutParams {
             score_defaults,
             user_layout,
-            ..
+            font,
         } = params;
 
         self.color = params.foreground_color();
@@ -247,12 +247,14 @@ impl System {
             .staff
             .line_width
             .or(score_defaults.appearance.staff)
+            .or(font.layout.staff.line_width)
             .unwrap_or(APP_DEFAULTS.staff.line_width);
 
         self.light_barline = user_layout
             .barline
             .light
             .or(score_defaults.appearance.light_barline)
+            .or(font.layout.barline.light)
             .unwrap_or(APP_DEFAULTS.barline.light);
 
         for section in self.sections.values_mut() {

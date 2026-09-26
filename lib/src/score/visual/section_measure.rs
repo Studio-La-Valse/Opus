@@ -18,7 +18,7 @@ impl SectionMeasure {
         let LayoutParams {
             score_defaults,
             user_layout,
-            ..
+            font,
         } = params;
 
         self.color = params.foreground_color();
@@ -27,6 +27,7 @@ impl SectionMeasure {
             .barline
             .light
             .or(score_defaults.appearance.light_barline)
+            .or(font.layout.barline.light)
             .unwrap_or(APP_DEFAULTS.barline.light)
     }
 }

@@ -26,6 +26,33 @@ pub struct SmuflMetadata {
 
     #[serde(rename = "glyphsWithAlternates")]
     pub glyph_alternatives: HashMap<String, Alternates>,
+
+    /// The font designer's recommended line thicknesses. Optional in the SMuFL
+    /// spec, so a font whose metadata omits the block still loads.
+    #[serde(rename = "engravingDefaults", default)]
+    pub engraving_defaults: EngravingDefaults,
+}
+
+/// The `engravingDefaults` keys this crate reads, verbatim, in staff spaces.
+///
+/// Only the keys some layout option is resolved from; the spec defines more.
+/// Every key is optional, per the spec: an absent one falls through to
+/// [`APP_DEFAULTS`](crate::score::layout_options::APP_DEFAULTS). Turned into a
+/// layout tier by
+/// [`UserLayout::from_engraving_defaults`](crate::score::layout_options::UserLayout::from_engraving_defaults).
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EngravingDefaults {
+    pub staff_line_thickness: Option<f32>,
+    pub thin_barline_thickness: Option<f32>,
+    pub thick_barline_thickness: Option<f32>,
+    pub beam_thickness: Option<f32>,
+    pub beam_spacing: Option<f32>,
+    pub stem_thickness: Option<f32>,
+    pub tie_endpoint_thickness: Option<f32>,
+    pub tie_midpoint_thickness: Option<f32>,
+    pub bracket_thickness: Option<f32>,
+    pub sub_bracket_thickness: Option<f32>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -9,13 +9,6 @@ use crate::smufl::glyphs::brace::Brace as SmuflBrace;
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
 use crate::smufl::smufl_glyph::staff_space;
 
-/// Thickness in tenths of the vertical stroke SMuFL's bracket tip glyphs are
-/// drawn against: Bravura's `engravingDefaults.bracketThickness`, 0.5 staff
-/// spaces. A property of the font, not a preference -- it is what a drawn
-/// bracket's serifs are in proportion to, so it is what a configured stroke
-/// thickness is scaled against.
-const BRACKET_GLYPH_STROKE: f32 = 5.;
-
 /// How far in tenths a bracket's stroke runs past the tips it meets, at each
 /// end. Purely a seam: the stroke is drawn over the glyphs, and without the
 /// overlap a hairline of background shows through where they meet. Small enough
@@ -208,10 +201,11 @@ impl GroupSymbol {
     /// The bracket: a stroke down the left, with a tip glyph at each end.
     ///
     /// The tips are scaled with the stroke so a thickened bracket keeps its
-    /// serifs in proportion -- at the default thickness that factor is exactly
-    /// one, and the glyphs are drawn at nominal size.
+    /// serifs in proportion: against the stroke the glyphs were drawn for,
+    /// which is the font's `bracketThickness`. At the default thickness that
+    /// factor is exactly one, and the glyphs are drawn at nominal size.
     pub fn bracket_shape(&self, top: &BracketTop, bottom: &BracketBottom) -> (Shape, BoundingBox) {
-        let scale = self.thickness / BRACKET_GLYPH_STROKE;
+        let scale = self.thickness / top.thickness;
         let unit = staff_space(scale);
 
         // Both tips register against the stroke's left edge.

@@ -522,6 +522,10 @@ mod tests {
     /// document is drawn below the upper staff and no lower than the bottom line of
     /// the lower one. A group that had lost its cross-staff reading would beam one
     /// staff on its own and land clear outside that band.
+    ///
+    /// "Clear outside" is what is tested: the band's lower edge allows one staff
+    /// space of overshoot, because the lowest beam of a stacked group does reach
+    /// just past the bottom line at Bravura's `beamSpacing`.
     #[test]
     fn the_cross_staff_beams_stay_between_the_two_staves() {
         let score = engraved("crazy-beams");
@@ -533,7 +537,7 @@ mod tests {
                 let upper = system.find_first_visible_staff();
                 let lower = system.find_last_visible_staff();
                 let below_upper = upper.xy.y + upper.height();
-                let above_lower_bottom = lower.xy.y + lower.height();
+                let above_lower_bottom = lower.xy.y + lower.height() + lower.line_space();
 
                 assert!(
                     !system.beams.is_empty(),

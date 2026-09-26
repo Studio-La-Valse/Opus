@@ -10,9 +10,16 @@
 //! Options are nested by concern: `tie.height_max`, `section.symbol`. Their flat
 //! spelling -- a CLI flag, a CSS custom property -- is the kebab-case of that
 //! path: `--tie-height-max`, `--section-symbol`.
+//!
+//! The line thicknesses a SMuFL font defines in `engravingDefaults` resolve
+//! through the font before they reach [`APP_DEFAULTS`] -- see
+//! [`UserLayout::from_engraving_defaults`]. Their app defaults are Bravura's
+//! values, so they only matter for a font whose metadata leaves a key out.
 
 use crate::geometry::color::Color;
 use crate::score::core::group_symbol::GroupSymbol;
+use crate::score::visual::staff::Staff;
+use crate::smufl::smufl_metadata::EngravingDefaults;
 use serde::{Deserialize, Serialize};
 
 layout_options! {
@@ -28,24 +35,25 @@ layout_options! {
 
     staff: StaffLayout, StaffDefaults {
         /// Thickness in tenths of a staff line, and of a ledger line.
-        line_width: f32 = 1.1,
+        line_width: f32 = 1.3,
     }
 
     /// Barline thicknesses in tenths.
     barline: BarlineLayout, BarlineDefaults {
-        light: f32 = 1.875,
+        light: f32 = 1.6,
         heavy: f32 = 5.,
     }
 
     /// Beam geometry in tenths.
     beam: BeamLayout, BeamDefaults {
         thickness: f32 = 5.,
-        spacing: f32 = 1.5,
+        /// The gap between two beam levels, edge to edge.
+        spacing: f32 = 2.5,
     }
 
     stem: StemLayout, StemDefaults {
         /// Stem thickness in tenths.
-        thickness: f32 = 1.,
+        thickness: f32 = 1.2,
     }
 
     /// Fraction of full size a grace or cue note is drawn at, overriding what
@@ -86,15 +94,11 @@ layout_options! {
 
     /// Tie shape, in tenths except `height_ratio`.
     tie: TieLayout, TieDefaults {
-        /// Tie thickness at a notehead end. Bravura's `tieEndpointThickness` is
-        /// 0.1 staff spaces; one space is
-        /// [`Staff::DEFAULT_SPACE_SIZE`](crate::score::visual::staff::Staff) = 10
-        /// tenths. Quoted rather than read, because `SmuflMetadata` does not
-        /// deserialize `engravingDefaults` -- the same reason `beam.thickness` is
-        /// hard-coded to Bravura's 0.5 spaces.
+        /// Tie thickness at a notehead end: the font's `tieEndpointThickness`
+        /// when it has one, Bravura's 0.1 staff spaces otherwise.
         endpoint_thickness: f32 = 1.,
-        /// Tie thickness at its widest point. Bravura's `tieMidpointThickness`,
-        /// 0.22 staff spaces.
+        /// Tie thickness at its widest point: the font's
+        /// `tieMidpointThickness`, Bravura's 0.22 staff spaces otherwise.
         midpoint_thickness: f32 = 2.2,
         /// A tie's arc height as a fraction of its horizontal span, before
         /// clamping.
@@ -169,9 +173,8 @@ layout_options! {
     }
 
     group_bracket: GroupBracketLayout, GroupBracketDefaults {
-        /// Thickness in tenths of a bracket's vertical stroke. Bravura's
-        /// `engravingDefaults.bracketThickness` is 0.5 staff spaces. Quoted
-        /// rather than read, for the reason the `tie` values are.
+        /// Thickness in tenths of a bracket's vertical stroke: the font's
+        /// `bracketThickness`, Bravura's 0.5 staff spaces otherwise.
         ///
         /// The bracket's tip glyphs are scaled to match, so a thicker stroke
         /// keeps serifs in proportion to it.
@@ -179,10 +182,10 @@ layout_options! {
     }
 
     group_line: GroupLineLayout, GroupLineDefaults {
-        /// Thickness in tenths of a `line` symbol. Bravura's
-        /// `subBracketThickness`, 0.16 staff spaces -- the weight SMuFL documents
-        /// for the vertical line grouping staves of one instrument, which is
-        /// what `line` is for.
+        /// Thickness in tenths of a `line` symbol: the font's
+        /// `subBracketThickness`, Bravura's 0.16 staff spaces otherwise -- the
+        /// weight SMuFL documents for the vertical line grouping staves of one
+        /// instrument, which is what `line` is for.
         thickness: f32 = 1.6,
     }
 
@@ -220,6 +223,49 @@ layout_options! {
     lyric: LyricLayout, LyricDefaults {
         /// Font family, resolved like `group_name.font`.
         font: String as &'static str = "serif",
+    }
+}
+
+impl UserLayout {
+    /// The layout a SMuFL font recommends through its `engravingDefaults`,
+    /// converted from staff spaces to tenths. Every option the font has no key
+    /// for is left `None`.
+    ///
+    /// This is the tier between the document's `<appearance>` and
+    /// [`APP_DEFAULTS`]: options resolve user -> document -> font -> app. It is
+    /// a `UserLayout` only because that is the partial layout type; nothing
+    /// about it comes from a user.
+    pub fn from_engraving_defaults(font: &EngravingDefaults) -> UserLayout {
+        let tenths = |spaces: Option<f32>| spaces.map(|s| s * Staff::DEFAULT_SPACE_SIZE);
+
+        UserLayout {
+            staff: StaffLayout {
+                line_width: tenths(font.staff_line_thickness),
+            },
+            barline: BarlineLayout {
+                light: tenths(font.thin_barline_thickness),
+                heavy: tenths(font.thick_barline_thickness),
+            },
+            beam: BeamLayout {
+                thickness: tenths(font.beam_thickness),
+                spacing: tenths(font.beam_spacing),
+            },
+            stem: StemLayout {
+                thickness: tenths(font.stem_thickness),
+            },
+            tie: TieLayout {
+                endpoint_thickness: tenths(font.tie_endpoint_thickness),
+                midpoint_thickness: tenths(font.tie_midpoint_thickness),
+                ..Default::default()
+            },
+            group_bracket: GroupBracketLayout {
+                thickness: tenths(font.bracket_thickness),
+            },
+            group_line: GroupLineLayout {
+                thickness: tenths(font.sub_bracket_thickness),
+            },
+            ..Default::default()
+        }
     }
 }
 
