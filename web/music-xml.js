@@ -149,6 +149,7 @@ const LAYOUT_OPTIONS = [
   "page.color",
   "foreground.color",
   "staff.line_width",
+  "staff.ledger_line_width",
   "barline.light",
   "barline.heavy",
   "beam.thickness",

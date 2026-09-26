@@ -61,10 +61,10 @@ impl PartMeasure {
 
         self.ledger_thickness = user_layout
             .staff
-            .line_width
-            .or(score_defaults.appearance.staff)
-            .or(font.layout.staff.line_width)
-            .unwrap_or(APP_DEFAULTS.staff.line_width);
+            .ledger_line_width
+            .or(score_defaults.appearance.leger)
+            .or(font.layout.staff.ledger_line_width)
+            .unwrap_or(APP_DEFAULTS.staff.ledger_line_width);
 
         for chord in self.chords.values_mut().flatten() {
             chord.resolve_layout(params);

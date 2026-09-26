@@ -88,6 +88,18 @@ export const OPTIONS = [
   },
   {
     group: "Staff & barlines",
+    name: "staff.ledger_line_width",
+    kind: "number",
+    default: 1.6,
+    min: 0,
+    max: 6,
+    step: 0.1,
+    unit: "tenths",
+    label: "Ledger line width",
+    help: "Thickness of the short lines above and below the staff.",
+  },
+  {
+    group: "Staff & barlines",
     name: "barline.light",
     kind: "number",
     default: 1.875,

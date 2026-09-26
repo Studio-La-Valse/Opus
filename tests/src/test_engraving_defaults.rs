@@ -87,6 +87,23 @@ mod tests {
         first_staff(&engrave(&score_xml(appearance), font, user_layout)).line_width
     }
 
+    /// The ledger thickness the score's one part measure resolved to. Resolved
+    /// whether or not any note needs a ledger line, so the score needs none.
+    fn ledger_line_width(appearance: &str, font: &SmuflFont, user_layout: &UserLayout) -> f32 {
+        let score = engrave(&score_xml(appearance), font, user_layout);
+        score
+            .pages
+            .values()
+            .flat_map(|page| page.systems.values())
+            .flat_map(|system| system.sections.values())
+            .flat_map(|section| section.part_groups.values())
+            .flat_map(|group| group.parts.values())
+            .flat_map(|part| part.measures.values())
+            .next()
+            .expect("the score engraved no part measure")
+            .ledger_thickness
+    }
+
     fn assert_close(actual: f32, expected: f32, what: &str) {
         assert!(
             (actual - expected).abs() < 1e-5,
@@ -101,6 +118,11 @@ mod tests {
         let app = &APP_DEFAULTS;
         vec![
             ("staff.line_width", l.staff.line_width, app.staff.line_width),
+            (
+                "staff.ledger_line_width",
+                l.staff.ledger_line_width,
+                app.staff.ledger_line_width,
+            ),
             ("barline.light", l.barline.light, app.barline.light),
             ("barline.heavy", l.barline.heavy, app.barline.heavy),
             ("beam.thickness", l.beam.thickness, app.beam.thickness),
@@ -195,6 +217,7 @@ mod tests {
         let user_layout = UserLayout {
             staff: StaffLayout {
                 line_width: Some(4.),
+                ..Default::default()
             },
             ..Default::default()
         };
@@ -204,6 +227,49 @@ mod tests {
             &user_layout,
         );
         assert_close(resolved, 4., "staff line width");
+    }
+
+    /// Ledger lines resolve user -> `<line-width type="leger">` -> the font's
+    /// `legerLineThickness` -> app, independently of the staff line width.
+    #[test]
+    fn ledger_line_width_has_its_own_tiers() {
+        let font = edited_bravura(|meta| {
+            meta["engravingDefaults"]["legerLineThickness"] = Value::from(0.2);
+        });
+        let leger = "<line-width type=\"leger\">3</line-width>";
+        let user_layout = UserLayout {
+            staff: StaffLayout {
+                ledger_line_width: Some(4.),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let bare = edited_bravura(|meta| {
+            meta.remove("engravingDefaults");
+        });
+        let app = ledger_line_width("", &bare, &UserLayout::default());
+        assert_close(app, APP_DEFAULTS.staff.ledger_line_width, "app");
+
+        let from_font = ledger_line_width("", &font, &UserLayout::default());
+        assert_close(from_font, 2., "font");
+
+        let from_document = ledger_line_width(leger, &font, &UserLayout::default());
+        assert_close(from_document, 3., "document");
+
+        let from_user = ledger_line_width(leger, &font, &user_layout);
+        assert_close(from_user, 4., "user");
+    }
+
+    /// A document's staff line width is not a ledger line width.
+    #[test]
+    fn a_staff_line_width_does_not_reach_ledger_lines() {
+        let resolved = ledger_line_width(
+            "<line-width type=\"staff\">3</line-width>",
+            bravura(),
+            &UserLayout::default(),
+        );
+        assert_close(resolved, 1.6, "ledger line width");
     }
 
     /// The stroke a bracket's tip glyphs are scaled against is the font's own

@@ -44,6 +44,7 @@ pub struct SmuflMetadata {
 #[serde(rename_all = "camelCase")]
 pub struct EngravingDefaults {
     pub staff_line_thickness: Option<f32>,
+    pub leger_line_thickness: Option<f32>,
     pub thin_barline_thickness: Option<f32>,
     pub thick_barline_thickness: Option<f32>,
     pub beam_thickness: Option<f32>,

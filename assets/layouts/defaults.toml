@@ -22,7 +22,8 @@ color = "#FFFFFF"             # background, #RRGGBB or #RRGGBBAA
 color = "#000000"             # ink for staves, notation and text
 
 [staff]
-line_width = 1.3              # staff and ledger lines
+line_width = 1.3              # staff lines
+ledger_line_width = 1.6
 
 [barline]
 light = 1.6

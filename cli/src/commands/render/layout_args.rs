@@ -26,6 +26,9 @@ pub struct LayoutArgs {
     staff_line_width: Option<f32>,
 
     #[arg(long)]
+    staff_ledger_line_width: Option<f32>,
+
+    #[arg(long)]
     barline_light: Option<f32>,
 
     #[arg(long)]
@@ -170,6 +173,7 @@ impl From<LayoutArgs> for UserLayout {
             },
             staff: StaffLayout {
                 line_width: args.staff_line_width,
+                ledger_line_width: args.staff_ledger_line_width,
             },
             barline: BarlineLayout {
                 light: args.barline_light,

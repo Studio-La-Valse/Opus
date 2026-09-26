@@ -34,8 +34,13 @@ layout_options! {
     }
 
     staff: StaffLayout, StaffDefaults {
-        /// Thickness in tenths of a staff line, and of a ledger line.
+        /// Thickness in tenths of a staff line.
         line_width: f32 = 1.3,
+        /// Thickness in tenths of a ledger line: the font's
+        /// `legerLineThickness`, Bravura's 0.16 staff spaces otherwise. Heavier
+        /// than a staff line by design, so a short line reads at the same
+        /// weight as a long one.
+        ledger_line_width: f32 = 1.6,
     }
 
     /// Barline thicknesses in tenths.
@@ -241,6 +246,7 @@ impl UserLayout {
         UserLayout {
             staff: StaffLayout {
                 line_width: tenths(font.staff_line_thickness),
+                ledger_line_width: tenths(font.leger_line_thickness),
             },
             barline: BarlineLayout {
                 light: tenths(font.thin_barline_thickness),
