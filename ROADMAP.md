@@ -162,6 +162,29 @@ Small and well-specified. Each is a single change and none depend on each other.
   `ScorePart` in `score_defaults.rs`, `StaffCtx` in `staff_measure.rs`, and
   `from_sources` / the private `ordered_bounds` in `tie.rs`.
 
+- Ledger lines are drawn at `staff.line_width` (`PartMeasure::ledger_thickness`),
+  but SMuFL gives them their own weight: Bravura's `legerLineThickness` is 0.16
+  staff spaces against `staffLineThickness` 0.13. Give them a layout option of
+  their own with a font tier. MusicXML's `<line-width type="leger">` is the
+  matching document tier.
+
+- Resolve the layout once, into a `ClosedLayout`. Every option is
+  resolved at its point of use by a hand-written chain —
+  `user.or(document).or(font).unwrap_or(APP_DEFAULTS)` — about fifteen of them,
+  and adding the font tier meant editing each. A site that skips a tier still
+  compiles. Every tier but the last is already a partial layout: the user's and
+  the font's are `UserLayout`s, and the document's `Appearance` needs only a
+  `UserLayout::from_appearance`. So `layout_options!` could generate a `close()`
+  that fills the gaps from `APP_DEFAULTS` into a struct with no `Option`s,
+  resolved once per `arrange_score` with `overlay`. `LayoutParams` would shrink
+  to that plus the font.
+
+  Group symbols don't close cleanly: the document declares one per
+  `<part-group>`, and a user override has to beat each declaration, so the
+  closed layout keeps the user's symbol as an `Option` beside the fallback. Tie
+  height sanitizing (`ordered_bounds`) would move into `close()`. The refactor
+  should change no output.
+
 ## 4. Features
 
 Larger than a fix. Several are comparable in size to section 1 and will want the
@@ -196,19 +219,13 @@ consecutive feature impact.
   on a part's `GroupSymbol` exists for it and is always `None` until something
   fills it. No sample in `assets/` uses one.
 
-- **Read SMuFL `engravingDefaults`.** `SmuflMetadata` deserializes glyph boxes,
-  advance widths, anchors and alternates, but not the `engravingDefaults` block,
-  so every thickness it defines is transcribed into `APP_DEFAULTS` by hand — see
-  the note on `tie.endpoint_thickness`, and the two group-symbol thicknesses
-  added with it. Wiring it up means a new resolution tier between
-  `ScoreDefaults.appearance` and `APP_DEFAULTS`.
-  
-  Doing so changes existing output, which is why it is not a free cleanup: four
-  of the transcribed values have drifted from Bravura's own —
-  `staff.line_width` is 1.1 against `staffLineThickness` 0.13 spaces (1.3),
-  `barline.light` 1.875 against `thinBarlineThickness` 0.16 (1.6),
-  `beam.spacing` 1.5 against `beamSpacing` 0.25 (2.5), and `stem.thickness` 1.0
-  against `stemThickness` 0.12 (1.2). The tie and beam thicknesses are faithful.
+- **Text fonts from `engravingDefaults.textFontFamily`.** The font tier covers
+  line thicknesses only. Bravura also recommends a text family (Academico,
+  Century Schoolbook, Edwin, then `serif`), which could sit between the user's
+  `title.font` / `lyric.font` / `group_name.font` and the app's `"serif"`. The
+  catch is that the recommended families are rarely installed, so the tier
+  wants to hand the whole fallback list to the renderer rather than pick its
+  first entry.
 
 - **Generalize SMuFL parsing** from some point onwards: so far manageable in
   code, but defining thousands of SMuFL glyphs in code is undesirable.
