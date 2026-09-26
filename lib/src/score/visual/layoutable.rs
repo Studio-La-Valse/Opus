@@ -11,8 +11,10 @@ use crate::smufl::smufl_font::SmuflFont;
 /// Two of these are layout config: the caller's overrides and the document's
 /// declared defaults, in falling precedence, with
 /// [`APP_DEFAULTS`] as the hard-coded fallback beneath both. The third, `font`,
-/// is not config but a resource -- the glyph metrics an element needs to size
-/// itself.
+/// is mainly a resource -- the glyph metrics an element needs to size itself --
+/// but also carries a tier of its own between the document and the app: the
+/// line thicknesses its `engravingDefaults` recommend, in
+/// [`SmuflFont::layout`].
 ///
 /// The font is here rather than being handed to elements at construction
 /// because *which* glyph an element draws is not always settled by then. A
@@ -108,14 +110,17 @@ impl LayoutParams<'_> {
     /// the shapes that have no stroke of their own.
     pub fn group_symbol_thickness(&self, symbol: GroupSymbol) -> f32 {
         let layout = self.user_layout;
+        let font = &self.font.layout;
         match symbol {
             GroupSymbol::Bracket => layout
                 .group_bracket
                 .thickness
+                .or(font.group_bracket.thickness)
                 .unwrap_or(APP_DEFAULTS.group_bracket.thickness),
             GroupSymbol::Line => layout
                 .group_line
                 .thickness
+                .or(font.group_line.thickness)
                 .unwrap_or(APP_DEFAULTS.group_line.thickness),
             GroupSymbol::Square => layout
                 .group_square

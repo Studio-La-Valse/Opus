@@ -112,7 +112,11 @@ Each option is resolved on its own, from the first of these that sets it:
 3. the MusicXML document itself, for the few options it can declare — the
    `<appearance>` line widths and note sizes, and each `<part-group>`'s
    `<group-symbol>`;
-4. the app's built-in default, which always has a value.
+4. the SMuFL font's `engravingDefaults`, for the line thicknesses it defines —
+   staff lines, barlines, beams, stems, ties and group brackets;
+5. the app's built-in default, which always has a value. For the thicknesses
+   above it is Bravura's own, so it only matters for a font that leaves a value
+   out.
 
 Everything above the built-in default is optional: `render` needs neither a
 layout file nor any layout flags. Because a layout file outranks the document,

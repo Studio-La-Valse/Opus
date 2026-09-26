@@ -9,6 +9,8 @@ use crate::smufl::smufl_glyph::{SmuflGlyph, placed_glyph};
 pub struct BracketTop {
     pub codepoint: char,
     pub bbox: BoundingBox,
+    /// Thickness in tenths of the vertical stroke the glyph is drawn against,
+    /// from the font's `bracketThickness`.
     pub thickness: f32,
 }
 
@@ -22,6 +24,7 @@ impl SmuflGlyph for BracketTop {
 pub struct BracketBottom {
     pub codepoint: char,
     pub bbox: BoundingBox,
+    /// As [`BracketTop::thickness`].
     pub thickness: f32,
 }
 

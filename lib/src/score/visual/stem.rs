@@ -168,7 +168,7 @@ impl Stem {
         let LayoutParams {
             score_defaults,
             user_layout,
-            ..
+            font,
         } = params;
 
         self.scale = self.size.resolve(params);
@@ -177,6 +177,7 @@ impl Stem {
             .stem
             .thickness
             .or(score_defaults.appearance.stem)
+            .or(font.layout.stem.thickness)
             .unwrap_or(APP_DEFAULTS.stem.thickness);
         self.color = params.foreground_color();
 

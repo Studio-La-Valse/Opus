@@ -56,8 +56,8 @@ pub struct RenderArgs {
 
     /// A TOML layout file: one table per option group, e.g. `[tie]` with
     /// `height_max = 14`. Optional; every option it leaves out falls back to
-    /// the document and then the app default. The layout flags below override
-    /// it, option by option.
+    /// the document, then the SMuFL font's engravingDefaults, then the app
+    /// default. The layout flags below override it, option by option.
     #[arg(long = "layout")]
     layout_file: Option<String>,
 

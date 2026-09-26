@@ -60,7 +60,7 @@ impl BeamMetrics {
         let LayoutParams {
             score_defaults,
             user_layout,
-            ..
+            font,
         } = params;
 
         Self {
@@ -68,10 +68,12 @@ impl BeamMetrics {
                 .beam
                 .thickness
                 .or(score_defaults.appearance.beam)
+                .or(font.layout.beam.thickness)
                 .unwrap_or(APP_DEFAULTS.beam.thickness),
             spacing: user_layout
                 .beam
                 .spacing
+                .or(font.layout.beam.spacing)
                 .unwrap_or(APP_DEFAULTS.beam.spacing),
             grace_scale: params.note_size(NoteKind::Grace),
             color: params.foreground_color(),

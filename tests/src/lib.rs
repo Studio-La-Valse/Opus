@@ -8,6 +8,7 @@ mod test_canvas;
 mod test_clef;
 mod test_clef_change;
 mod test_engrave_samples;
+mod test_engraving_defaults;
 mod test_flat_buffer;
 mod test_glyph;
 mod test_group_name;

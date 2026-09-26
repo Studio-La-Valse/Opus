@@ -2,6 +2,7 @@ use crate::geometry::bounding_box::BoundingBox;
 use crate::score::core::accidental::Accidental as AccidentalCore;
 use crate::score::core::clef::Clef as ClefCore;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
+use crate::score::layout_options::{APP_DEFAULTS, UserLayout};
 use crate::score::visual::stem::UpDown;
 use crate::smufl::glyph_name::{GlyphName, ToChar, load_glyph_names};
 use crate::smufl::glyphs::accidental::Accidental;
@@ -18,6 +19,9 @@ use std::collections::HashMap;
 pub struct SmuflFont {
     pub meta: SmuflMetadata,
     pub glyph_names: HashMap<String, GlyphName>,
+    /// The layout tier this font's `engravingDefaults` recommends, in tenths.
+    /// See [`UserLayout::from_engraving_defaults`].
+    pub layout: UserLayout,
     glyph_text: HashMap<char, String>,
 }
 
@@ -39,9 +43,12 @@ impl SmuflFont {
             }
         }
 
+        let layout = UserLayout::from_engraving_defaults(&meta.engraving_defaults);
+
         SmuflFont {
             meta,
             glyph_names,
+            layout,
             glyph_text,
         }
     }
@@ -143,7 +150,7 @@ impl SmuflFont {
         BracketTop {
             codepoint,
             bbox,
-            thickness: 0.5,
+            thickness: self.bracket_glyph_stroke(),
         }
     }
 
@@ -158,7 +165,7 @@ impl SmuflFont {
         BracketBottom {
             codepoint,
             bbox,
-            thickness: 0.5,
+            thickness: self.bracket_glyph_stroke(),
         }
     }
 
@@ -256,6 +263,16 @@ impl SmuflFont {
             bbox,
             advance,
         }
+    }
+
+    /// Thickness in tenths of the vertical stroke the bracket tip glyphs are
+    /// drawn against: the font's `bracketThickness`. A property of the glyphs,
+    /// not a preference, so no user or document override applies.
+    fn bracket_glyph_stroke(&self) -> f32 {
+        self.layout
+            .group_bracket
+            .thickness
+            .unwrap_or(APP_DEFAULTS.group_bracket.thickness)
     }
 
     pub fn accidental(&self, accidental: AccidentalCore) -> Accidental {

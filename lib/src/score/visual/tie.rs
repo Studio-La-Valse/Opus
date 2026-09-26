@@ -160,10 +160,16 @@ fn ordered_bounds(min: f32, max: f32, default_min: f32, default_max: f32) -> (f3
 
 impl TieMetrics {
     pub fn resolve(params: LayoutParams<'_>) -> Self {
-        Self::from_sources(&params.user_layout.tie, &APP_DEFAULTS.tie)
+        Self::from_sources(
+            &params.user_layout.tie,
+            &params.font.layout.tie,
+            &APP_DEFAULTS.tie,
+        )
     }
 
-    fn from_sources(user: &TieLayout, app: &TieDefaults) -> Self {
+    /// Only the two thicknesses have a font tier; the font says nothing about
+    /// a tie's shape or placement.
+    fn from_sources(user: &TieLayout, font: &TieLayout, app: &TieDefaults) -> Self {
         let (height_min, height_max) = ordered_bounds(
             user.height_min.unwrap_or(app.height_min),
             user.height_max.unwrap_or(app.height_max),
@@ -172,8 +178,14 @@ impl TieMetrics {
         );
 
         TieMetrics {
-            endpoint_thickness: user.endpoint_thickness.unwrap_or(app.endpoint_thickness),
-            midpoint_thickness: user.midpoint_thickness.unwrap_or(app.midpoint_thickness),
+            endpoint_thickness: user
+                .endpoint_thickness
+                .or(font.endpoint_thickness)
+                .unwrap_or(app.endpoint_thickness),
+            midpoint_thickness: user
+                .midpoint_thickness
+                .or(font.midpoint_thickness)
+                .unwrap_or(app.midpoint_thickness),
             height_ratio: user.height_ratio.unwrap_or(app.height_ratio),
             height_min,
             height_max,
