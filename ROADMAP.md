@@ -1,97 +1,11 @@
 # Roadmap
 
-Work that is known, wanted, and not done. Ordered: section 1 is a major
-(multi-commit) feature that needs an implementation as soon as possible. The
-sections after it group the rest by kind — bugs first, then small fixes,
-features, open questions, and the long term.
+Work that is known, wanted, and not done, grouped by kind — bugs first, then
+small fixes, features, open questions, and the long term.
 
 ---
 
-## 1. Beaming
-
-The largest outstanding gap, and the one to do next.
-
-### 1a. Beam groups that outlive a measure
-
-A beam group cannot currently leave the measure it starts in.
-`PartMeasure::rebeam` and `PartMeasure::arrange_beams` both begin at
-`collect_voices(&mut self.chords, grace)`, which is *this* measure's chords, so
-`create_beam_groups` never sees a chord from anywhere else. The drawn beams are
-`PartMeasure::beams`, a `Vec<Polygon>` the measure owns.
-
-That rules out three things that occur in real music:
-
-- **Cross-measure** beams — the common case, and the one worth having first.
-- **Cross-system** beams, where the group is broken by a system break and each
-  half is drawn against its own system.
-- **Cross-page** beams, which are the same case as cross-system: the two systems
-  simply sit on different pages.
-
-**Ties already solved this exact shape, and the pattern should be reused rather
-than reinvented.** `Score::ties` is a flat list of `NoteId` pairs owned by the
-score rather than by any node in the page tree, because the two endpoints may be
-measures, systems or pages apart. `arrange_ties` runs last, after
-`LayoutEngine::arrange_pages`, when every note finally has an absolute position,
-and files the resulting arcs under `System::ties` keyed by `(page, system)`. The
-cross-page case needed no code of its own once the fragments were keyed that way.
-`lib/src/score/visual/tie.rs` and `tie_arranger.rs` carry the full reasoning, and
-`split_tie` is deliberately a pure function over anchors and extents so it can be
-tested without a multi-system fixture.
-
-A beam group is the same kind of object: a relation between chords that the
-containment hierarchy cannot express. The shape to aim for is a flat
-`Score::beam_groups`, resolved after arrange into per-system geometry.
-
-What beams need that ties did not:
-
-- A group is *n* chords, not two endpoints, and the beam's slant is fitted across
-  all of them (`create_ray`), so the split has to decide the slant per fragment.
-- Stem lengths are adjusted to meet the beam (`adjust_stem_lengths`), which means
-  the resolution pass has to write back into the chords, not just emit geometry.
-  Ties only ever read.
-- Secondary beam levels can start and stop independently of level 1, so a split
-  has to be applied per level.
-
-### 1b. A rebeam strategy worth the name
-
-`SimpleRebeamStrategy` assigns `Start` to the first stem, `End` to the last and
-`Continue` to everything between, at every beam level the note's duration
-warrants. Three things it gets wrong:
-
-- **No hooks.** A dotted-eighth/sixteenth pair should give the sixteenth a
-  backward hook; the current strategy gives it a full secondary beam back to the
-  dotted eighth. `BeamType::HookStart` / `HookEnd` exist and are drawn correctly
-  — nothing ever infers them.
-- **No beat grouping.** A beam group should break at beat boundaries: 6/8 groups
-  in threes, 4/4 in twos. The strategy has no notion of the time signature and
-  beams whatever it is handed as one run.
-- **The trigger is too narrow.** `OnlyWhenRequiredRebeamStrategy` defers to
-  `requires_rebeam`, which compares how many beams a note *declares* against how
-  many its duration *warrants*. A group whose counts are all correct but whose
-  types do not form a `begin…end` run passes straight through untouched — that is
-  exactly the malformation `BeamGroupVisitor` now warns about and
-  `beam_level_ends_at` infers around. A strategy that validated the run's shape
-  would repair those instead of leaving the renderer to guess.
-
-### 1c. Beam geometry
-
-Two constants stand in for rules that should be computed. One of the two is a
-genuinely cheap fix; the other is not, and should not be scheduled as if it were.
-
-- **Hook length is a constant.** A beam hook is a fixed `HOOK_LENGTH` of 7.5
-  tenths. It should be inferred from the space available between the two stems
-  and clamped to a maximum. Cheap: both stems are already in hand where the hook
-  is drawn.
-- **Slant is a clamp, not a rule.** Beam slant is clamped to a flat
-  `MAX_BEAM_SLANT_DY` of two line spaces. Two spaces is indeed the conventional
-  maximum, but a clamp is all it is: the slant a group actually wants follows the
-  interval it spans, how many notes it has and where they sit on the staff. That
-  is a rule set to implement, not a constant to tweak — smaller than 1a, but not
-  free.
-
----
-
-## 2. Bugs
+## 1. Bugs
 
 Defects in what is already built, not missing features.
 
@@ -108,7 +22,7 @@ Defects in what is already built, not missing features.
   is measured against the wrong line. Staves now carry their declared line count
   and `Clef::anchor_line` already takes it, which makes this the remaining
   five-line assumption in the render path. See also the indexing question in
-  section 5.
+  section 4.
 - **A section measures itself from its first part-group, not its first visible
   one.** `Section::first_visible_staff_distance` reads
   `part_groups.values().next()` unconditionally, while `PartGroup`'s version of
@@ -134,7 +48,7 @@ Defects in what is already built, not missing features.
 
 ---
 
-## 3. Fixes
+## 2. Fixes
 
 Small and well-specified. Each is a single change and none depend on each other.
 
@@ -185,11 +99,37 @@ Small and well-specified. Each is a single change and none depend on each other.
   height sanitizing (`ordered_bounds`) would move into `close()`. The refactor
   should change no output.
 
-## 4. Features
+- Quantize beams onto the staff lines. `fit_beam` decides a beam's slant and
+  height from the notes and stems alone, so a beam end can land anywhere
+  relative to a staff line, including a thin wedge of white between beam and
+  line. Engraving convention snaps each end inside the staff to sit on,
+  straddle or hang from a line; beams entirely outside the staff are exempt.
+  Applied after the slant and push-out, moving the line outward only, so no
+  stem gets shorter than its natural length.
 
-Larger than a fix. Several are comparable in size to section 1 and will want the
-same code-anchored breakdown before they start. Tentatively ordered by
-consecutive feature impact.
+## 3. Features
+
+Larger than a fix. Several will want a code-anchored breakdown before they
+start. Tentatively ordered by consecutive feature impact.
+
+- **A rebeam strategy worth the name.** `SimpleRebeamStrategy` assigns `Start`
+  to the first stem, `End` to the last and `Continue` to everything between, at
+  every beam level the note's duration warrants. Three things it gets wrong:
+
+  - **No hooks.** A dotted-eighth/sixteenth pair should give the sixteenth a
+    backward hook; the current strategy gives it a full secondary beam back to
+    the dotted eighth. `BeamType::HookStart` / `HookEnd` exist and are drawn
+    correctly — nothing ever infers them.
+  - **No beat grouping.** A beam group should break at beat boundaries: 6/8
+    groups in threes, 4/4 in twos. The strategy has no notion of the time
+    signature and beams whatever it is handed as one run.
+  - **The trigger is too narrow.** `OnlyWhenRequiredRebeamStrategy` defers to
+    `requires_rebeam`, which compares how many beams a note *declares* against
+    how many its duration *warrants*. A group whose counts are all correct but
+    whose types do not form a `begin…end` run passes straight through untouched
+    — that is exactly the malformation `BeamGroupVisitor` warns about and
+    `beam_level_ends_at` infers around. A strategy that validated the run's
+    shape would repair those instead of leaving the renderer to guess.
 
 - **A layout file for `<music-xml>`.** The CLI layers `--layout <file.toml>`
   under its flags with `UserLayout::overlay`; the web component has only its
@@ -240,11 +180,12 @@ consecutive feature impact.
 - **Support for other SMuFL fonts.**
 
 - **Tuplets.** The number, the bracket and its hooks, nested tuplets, and
-  `<time-modification>` feeding the duration maths. Worth designing alongside
-  section 1 rather than after it: a tuplet bracket spans the same run of chords a
-  beam group does, and when that run is beamed the bracket is conventionally
-  suppressed in favour of the bare number — so whatever shape `Score::beam_groups`
-  takes, a tuplet wants the same one.
+  `<time-modification>` feeding the duration maths. A tuplet bracket spans the
+  same run of chords a beam group does, and when that run is beamed the bracket
+  is conventionally suppressed in favour of the bare number — so a tuplet wants
+  the same shape: a run rebuilt from document order by a whole-score pass after
+  arrange, the way `BeamArranger::collect_runs` rebuilds beam groups, split per
+  system where it crosses a break.
 
 - **Barline types, including repeats.** Light and heavy, double and final,
   repeat dots and their forward/backward direction, volta brackets for endings,
@@ -274,7 +215,7 @@ consecutive feature impact.
 
 ---
 
-## 5. Reviews and decisions
+## 4. Reviews and decisions
 
 Open questions. Each wants an answer written down, and the answer may be "no".
 
@@ -290,14 +231,14 @@ Open questions. Each wants an answer written down, and the answer may be "no".
 
 - **Path support for ties.** Ties are now multi-segment polygons because of
   thickness. Update path support — or explicitly decide not to. (Slurs are not
-  built yet; they are in section 4.)
+  built yet; they are in section 3.)
 
 - **Staff line indexing.** Ours start at 0 from top to bottom, MusicXML counts
   from 1 bottom to top. Either a conversion method, or review our internal
   drawing engine. `Clef::anchor_line` now takes the staff's line count and
   centres the unpitched clefs, so the clef case is handled; what remains is the
   convention itself and the assumptions still riding on it — see the tie
-  direction bug in section 2.
+  direction bug in section 1.
 
 - **Should a declared `<group-symbol>` beat the structural guard?** A group
   symbol is drawn only when there is more than one thing for it to bind: more
@@ -322,7 +263,7 @@ Open questions. Each wants an answer written down, and the answer may be "no".
 
 ---
 
-## 6. Long term goals
+## 5. Long term goals
 
 - Installer, create publication, system wide available `opus` cli. Release once
   the cli reaches a stable point, do not wait for full desktop/mobile/web
