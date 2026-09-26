@@ -10,7 +10,7 @@ use lib::musicxml::visitors::validators::position_visitor::PositionVisitor;
 use lib::musicxml::visitors::validators::staff_details_visitor::StaffDetailsVisitor;
 use lib::musicxml::walker::Walker;
 use lib::score::engrave::{EngravedScore, Stage, engrave};
-use lib::score::layout_options::{APP_DEFAULTS, UserLayout};
+use lib::score::layout_options::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
 use lib::smufl::smufl_font::SmuflFont;
@@ -176,28 +176,12 @@ pub fn run(format: RenderCommand) {
         print_issues(&document, &messages);
     }
 
-    let title_font = user_layout
-        .title
-        .font
-        .as_deref()
-        .unwrap_or(APP_DEFAULTS.title.font);
-    let lyric_font = user_layout
-        .lyric
-        .font
-        .as_deref()
-        .unwrap_or(APP_DEFAULTS.lyric.font);
-    let group_name_font = user_layout
-        .group_name
-        .font
-        .as_deref()
-        .unwrap_or(APP_DEFAULTS.group_name.font);
-
     let time = Instant::now();
 
     // One walk feeds every format: the score's pages, each carrying its
     // elements in page-local tenths. `fonts` must outlive `pages`, which
     // borrows glyph data from it.
-    let fonts = RenderFonts::create(&font, title_font, lyric_font, group_name_font);
+    let fonts = RenderFonts::resolve(&font, &user_layout);
     let pages = RenderCompositor::compose(&visual, &fonts, debug);
 
     println!("Render pass: {}ms", time.elapsed().as_millis());

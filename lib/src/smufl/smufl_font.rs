@@ -6,7 +6,7 @@ use crate::score::layout_options::{APP_DEFAULTS, UserLayout};
 use crate::score::visual::stem::UpDown;
 use crate::smufl::glyph_name::{GlyphName, ToChar, load_glyph_names};
 use crate::smufl::glyphs::accidental::Accidental;
-use crate::smufl::glyphs::brace::Brace;
+use crate::smufl::glyphs::brace::{Brace, BraceStyle};
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
 use crate::smufl::glyphs::clef::Clef;
 use crate::smufl::glyphs::flag::Flag;
@@ -169,26 +169,29 @@ impl SmuflFont {
         }
     }
 
-    pub fn brace(&self, alternative: Option<&str>) -> Brace {
+    /// The brace glyph `style` asks for. A font that doesn't offer that
+    /// alternate -- it lists none for `brace`, or not this one -- draws its
+    /// plain `brace` instead: the style is a preference, and the font is
+    /// what can't honour it.
+    pub fn brace(&self, style: BraceStyle) -> Brace {
         let mut name = "brace";
         let mut codepoint = self.glyph_names.get(name).unwrap().codepoint_char();
 
-        if let Some(alternative) = alternative {
-            let alternate = self.meta.glyph_alternatives.get("brace");
+        let alternate = style.alternate_name().and_then(|alternative| {
+            self.meta
+                .glyph_alternatives
+                .get("brace")?
+                .alternates
+                .iter()
+                .find(|v| v.name == alternative)
+        });
 
-            if let Some(alternate) = alternate {
-                let alternate = alternate
-                    .alternates
-                    .iter()
-                    .find(|v| v.name == alternative)
-                    .unwrap();
-
-                // The metadata keys a chosen alternate's own box and advance by
-                // its name, so both have to be read against that rather than
-                // against the default brace they replace.
-                name = &alternate.name;
-                codepoint = alternate.codepoint.codepoint_char();
-            }
+        if let Some(alternate) = alternate {
+            // The metadata keys a chosen alternate's own box and advance by its
+            // name, so both have to be read against that rather than against
+            // the default brace they replace.
+            name = &alternate.name;
+            codepoint = alternate.codepoint.codepoint_char();
         }
 
         let bbox: BoundingBox = self.meta.glyph_boxes.get(name).unwrap().into();

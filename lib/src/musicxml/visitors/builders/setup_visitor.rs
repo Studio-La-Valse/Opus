@@ -30,6 +30,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for SetupVisitor {
 
                 match t {
                     "staff" => ctx.layout.appearance.staff = Some(v),
+                    "leger" => ctx.layout.appearance.leger = Some(v),
                     "light barline" => ctx.layout.appearance.light_barline = Some(v),
                     "heavy barline" => ctx.layout.appearance.heavy_barline = Some(v),
                     "beam" => ctx.layout.appearance.beam = Some(v),

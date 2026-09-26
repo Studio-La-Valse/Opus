@@ -328,7 +328,7 @@ impl GroupSymbol {
         // Read here rather than at construction: the walk that builds the tree
         // runs once, and the shape can change between two renders of it.
         self.glyphs = match self.kind {
-            Kind::Brace => Glyphs::Brace(font.brace(None)),
+            Kind::Brace => Glyphs::Brace(font.brace(params.group_brace_style())),
             Kind::Bracket => Glyphs::Bracket(font.bracket_top(), font.bracket_bottom()),
             Kind::None | Kind::Line | Kind::Square => Glyphs::None,
         };

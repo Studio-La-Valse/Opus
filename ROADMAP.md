@@ -55,12 +55,6 @@ Small and well-specified. Each is a single change and none depend on each other.
 - Scale grace and cue notes' accidental, flag and beam group. Decide how to
   handle vecs of chords with mixed grace, cue and normal notes: validation is a must.
 
-- Ledger lines are drawn at `staff.line_width` (`PartMeasure::ledger_thickness`),
-  but SMuFL gives them their own weight: Bravura's `legerLineThickness` is 0.16
-  staff spaces against `staffLineThickness` 0.13. Give them a layout option of
-  their own with a font tier. MusicXML's `<line-width type="leger">` is the
-  matching document tier.
-
 - Resolve the layout once, into a `ClosedLayout`. Every option is
   resolved at its point of use by a hand-written chain —
   `user.or(document).or(font).unwrap_or(APP_DEFAULTS)` — about fifteen of them,
@@ -118,16 +112,6 @@ start. Tentatively ordered by consecutive feature impact.
   merged `UserLayout`, so the merge belongs in JS (or in a small wasm helper
   exposing `overlay`), and the file would be JSON or TOML parsed in the browser.
 
-- **SMuFL brace alternatives.** `SmuflFont::brace` already takes an alternate
-  name and resolves its own box and advance through `glyphsWithAlternates`, but
-  nothing ever passes one, so Bravura's `braceSmall` / `braceLarge` /
-  `braceLarger` / `braceFlat` are unreachable. Exposing them wants a style enum
-  in `layout_options!` rather than a free-text glyph name, so an unknown
-  alternate is a parse error rather than a missing glyph. The brace now scales
-  from the glyph's own bounding box rather than a nominal four staff spaces, so
-  an alternate of a different height comes out the right size with no further
-  work.
-
 - **The rest of what a `<part-group>` says.** `<group-symbol default-x>` is the
   document declaring how far from the system its symbol sits, and every real
   sample carries one — ActorPrelude writes `-5` for its brackets and `-9` for
@@ -138,13 +122,15 @@ start. Tentatively ordered by consecutive feature impact.
   on a part's `GroupSymbol` exists for it and is always `None` until something
   fills it. No sample in `assets/` uses one.
 
-- **Text fonts from `engravingDefaults.textFontFamily`.** The font tier covers
-  line thicknesses only. Bravura also recommends a text family (Academico,
-  Century Schoolbook, Edwin, then `serif`), which could sit between the user's
-  `title.font` / `lyric.font` / `group_name.font` and the app's `"serif"`. The
-  catch is that the recommended families are rarely installed, so the tier
-  wants to hand the whole fallback list to the renderer rather than pick its
-  first entry.
+- **Text fonts from the document.** `title.font` / `lyric.font` /
+  `group_name.font` resolve user → the SMuFL font's `textFontFamily` → `serif`,
+  with no document tier between the first two. MusicXML declares one in
+  `<defaults>`: `<lyric-font>` for lyrics and `<word-font>` for other text, both
+  with a `font-family` that is itself a comma-separated list. Most samples
+  write `Times New Roman`. `<lyric-font>` maps onto `lyric.font` directly.
+  `<word-font>` is the default for words generally, so whether it covers titles
+  (which MusicXML usually carries as `<credit>` with its own fonts) and part
+  names needs deciding. Its `font-size` is a second option nothing reads yet.
 
 - **Generalize SMuFL parsing** from some point onwards: so far manageable in
   code, but defining thousands of SMuFL glyphs in code is undesirable.
@@ -156,7 +142,36 @@ start. Tentatively ordered by consecutive feature impact.
   itself), optionally providing the currently supported SMuFL (meta-)data through
   cli args.
 
-- **Support for other SMuFL fonts.**
+- **Support for other SMuFL fonts.** Bravura is the only font in use.
+  Leland and Finale Maestro sit in `assets/smufl` (untracked), with Edwin,
+  Leland's text companion. Direction agreed so far:
+
+  - **Discovery follows the SMuFL spec:** fonts and their metadata are
+    installed system-wide. Nothing is bundled into the lib as a built-in
+    catalog; see the entry above on system-wide files.
+  - **Resolved in a pass after the walk.** Today the walk needs the font:
+    `ClefVisitor` and `ContentVisitor` look glyphs up through `WalkerCtx::font`.
+    Those lookups move to a later pass, so the walk no longer depends on which
+    font is chosen. That also lets a wasm `Score` switch fonts without
+    re-walking.
+  - **Precedence: user → `<defaults><music-font font-family>` → Bravura.** The
+    document's value is a list to walk in order (`Maestro,engraved` in nine
+    samples). Match case-insensitively, plus an alias table for legacy names:
+    `Maestro` → `Finale Maestro`, as Finale maps it on import. Skip names that
+    match nothing, such as `engraved`.
+
+  Things that break or go missing with the other two fonts:
+
+  - Neither has `glyphAdvanceWidths`. `SmuflFont::brace` unwraps the brace's
+    advance and would panic; it wants the bounding-box fallback that
+    `number_digit` already uses.
+  - Finale Maestro has no `glyphsWithAlternates`, which is now optional, and no
+    `textFontFamily`.
+  - The PDF writer looks the music font up in the system fonts and panics when
+    it isn't installed.
+  - `web/music-xml.js` hardwires Bravura's woff and metadata URLs. Choosing a
+    font per document means loading them on demand, and the site staging
+    (`scripts/lib/stage-runtime.sh`) has to ship the other fonts too.
 
 - **Tuplets.** The number, the bracket and its hooks, nested tuplets, and
   `<time-modification>` feeding the duration maths. A tuplet bracket spans the

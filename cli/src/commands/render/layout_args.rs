@@ -2,11 +2,12 @@ use clap::Args;
 use lib::geometry::color::Color;
 use lib::score::core::group_symbol::GroupSymbol;
 use lib::score::layout_options::{
-    BarlineLayout, BeamLayout, DotLayout, ForegroundLayout, GroupBracketLayout, GroupLineLayout,
-    GroupNameLayout, GroupSquareLayout, LyricLayout, MeasureStartLayout, NoteSizeLayout,
-    PageLayout, PartGroupLayout, PartLayout, SectionLayout, StaffLayout, StemLayout, TieLayout,
-    TitleLayout, UserLayout,
+    BarlineLayout, BeamLayout, DotLayout, ForegroundLayout, GroupBraceLayout, GroupBracketLayout,
+    GroupLineLayout, GroupNameLayout, GroupSquareLayout, LyricLayout, MeasureStartLayout,
+    NoteSizeLayout, PageLayout, PartGroupLayout, PartLayout, SectionLayout, StaffLayout,
+    StemLayout, TieLayout, TitleLayout, UserLayout,
 };
+use lib::smufl::glyphs::brace::BraceStyle;
 
 /// One flag per [`UserLayout`] option, each named after the kebab-case of the
 /// option's path: `tie.height_max` is `--tie-height-max`. See
@@ -24,6 +25,9 @@ pub struct LayoutArgs {
 
     #[arg(long)]
     staff_line_width: Option<f32>,
+
+    #[arg(long)]
+    staff_ledger_line_width: Option<f32>,
 
     #[arg(long)]
     barline_light: Option<f32>,
@@ -123,6 +127,11 @@ pub struct LayoutArgs {
     #[arg(long)]
     group_bracket_thickness: Option<f32>,
 
+    /// Which brace glyph to draw: `default`, `small`, `large`, `larger` or
+    /// `flat`. A font without that alternate draws its plain brace.
+    #[arg(long)]
+    group_brace_style: Option<BraceStyle>,
+
     #[arg(long)]
     group_line_thickness: Option<f32>,
 
@@ -133,8 +142,8 @@ pub struct LayoutArgs {
     #[arg(long)]
     group_square_arm: Option<f32>,
 
-    /// Font family for part / part-group names. Defaults to the app default
-    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
+    /// Font family for part / part-group names. Defaults like `--title-font`,
+    /// and is resolved and embedded like it for `render pdf`.
     #[arg(long)]
     group_name_font: Option<String>,
 
@@ -147,14 +156,15 @@ pub struct LayoutArgs {
     #[arg(long)]
     group_name_padding: Option<f32>,
 
-    /// Font family for titles / work-level text. Defaults to the app default
-    /// (`serif`). For `render pdf` this family is resolved against the installed
-    /// system fonts and embedded.
+    /// Font family for titles / work-level text, or a CSS family list to fall
+    /// through. Defaults to the SMuFL font's `textFontFamily` list, then
+    /// `serif`. For `render pdf` the first installed family in the list is
+    /// embedded.
     #[arg(long)]
     title_font: Option<String>,
 
-    /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
-    /// and embedded like `--title-font` for `render pdf`.
+    /// Font family for lyrics. Defaults like `--title-font`, and is resolved
+    /// and embedded like it for `render pdf`.
     #[arg(long)]
     lyric_font: Option<String>,
 }
@@ -170,6 +180,7 @@ impl From<LayoutArgs> for UserLayout {
             },
             staff: StaffLayout {
                 line_width: args.staff_line_width,
+                ledger_line_width: args.staff_ledger_line_width,
             },
             barline: BarlineLayout {
                 light: args.barline_light,
@@ -220,6 +231,9 @@ impl From<LayoutArgs> for UserLayout {
             },
             group_bracket: GroupBracketLayout {
                 thickness: args.group_bracket_thickness,
+            },
+            group_brace: GroupBraceLayout {
+                style: args.group_brace_style,
             },
             group_line: GroupLineLayout {
                 thickness: args.group_line_thickness,

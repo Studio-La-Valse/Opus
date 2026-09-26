@@ -3,13 +3,13 @@
 # Copy this file and keep only what you want to change: every table and every
 # key is optional, and an option left out falls back to what the document
 # declares, then to what the SMuFL font's engravingDefaults recommend (for the
-# line thicknesses it defines), then to the value shown here. An unknown table
-# or key is an error. The thicknesses shown are Bravura's own.
+# line thicknesses and text fonts it defines), then to the value shown here. An
+# unknown table or key is an error. The thicknesses shown are Bravura's own.
 #
 # Don't pass this file as it stands unless that is what you mean: an option
 # set here overrides the document and the font, so it would replace every line
 # width and note size the document declares in its <appearance> with these
-# defaults.
+# defaults, and Bravura's recommended text fonts with plain serif.
 # Any `--<table>-<key>` flag on the command line (e.g. `--tie-height-max`)
 # overrides the file for that one option.
 #
@@ -22,7 +22,8 @@ color = "#FFFFFF"             # background, #RRGGBB or #RRGGBBAA
 color = "#000000"             # ink for staves, notation and text
 
 [staff]
-line_width = 1.3              # staff and ledger lines
+line_width = 1.3              # staff lines
+ledger_line_width = 1.6
 
 [barline]
 light = 1.6
@@ -76,6 +77,9 @@ symbol_gap = 5.0              # padding from the part-group symbol
 [group_bracket]
 thickness = 5.0
 
+[group_brace]
+style = "default"             # or small, large, larger, flat
+
 [group_line]
 thickness = 1.6
 
@@ -84,7 +88,7 @@ thickness = 1.2
 arm = 8.0                     # how far the arms reach toward the system
 
 [group_name]
-font = "serif"                # a CSS family; resolved and embedded for PDF
+font = "serif"                # a CSS family or list; PDF embeds the first installed
 size = 16.0
 padding = 10.0                # name's right edge to its symbol
 

@@ -24,7 +24,9 @@ pub struct SmuflMetadata {
     #[serde(rename = "glyphsWithAnchors")]
     pub glyph_anchors: HashMap<String, GlyphAnchors>,
 
-    #[serde(rename = "glyphsWithAlternates")]
+    /// Optional in the SMuFL spec: a font with no alternates (Finale Maestro)
+    /// omits the key entirely.
+    #[serde(rename = "glyphsWithAlternates", default)]
     pub glyph_alternatives: HashMap<String, Alternates>,
 
     /// The font designer's recommended line thicknesses. Optional in the SMuFL
@@ -33,7 +35,8 @@ pub struct SmuflMetadata {
     pub engraving_defaults: EngravingDefaults,
 }
 
-/// The `engravingDefaults` keys this crate reads, verbatim, in staff spaces.
+/// The `engravingDefaults` keys this crate reads, verbatim: line thicknesses in
+/// staff spaces, and the recommended text faces.
 ///
 /// Only the keys some layout option is resolved from; the spec defines more.
 /// Every key is optional, per the spec: an absent one falls through to
@@ -44,6 +47,7 @@ pub struct SmuflMetadata {
 #[serde(rename_all = "camelCase")]
 pub struct EngravingDefaults {
     pub staff_line_thickness: Option<f32>,
+    pub leger_line_thickness: Option<f32>,
     pub thin_barline_thickness: Option<f32>,
     pub thick_barline_thickness: Option<f32>,
     pub beam_thickness: Option<f32>,
@@ -53,6 +57,9 @@ pub struct EngravingDefaults {
     pub tie_midpoint_thickness: Option<f32>,
     pub bracket_thickness: Option<f32>,
     pub sub_bracket_thickness: Option<f32>,
+    /// The text faces the font is designed to sit beside, most preferred
+    /// first. Bravura's ends in the generic `serif`.
+    pub text_font_family: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

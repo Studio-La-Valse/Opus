@@ -71,6 +71,7 @@ mod tests {
             "section.symbol" | "part_group.symbol" | "part.symbol" => {
                 Value::String("bracket".to_string())
             }
+            "group_brace.style" => Value::String("large".to_string()),
             "group_name.font" | "title.font" | "lyric.font" => Value::String("serif".to_string()),
             _ => Value::from(1.5),
         }

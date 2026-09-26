@@ -1,6 +1,6 @@
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::pdf::{self, EmbeddedFont, FontSet, PdfPage, PdfPageCanvas};
-use lib::drawable::elements::text::{FontStyle, FontWeight};
+use lib::drawable::elements::text::{FontSpec, FontStyle, FontWeight};
 use lib::score::score_defaults::Defaults;
 use lib::score::visual::render_compositor::RenderedPage;
 use lib::score::visual::render_fonts::RenderFonts;
@@ -28,12 +28,12 @@ pub(super) fn write(
 
     // Own the bytes here so the parsed `Face`s and the slices `write_pdf` embeds
     // can borrow them for the rest of this function.
-    let music_bytes = load_family_bytes(&db, music_family).unwrap_or_else(|| {
+    let music_bytes = load_family_bytes(&db, fonts.music).unwrap_or_else(|| {
         panic!("music font '{music_family}' not found in the system fonts; install it")
     });
-    let title_bytes = load_family_bytes(&db, fonts.title.family);
-    let lyric_bytes = load_family_bytes(&db, fonts.lyric.family);
-    let group_name_bytes = load_family_bytes(&db, fonts.group_name.family);
+    let title_bytes = load_family_bytes(&db, fonts.title);
+    let lyric_bytes = load_family_bytes(&db, fonts.lyric);
+    let group_name_bytes = load_family_bytes(&db, fonts.group_name);
 
     // Embed each family the score draws text in exactly once, in a fixed order
     // so the music font is always entry 0 -- which `FontSet` uses as the
@@ -77,21 +77,24 @@ pub(super) fn write(
     println!("Written to: {}", path.display());
 }
 
-/// Copies out the raw bytes of the installed font matching `family` at regular
-/// weight / upright style, or `None` if nothing matches. The CSS generic
-/// keywords resolve through fontdb's generic families rather than as literal
-/// names.
-fn load_family_bytes(db: &fontdb::Database, family: &str) -> Option<Vec<u8>> {
-    let family = match family {
-        "serif" => fontdb::Family::Serif,
-        "sans-serif" => fontdb::Family::SansSerif,
-        "monospace" => fontdb::Family::Monospace,
-        "cursive" => fontdb::Family::Cursive,
-        "fantasy" => fontdb::Family::Fantasy,
-        name => fontdb::Family::Name(name),
-    };
+/// Copies out the raw bytes of the first installed font in `spec`'s family
+/// list, at regular weight / upright style, or `None` if none is installed.
+/// The CSS generic keywords resolve through fontdb's generic families rather
+/// than as literal names.
+fn load_family_bytes(db: &fontdb::Database, spec: FontSpec<'_>) -> Option<Vec<u8>> {
+    let families: Vec<fontdb::Family> = spec
+        .families()
+        .map(|family| match family {
+            "serif" => fontdb::Family::Serif,
+            "sans-serif" => fontdb::Family::SansSerif,
+            "monospace" => fontdb::Family::Monospace,
+            "cursive" => fontdb::Family::Cursive,
+            "fantasy" => fontdb::Family::Fantasy,
+            name => fontdb::Family::Name(name),
+        })
+        .collect();
     let id = db.query(&fontdb::Query {
-        families: &[family],
+        families: &families,
         weight: fontdb::Weight::NORMAL,
         stretch: fontdb::Stretch::Normal,
         style: fontdb::Style::Normal,

@@ -9,7 +9,7 @@
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
 use lib::score::engrave::{arrange_score, walk_document};
-use lib::score::layout_options::{APP_DEFAULTS, UserLayout};
+use lib::score::layout_options::UserLayout;
 use lib::score::score_defaults::ScoreDefaults;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
@@ -206,22 +206,7 @@ impl WasmScore {
             &mut |_stage| {},
         );
 
-        let title_font = layout
-            .title
-            .font
-            .as_deref()
-            .unwrap_or(APP_DEFAULTS.title.font);
-        let lyric_font = layout
-            .lyric
-            .font
-            .as_deref()
-            .unwrap_or(APP_DEFAULTS.lyric.font);
-        let group_name_font = layout
-            .group_name
-            .font
-            .as_deref()
-            .unwrap_or(APP_DEFAULTS.group_name.font);
-        let fonts = RenderFonts::create(&self.font, title_font, lyric_font, group_name_font);
+        let fonts = RenderFonts::resolve(&self.font, layout);
 
         // One page-preserving walk; the flat buffer concatenates the pages into
         // its single stream but records each page's boundary in `page_table`.

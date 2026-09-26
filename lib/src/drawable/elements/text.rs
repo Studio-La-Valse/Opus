@@ -73,11 +73,13 @@ impl FontStyle {
     }
 }
 
-/// Which typeface a [`Text`] element is drawn in. The `family` is a plain
-/// font-family name (as understood by CSS / a PDF `BaseFont`); it carries no
-/// meaning of its own to this crate -- a consumer picks the names it wants and
-/// each [`Canvas`](crate::drawable::canvas::Canvas) resolves them to its own
-/// target (an SVG `font-family`, a canvas `ctx.font`, an embedded PDF font).
+/// Which typeface a [`Text`] element is drawn in. The `family` is a CSS
+/// `font-family` value: one name, or a comma-separated list to fall through,
+/// multi-word names quoted. It carries no meaning of its own to this crate -- a
+/// consumer picks the names it wants and each
+/// [`Canvas`](crate::drawable::canvas::Canvas) resolves them to its own target
+/// (an SVG `font-family` and a canvas `ctx.font` take the list as it is; a PDF
+/// writer walks [`families`](Self::families) for the first one installed).
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct FontSpec<'a> {
     pub family: &'a str,
@@ -93,6 +95,16 @@ impl<'a> FontSpec<'a> {
             weight: FontWeight::Normal,
             style: FontStyle::Normal,
         }
+    }
+
+    /// The names in `family`, most preferred first, with their CSS quotes
+    /// stripped: `Edwin, 'Century Schoolbook', serif` yields `Edwin`,
+    /// `Century Schoolbook`, `serif`.
+    pub fn families(&self) -> impl Iterator<Item = &'a str> {
+        self.family
+            .split(',')
+            .map(|name| name.trim().trim_matches(|c| c == '\'' || c == '"'))
+            .filter(|name| !name.is_empty())
     }
 }
 

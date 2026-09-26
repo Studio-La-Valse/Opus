@@ -168,6 +168,7 @@ pub struct ResolvedPage {
 #[derive(Default, Clone)]
 pub struct Appearance {
     pub staff: Option<f32>,
+    pub leger: Option<f32>,
     pub light_barline: Option<f32>,
     pub heavy_barline: Option<f32>,
     pub beam: Option<f32>,
