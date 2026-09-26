@@ -1,11 +1,11 @@
 // The option manifest for the render page's pane: one descriptor per knob the
 // <music-xml> element exposes, mirroring lib/src/score/layout_options.rs
 // option for option, each `name` being the option's `group.field` path - with
-// two exceptions, each noted at its own entry below: page_orientation (page
+// three exceptions, each noted at its own entry below: page_orientation (page
 // arrangement is a component-level, CSS concern now that the engine no longer
 // arranges pages relative to each other at all - there is no UserLayout field
 // for it; the gap between pages is a fixed 10px in the component and is not
-// exposed here at all) and debug (an HTML attribute). Adding a UserLayout knob
+// exposed here at all), and debug and music-font (HTML attributes). Adding a UserLayout knob
 // here is the only change needed to add it to the pane - render.js builds the
 // whole thing by iterating this array, the same data-driven intent
 // UserLayout's own doc comment asks for ("Don't mirror it into a parallel
@@ -20,9 +20,14 @@
 //   "number" - a linked range slider + number box. `unit` is display-only.
 //   "enum"   - a <select> over `values`.
 //   "font"   - free-text CSS font-family; blank means "unset".
-//   "boolean-attribute" - a checkbox toggling a real HTML attribute (`debug`
-//              is the only one; every other knob is a CSS custom property).
+//   "boolean-attribute" - a checkbox toggling a real HTML attribute (`debug`).
+//   "enum-attribute" - a <select> over `values` setting a real HTML attribute
+//              (`music-font`), plus an `unsetLabel` entry that removes it.
+//   Every other knob is a CSS custom property.
+import { MUSIC_FONTS } from "/web/music-xml.js";
+
 export const OPTION_GROUPS = [
+  "Fonts",
   "Page",
   "Staff & barlines",
   "Measure starts",
@@ -31,7 +36,6 @@ export const OPTION_GROUPS = [
   "Ties",
   "Group symbols",
   "Group names",
-  "Fonts",
   "Debug",
 ];
 
@@ -509,6 +513,18 @@ export const OPTIONS = [
   },
 
   // --- Fonts --------------------------------------------------------------
+  {
+    group: "Fonts",
+    // An HTML attribute, not a UserLayout field: switching the music font
+    // loads another font for the already-walked score rather than changing a
+    // layout option. The choices are the fonts the element ships with.
+    name: "music-font",
+    kind: "enum-attribute",
+    values: MUSIC_FONTS.map((font) => font.name),
+    unsetLabel: "As the document asks",
+    label: "Music font",
+    help: "SMuFL font the notation is engraved in. Left unset, the document's own music font is used if available, otherwise Bravura.",
+  },
   {
     group: "Fonts",
     name: "title.font",

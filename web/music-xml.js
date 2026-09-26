@@ -4,8 +4,9 @@
 // Usage:
 //   <script type="module" src="/path/to/music-xml.js"></script>
 //   <music-xml file="score.musicxml" style="--page-color: #ffffff;"></music-xml>
+//   <music-xml file="score.musicxml" music-font="Leland"></music-xml>
 //
-// All asset paths (the wasm module, the Bravura font, SMuFL metadata) are
+// All asset paths (the wasm module, the music and text fonts, SMuFL metadata) are
 // resolved relative to *this file's own URL* via import.meta.url, not
 // relative to the page that imports it - so the tag works the same way
 // regardless of where it's dropped into a host page, as long as this file
@@ -61,30 +62,56 @@ const MAX_CANVAS_PIXELS = 12_000_000;
 const MAX_CANVAS_SIDE_PX = 16_384;
 
 const WASM_JS_URL = new URL("../wasm/pkg/wasm.js", import.meta.url).href;
-const BRAVURA_METADATA_URL = new URL(
-  "../assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-  import.meta.url,
-);
-const BRAVURA_WOFF2_URL = new URL(
-  "../assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff2",
-  import.meta.url,
-);
-const BRAVURA_WOFF_URL = new URL(
-  "../assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff",
-  import.meta.url,
-);
 
-async function loadBravuraFont() {
-  // Canvas text rasterizes synchronously at fillText() time and never
-  // repaints once a font arrives later, unlike SVG/DOM text, so it has to be
-  // force-loaded up front via the Font Loading API rather than left to a
-  // passive @font-face rule.
-  const font = new FontFace(
-    "Bravura",
-    `url("${BRAVURA_WOFF2_URL}") format("woff2"), url("${BRAVURA_WOFF_URL}") format("woff")`,
-  );
-  await font.load();
-  document.fonts.add(font);
+function asset(path) {
+  return new URL(`../assets/smufl/${path}`, import.meta.url).href;
+}
+
+// The SMuFL music fonts this element ships with, by the name their metadata's
+// `fontName` gives - which is also the CSS family their glyphs are drawn in,
+// and what the `music-font` attribute and a document's <music-font> are
+// matched against. A browser has no system-wide SMuFL installation to look
+// in, so this list is the web's equivalent of `opus font list`.
+export const MUSIC_FONTS = [
+  {
+    name: "Bravura",
+    metadata: asset("bravura-bravura-1.392/redist/bravura_metadata.json"),
+    sources: [
+      [asset("bravura-bravura-1.392/redist/woff/Bravura.woff2"), "woff2"],
+      [asset("bravura-bravura-1.392/redist/woff/Bravura.woff"), "woff"],
+    ],
+  },
+  {
+    name: "Leland",
+    metadata: asset("Leland-main/leland_metadata.json"),
+    sources: [[asset("Leland-main/Leland.otf"), "opentype"]],
+  },
+  {
+    name: "Finale Maestro",
+    metadata: asset("Maestro-main/Finale Maestro.json"),
+    sources: [[asset("Maestro-main/FinaleMaestro.otf"), "opentype"]],
+  },
+];
+
+// Text faces a music font's `textFontFamily` asks for. Edwin is Leland's
+// companion and Bravura's third choice; registered up front so the titles and
+// names those fonts resolve to are available when a page first paints.
+const TEXT_FONTS = [
+  { family: "Edwin", file: "Edwin-main/Edwin-Roman.otf", weight: "400", style: "normal" },
+  { family: "Edwin", file: "Edwin-main/Edwin-Bold.otf", weight: "700", style: "normal" },
+  { family: "Edwin", file: "Edwin-main/Edwin-Italic.otf", weight: "400", style: "italic" },
+  { family: "Edwin", file: "Edwin-main/Edwin-BdIta.otf", weight: "700", style: "italic" },
+];
+
+// Canvas text rasterizes synchronously at fillText() time and never repaints
+// once a font arrives later, unlike SVG/DOM text, so every face has to be
+// force-loaded up front via the Font Loading API rather than left to a
+// passive @font-face rule.
+async function loadFontFace(family, sources, descriptors) {
+  const src = sources.map(([url, format]) => `url("${url}") format("${format}")`).join(", ");
+  const face = new FontFace(family, src, descriptors);
+  await face.load();
+  document.fonts.add(face);
 }
 
 async function bootstrap() {
@@ -92,22 +119,24 @@ async function bootstrap() {
   // bundlers that try to statically analyze dynamic import() (e.g. Vite)
   // can't resolve it - tell them to leave it alone rather than warn/fail.
   const wasmPromise = import(/* @vite-ignore */ WASM_JS_URL);
-  const metaJsonPromise = fetch(BRAVURA_METADATA_URL).then((r) => r.text());
-  const fontPromise = loadBravuraFont();
+  const textFontsPromise = Promise.all(
+    TEXT_FONTS.map(({ family, file, weight, style }) =>
+      loadFontFace(family, [[asset(file), "opentype"]], { weight, style }),
+    ),
+  );
 
   const wasm = await wasmPromise;
   await wasm.default();
-  const metaJson = await metaJsonPromise;
-  await fontPromise;
+  await textFontsPromise;
 
-  return { wasm, metaJson };
+  return { wasm };
 }
 
-// Shared across every <music-xml> instance on the page: the wasm module, the
-// Bravura font, and the SMuFL metadata are all instance-independent, so
-// there's no reason for a second element to re-fetch or re-instantiate them.
-// Reset to undefined on failure so a later load can retry (e.g. after a
-// transient network error) instead of every element being stuck forever.
+// Shared across every <music-xml> instance on the page: the wasm module and
+// the text faces are instance-independent, so there's no reason for a second
+// element to re-fetch or re-instantiate them. Reset to undefined on failure so
+// a later load can retry (e.g. after a transient network error) instead of
+// every element being stuck forever.
 let bootstrapPromise;
 function ensureBootstrapped() {
   if (!bootstrapPromise) {
@@ -117,6 +146,28 @@ function ensureBootstrapped() {
     });
   }
   return bootstrapPromise;
+}
+
+// One wasm `MusicFont` per music font, loaded the first time any element asks
+// for it and shared by every element after: its metadata fetched and parsed,
+// and its face registered with the page. Never freed - there are only ever as
+// many as MUSIC_FONTS lists. A failed load is forgotten so a later one retries.
+const musicFontPromises = new Map();
+function ensureMusicFont(wasm, name) {
+  let promise = musicFontPromises.get(name);
+  if (!promise) {
+    const entry = MUSIC_FONTS.find((font) => font.name === name);
+    promise = Promise.all([
+      fetch(entry.metadata).then((r) => {
+        if (!r.ok) throw new Error(`failed to fetch the ${name} metadata: ${r.status}`);
+        return r.text();
+      }),
+      loadFontFace(entry.name, entry.sources),
+    ]).then(([metaJson]) => new wasm.MusicFont(metaJson));
+    promise.catch(() => musicFontPromises.delete(name));
+    musicFontPromises.set(name, promise);
+  }
+  return promise;
 }
 
 function rgba(r, g, b, a) {
@@ -193,11 +244,18 @@ function cssPropertyFor(option) {
 
 // These are CSS custom properties only (`--page-color`, etc. - via an inline
 // `style="--page-color: ..."`, a class, or a plain stylesheet rule targeting
-// the tag), not HTML attributes - see `_renderOptions`. `file` and `debug`
-// are the only real HTML attributes this element has.
+// the tag), not HTML attributes - see `_renderOptions`. `file`, `debug` and
+// `music-font` are the only real HTML attributes this element has.
+//
+// `music-font` names one of MUSIC_FONTS and overrides the document's own
+// <music-font>; without it, the document's choice applies, then Bravura.
+// It's an attribute rather than a custom property because it isn't a
+// UserLayout field: switching it loads another font rather than re-reading
+// the layout.
 const OBSERVED_ATTRIBUTES = [
   "file",
   "debug",
+  "music-font",
   // "style" is observed (rather than each --custom-property individually,
   // which isn't possible - attributeChangedCallback only fires for real
   // attributes) so that `el.style.setProperty(...)` or a `style="..."` edit
@@ -267,6 +325,11 @@ export class MusicXmlElement extends HTMLElement {
     // engraved score is not - so there is no handle or registry to track.
     this._score = undefined;
     this._loadSeq = 0;
+    // The wasm `MusicFont` the score is rendered in, shared with every other
+    // element using the same font (see ensureMusicFont), and a counter that
+    // lets only the latest font selection land.
+    this._font = undefined;
+    this._fontSeq = 0;
     this._renderDebounce = undefined;
     this._connected = false;
 
@@ -345,6 +408,13 @@ export class MusicXmlElement extends HTMLElement {
 
     if (name === "file") {
       this._loadFile();
+    } else if (name === "music-font") {
+      // No re-fetch or re-walk: the walked score is re-arranged in the other
+      // font.
+      this._selectFont().catch((err) => {
+        this._setStatus(String(err));
+        this.dispatchEvent(new CustomEvent("error", { detail: err }));
+      });
     } else {
       // --page-orientation is component-level, not a UserLayout field, so a
       // style-only change applies it directly here - a pure CSS re-layout,
@@ -391,7 +461,7 @@ export class MusicXmlElement extends HTMLElement {
     this._setStatus("Loading…");
 
     try {
-      const { wasm, metaJson } = await ensureBootstrapped();
+      const { wasm } = await ensureBootstrapped();
       if (seq !== this._loadSeq) return;
 
       const response = await fetch(fileUrl);
@@ -401,15 +471,42 @@ export class MusicXmlElement extends HTMLElement {
       const musicxml = await response.text();
       if (seq !== this._loadSeq) return;
 
-      this._score = new wasm.Score(musicxml, metaJson);
-      this._setStatus("");
-      this._render();
+      this._score = new wasm.Score(musicxml);
+      // The walk doesn't need the font, so the document's own <music-font>
+      // can have its say before one is loaded. _selectFont renders.
+      await this._selectFont();
+      if (seq !== this._loadSeq) return;
       this.dispatchEvent(new CustomEvent("load"));
     } catch (err) {
       if (seq !== this._loadSeq) return;
       this._setStatus(String(err));
       this.dispatchEvent(new CustomEvent("error", { detail: err }));
     }
+  }
+
+  // Chooses the music font - the `music-font` attribute, then the document's
+  // <music-font> list, then Bravura, among MUSIC_FONTS - loads it, and
+  // renders in it. Throws when the attribute names a font that isn't there.
+  // Only the most recent call renders, so a font still loading when the
+  // attribute changes again can't land on top of the newer choice.
+  async _selectFont() {
+    if (!this._score) return;
+    const seq = ++this._fontSeq;
+
+    const { wasm } = await ensureBootstrapped();
+    const requested = this.getAttribute("music-font") || undefined;
+    const name = wasm.chooseMusicFont(
+      requested,
+      this._score.musicFonts(),
+      MUSIC_FONTS.map((font) => font.name),
+    );
+    const font = await ensureMusicFont(wasm, name);
+    if (seq !== this._fontSeq || !this._score) return;
+
+    this._font = font;
+    this._lastOptionsJson = undefined;
+    this._setStatus("");
+    this._render();
   }
 
   // Releases the score's wasm memory. Nothing else does: wasm objects are only
@@ -519,7 +616,7 @@ export class MusicXmlElement extends HTMLElement {
   }
 
   _render() {
-    if (!this._score) return;
+    if (!this._score || !this._font) return;
 
     // _scheduleRender already built these; a direct call (from _loadFile or
     // refresh()) has not, so build them now.
@@ -528,7 +625,7 @@ export class MusicXmlElement extends HTMLElement {
 
     let output;
     try {
-      output = this._score.render(options);
+      output = this._score.render(options, this._font);
       this._decode(output);
       this._reconcilePages();
       this._repaintVisiblePages();

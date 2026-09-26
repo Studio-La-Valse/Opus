@@ -17,7 +17,7 @@
 mod tests {
     use cli::commands::read_musicxml;
     use std::fs::read_to_string;
-    use wasm::{RenderOptions, WasmScore};
+    use wasm::{RenderOptions, WasmMusicFont, WasmScore};
 
     fn asset(relative_path: &str) -> String {
         read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
@@ -38,12 +38,12 @@ mod tests {
     /// [`engrave`] in the font whose metadata is at `meta`.
     fn engrave_in(document: &str, meta: &str) {
         let musicxml = read_musicxml(&format!("{}/../{document}", env!("CARGO_MANIFEST_DIR")));
-        let meta_json = asset(meta);
+        let font = WasmMusicFont::new(&asset(meta));
 
-        let mut score = WasmScore::new(&musicxml, &meta_json)
+        let mut score = WasmScore::new(&musicxml)
             .unwrap_or_else(|e| panic!("{document} failed to build: {e:?}"));
 
-        let mut output = score.render_with(&RenderOptions::default());
+        let mut output = score.render_with(&RenderOptions::default(), &font);
         assert!(
             !output.geometry().is_empty(),
             "{document} engraved to no geometry at all"

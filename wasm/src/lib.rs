@@ -14,6 +14,7 @@ use lib::score::score_defaults::ScoreDefaults;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
 use lib::score::visual::score;
+use lib::smufl::font_choice;
 use lib::smufl::smufl_font::SmuflFont;
 use roxmltree::{Document, ParsingOptions};
 use serde::Deserialize;
@@ -129,28 +130,64 @@ pub struct RenderOptions {
 // copies doc comments into the generated JSDoc, so a `*/` anywhere inside one
 // closes the comment early and leaves wasm.js syntactically invalid.)
 
+/// A SMuFL music font, loaded from its metadata file. Independent of any one
+/// document, so one instance can serve every [`Score`](WasmScore) on a page.
+#[wasm_bindgen(js_name = MusicFont)]
+pub struct WasmMusicFont {
+    font: SmuflFont,
+}
+
+#[wasm_bindgen(js_class = MusicFont)]
+impl WasmMusicFont {
+    /// `meta_json` is the font's SMuFL metadata file.
+    #[wasm_bindgen(constructor)]
+    pub fn new(meta_json: &str) -> WasmMusicFont {
+        WasmMusicFont {
+            font: SmuflFont::load(meta_json),
+        }
+    }
+
+    /// The font's own name, as its metadata's `fontName` spells it -- which is
+    /// also the CSS family its glyphs are drawn in.
+    #[wasm_bindgen(getter)]
+    pub fn name(&self) -> String {
+        self.font.meta.font.clone()
+    }
+}
+
+/// Picks the music font to engrave with out of `available`: `user` if given,
+/// then the document's `<music-font>` list, then Bravura. Throws when `user`
+/// names a font that is not available, or when nothing is.
+#[wasm_bindgen(js_name = chooseMusicFont)]
+pub fn choose_music_font(
+    user: Option<String>,
+    document: Vec<String>,
+    available: Vec<String>,
+) -> Result<String, JsValue> {
+    font_choice::choose_music_font(user.as_deref(), &document, &available)
+        .map(str::to_string)
+        .map_err(|err| JsValue::from_str(&err.to_string()))
+}
+
 /// One MusicXML document, walked once on construction and re-arrangeable for
-/// any number of different [`RenderOptions`].
+/// any number of different [`RenderOptions`] and music fonts.
 ///
 /// The split matches [`lib::score::engrave`]'s two halves: the constructor runs
 /// [`walk_document`] (parse + the two visitor passes, none of which depend on
-/// the user layout) and each [`Score::render`] re-runs only [`arrange_score`],
-/// so a layout-only change such as a page-colour tweak never re-parses the XML.
+/// the user layout or the font) and each [`Score::render`] re-runs only
+/// [`arrange_score`], so neither a layout-only change such as a page-colour
+/// tweak nor a switch of music font re-parses the XML.
 #[wasm_bindgen(js_name = Score)]
 pub struct WasmScore {
     defaults: ScoreDefaults,
     score: score::Score,
-    font: SmuflFont,
 }
 
 #[wasm_bindgen(js_class = Score)]
 impl WasmScore {
     /// Parses `musicxml` and walks it into a laid-out-on-demand score.
-    /// `meta_json` is the SMuFL font's metadata file.
     #[wasm_bindgen(constructor)]
-    pub fn new(musicxml: &str, meta_json: &str) -> Result<WasmScore, JsValue> {
-        let font = SmuflFont::load(meta_json);
-
+    pub fn new(musicxml: &str) -> Result<WasmScore, JsValue> {
         let options = ParsingOptions {
             allow_dtd: true,
             ..ParsingOptions::default()
@@ -162,28 +199,35 @@ impl WasmScore {
         // them, and nothing in the render path reads them back.
         let (score, defaults, _messages) = walk_document(&document, &mut |_stage| {});
 
-        Ok(WasmScore {
-            defaults,
-            score,
-            font,
-        })
+        Ok(WasmScore { defaults, score })
     }
 
-    /// Lays the score out for `options` and returns the resulting drawable
-    /// elements. Does no XML parsing or walking, so it's cheap to call on every
-    /// layout-only change (e.g. a page colour tweak).
+    /// The music fonts the document asks for in `<defaults><music-font>`, most
+    /// preferred first, as written. Empty when it names none.
+    #[wasm_bindgen(js_name = musicFonts)]
+    pub fn music_fonts(&self) -> Vec<String> {
+        self.defaults.music_font.clone()
+    }
+
+    /// Lays the score out for `options` in `font` and returns the resulting
+    /// drawable elements. Does no XML parsing or walking, so it's cheap to call
+    /// on every layout-only change (e.g. a page colour tweak) or font switch.
     ///
     /// `options` is a plain JS object; see [`RenderOptions`], whose `layout`
     /// member accepts [`UserLayout`] as nested snake_case objects
     /// (`{ tie: { height_max: 14 } }`).
-    pub fn render(&mut self, options: JsValue) -> Result<RenderOutput, JsValue> {
+    pub fn render(
+        &mut self,
+        options: JsValue,
+        font: &WasmMusicFont,
+    ) -> Result<RenderOutput, JsValue> {
         let options: RenderOptions = if options.is_undefined() || options.is_null() {
             RenderOptions::default()
         } else {
             serde_wasm_bindgen::from_value(options)?
         };
 
-        Ok(self.render_with(&options))
+        Ok(self.render_with(&options, font))
     }
 }
 
@@ -191,18 +235,19 @@ impl WasmScore {
     /// The body of [`WasmScore::render`] once the options have been decoded.
     /// Separate so Rust callers (the test crate) don't have to go through a
     /// `JsValue`.
-    pub fn render_with(&mut self, options: &RenderOptions) -> RenderOutput {
+    pub fn render_with(&mut self, options: &RenderOptions, font: &WasmMusicFont) -> RenderOutput {
         let layout = &options.layout;
+        let font = &font.font;
 
         arrange_score(
             &mut self.score,
             &self.defaults,
-            &self.font,
+            font,
             layout,
             &mut |_stage| {},
         );
 
-        let fonts = RenderFonts::resolve(&self.font, layout);
+        let fonts = RenderFonts::resolve(font, layout);
 
         // One page-preserving walk; the flat buffer concatenates the pages into
         // its single stream but records each page's boundary in `page_table`.

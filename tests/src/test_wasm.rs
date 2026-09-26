@@ -2,20 +2,30 @@
 mod tests {
     use lib::score::layout_options::UserLayout;
     use std::fs::read_to_string;
-    use wasm::{RenderOptions, RenderOutput, WasmScore};
+    use std::sync::OnceLock;
+    use wasm::{RenderOptions, RenderOutput, WasmMusicFont, WasmScore};
 
     fn fixture(relative_path: &str) -> String {
         read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
             .unwrap_or_else(|e| panic!("failed to read {relative_path}: {e}"))
     }
 
-    /// Builds a score from one of the sample documents and the real SMuFL
-    /// metadata, the way the constructor is called from JS.
+    /// Builds a score from one of the sample documents, the way the constructor
+    /// is called from JS.
     fn score(musicxml_path: &str) -> WasmScore {
         let musicxml = fixture(musicxml_path);
-        let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
 
-        WasmScore::new(&musicxml, &meta_json).expect("failed to build score")
+        WasmScore::new(&musicxml).expect("failed to build score")
+    }
+
+    /// Bravura from its real SMuFL metadata, as JS loads it.
+    fn bravura() -> &'static WasmMusicFont {
+        static FONT: OnceLock<WasmMusicFont> = OnceLock::new();
+        FONT.get_or_init(|| {
+            WasmMusicFont::new(&fixture(
+                "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+            ))
+        })
     }
 
     /// These tests go through `render_with` rather than the `render(JsValue)`
@@ -23,7 +33,7 @@ mod tests {
     /// implementation, which panics on a native test target. Everything past
     /// the decode is the same code either way.
     fn render_at(score: &mut WasmScore) -> RenderOutput {
-        score.render_with(&RenderOptions::default())
+        score.render_with(&RenderOptions::default(), bravura())
     }
 
     /// `render` reruns rebeam/measure/arrange_pages on the same cached `Score`
@@ -35,15 +45,18 @@ mod tests {
         let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
 
         let render_once = |score: &mut WasmScore| {
-            score.render_with(&RenderOptions {
-                // Doubled hashes because the JSON itself contains `"#`, which
-                // would close a single-hash raw string.
-                layout: serde_json::from_str(
-                    r##"{ "page": { "color": "#ffffff" }, "foreground": { "color": "#000000" } }"##,
-                )
-                .expect("layout options failed to deserialize"),
-                ..Default::default()
-            })
+            score.render_with(
+                &RenderOptions {
+                    // Doubled hashes because the JSON itself contains `"#`, which
+                    // would close a single-hash raw string.
+                    layout: serde_json::from_str(
+                        r##"{ "page": { "color": "#ffffff" }, "foreground": { "color": "#000000" } }"##,
+                    )
+                    .expect("layout options failed to deserialize"),
+                    ..Default::default()
+                },
+                bravura(),
+            )
         };
 
         // `geometry()`/`text_blob()`/`page_table()` take the buffer out of the
@@ -186,6 +199,27 @@ mod tests {
         assert!(bad_color.is_err(), "an unparseable colour must be rejected");
     }
 
+    /// One walked score re-arranged in another font gives different glyph
+    /// metrics without re-walking -- the font switch the render page makes --
+    /// and the document's own `<music-font>` list is what JS chooses from.
+    #[test]
+    fn a_score_renders_in_another_font_without_a_rewalk() {
+        let mut score = score("assets/xmlsamples/MozartTrio.musicxml");
+        assert_eq!(score.music_fonts(), vec!["Maestro", "engraved"]);
+
+        let leland = WasmMusicFont::new(&fixture("assets/smufl/Leland-main/leland_metadata.json"));
+        assert_eq!(leland.name(), "Leland");
+
+        let in_bravura = score
+            .render_with(&RenderOptions::default(), bravura())
+            .font_blob();
+        let in_leland = score
+            .render_with(&RenderOptions::default(), &leland)
+            .font_blob();
+        assert!(in_bravura.contains("Bravura") && !in_bravura.contains("Leland"));
+        assert!(in_leland.contains("Leland") && !in_leland.contains("Bravura"));
+    }
+
     /// Inverted tie height bounds used to panic inside `f32::clamp` during
     /// `arrange_score`, and on `wasm32` that panic traps without unwinding --
     /// see `TieMetrics::from_sources` / `ordered_bounds` in `tie.rs`. This
@@ -195,11 +229,16 @@ mod tests {
     fn render_survives_inverted_tie_height_bounds() {
         let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
 
-        let mut output = score.render_with(&RenderOptions {
-            layout: serde_json::from_str(r#"{ "tie": { "height_min": 30, "height_max": 16 } }"#)
+        let mut output = score.render_with(
+            &RenderOptions {
+                layout: serde_json::from_str(
+                    r#"{ "tie": { "height_min": 30, "height_max": 16 } }"#,
+                )
                 .expect("layout options failed to deserialize"),
-            ..Default::default()
-        });
+                ..Default::default()
+            },
+            bravura(),
+        );
 
         let page_table = output.page_table();
         assert!(!page_table.is_empty(), "expected at least one page");

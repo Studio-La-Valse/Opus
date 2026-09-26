@@ -244,6 +244,38 @@ function buildBooleanAttributeControl(scoreEl, option) {
   return root;
 }
 
+function buildEnumAttributeControl(scoreEl, option) {
+  const { root, controls } = optionShell(option);
+
+  const select = document.createElement("select");
+  const unset = document.createElement("option");
+  unset.value = "";
+  unset.textContent = option.unsetLabel;
+  select.append(unset);
+  for (const value of option.values) {
+    const entry = document.createElement("option");
+    entry.value = value;
+    entry.textContent = value;
+    select.append(entry);
+  }
+
+  const write = () => {
+    if (select.value === "") {
+      scoreEl.removeAttribute(option.name);
+    } else {
+      scoreEl.setAttribute(option.name, select.value);
+    }
+  };
+  select.addEventListener("change", write);
+
+  controls.append(select);
+  root.reset = () => {
+    select.value = "";
+    scoreEl.removeAttribute(option.name);
+  };
+  return root;
+}
+
 function buildControl(scoreEl, cssState, option) {
   switch (option.kind) {
     case "number":
@@ -256,6 +288,8 @@ function buildControl(scoreEl, cssState, option) {
       return buildFontControl(scoreEl, cssState, option);
     case "boolean-attribute":
       return buildBooleanAttributeControl(scoreEl, option);
+    case "enum-attribute":
+      return buildEnumAttributeControl(scoreEl, option);
     default:
       throw new Error(`unknown option kind "${option.kind}"`);
   }
@@ -294,7 +328,7 @@ function buildPane(scoreEl, panelGroupsEl) {
 function copyCss(cssState) {
   const lines = [];
   for (const option of OPTIONS) {
-    if (option.kind === "boolean-attribute") continue;
+    if (option.kind === "boolean-attribute" || option.kind === "enum-attribute") continue;
     const prop = cssPropertyFor(option.name);
     if (cssState.has(prop)) lines.push(`  --${prop}: ${cssState.get(prop)};`);
   }
