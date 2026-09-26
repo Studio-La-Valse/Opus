@@ -153,31 +153,38 @@ Small and well-specified. Each is a single change and none depend on each other.
   `scripts/build-wasm.sh` has no ignore rule for it in place yet. Add an
   explicit `/wasm/pkg/` entry to the root `.gitignore`.
 
+- `WalkerCtx::user_layout` is never read: no visitor in either walk pass
+  consults it, so `walk_document`'s `user_layout` parameter exists only to fill
+  it, and the wasm constructor passes a default `UserLayout` for no reason but
+  the signature. Remove the field and the parameter.
+
+- `cargo doc -p lib` reports three broken intra-doc links: `Self::lookup` on
+  `ScorePart` in `score_defaults.rs`, `StaffCtx` in `staff_measure.rs`, and
+  `from_sources` / the private `ordered_bounds` in `tie.rs`.
+
 ## 4. Features
 
 Larger than a fix. Several are comparable in size to section 1 and will want the
 same code-anchored breakdown before they start. Tentatively ordered by
 consecutive feature impact.
 
-- **User-defined layout from a deserialized file.** Decide yml, ini, json, etc.
-  Keep the current cli arguments: allow them as additional overrides on top of
-  the user layout. Review the structure of the user layout particularly: should
-  it be a flat list or nested? Also fully mirror app defaults and user layout: no
-  option should exist in one that doesn't exist in the other — however user
-  layout options are always optional, app defaults are static and readonly and
-  always have a value assigned. The user layout file should always be optional,
-  never required for cli functionality. Note that the wasm path already takes a
-  whole `UserLayout` inside its `RenderOptions`, so whatever precedence the cli
-  settles on has to be expressible there too.
+- **A layout file for `<music-xml>`.** The CLI layers `--layout <file.toml>`
+  under its flags with `UserLayout::overlay`; the web component has only its
+  CSS custom properties. A `layout` attribute naming a file to fetch, with the
+  custom properties overlaid on top, would give it the same two tiers. Nothing
+  on the wasm side needs to change: `RenderOptions.layout` already takes one
+  merged `UserLayout`, so the merge belongs in JS (or in a small wasm helper
+  exposing `overlay`), and the file would be JSON or TOML parsed in the browser.
 
 - **SMuFL brace alternatives.** `SmuflFont::brace` already takes an alternate
   name and resolves its own box and advance through `glyphsWithAlternates`, but
   nothing ever passes one, so Bravura's `braceSmall` / `braceLarge` /
   `braceLarger` / `braceFlat` are unreachable. Exposing them wants a style enum
-  on `UserLayout` rather than a name: `UserLayout` derives `Copy` and so cannot
-  hold a `String`. The brace now scales from the glyph's own bounding box rather
-  than a nominal four staff spaces, so an alternate of a different height comes
-  out the right size with no further work.
+  in `layout_options!` rather than a free-text glyph name, so an unknown
+  alternate is a parse error rather than a missing glyph. The brace now scales
+  from the glyph's own bounding box rather than a nominal four staff spaces, so
+  an alternate of a different height comes out the right size with no further
+  work.
 
 - **The rest of what a `<part-group>` says.** `<group-symbol default-x>` is the
   document declaring how far from the system its symbol sits, and every real
@@ -191,26 +198,17 @@ consecutive feature impact.
 
 - **Read SMuFL `engravingDefaults`.** `SmuflMetadata` deserializes glyph boxes,
   advance widths, anchors and alternates, but not the `engravingDefaults` block,
-  so every thickness it defines is transcribed into `AppDefaults` by hand — see
-  the note on `tie_endpoint_thickness`, and the two group-symbol thicknesses
+  so every thickness it defines is transcribed into `APP_DEFAULTS` by hand — see
+  the note on `tie.endpoint_thickness`, and the two group-symbol thicknesses
   added with it. Wiring it up means a new resolution tier between
-  `ScoreDefaults.appearance` and `AppDefaults`.
+  `ScoreDefaults.appearance` and `APP_DEFAULTS`.
   
   Doing so changes existing output, which is why it is not a free cleanup: four
   of the transcribed values have drifted from Bravura's own —
-  `staff_line_thickness` is 1.1 against `staffLineThickness` 0.13 spaces (1.3),
-  `barline_light` 1.875 against `thinBarlineThickness` 0.16 (1.6),
-  `beam_spacing` 1.5 against `beamSpacing` 0.25 (2.5), and `stem_thickness` 1.0
+  `staff.line_width` is 1.1 against `staffLineThickness` 0.13 spaces (1.3),
+  `barline.light` 1.875 against `thinBarlineThickness` 0.16 (1.6),
+  `beam.spacing` 1.5 against `beamSpacing` 0.25 (2.5), and `stem.thickness` 1.0
   against `stemThickness` 0.12 (1.2). The tie and beam thicknesses are faithful.
-
-- **Part group and part names drawn left of the brace or section bracket**, if
-  one exists. This needs a part-name font type: `RenderFonts` currently carries
-  music, title and lyric, so part names are the fourth — the lyric face is the
-  pattern to copy, including its `AppDefaults` entry and its `UserLayout` / wasm
-  option. Every group symbol now reports an exact `bounds()`, which is what a
-  name right-aligns against, and the spacing left of the system is already
-  `section_symbol_gap` and its two siblings. Sections should not have a
-  (potential) name attached.
 
 - **Generalize SMuFL parsing** from some point onwards: so far manageable in
   code, but defining thousands of SMuFL glyphs in code is undesirable.
@@ -246,7 +244,7 @@ consecutive feature impact.
   glyph lookup rather than being decided by duration alone.
 
 - **Lyrics.** The font is already plumbed end to end — `RenderFonts::lyric`,
-  `AppDefaults::lyric_font`, the wasm `lyricFont` option — so what is missing is
+  the `lyric.font` layout option — so what is missing is
   reading `<lyric>`, placing the syllables, and the vertical space they claim.
 
 - **Every articulation imaginable.**
