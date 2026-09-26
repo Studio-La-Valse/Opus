@@ -30,7 +30,6 @@ mod tests {
     const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
     const GROUP_SYMBOLS: &str = "assets/xmlfixtures/group-symbols.musicxml";
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     /// The system's left edge, at the top line of the first staff spanned.
     const ORIGIN: XY = XY { x: 500., y: 200. };
@@ -44,7 +43,7 @@ mod tests {
 
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_META), &asset(GLYPH_NAMES)))
+        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_META)))
     }
 
     /// A symbol of `kind` at `level`, measured over [`SPAN`] and arranged at
@@ -120,7 +119,7 @@ mod tests {
         )
         .expect("test document does not parse");
 
-        walk_document(&document, font(), &mut |_stage| {})
+        walk_document(&document, &mut |_stage| {})
     }
 
     fn arrange(score: &mut Score, defaults: &ScoreDefaults, user_layout: &UserLayout) {

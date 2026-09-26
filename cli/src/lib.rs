@@ -3,3 +3,4 @@
 //! is a thin `clap` front end over this module.
 
 pub mod commands;
+pub mod smufl_fonts;

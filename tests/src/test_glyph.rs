@@ -9,8 +9,11 @@ mod tests {
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
     use lib::score::core::clef::Clef as ClefCore;
+    use lib::score::layout_options::UserLayout;
+    use lib::score::score_defaults::ScoreDefaults;
     use lib::score::visual::arranger::ScoreMeasurement;
     use lib::score::visual::clef::Clef;
+    use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::placed::Placed;
     use lib::score::visual::staff::Staff;
     use lib::smufl::glyphs::brace::BraceStyle;
@@ -27,11 +30,24 @@ mod tests {
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
         FONT.get_or_init(|| {
-            SmuflFont::load(
-                &asset("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json"),
-                &asset("assets/smufl/metadata/glyphnames.json"),
-            )
+            SmuflFont::load(&asset(
+                "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+            ))
         })
+    }
+
+    /// A clef on a five-line staff with its glyph looked up in `font()`, as the
+    /// arrange would leave it.
+    fn treble_clef() -> Clef {
+        let mut clef = Clef::new(ClefCore::Treble, Staff::DEFAULT_LINES);
+        let score_defaults = ScoreDefaults::default();
+        let user_layout = UserLayout::default();
+        clef.resolve_layout(LayoutParams {
+            score_defaults: &score_defaults,
+            user_layout: &user_layout,
+            font: font(),
+        });
+        clef
     }
 
     /// Origin (10, 20), with a box normalized to 4 world units: 2 x 6 of them
@@ -151,7 +167,7 @@ mod tests {
     fn a_glyph_box_agrees_with_the_visual_element_that_placed_it() {
         let smufl_clef = font().clef(&ClefCore::Treble, Staff::DEFAULT_LINES);
 
-        let mut clef = Clef::new(smufl_clef.clone());
+        let mut clef = treble_clef();
         clef.xy = XY { x: 40.0, y: 60.0 };
         clef.rescale(Clef::COURTESY_SCALE);
         ScoreMeasurement.measure_clef(&mut clef);
@@ -247,14 +263,33 @@ mod tests {
         ))
         .unwrap();
         meta.as_object_mut().unwrap().remove("glyphsWithAlternates");
-        let font = SmuflFont::load(
-            &meta.to_string(),
-            &asset("assets/smufl/metadata/glyphnames.json"),
-        );
+        let font = SmuflFont::load(&meta.to_string());
 
         let brace = font.brace(BraceStyle::Large);
         assert_eq!(brace.codepoint, '\u{E000}');
         assert_eq!(brace.advance, font.brace(BraceStyle::Default).advance);
+    }
+
+    fn leland() -> SmuflFont {
+        SmuflFont::load(&asset("assets/smufl/Leland-main/leland_metadata.json"))
+    }
+
+    /// Leland's metadata carries no advance widths at all, so the brace steps
+    /// back by its ink width instead.
+    #[test]
+    fn a_font_without_advance_widths_steps_the_brace_back_by_its_ink() {
+        let brace = leland().brace(BraceStyle::Default);
+        assert_eq!(brace.advance, brace.bbox.width());
+    }
+
+    /// Anchors are optional per glyph: Leland omits them for the double whole
+    /// notehead, which never carries a stem.
+    #[test]
+    fn a_notehead_without_anchors_has_no_cutouts_and_no_stem_anchors() {
+        let notehead = leland().notehead("noteheadDoubleWhole");
+        assert!(notehead.stem_anchor_left.is_none());
+        assert!(notehead.stem_anchor_right.is_none());
+        assert!(notehead.cutouts.nw.is_none() && notehead.cutouts.se.is_none());
     }
 
     #[test]
@@ -304,7 +339,7 @@ mod tests {
     /// so a point and a box scaled off the same element land consistently.
     #[test]
     fn placed_scales_points_and_boxes_by_the_same_unit() {
-        let mut clef = Clef::new(font().clef(&ClefCore::Treble, Staff::DEFAULT_LINES));
+        let mut clef = treble_clef();
         clef.xy = XY { x: 7.0, y: 11.0 };
         clef.rescale(0.5);
 

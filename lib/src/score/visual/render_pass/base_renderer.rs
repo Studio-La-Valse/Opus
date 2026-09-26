@@ -232,7 +232,7 @@ impl RenderPass for BaseRenderer {
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let glyph = clef
-            .clef
+            .glyph()
             .as_glyph(fonts.smufl, clef.color, clef.xy, clef.scale);
         out.push(glyph.into());
     }
@@ -261,7 +261,7 @@ impl RenderPass for BaseRenderer {
         fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = accidental.glyph.as_glyph(
+        let glyph = accidental.glyph().as_glyph(
             fonts.smufl,
             accidental.color,
             accidental.xy,
@@ -277,7 +277,7 @@ impl RenderPass for BaseRenderer {
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let glyph = rest
-            .glyph
+            .glyph()
             .as_glyph(fonts.smufl, rest.color, rest.xy, rest.scale);
         out.push(glyph.into());
     }
@@ -289,7 +289,7 @@ impl RenderPass for BaseRenderer {
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let glyph = note
-            .glyph
+            .glyph()
             .as_glyph(fonts.smufl, note.color, note.xy, note.scale);
         out.push(glyph.into());
     }
@@ -336,7 +336,7 @@ impl RenderPass for BaseRenderer {
         out: &mut Vec<DrawableElement<'a>>,
     ) {
         let glyph = flag
-            .glyph
+            .glyph()
             .as_glyph(fonts.smufl, flag.color, flag.xy, flag.scale);
         out.push(glyph.into());
     }

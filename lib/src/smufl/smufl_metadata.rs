@@ -176,7 +176,7 @@ fn map_arr(v: [f32; 2]) -> XY {
     XY { x: v[0], y: -v[1] }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Cutouts {
     pub nw: Option<BoundingBox>,
     pub ne: Option<BoundingBox>,

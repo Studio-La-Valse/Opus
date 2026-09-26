@@ -98,14 +98,18 @@ pub struct Note {
     /// in world units; see [`DotDefaults::spacing`](crate::score::layout_options::DotDefaults).
     pub dot_spacing: f32,
 
-    pub glyph: Notehead,
+    /// The SMuFL name of the notehead this note draws, which the walk settles
+    /// without knowing the font.
+    pub glyph_name: &'static str,
+    /// `glyph_name` looked up in the font, written by `resolve_layout`.
+    glyph: Option<Notehead>,
     pub accidental: Option<Accidental>,
 }
 
 impl Note {
     pub fn new(
         id: NoteId,
-        glyph: Notehead,
+        glyph_name: &'static str,
         default_x: f32,
         staff: StaffIdx,
         staff_line: i32,
@@ -114,7 +118,8 @@ impl Note {
     ) -> Self {
         Note {
             id,
-            glyph,
+            glyph_name,
+            glyph: None,
             accidental: None,
 
             default_x,
@@ -134,6 +139,18 @@ impl Note {
             color: Color::default(),
         }
     }
+
+    /// The notehead glyph in the font the score is arranged with.
+    ///
+    /// # Panics
+    ///
+    /// Before `resolve_layout` has run: the walk that builds the note does not
+    /// know the font.
+    pub fn glyph(&self) -> &Notehead {
+        self.glyph
+            .as_ref()
+            .expect("note glyph read before resolve_layout")
+    }
 }
 
 impl Placed for Note {
@@ -149,6 +166,7 @@ impl Placed for Note {
 impl Note {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         self.scale = self.size.resolve(params);
+        self.glyph = Some(params.font.notehead(self.glyph_name));
 
         self.color = params.foreground_color();
         self.dot_spacing = params

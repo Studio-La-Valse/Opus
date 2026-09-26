@@ -17,25 +17,33 @@
 mod tests {
     use cli::commands::read_musicxml;
     use std::fs::read_to_string;
-    use wasm::{RenderOptions, WasmScore};
+    use wasm::{RenderOptions, WasmMusicFont, WasmScore};
 
     fn asset(relative_path: &str) -> String {
         read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
             .unwrap_or_else(|e| panic!("failed to read {relative_path}: {e}"))
     }
 
+    const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
+    const LELAND_META: &str = "assets/smufl/Leland-main/leland_metadata.json";
+    const MAESTRO_META: &str = "assets/smufl/Maestro-main/Finale Maestro.json";
+
     /// Walks and arranges one document the way the wasm entry point does, which
     /// is the whole pipeline short of writing an output file. `document` is a
     /// repo-relative path.
     fn engrave(document: &str) {
-        let musicxml = read_musicxml(&format!("{}/../{document}", env!("CARGO_MANIFEST_DIR")));
-        let meta_json = asset("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = asset("assets/smufl/metadata/glyphnames.json");
+        engrave_in(document, BRAVURA_META);
+    }
 
-        let mut score = WasmScore::new(&musicxml, &meta_json, &glyph_names_json)
+    /// [`engrave`] in the font whose metadata is at `meta`.
+    fn engrave_in(document: &str, meta: &str) {
+        let musicxml = read_musicxml(&format!("{}/../{document}", env!("CARGO_MANIFEST_DIR")));
+        let font = WasmMusicFont::new(&asset(meta));
+
+        let mut score = WasmScore::new(&musicxml)
             .unwrap_or_else(|e| panic!("{document} failed to build: {e:?}"));
 
-        let mut output = score.render_with(&RenderOptions::default());
+        let mut output = score.render_with(&RenderOptions::default(), &font);
         assert!(
             !output.geometry().is_empty(),
             "{document} engraved to no geometry at all"
@@ -129,5 +137,39 @@ mod tests {
     #[test]
     fn an_orchestral_score_engraves() {
         fixture("stresstest");
+    }
+
+    /// Every sample and fixture, repo-relative.
+    fn every_document() -> Vec<String> {
+        let mut documents = Vec::new();
+        for dir in ["assets/xmlsamples", "assets/xmlfixtures"] {
+            let path = format!("{}/../{dir}", env!("CARGO_MANIFEST_DIR"));
+            for entry in std::fs::read_dir(&path).unwrap() {
+                let name = entry.unwrap().file_name().into_string().unwrap();
+                if name.ends_with(".musicxml") {
+                    documents.push(format!("{dir}/{name}"));
+                }
+            }
+        }
+        documents.sort();
+        documents
+    }
+
+    /// Leland ships no `glyphAdvanceWidths` and leaves the anchors off
+    /// `noteheadDoubleWhole`; neither may stop a document engraving.
+    #[test]
+    fn every_document_engraves_in_leland() {
+        for document in every_document() {
+            engrave_in(&document, LELAND_META);
+        }
+    }
+
+    /// Finale Maestro ships neither advance widths nor any glyph alternates, so
+    /// every brace falls back to the plain one.
+    #[test]
+    fn every_document_engraves_in_finale_maestro() {
+        for document in every_document() {
+            engrave_in(&document, MAESTRO_META);
+        }
     }
 }

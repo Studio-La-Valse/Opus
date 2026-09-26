@@ -124,6 +124,7 @@ dependencies = [
  "fontdb",
  "lib",
  "roxmltree 0.21.1",
+ "serde_json",
  "toml",
  "ttf-parser",
 ]

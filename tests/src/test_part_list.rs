@@ -14,11 +14,8 @@ mod tests {
     use lib::score::part_list::builder::build_part_list;
     use lib::score::part_list::display::format_part_list_tree;
     use lib::score::part_list::tree::PartListNode;
-    use lib::smufl::smufl_font::SmuflFont;
 
     const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
-    const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     fn fixture(relative: &str) -> String {
         read_to_string(format!("{}/../{relative}", env!("CARGO_MANIFEST_DIR")))
@@ -521,10 +518,9 @@ mod tests {
 
     /// Walks a document for real and returns what the build walk logged.
     fn log_build(xml: &str) -> Vec<ValidationIssue> {
-        let font = SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES));
         let document = parse(xml);
 
-        let (_score, _defaults, messages) = walk_document(&document, &font, &mut |_| {});
+        let (_score, _defaults, messages) = walk_document(&document, &mut |_| {});
 
         assert!(
             messages.iter().all(|m| m.severity == Severity::Info),

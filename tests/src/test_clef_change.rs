@@ -16,15 +16,16 @@ mod tests {
     use lib::score::core::staff_idx::StaffIdx;
     use lib::score::engrave::{EngravedScore, engrave};
     use lib::score::layout_options::UserLayout;
+    use lib::score::score_defaults::ScoreDefaults;
     use lib::score::visual::arranger::ScoreMeasurement;
     use lib::score::visual::clef::{Clef, ClefAnchor};
+    use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::note::NoteId;
     use lib::score::visual::score::Score;
     use lib::score::visual::staff::Staff;
     use lib::smufl::smufl_font::SmuflFont;
 
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     /// The official samples that actually write a clef part-way through a
     /// measure. Most do not: a clef almost always opens a measure, which is a
@@ -42,7 +43,7 @@ mod tests {
 
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES)))
+        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META)))
     }
 
     fn engraved(relative: &str) -> EngravedScore {
@@ -110,7 +111,14 @@ mod tests {
     /// has no width at all until it is scaled and measured, and every placement
     /// rule reads the width back.
     fn clef(which: lib::score::core::clef::Clef) -> Clef {
-        let mut clef = Clef::new(font().clef(&which, 5));
+        let mut clef = Clef::new(which, 5);
+        let score_defaults = ScoreDefaults::default();
+        let user_layout = UserLayout::default();
+        clef.resolve_layout(LayoutParams {
+            score_defaults: &score_defaults,
+            user_layout: &user_layout,
+            font: font(),
+        });
         clef.rescale(1.0);
         ScoreMeasurement.measure_clef(&mut clef);
         clef
@@ -132,7 +140,7 @@ mod tests {
 
         // The bass clef is fixed to the second line from the top, which is two
         // half-spaces down from the staff's top line.
-        let expected = 1000. + clef.clef.line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.);
+        let expected = 1000. + clef.glyph().line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.);
         assert_eq!(clef.xy.y, expected, "the clef should sit on its own line");
     }
 
@@ -146,7 +154,7 @@ mod tests {
         assert!(clef.width > 0., "a zero-wide clef would prove nothing here");
         assert_eq!(clef.xy.x, 400., "the clef's left edge should be the anchor");
 
-        let expected = 1000. + clef.clef.line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.);
+        let expected = 1000. + clef.glyph().line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.);
         assert_eq!(clef.xy.y, expected, "the clef should sit on its own line");
     }
 

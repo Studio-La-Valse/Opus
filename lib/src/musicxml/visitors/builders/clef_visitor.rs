@@ -1,8 +1,8 @@
 use crate::musicxml::visitor::Visitor;
 use crate::musicxml::walker_ctx::WalkerCtx;
+use crate::score::core::clef::Clef as ClefCore;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::clef::{Clef, ClefChange};
-use crate::smufl::glyphs::clef::Clef as SmuflClef;
 use roxmltree::Node;
 use std::collections::BTreeMap;
 
@@ -38,7 +38,7 @@ pub struct ClefVisitor {
     /// drawn in front of. Keyed by staff because a part's staves share one
     /// stream of `<note>` elements, and a change on staff 2 waits for a staff-2
     /// note however many staff-1 notes come first.
-    pending: BTreeMap<StaffIdx, SmuflClef>,
+    pending: BTreeMap<StaffIdx, (ClefCore, usize)>,
     /// Changes anchored so far in the current part, flushed in `exit_part`.
     changes: Vec<ClefChange>,
 }
@@ -51,19 +51,20 @@ impl ClefVisitor {
         }
     }
 
-    /// The glyph for whatever clef the staff under the cursor is now reading in.
+    /// Whatever clef the staff under the cursor is now reading in, with the
+    /// staff's line count.
     ///
-    /// Picked here rather than during the arrange because the choice depends on
-    /// how many lines the staff is drawn with, which the walk knows and the
-    /// arrange would have to look up again. `WalkCursorVisitor` stamps the
-    /// active clef before any visitor chained after it sees the element, so the
-    /// lookup only comes up empty for a `<clef>` nothing tracked -- which the
-    /// cursor has no arm for either.
-    fn active_glyph(&self, staff_idx: &StaffIdx, ctx: &WalkerCtx) -> Option<SmuflClef> {
+    /// The count is taken here rather than during the arrange because where the
+    /// glyph sits depends on how many lines the staff is drawn with, which the
+    /// walk knows and the arrange would have to look up again.
+    /// `WalkCursorVisitor` stamps the active clef before any visitor chained
+    /// after it sees the element, so the lookup only comes up empty for a
+    /// `<clef>` nothing tracked -- which the cursor has no arm for either.
+    fn active_clef(&self, staff_idx: &StaffIdx, ctx: &WalkerCtx) -> Option<(ClefCore, usize)> {
         let clef = ctx.cursor.staff.active_clef.get(staff_idx)?;
         let staff_lines = ctx.cursor.staff.lines(staff_idx);
 
-        Some(ctx.font.clef(clef, staff_lines))
+        Some((*clef, staff_lines))
     }
 }
 
@@ -80,12 +81,12 @@ impl<'a> Visitor<WalkerCtx<'a>> for ClefVisitor {
     /// waits for a note.
     fn enter_clef(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx: StaffIdx = ctx.cursor.staff.number;
-        let Some(glyph) = self.active_glyph(&staff_idx, ctx) else {
+        let Some((clef, staff_lines)) = self.active_clef(&staff_idx, ctx) else {
             return;
         };
 
         if ctx.cursor.position > 0 {
-            self.pending.insert(staff_idx, glyph);
+            self.pending.insert(staff_idx, (clef, staff_lines));
             return;
         }
 
@@ -100,7 +101,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ClefVisitor {
                 ctx.visual_score
                     .locate_staff_measure_mut(part_id, &staff_idx, measure_number - 1)
         {
-            previous_measure.clef_end = Some(Clef::new(glyph));
+            previous_measure.clef_end = Some(Clef::new(clef, staff_lines));
         }
     }
 
@@ -114,11 +115,12 @@ impl<'a> Visitor<WalkerCtx<'a>> for ClefVisitor {
     fn enter_note(&mut self, _node: &Node, ctx: &mut WalkerCtx) {
         let staff_idx: StaffIdx = ctx.cursor.staff.number;
 
-        if let Some(clef) = self.pending.remove(&staff_idx) {
+        if let Some((clef, staff_lines)) = self.pending.remove(&staff_idx) {
             self.changes.push(ClefChange {
                 anchor: ctx.cursor.note_id,
                 staff: staff_idx,
                 clef,
+                staff_lines,
             });
         }
     }
@@ -143,9 +145,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ClefVisitor {
             &part_id,
         );
 
-        part.set_opening_clef(&ctx.cursor.staff.opening_clef, |clef, staff_lines| {
-            Clef::new(ctx.font.clef(&clef, staff_lines))
-        });
+        part.set_opening_clef(&ctx.cursor.staff.opening_clef, Clef::new);
     }
 
     /// Hands this part's changes to the score and resets.

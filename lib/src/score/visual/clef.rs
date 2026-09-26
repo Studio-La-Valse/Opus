@@ -1,6 +1,7 @@
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
+use crate::score::core::clef::Clef as ClefCore;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::NoteId;
@@ -19,8 +20,8 @@ use crate::smufl::glyphs::clef::Clef as SmuflClef;
 /// are rebuilt from this list by
 /// [`ClefChangeArranger`](crate::score::visual::arranger::ClefChangeArranger).
 ///
-/// Holds the SMuFL glyph rather than the core clef because picking the glyph
-/// needs the staff's line count, which is settled during the walk -- see
+/// Carries the staff's line count alongside the clef because placing the glyph
+/// needs it, and it is settled during the walk -- see
 /// [`Clef::anchor_line`](crate::score::core::clef::Clef).
 pub struct ClefChange {
     /// The note or rest this change is drawn in front of.
@@ -28,7 +29,8 @@ pub struct ClefChange {
     /// The staff the change applies to, which is not necessarily the staff the
     /// anchor sits on: a part's staves share one stream of `<note>` elements.
     pub staff: StaffIdx,
-    pub clef: SmuflClef,
+    pub clef: ClefCore,
+    pub staff_lines: usize,
 }
 
 /// What a clef is pinned to horizontally.
@@ -60,7 +62,13 @@ pub struct Clef {
     pub color: Color,
     pub scale: f32,
 
-    pub clef: SmuflClef,
+    /// Which clef this is, settled by the walk without knowing the font.
+    pub clef: ClefCore,
+    /// The line count of the staff it is drawn on, which decides where a clef
+    /// that names no pitch sits.
+    pub staff_lines: usize,
+    /// `clef` looked up in the font, written by `resolve_layout`.
+    glyph: Option<SmuflClef>,
 }
 
 impl Placed for Clef {
@@ -83,7 +91,7 @@ impl Clef {
     /// change is written in front of.
     pub const COURTESY_GAP: f32 = 5.;
 
-    pub fn new(clef: crate::smufl::glyphs::clef::Clef) -> Clef {
+    pub fn new(clef: ClefCore, staff_lines: usize) -> Clef {
         Clef {
             xy: Default::default(),
             color: Color::BLACK,
@@ -93,12 +101,26 @@ impl Clef {
             height: 0.,
 
             clef,
+            staff_lines,
+            glyph: None,
         }
+    }
+
+    /// The clef glyph in the font the score is arranged with.
+    ///
+    /// # Panics
+    ///
+    /// Before `resolve_layout` has run: the walk that builds the clef does not
+    /// know the font.
+    pub fn glyph(&self) -> &SmuflClef {
+        self.glyph
+            .as_ref()
+            .expect("clef glyph read before resolve_layout")
     }
 
     /// Bounding box scaled to world pixels.
     pub fn scaled_box(&self) -> BoundingBox {
-        self.scale_box(&self.clef.bbox)
+        self.scale_box(&self.glyph().bbox)
     }
 
     /// Sets the scale (e.g. courtesy clefs at 0.8x). The width and height are
@@ -113,6 +135,7 @@ impl Clef {
 
 impl Clef {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        self.glyph = Some(params.font.clef(&self.clef, self.staff_lines));
         self.color = params.foreground_color();
     }
 }
@@ -151,7 +174,7 @@ impl Clef {
             ClefAnchor::GapBefore(x) => x - Clef::COURTESY_GAP - self.width,
         };
 
-        let dy = self.clef.line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scaling;
+        let dy = self.glyph().line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scaling;
 
         self.xy = XY {
             x,

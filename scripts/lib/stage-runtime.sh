@@ -16,7 +16,9 @@ stage_runtime() {
     "$dest/web" \
     "$dest/wasm/pkg" \
     "$dest/assets/smufl/bravura-bravura-1.392/redist/woff" \
-    "$dest/assets/smufl/metadata"
+    "$dest/assets/smufl/Leland-main" \
+    "$dest/assets/smufl/Maestro-main" \
+    "$dest/assets/smufl/Edwin-main"
 
   cp web/music-xml.js "$dest/web/"
 
@@ -28,5 +30,20 @@ stage_runtime() {
   cp assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff \
      assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff2 \
      "$dest/assets/smufl/bravura-bravura-1.392/redist/woff/"
-  cp assets/smufl/metadata/glyphnames.json "$dest/assets/smufl/metadata/"
+
+  # The other music fonts in MUSIC_FONTS ship no web formats, so their OTFs
+  # are served as they are.
+  cp assets/smufl/Leland-main/leland_metadata.json \
+     assets/smufl/Leland-main/Leland.otf \
+     assets/smufl/Leland-main/LICENSE.txt \
+     "$dest/assets/smufl/Leland-main/"
+  cp "assets/smufl/Maestro-main/Finale Maestro.json" \
+     assets/smufl/Maestro-main/FinaleMaestro.otf \
+     assets/smufl/Maestro-main/OFL.txt \
+     "$dest/assets/smufl/Maestro-main/"
+
+  # Edwin, the text face in Leland's and Bravura's textFontFamily.
+  cp assets/smufl/Edwin-main/Edwin-*.otf \
+     assets/smufl/Edwin-main/LICENSE.txt \
+     "$dest/assets/smufl/Edwin-main/"
 }

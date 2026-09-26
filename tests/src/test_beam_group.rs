@@ -31,7 +31,6 @@ mod tests {
     use lib::smufl::smufl_font::SmuflFont;
 
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     fn asset(relative: &str) -> String {
         read_to_string(format!("{}/../{relative}", env!("CARGO_MANIFEST_DIR")))
@@ -40,7 +39,7 @@ mod tests {
 
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_META), &asset(GLYPH_NAMES)))
+        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_META)))
     }
 
     /// A chord whose stem declares `beams`, one entry per level. Nothing else

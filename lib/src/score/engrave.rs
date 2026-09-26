@@ -28,6 +28,7 @@ use crate::musicxml::visitors::builders::build_logging_visitor::BuildLoggingVisi
 use crate::musicxml::visitors::builders::clef_visitor::ClefVisitor;
 use crate::musicxml::visitors::builders::content_visitor::ContentVisitor;
 use crate::musicxml::visitors::builders::layout_visitor::LayoutVisitor;
+use crate::musicxml::visitors::builders::music_font_visitor::MusicFontVisitor;
 use crate::musicxml::visitors::builders::print_layout_visitor::PrintLayoutVisitor;
 use crate::musicxml::visitors::builders::setup_visitor::SetupVisitor;
 use crate::musicxml::visitors::builders::tie_visitor::TieVisitor;
@@ -81,7 +82,7 @@ pub fn engrave(
     user_layout: &UserLayout,
     progress: &mut dyn FnMut(Stage),
 ) -> EngravedScore {
-    let (mut score, layout, messages) = walk_document(document, font, progress);
+    let (mut score, layout, messages) = walk_document(document, progress);
     arrange_score(&mut score, &layout, font, user_layout, progress);
     EngravedScore {
         score,
@@ -91,14 +92,13 @@ pub fn engrave(
 }
 
 /// The two document walks that build the [`Score`] and [`ScoreDefaults`]. Nothing here
-/// depends on [`UserLayout`], so the result can be cached and re-arranged for
-/// different user layouts.
+/// depends on [`UserLayout`] or on the music font, so the result can be cached
+/// and re-arranged for different user layouts and fonts.
 ///
 /// Emits [`Stage::FirstPass`] and [`Stage::SecondPass`], and returns whatever
 /// [`BuildLoggingVisitor`] had to say about the walk.
 pub fn walk_document(
     document: &Document,
-    font: &SmuflFont,
     progress: &mut dyn FnMut(Stage),
 ) -> (Score, ScoreDefaults, Vec<ValidationIssue>) {
     let mut cursor = WalkCursor::default();
@@ -111,12 +111,13 @@ pub fn walk_document(
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
         .uses(SetupVisitor {})
+        .uses(MusicFontVisitor {})
         .uses(PrintLayoutVisitor {})
         .uses(LayoutVisitor {
             encountered: HashSet::new(),
         })
         .uses(BuildLoggingVisitor::default());
-    let mut ctx = WalkerCtx::new(&mut layout, &mut cursor, &mut score, font, &mut messages);
+    let mut ctx = WalkerCtx::new(&mut layout, &mut cursor, &mut score, &mut messages);
     Walker::new(visitor).walk(document, &mut ctx);
 
     progress(Stage::FirstPass);
@@ -126,7 +127,7 @@ pub fn walk_document(
         .uses(ContentVisitor::new())
         .uses(TieVisitor::new())
         .uses(ClefVisitor::new());
-    let mut ctx = WalkerCtx::new(&mut layout, &mut cursor, &mut score, font, &mut messages);
+    let mut ctx = WalkerCtx::new(&mut layout, &mut cursor, &mut score, &mut messages);
     Walker::new(visitor).walk(document, &mut ctx);
 
     progress(Stage::SecondPass);
@@ -136,11 +137,9 @@ pub fn walk_document(
 
 /// Resolves the user layout onto an already-walked `score`, rebeams it, resolves
 /// every element's appearance, measures every element and arranges the pages.
-/// Callable on its own to re-lay-out a cached score for a new [`UserLayout`]
-/// without re-walking the document -- which is why `font` is a parameter here as
-/// well as on [`walk_document`]: an element whose glyph depends on the user
-/// layout has to be able to look it up on every arrange, not once during the
-/// walk.
+/// Callable on its own to re-lay-out a cached score for a new [`UserLayout`] or
+/// a new `font` without re-walking the document: every element looks its glyph
+/// up here, on every arrange, rather than once during the walk.
 ///
 /// Emits [`Stage::Rebeam`], [`Stage::ResolveLayout`] and [`Stage::LayoutPass`].
 /// Appearance resolution is its own downward pass ahead of measuring -- see

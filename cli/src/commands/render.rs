@@ -1,4 +1,5 @@
 use crate::commands::{print_issues, read_musicxml};
+use crate::smufl_fonts::{SmuflRoots, discover};
 use clap::{Args, Subcommand};
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
@@ -9,10 +10,11 @@ use lib::musicxml::visitors::validators::part_consistency_visitor::PartConsisten
 use lib::musicxml::visitors::validators::position_visitor::PositionVisitor;
 use lib::musicxml::visitors::validators::staff_details_visitor::StaffDetailsVisitor;
 use lib::musicxml::walker::Walker;
-use lib::score::engrave::{EngravedScore, Stage, engrave};
+use lib::score::engrave::{Stage, arrange_score, walk_document};
 use lib::score::layout_options::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
+use lib::smufl::font_choice::choose_music_font;
 use lib::smufl::smufl_font::SmuflFont;
 use roxmltree::{Document, ParsingOptions};
 use std::fs::read_to_string;
@@ -45,11 +47,12 @@ pub struct RenderArgs {
     #[arg(long, action)]
     overwrite: bool,
 
+    /// The SMuFL music font to engrave in, by name (`Bravura`, `Leland`, ...).
+    /// Overrides the document's `<music-font>`; without either, Bravura. The
+    /// font has to be installed -- see `opus font list` and
+    /// `opus font install`.
     #[arg(long)]
-    meta: String,
-
-    #[arg(long)]
-    glyphs: String,
+    music_font: Option<String>,
 
     #[arg(long, short, action)]
     debug: bool,
@@ -96,8 +99,7 @@ pub fn run(format: RenderCommand) {
         file,
         out,
         overwrite,
-        meta,
-        glyphs: glyph_names,
+        music_font,
         debug,
         layout_file,
         layout_args,
@@ -106,11 +108,6 @@ pub fn run(format: RenderCommand) {
     let mut time = Instant::now();
 
     let data = read_musicxml(&file);
-    let meta_content = read_to_string(&meta)
-        .unwrap_or_else(|err| panic!("Failed to read metadata '{meta}': {err}"));
-    let glyph_names_content = read_to_string(&glyph_names)
-        .unwrap_or_else(|err| panic!("Failed to read glyph names '{glyph_names}': {err}"));
-    let font = SmuflFont::load(&meta_content, &glyph_names_content);
 
     println!("Reading to string: {}ms", time.elapsed().as_millis());
     time = Instant::now();
@@ -148,11 +145,7 @@ pub fn run(format: RenderCommand) {
     // wants durations measures the gaps between stage callbacks.
     let mut stage_time = Instant::now();
 
-    let EngravedScore {
-        score: visual,
-        layout,
-        messages,
-    } = engrave(&document, &font, &user_layout, &mut |stage| {
+    let mut progress = |stage| {
         let elapsed = stage_time.elapsed().as_millis();
         stage_time = Instant::now();
 
@@ -167,7 +160,13 @@ pub fn run(format: RenderCommand) {
             Stage::ResolveLayout => println!("Resolving layout: {elapsed}ms"),
             Stage::LayoutPass => println!("Layout pass: {elapsed}ms"),
         }
-    });
+    };
+
+    // The walk does not need the font, so the document's own `<music-font>`
+    // can weigh in on which one to load before anything is arranged.
+    let (mut visual, layout, messages) = walk_document(&document, &mut progress);
+    let font = load_music_font(music_font.as_deref(), &layout.music_font);
+    arrange_score(&mut visual, &layout, &font, &user_layout, &mut progress);
 
     // Guarded because `print_issues` announces an empty list as "no issues
     // found", which would read as a validation verdict rather than as the walk
@@ -193,4 +192,26 @@ pub fn run(format: RenderCommand) {
     } else {
         svg::write(&pages, &target);
     }
+}
+
+/// Finds the installed SMuFL fonts, picks one by `user` → `document` →
+/// Bravura, and loads its metadata.
+fn load_music_font(user: Option<&str>, document: &[String]) -> SmuflFont {
+    let installed = discover(&SmuflRoots::for_this_system());
+    let names: Vec<String> = installed.iter().map(|font| font.name.clone()).collect();
+
+    let name = choose_music_font(user, document, &names).unwrap_or_else(|err| {
+        panic!("{err}; see `opus font list`, or install one with `opus font install <folder>`")
+    });
+    let font = installed.iter().find(|font| font.name == name).unwrap();
+
+    println!("Music font: {name} ({})", font.metadata.display());
+
+    let json = read_to_string(&font.metadata).unwrap_or_else(|err| {
+        panic!(
+            "Failed to read metadata '{}': {err}",
+            font.metadata.display()
+        )
+    });
+    SmuflFont::load(&json)
 }

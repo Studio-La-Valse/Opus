@@ -70,8 +70,8 @@ impl Chord {
             .unwrap();
 
             let tail_anchor = match stem.direction {
-                UpDown::Up => tail_note.glyph.stem_anchor_right,
-                UpDown::Down => tail_note.glyph.stem_anchor_left,
+                UpDown::Up => tail_note.glyph().stem_anchor_right,
+                UpDown::Down => tail_note.glyph().stem_anchor_left,
             }
             .unwrap();
             let tail_anchor = tail_note.scale_pt(&tail_anchor);
@@ -92,8 +92,8 @@ impl Chord {
                 .unwrap();
 
                 let tip_anchor = (match stem.direction {
-                    UpDown::Up => tip_note.glyph.stem_anchor_right,
-                    UpDown::Down => tip_note.glyph.stem_anchor_left,
+                    UpDown::Up => tip_note.glyph().stem_anchor_right,
+                    UpDown::Down => tip_note.glyph().stem_anchor_left,
                 })
                 .unwrap();
                 let tip_anchor = tip_note.scale_pt(&tip_anchor);

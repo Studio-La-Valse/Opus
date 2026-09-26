@@ -37,10 +37,9 @@ mod tests {
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
         FONT.get_or_init(|| {
-            SmuflFont::load(
-                &asset("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json"),
-                &asset("assets/smufl/metadata/glyphnames.json"),
-            )
+            SmuflFont::load(&asset(
+                "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+            ))
         })
     }
 
@@ -85,7 +84,7 @@ mod tests {
 
     fn engrave(xml: &str) -> Score {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (mut score, defaults, _messages) = walk_document(&document, font(), &mut |_stage| {});
+        let (mut score, defaults, _messages) = walk_document(&document, &mut |_stage| {});
 
         arrange_score(
             &mut score,

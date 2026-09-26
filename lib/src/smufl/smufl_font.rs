@@ -4,7 +4,7 @@ use crate::score::core::clef::Clef as ClefCore;
 use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::score::layout_options::{APP_DEFAULTS, UserLayout};
 use crate::score::visual::stem::UpDown;
-use crate::smufl::glyph_name::{GlyphName, ToChar, load_glyph_names};
+use crate::smufl::glyph_name::{GlyphName, ToChar, glyph_names};
 use crate::smufl::glyphs::accidental::Accidental;
 use crate::smufl::glyphs::brace::{Brace, BraceStyle};
 use crate::smufl::glyphs::bracket::{BracketBottom, BracketTop};
@@ -18,7 +18,7 @@ use std::collections::HashMap;
 
 pub struct SmuflFont {
     pub meta: SmuflMetadata,
-    pub glyph_names: HashMap<String, GlyphName>,
+    pub glyph_names: &'static HashMap<String, GlyphName>,
     /// The layout tier this font's `engravingDefaults` recommends, in tenths.
     /// See [`UserLayout::from_engraving_defaults`].
     pub layout: UserLayout,
@@ -26,10 +26,13 @@ pub struct SmuflFont {
 }
 
 impl SmuflFont {
-    pub fn load(meta_json_content: &str, glyph_names_json_content: &str) -> SmuflFont {
+    /// Loads a font from its SMuFL metadata file. Codepoints come from the
+    /// standard's own glyph-name table, which is the same for every font; see
+    /// [`glyph_names`].
+    pub fn load(meta_json_content: &str) -> SmuflFont {
         let meta: SmuflMetadata =
             serde_json::from_str(meta_json_content).expect("Invalid SMuFL metadata");
-        let glyph_names = load_glyph_names(glyph_names_json_content);
+        let glyph_names = glyph_names();
 
         let mut glyph_text: HashMap<char, String> = HashMap::new();
         for glyph in glyph_names.values() {
@@ -65,11 +68,17 @@ impl SmuflFont {
         let glyph_box = self.meta.glyph_boxes.get(name).unwrap();
         let bbox: BoundingBox = glyph_box.into();
 
-        let anchors = self.meta.glyph_anchors.get(name).unwrap();
-        let cutouts: Cutouts = anchors.to_cutouts(&bbox);
+        // Anchors are optional in the spec, and fonts do leave them off a
+        // notehead that never carries a stem -- Leland's `noteheadDoubleWhole`.
+        // Such a notehead has no cutouts and nothing for a stem to attach to.
+        let anchors = self.meta.glyph_anchors.get(name);
+        let cutouts = match anchors {
+            Some(anchors) => anchors.to_cutouts(&bbox),
+            None => Cutouts::default(),
+        };
 
-        let stem_anchor_left = anchors.stem_down_nw();
-        let stem_anchor_right = anchors.stem_up_se();
+        let stem_anchor_left = anchors.and_then(|a| a.stem_down_nw());
+        let stem_anchor_right = anchors.and_then(|a| a.stem_up_se());
 
         Notehead {
             codepoint,
@@ -195,7 +204,15 @@ impl SmuflFont {
         }
 
         let bbox: BoundingBox = self.meta.glyph_boxes.get(name).unwrap().into();
-        let advance = *self.meta.glyph_advance_widths.get(name).unwrap();
+
+        // Advance widths are optional in the spec (Leland and Finale Maestro
+        // omit them); the ink width stands in, as in `number_digit`.
+        let advance = self
+            .meta
+            .glyph_advance_widths
+            .get(name)
+            .copied()
+            .unwrap_or_else(|| bbox.width());
 
         Brace {
             codepoint,

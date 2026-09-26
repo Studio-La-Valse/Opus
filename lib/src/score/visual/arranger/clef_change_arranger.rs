@@ -178,7 +178,7 @@ impl ClefChangeArranger {
     ) -> Option<Clef> {
         let ctx = staff_ctx.get(&change.staff)?;
 
-        let mut clef = Clef::new(change.clef.clone());
+        let mut clef = Clef::new(change.clef, change.staff_lines);
         clef.resolve_layout(params);
 
         // Built here rather than during the measure pass, so it has to size itself

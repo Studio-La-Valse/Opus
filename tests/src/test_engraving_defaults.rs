@@ -22,7 +22,6 @@ mod tests {
 
     const BRAVURA_METADATA: &str =
         "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     fn asset(relative_path: &str) -> String {
         read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
@@ -31,14 +30,14 @@ mod tests {
 
     fn bravura() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_METADATA), &asset(GLYPH_NAMES)))
+        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_METADATA)))
     }
 
     /// Bravura, with its `engravingDefaults` block handed to `edit` first.
     fn edited_bravura(edit: impl FnOnce(&mut serde_json::Map<String, Value>)) -> SmuflFont {
         let mut meta: Value = serde_json::from_str(&asset(BRAVURA_METADATA)).unwrap();
         edit(meta.as_object_mut().unwrap());
-        SmuflFont::load(&meta.to_string(), &asset(GLYPH_NAMES))
+        SmuflFont::load(&meta.to_string())
     }
 
     fn with_staff_line_thickness(spaces: f64) -> SmuflFont {
@@ -67,7 +66,7 @@ mod tests {
 
     fn engrave(xml: &str, font: &SmuflFont, user_layout: &UserLayout) -> Score {
         let document = Document::parse(xml).expect("score does not parse");
-        let (mut score, defaults, _) = walk_document(&document, font, &mut |_| {});
+        let (mut score, defaults, _) = walk_document(&document, &mut |_| {});
         arrange_score(&mut score, &defaults, font, user_layout, &mut |_| {});
         score
     }

@@ -1,6 +1,7 @@
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
+use crate::score::core::accidental::Accidental as AccidentalCore;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::staff::Staff;
 use crate::smufl::glyphs::accidental::Accidental as SmuflAccidental;
@@ -13,11 +14,14 @@ pub struct Accidental {
     pub scale: f32,
     pub color: Color,
 
-    pub glyph: SmuflAccidental,
+    /// Which accidental this is, settled by the walk without knowing the font.
+    pub accidental: AccidentalCore,
+    /// `accidental` looked up in the font, written by `resolve_layout`.
+    glyph: Option<SmuflAccidental>,
 }
 
 impl Accidental {
-    pub fn new(glyph: SmuflAccidental) -> Self {
+    pub fn new(accidental: AccidentalCore) -> Self {
         Self {
             xy: XY::ZERO,
             width: 0.,
@@ -26,8 +30,21 @@ impl Accidental {
             scale: 1.,
             color: Color::BLACK,
 
-            glyph,
+            accidental,
+            glyph: None,
         }
+    }
+
+    /// The accidental glyph in the font the score is arranged with.
+    ///
+    /// # Panics
+    ///
+    /// Before `resolve_layout` has run: the walk that builds the accidental
+    /// does not know the font.
+    pub fn glyph(&self) -> &SmuflAccidental {
+        self.glyph
+            .as_ref()
+            .expect("accidental glyph read before resolve_layout")
     }
 
     /// Sets the scale -- a key signature on a reduced staff, a cue note's
@@ -43,12 +60,12 @@ impl Accidental {
 
     /// Full world-space bounding box of the glyph.
     pub fn world_bbox(&self) -> BoundingBox {
-        self.glyph_bbox(&self.glyph.bbox)
+        self.glyph_bbox(&self.glyph().bbox)
     }
 
     /// World-space bounding boxes for all active cutouts.
     pub fn world_cutouts(&self) -> Vec<BoundingBox> {
-        if let Some(ref cutouts) = self.glyph.cutouts {
+        if let Some(ref cutouts) = self.glyph().cutouts {
             [cutouts.nw, cutouts.ne, cutouts.se, cutouts.sw]
                 .into_iter()
                 .flatten()
@@ -71,7 +88,7 @@ impl Accidental {
 
     /// Right-side cutouts of `self` (NE and SE) in world coordinates.
     fn right_cutouts(&self) -> Vec<BoundingBox> {
-        match self.glyph.cutouts {
+        match self.glyph().cutouts {
             Some(ref cutouts) => [cutouts.ne, cutouts.se]
                 .into_iter()
                 .flatten()
@@ -83,7 +100,7 @@ impl Accidental {
 
     /// Left-side cutouts of `self` (NW and SW) in world coordinates.
     fn left_cutouts(&self) -> Vec<BoundingBox> {
-        match self.glyph.cutouts {
+        match self.glyph().cutouts {
             Some(ref cutouts) => [cutouts.nw, cutouts.sw]
                 .into_iter()
                 .flatten()
@@ -160,6 +177,7 @@ impl Accidental {
 
 impl Accidental {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        self.glyph = Some(params.font.accidental(self.accidental));
         self.color = params.foreground_color();
     }
 }

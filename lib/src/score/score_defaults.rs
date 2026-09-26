@@ -199,6 +199,12 @@ pub struct ScoreDefaults {
     pub staff_distance: f32,
 
     pub part_list: Vec<PartListNode>,
+
+    /// `<defaults><music-font font-family>`: the music fonts the document asks
+    /// for, most preferred first, exactly as written. Empty where it names
+    /// none. Not all of them need exist -- `engraved` in `Maestro,engraved` is
+    /// a generic, not a font.
+    pub music_font: Vec<String>,
 }
 
 impl ScoreDefaults {
@@ -335,6 +341,8 @@ impl Default for ScoreDefaults {
             staff_distance: 80.,
 
             part_list: Vec::new(),
+
+            music_font: Vec::new(),
         }
     }
 }
