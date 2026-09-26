@@ -178,6 +178,7 @@ const LAYOUT_OPTIONS = [
   "part.symbol",
   "part.symbol_gap",
   "group_bracket.thickness",
+  "group_brace.style",
   "group_line.thickness",
   "group_square.thickness",
   "group_square.arm",

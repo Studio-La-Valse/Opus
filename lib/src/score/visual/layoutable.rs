@@ -3,6 +3,7 @@ use crate::score::core::group_symbol::{GroupLevel, GroupSymbol};
 use crate::score::core::note_kind::NoteKind;
 use crate::score::layout_options::{APP_DEFAULTS, UserLayout};
 use crate::score::score_defaults::ScoreDefaults;
+use crate::smufl::glyphs::brace::BraceStyle;
 use crate::smufl::smufl_font::SmuflFont;
 
 /// What every element resolves its own appearance and size from, threaded
@@ -130,6 +131,15 @@ impl LayoutParams<'_> {
             // `None` to have a weight.
             GroupSymbol::Brace | GroupSymbol::None => 0.,
         }
+    }
+
+    /// Which brace glyph a `brace` symbol is drawn with. Two-tier
+    /// (user -> app): neither the document nor the font has a say.
+    pub fn group_brace_style(&self) -> BraceStyle {
+        self.user_layout
+            .group_brace
+            .style
+            .unwrap_or(APP_DEFAULTS.group_brace.style)
     }
 
     /// How far a `square` symbol's arms reach toward the system, in tenths.

@@ -36,6 +36,7 @@ export const OPTION_GROUPS = [
 ];
 
 const GROUP_SYMBOL_VALUES = ["none", "brace", "bracket", "line", "square"];
+const BRACE_STYLE_VALUES = ["default", "small", "large", "larger", "flat"];
 
 export const OPTIONS = [
   // --- Page ---------------------------------------------------------------
@@ -434,6 +435,15 @@ export const OPTIONS = [
     unit: "tenths",
     label: "Bracket thickness",
     help: "Thickness of a bracket symbol's vertical stroke.",
+  },
+  {
+    group: "Group symbols",
+    name: "group_brace.style",
+    kind: "enum",
+    values: BRACE_STYLE_VALUES,
+    default: "default",
+    label: "Brace style",
+    help: "Which of the font's brace glyphs to draw; a font without the alternate draws its plain brace.",
   },
   {
     group: "Group symbols",

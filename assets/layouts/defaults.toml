@@ -77,6 +77,9 @@ symbol_gap = 5.0              # padding from the part-group symbol
 [group_bracket]
 thickness = 5.0
 
+[group_brace]
+style = "default"             # or small, large, larger, flat
+
 [group_line]
 thickness = 1.6
 

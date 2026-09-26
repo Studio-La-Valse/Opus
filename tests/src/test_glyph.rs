@@ -13,6 +13,7 @@ mod tests {
     use lib::score::visual::clef::Clef;
     use lib::score::visual::placed::Placed;
     use lib::score::visual::staff::Staff;
+    use lib::smufl::glyphs::brace::BraceStyle;
     use lib::smufl::smufl_font::SmuflFont;
     use lib::smufl::smufl_glyph::{SmuflGlyph, staff_space};
     use std::fs::{read, read_to_string};
@@ -193,7 +194,7 @@ mod tests {
     /// origin, because it hangs to the left of the system it braces.
     #[test]
     fn a_brace_is_placed_by_its_right_edge() {
-        let brace = font().brace(None);
+        let brace = font().brace(BraceStyle::Default);
         let at = XY { x: 500.0, y: 300.0 };
         let glyph = brace.as_glyph(font(), Color::BLACK, at, 2.0);
 
@@ -204,6 +205,64 @@ mod tests {
         // bearing the advance includes and the box does not.
         assert!(glyph.bounds().x_max() < 500.0);
         assert!(glyph.bounds().x_max() > 500.0 - 0.05 * unit);
+    }
+
+    /// Each style reaches its own alternate, with that glyph's own box and
+    /// advance rather than the plain brace's.
+    #[test]
+    fn a_brace_style_selects_the_fonts_alternate() {
+        let plain = font().brace(BraceStyle::Default);
+        assert_eq!(plain.codepoint, '\u{E000}');
+
+        for (style, codepoint) in [
+            (BraceStyle::Small, '\u{F400}'),
+            (BraceStyle::Large, '\u{F401}'),
+            (BraceStyle::Larger, '\u{F402}'),
+            (BraceStyle::Flat, '\u{F403}'),
+        ] {
+            let brace = font().brace(style);
+            let name = style.alternate_name().unwrap();
+            let expected: BoundingBox = font().meta.glyph_boxes.get(name).unwrap().into();
+
+            assert_eq!(brace.codepoint, codepoint, "{style:?}");
+            assert_eq!(
+                (brace.bbox.width(), brace.bbox.height()),
+                (expected.width(), expected.height()),
+                "{style:?}"
+            );
+            assert_eq!(
+                brace.advance,
+                font().meta.glyph_advance_widths[name],
+                "{style:?}"
+            );
+        }
+    }
+
+    /// A font that lists no brace alternates -- Finale Maestro lists none at
+    /// all -- still loads, and draws its plain brace for any style.
+    #[test]
+    fn a_font_without_the_alternate_draws_the_plain_brace() {
+        let mut meta: serde_json::Value = serde_json::from_str(&asset(
+            "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+        ))
+        .unwrap();
+        meta.as_object_mut().unwrap().remove("glyphsWithAlternates");
+        let font = SmuflFont::load(
+            &meta.to_string(),
+            &asset("assets/smufl/metadata/glyphnames.json"),
+        );
+
+        let brace = font.brace(BraceStyle::Large);
+        assert_eq!(brace.codepoint, '\u{E000}');
+        assert_eq!(brace.advance, font.brace(BraceStyle::Default).advance);
+    }
+
+    #[test]
+    fn a_brace_style_parses_its_own_spelling_and_nothing_else() {
+        assert_eq!("larger".parse::<BraceStyle>().unwrap(), BraceStyle::Larger);
+        assert_eq!(" Flat ".parse::<BraceStyle>().unwrap(), BraceStyle::Flat);
+        assert!("braceLarge".parse::<BraceStyle>().is_err());
+        assert!(serde_json::from_str::<BraceStyle>("\"huge\"").is_err());
     }
 
     /// The brace's placement steps back by the advance width the *metadata*
@@ -226,7 +285,8 @@ mod tests {
         let spaces_per_em = Staff::SPACES as f32;
 
         for (codepoint, advance) in [
-            ('\u{E000}', font().brace(None).advance),
+            ('\u{E000}', font().brace(BraceStyle::Default).advance),
+            ('\u{F401}', font().brace(BraceStyle::Large).advance),
             ('\u{E080}', font().number(0).digits[0].advance),
         ] {
             let gid = face.glyph_index(codepoint).expect("a glyph in Bravura");

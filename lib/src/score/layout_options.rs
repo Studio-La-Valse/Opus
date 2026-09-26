@@ -19,6 +19,7 @@
 use crate::geometry::color::Color;
 use crate::score::core::group_symbol::GroupSymbol;
 use crate::score::visual::staff::Staff;
+use crate::smufl::glyphs::brace::BraceStyle;
 use crate::smufl::smufl_metadata::EngravingDefaults;
 use serde::{Deserialize, Serialize};
 
@@ -184,6 +185,14 @@ layout_options! {
         /// The bracket's tip glyphs are scaled to match, so a thicker stroke
         /// keeps serifs in proportion to it.
         thickness: f32 = 5.,
+    }
+
+    group_brace: GroupBraceLayout, GroupBraceDefaults {
+        /// Which brace glyph is drawn: `default`, or one of the SMuFL alternates
+        /// `small`, `large`, `larger` and `flat`. A font that doesn't offer the
+        /// alternate draws its plain brace. Whichever glyph it is, it is scaled
+        /// from its own bounding box to the span it covers.
+        style: BraceStyle = BraceStyle::Default,
     }
 
     group_line: GroupLineLayout, GroupLineDefaults {

@@ -2,11 +2,12 @@ use clap::Args;
 use lib::geometry::color::Color;
 use lib::score::core::group_symbol::GroupSymbol;
 use lib::score::layout_options::{
-    BarlineLayout, BeamLayout, DotLayout, ForegroundLayout, GroupBracketLayout, GroupLineLayout,
-    GroupNameLayout, GroupSquareLayout, LyricLayout, MeasureStartLayout, NoteSizeLayout,
-    PageLayout, PartGroupLayout, PartLayout, SectionLayout, StaffLayout, StemLayout, TieLayout,
-    TitleLayout, UserLayout,
+    BarlineLayout, BeamLayout, DotLayout, ForegroundLayout, GroupBraceLayout, GroupBracketLayout,
+    GroupLineLayout, GroupNameLayout, GroupSquareLayout, LyricLayout, MeasureStartLayout,
+    NoteSizeLayout, PageLayout, PartGroupLayout, PartLayout, SectionLayout, StaffLayout,
+    StemLayout, TieLayout, TitleLayout, UserLayout,
 };
+use lib::smufl::glyphs::brace::BraceStyle;
 
 /// One flag per [`UserLayout`] option, each named after the kebab-case of the
 /// option's path: `tie.height_max` is `--tie-height-max`. See
@@ -126,6 +127,11 @@ pub struct LayoutArgs {
     #[arg(long)]
     group_bracket_thickness: Option<f32>,
 
+    /// Which brace glyph to draw: `default`, `small`, `large`, `larger` or
+    /// `flat`. A font without that alternate draws its plain brace.
+    #[arg(long)]
+    group_brace_style: Option<BraceStyle>,
+
     #[arg(long)]
     group_line_thickness: Option<f32>,
 
@@ -224,6 +230,9 @@ impl From<LayoutArgs> for UserLayout {
             },
             group_bracket: GroupBracketLayout {
                 thickness: args.group_bracket_thickness,
+            },
+            group_brace: GroupBraceLayout {
+                style: args.group_brace_style,
             },
             group_line: GroupLineLayout {
                 thickness: args.group_line_thickness,

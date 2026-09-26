@@ -24,7 +24,9 @@ pub struct SmuflMetadata {
     #[serde(rename = "glyphsWithAnchors")]
     pub glyph_anchors: HashMap<String, GlyphAnchors>,
 
-    #[serde(rename = "glyphsWithAlternates")]
+    /// Optional in the SMuFL spec: a font with no alternates (Finale Maestro)
+    /// omits the key entirely.
+    #[serde(rename = "glyphsWithAlternates", default)]
     pub glyph_alternatives: HashMap<String, Alternates>,
 
     /// The font designer's recommended line thicknesses. Optional in the SMuFL
