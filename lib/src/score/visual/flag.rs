@@ -34,7 +34,7 @@ impl Placed for Flag {
 
 impl Flag {
     pub fn new(glyph: SmuflFlag, size: NoteScale) -> Self {
-        let mut result = Flag {
+        Flag {
             xy: XY::ZERO,
             width: 0.,
             height: 0.,
@@ -45,30 +45,14 @@ impl Flag {
             color: Color::BLACK,
 
             glyph,
-        };
-
-        result.measure_size();
-
-        result
+        }
     }
 
     /// World-space position of the glyph's own SMuFL stem-attachment anchor.
-    /// After `arrange`, this coincides exactly with the stem corner it was
+    /// After [`place`](Self::place), this coincides exactly with the stem corner it was
     /// aligned to.
     pub fn stem_anchor_world(&self) -> XY {
         self.scale_pt(&self.glyph.stem_anchor)
-    }
-
-    /// The same anchor as an offset from the glyph origin, which is what
-    /// `arrange` subtracts to put the origin where the anchor lands on the stem.
-    fn scaled_stem_anchor(&self) -> XY {
-        self.glyph.stem_anchor.scale(self.unit())
-    }
-
-    fn measure_size(&mut self) {
-        let bbox = self.scale_box(&self.glyph.bbox);
-        self.width = bbox.width();
-        self.height = bbox.height();
     }
 }
 
@@ -86,15 +70,18 @@ impl Flag {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
+}
 
-    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
-        self.measure_size();
-    }
+// ---- placement ----
 
+impl Flag {
     /// Supplied origin is the point on the stem (its nw/sw corner) that the
     /// flag's own SMuFL stem-attachment anchor should land on - not the
     /// flag's own top-left corner.
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin - self.scaled_stem_anchor();
+    pub fn place(&mut self, origin: &XY) {
+        // The offset from the glyph's origin to its stem-attachment anchor,
+        // subtracted to put the origin where the anchor lands on the stem.
+        let anchor_offset = self.glyph.stem_anchor.scale(self.unit());
+        self.xy = *origin - anchor_offset;
     }
 }

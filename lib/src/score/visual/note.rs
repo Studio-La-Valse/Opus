@@ -6,8 +6,6 @@ use crate::score::visual::dot::Dot;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note_scale::NoteScale;
 use crate::score::visual::placed::Placed;
-use crate::score::visual::staff::Staff;
-use crate::score::visual::staff_ctx::StaffCtx;
 use crate::score::visual::stem::UpDown;
 use crate::score::visual::system::SystemKey;
 use crate::smufl::glyphs::notehead::Notehead;
@@ -56,7 +54,8 @@ impl From<u32> for NoteId {
 pub struct NoteAnchor {
     pub key: SystemKey,
     /// Left edge of the notehead at its vertical centre -- exactly what
-    /// `Note::xy` is, per `Note::arrange_ctx` and `PartMeasure::ledger_lines`.
+    /// `Note::xy` is, per `ContentArranger::arrange_note_ctx` and
+    /// `ContentArranger::part_measure_ledger_lines`.
     pub left: XY,
     pub width: f32,
     /// Right edge of the `PartMeasure` this note sits in. A tie broken across a
@@ -103,10 +102,6 @@ pub struct Note {
 }
 
 impl Note {
-    /// Gap in tenths between a notehead's left edge and the right edge of its
-    /// accidental. Scaled with the note, like everything else it owns.
-    const ACCIDENTAL_GAP: f32 = 2.;
-
     pub fn new(
         id: NoteId,
         glyph: Notehead,
@@ -136,24 +131,6 @@ impl Note {
             height: f32::default(),
 
             color: Color::default(),
-        }
-    }
-
-    pub fn arrange_ctx(&mut self, origin: &XY, staff_ctx: &StaffCtx) {
-        let staff_top = origin.mv(0., staff_ctx.distance_from_top);
-        let note_dy =
-            self.staff_line as f32 * ((Staff::DEFAULT_SPACE_SIZE / 2.) * staff_ctx.scaling);
-        let note_top = staff_top.mv(0., note_dy);
-        self.xy = note_top.mv(self.default_x, 0.);
-
-        self.arrange_accidental();
-    }
-
-    fn arrange_accidental(&mut self) {
-        let gap = Note::ACCIDENTAL_GAP * self.scale;
-
-        if let Some(accidental) = &mut self.accidental {
-            accidental.arrange(&self.xy.mv(-gap, 0.));
         }
     }
 }
@@ -189,28 +166,6 @@ impl Note {
 
         for dot in self.dots.iter_mut() {
             dot.resolve_layout(params);
-        }
-    }
-}
-
-impl Note {
-    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        self.height = Staff::DEFAULT_SPACE_SIZE * self.scale;
-
-        let glyph = &self.glyph;
-        let bbox = self.scale_box(&glyph.bbox);
-
-        self.width = bbox.width();
-
-        if let Some(accidental) = &mut self.accidental {
-            // Sized with the note, not the staff: a cue or grace note's
-            // accidental is reduced by the same factor its notehead is.
-            accidental.rescale(self.scale);
-            accidental.measure(available, params);
-        }
-
-        for dot in &mut self.dots {
-            dot.measure(available, params);
         }
     }
 }

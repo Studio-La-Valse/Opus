@@ -1,4 +1,3 @@
-use crate::geometry::xy::XY;
 use crate::score::core::group_symbol::GroupLevel;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
@@ -174,20 +173,12 @@ impl Score {
     }
 
     /// Resolves every page's appearance from `params`. Run once over the whole
-    /// tree ahead of [`measure`](Score::measure) -- see
-    /// [`arrange_score`](crate::score::engrave::arrange_score).
+    /// tree ahead of the
+    /// [`ScoreMeasurement`](crate::score::visual::arranger::ScoreMeasurement)
+    /// -- see [`arrange_score`](crate::score::engrave::arrange_score).
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         for page in self.pages.values_mut() {
             page.resolve_layout(params);
-        }
-    }
-
-    /// Sizes every page. Page *placement* is a separate pass -- see
-    /// [`PageArranger`](crate::score::visual::arranger::PageArranger),
-    /// which is why `Score` has no `arrange`.
-    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        for page in self.pages.values_mut() {
-            page.measure(available, params);
         }
     }
 
@@ -216,7 +207,7 @@ impl Score {
                             }
 
                             for measure in part.measures.values() {
-                                // `Part::arrange` walks its measures left to
+                                // `PageArranger::arrange_part_clear_of` walks its measures left to
                                 // right, advancing the origin by each
                                 // measure's width, so these two are the
                                 // measure's own span.

@@ -33,34 +33,35 @@ const BRACKET_STROKE_SEAM: f32 = 1.;
 /// same walked score.
 ///
 /// [`shape`](Self::shape) and [`bounds`](Self::bounds) are written by the same
-/// statement in [`arrange`](Self::arrange) and readable but not writable,
-/// so ink that falls outside the reported box is unconstructible. That is the
-/// arrangement [`Glyph`](crate::drawable::elements::glyph::Glyph) uses for a
-/// single glyph, kept for a composite of several pieces -- and the box has to be
-/// exact, because instrument names are aligned against it.
+/// statement in
+/// [`arrange_group_symbol`](crate::score::visual::arranger::PageArranger::arrange_group_symbol)
+/// so the arrange pass cannot produce ink that falls outside the reported box.
+/// That is the arrangement [`Glyph`](crate::drawable::elements::glyph::Glyph)
+/// uses for a single glyph, kept for a composite of several pieces -- and the
+/// box has to be exact, because instrument names are aligned against it.
 #[derive(Clone)]
 pub struct GroupSymbol {
-    level: GroupLevel,
-    declared: Option<Kind>,
+    pub level: GroupLevel,
+    pub declared: Option<Kind>,
 
-    kind: Kind,
-    color: Color,
-    gap: f32,
-    thickness: f32,
-    arm: f32,
-    span: f32,
+    pub kind: Kind,
+    pub color: Color,
+    pub gap: f32,
+    pub thickness: f32,
+    pub arm: f32,
+    pub span: f32,
 
-    glyphs: Glyphs,
+    pub glyphs: Glyphs,
 
-    anchor: XY,
-    shape: Shape,
-    bounds: BoundingBox,
+    pub anchor: XY,
+    pub shape: Shape,
+    pub bounds: BoundingBox,
 }
 
 /// The glyph metrics the resolved shape needs, read from the font on the layout
 /// pass. Owned rather than borrowed, so the score tree stays font-free.
 #[derive(Clone)]
-enum Glyphs {
+pub enum Glyphs {
     None,
     Brace(SmuflBrace),
     Bracket(BracketTop, BracketBottom),
@@ -124,7 +125,7 @@ impl GroupSymbol {
     }
 
     /// The shape resolved for this layout pass. `None` until the first
-    /// [`measure`](Self::measure).
+    /// [`measure_group_symbol`](crate::score::visual::arranger::ScoreMeasurement::measure_group_symbol).
     pub fn kind(&self) -> Kind {
         self.kind
     }
@@ -180,7 +181,7 @@ impl GroupSymbol {
     /// size. Placing it by `bbox.xy.y` rather than by the span's foot is the
     /// same point: a glyph whose ink does not start at its origin still lands
     /// where it should.
-    fn brace_shape(&self, glyph: &SmuflBrace) -> (Shape, BoundingBox) {
+    pub fn brace_shape(&self, glyph: &SmuflBrace) -> (Shape, BoundingBox) {
         let scale = self.span / (glyph.bbox.height() * Staff::DEFAULT_SPACE_SIZE);
         let unit = staff_space(scale);
 
@@ -209,7 +210,7 @@ impl GroupSymbol {
     /// The tips are scaled with the stroke so a thickened bracket keeps its
     /// serifs in proportion -- at the default thickness that factor is exactly
     /// one, and the glyphs are drawn at nominal size.
-    fn bracket_shape(&self, top: &BracketTop, bottom: &BracketBottom) -> (Shape, BoundingBox) {
+    pub fn bracket_shape(&self, top: &BracketTop, bottom: &BracketBottom) -> (Shape, BoundingBox) {
         let scale = self.thickness / BRACKET_GLYPH_STROKE;
         let unit = staff_space(scale);
 
@@ -248,7 +249,7 @@ impl GroupSymbol {
     }
 
     /// A bare vertical line, spanning exactly the staves it binds.
-    fn line_shape(&self) -> (Shape, BoundingBox) {
+    pub fn line_shape(&self) -> (Shape, BoundingBox) {
         let stroke = self.filled(
             XY {
                 x: self.anchor.x - self.thickness,
@@ -268,7 +269,7 @@ impl GroupSymbol {
     /// runs the same distance so the corners are square. The arms' right ends
     /// are what the gap is measured to, since they are what comes nearest the
     /// staff.
-    fn square_shape(&self) -> (Shape, BoundingBox) {
+    pub fn square_shape(&self) -> (Shape, BoundingBox) {
         let t = self.thickness;
         let left = self.anchor.x - self.arm - t;
         let top = self.anchor.y - t;
@@ -296,7 +297,7 @@ impl GroupSymbol {
     /// Nothing drawn, but still a box: zero-width at the anchor, spanning the
     /// staves. A name aligned against a symbol-less group then lands where it
     /// would have had there been one.
-    fn empty_shape(&self) -> (Shape, BoundingBox) {
+    pub fn empty_shape(&self) -> (Shape, BoundingBox) {
         let bounds = BoundingBox {
             xy: self.anchor,
             size: XY {
@@ -344,43 +345,5 @@ impl GroupSymbol {
             Kind::Bracket => Glyphs::Bracket(font.bracket_top(), font.bracket_bottom()),
             Kind::None | Kind::Line | Kind::Square => Glyphs::None,
         };
-    }
-
-    /// `available.y` is how tall a run of staves this symbol binds; `available.x`
-    /// is ignored, because a symbol's width follows from its shape rather than
-    /// being granted to it.
-    pub fn measure(&mut self, available: &XY, _params: LayoutParams<'_>) {
-        self.span = available.y.max(0.);
-    }
-
-    /// `origin.x` is the left edge this symbol sits clear of, and `origin.y` the
-    /// top line of the first staff it spans. Neither is a position for the
-    /// symbol itself: it steps left by its own gap from there.
-    ///
-    /// What that edge is depends on the level. A section's is the system's own
-    /// left edge, since a section symbol is the innermost of the three. A
-    /// part-group's is whatever its section drew, and a part's is whatever its
-    /// part-group drew, so the three stack outward without any of them knowing
-    /// how wide the others are -- which they could not know, a brace's width
-    /// following the span it covers.
-    pub fn arrange(&mut self, origin: &XY) {
-        self.anchor = origin.mv(-self.gap, 0.);
-
-        // One statement for both, so the box always describes the ink.
-        let (shape, bounds) = if self.span <= 0. {
-            self.empty_shape()
-        } else {
-            match (&self.glyphs, self.kind) {
-                (Glyphs::Brace(glyph), Kind::Brace) => self.brace_shape(glyph),
-                (Glyphs::Bracket(top, bottom), Kind::Bracket) => self.bracket_shape(top, bottom),
-                (_, Kind::Line) => self.line_shape(),
-                (_, Kind::Square) => self.square_shape(),
-                // `None`, and any shape whose glyphs failed to resolve.
-                _ => self.empty_shape(),
-            }
-        };
-
-        self.shape = shape;
-        self.bounds = bounds;
     }
 }

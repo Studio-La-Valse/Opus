@@ -30,21 +30,15 @@ impl Accidental {
         }
     }
 
-    /// Sets the scale and re-derives width/height from it, so callers that
-    /// rescale an accidental after construction -- a key signature on a reduced
-    /// staff, a cue note's accidental -- don't position against a stale,
-    /// pre-rescale size. The counterpart of
+    /// Sets the scale -- a key signature on a reduced staff, a cue note's
+    /// accidental. The width and height are not re-derived here: they are the
+    /// measure pass's to settle, so a caller that reads them straight after
+    /// rescaling has to
+    /// [`measure_accidental`](crate::score::visual::arranger::ScoreMeasurement::measure_accidental)
+    /// first. The counterpart of
     /// [`Clef::rescale`](crate::score::visual::clef::Clef::rescale).
     pub fn rescale(&mut self, scale: f32) {
         self.scale = scale;
-        self.measure_size();
-    }
-
-    fn measure_size(&mut self) {
-        let bbox = self.glyph_bbox(&self.glyph.bbox);
-
-        self.width = bbox.width();
-        self.height = bbox.height();
     }
 
     /// Full world-space bounding box of the glyph.
@@ -175,14 +169,5 @@ impl Accidental {
         self.color = user_layout
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
-    }
-
-    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
-        self.measure_size();
-    }
-
-    /// Provided origin is the right origin of the accidental.
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = origin.mv(-self.width, 0.);
     }
 }

@@ -19,23 +19,23 @@ use crate::score::visual::layoutable::LayoutParams;
 /// the left and nothing in the horizontal layout moves for it.
 ///
 /// [`bounds`](Self::bounds) is written by a single statement in
-/// [`arrange_between`](Self::arrange_between) and is readable but not writable,
-/// the invariant-by-construction shape [`GroupSymbol`] already uses.
+/// [`arrange_group_name_between`](crate::score::visual::arranger::PageArranger::arrange_group_name_between)
+/// so it always describes what is reserved.
 ///
 /// [`GroupSymbol`]: crate::score::visual::group_symbol::GroupSymbol
 #[derive(Clone)]
 pub struct GroupName {
-    name: String,
-    abbr: String,
+    pub name: String,
+    pub abbr: String,
 
     // Resolved on every layout pass, like a `GroupSymbol`'s appearance.
-    color: Color,
-    font_size: f32,
-    padding: f32,
-    abbreviated: bool,
+    pub color: Color,
+    pub font_size: f32,
+    pub padding: f32,
+    pub abbreviated: bool,
 
-    span: f32,
-    bounds: BoundingBox,
+    pub span: f32,
+    pub bounds: BoundingBox,
 }
 
 impl GroupName {
@@ -120,38 +120,5 @@ impl GroupName {
             .unwrap_or(params.app_defaults.foreground_color);
         self.font_size = params.group_name_size();
         self.padding = params.group_name_padding();
-    }
-
-    /// Sizes the name against a run of staves: `available.y` is how tall that
-    /// run is, the same span a [`GroupSymbol`](crate::score::visual::group_symbol::GroupSymbol)
-    /// is measured with. `available.x` is ignored -- the box's width follows
-    /// from where the symbol ended up, not from a width granted here.
-    pub fn measure(&mut self, available: &XY) {
-        self.span = available.y.max(0.);
-    }
-
-    /// Places the box in one statement, so it always describes what is reserved.
-    ///
-    /// `top` is the top line of the first staff the name covers, `right` the
-    /// left edge of the level's symbol (or where that symbol would have been,
-    /// when nothing is drawn), and `margin_left` the page's left margin. The
-    /// box's right edge is always `right` less the padding -- that is where a
-    /// right-aligned run ends. Its left edge is the margin when there is room,
-    /// and the right edge itself when there is not: a name with no room to its
-    /// left still ends in the right place and simply overflows past the margin,
-    /// since nothing in the horizontal layout moves to make space for it.
-    pub fn arrange_between(&mut self, top: XY, right: f32, margin_left: f32) {
-        let box_right = right - self.padding;
-        let box_left = margin_left.min(box_right);
-        self.bounds = BoundingBox {
-            xy: XY {
-                x: box_left,
-                y: top.y,
-            },
-            size: XY {
-                x: box_right - box_left,
-                y: self.span,
-            },
-        };
     }
 }

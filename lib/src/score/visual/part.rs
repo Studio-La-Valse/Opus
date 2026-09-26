@@ -180,7 +180,9 @@ impl Part {
     /// that are positioned against a staff without belonging to it -- notes and
     /// rests, which hang off a `PartMeasure` and only name their staff by index.
     ///
-    /// Walks the staves the same way [`Part::arrange`] does, hidden ones
+    /// Walks the staves the same way
+    /// [`PageArranger`](crate::score::visual::arranger::PageArranger)
+    /// does, hidden ones
     /// included in the map but contributing no distance of their own. If they
     /// contributed here but not there, every staff below a hidden one would have
     /// its notes pushed down past its own staff lines.
@@ -238,55 +240,6 @@ impl Part {
     pub fn shows_name(&self) -> bool {
         self.visible_staves().count() > 0 && self.name.is_drawn()
     }
-
-    /// How far left this part's own ink reaches, which is what its name aligns
-    /// against: the symbol's left edge when it draws, and the incoming
-    /// `clear_of` when it does not. The counterpart of
-    /// [`Section::symbol_left_edge`](crate::score::visual::section::Section).
-    fn symbol_left_edge(&self, clear_of: f32) -> f32 {
-        if self.shows_symbol() {
-            self.symbol.bounds().x_min()
-        } else {
-            clear_of
-        }
-    }
-
-    /// Places this part, with `clear_of` the left edge of whatever its
-    /// part-group drew and `margin_left` the page's left margin. A part's
-    /// symbol is the outermost of the three, so nothing keeps clear of it in
-    /// turn; its name ends a padding left of it and reaches back to the margin.
-    pub fn arrange_clear_of(&mut self, origin: &XY, clear_of: f32, margin_left: f32) {
-        self.xy = *origin;
-
-        let mut _origin = self.xy;
-        for staff in self.staves.values_mut() {
-            if staff.hidden {
-                continue;
-            }
-
-            _origin = _origin.mv(0., staff.distance_final);
-
-            staff.arrange(&_origin);
-            _origin = _origin.mv(0., staff.height());
-        }
-
-        let mut _origin = self.xy;
-        for measure in self.measures.values_mut() {
-            measure.arrange(&_origin);
-            _origin = _origin.mv(measure.width, 0.);
-        }
-
-        let first_visible_staff_distance = self.first_visible_staff_distance();
-        let symbol_top = XY {
-            x: clear_of,
-            y: self.xy.y + first_visible_staff_distance,
-        };
-        self.symbol.arrange(&symbol_top);
-
-        let name_right = self.symbol_left_edge(clear_of);
-        self.name
-            .arrange_between(symbol_top, name_right, margin_left);
-    }
 }
 impl Part {
     /// Recurses into every child unconditionally, a hidden part included: it
@@ -303,54 +256,5 @@ impl Part {
 
         self.symbol.resolve_layout(params);
         self.name.resolve_layout(params);
-    }
-
-    pub fn measure(&mut self, _: &XY, params: LayoutParams<'_>) {
-        self.width = 0.;
-        self.height = 0.;
-
-        if self.visibility == Visibility::Hidden {
-            return;
-        }
-
-        for staff in self.staves.values_mut() {
-            let available = &XY::INFINITE;
-            // a staff knows its own size (sum of measure widths, staff height)
-            staff.measure(available, params);
-
-            if staff.hidden {
-                continue;
-            }
-
-            self.height += staff.height();
-            self.height += staff.distance_final;
-        }
-
-        for measure in self.measures.values_mut() {
-            let available = &XY {
-                x: f32::INFINITY,
-                y: self.height,
-            };
-            measure.measure(available, params);
-            self.width += measure.width;
-        }
-
-        let first_visible_staff_distance = self.first_visible_staff_distance();
-        let staves_height = self.height - first_visible_staff_distance;
-
-        // Sized on every pass whatever it draws; see `Section::measure`. The
-        // name is sized with the same staves height the symbol is.
-        let available = XY {
-            x: f32::INFINITY,
-            y: staves_height,
-        };
-        self.symbol.measure(&available, params);
-        self.name.measure(&available);
-    }
-
-    /// Places this part as [`arrange_clear_of`](Part::arrange_clear_of) does,
-    /// with nothing to its left to keep clear of.
-    pub fn arrange(&mut self, origin: &XY) {
-        self.arrange_clear_of(origin, origin.x, origin.x);
     }
 }

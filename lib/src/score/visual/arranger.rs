@@ -1,26 +1,28 @@
-//! The passes that arrange a score once it has been measured: placing the
-//! pages, then resolving every score-wide notation element that placement
-//! makes possible. Grouped in one folder because each is otherwise a small,
-//! self-contained module easy to lose among `visual`'s other, purely
-//! structural ones.
+//! The passes that lay a score out once its appearance is resolved: measuring
+//! it, placing the pages, then resolving every score-wide notation element
+//! that placement makes possible. Grouped in one folder because each is
+//! otherwise a small, self-contained module easy to lose among `visual`'s
+//! other, purely structural ones.
 
 mod beam_arranger;
 mod clef_change_arranger;
 mod content_arranger;
 mod page_arranger;
+mod score_measurement;
 mod tie_arranger;
 
 pub use beam_arranger::BeamArranger;
 pub use clef_change_arranger::ClefChangeArranger;
 pub use content_arranger::ContentArranger;
 pub use page_arranger::PageArranger;
+pub use score_measurement::ScoreMeasurement;
 pub use tie_arranger::TieArranger;
 
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
 
-/// Runs one top-level layout pass over an already-measured [`Score`]: placing
-/// the pages, or -- once that has happened -- resolving beams, ties, or
+/// Runs one top-level layout pass over a [`Score`]: sizing it, placing the
+/// pages, or -- once that has happened -- resolving beams, ties, or
 /// mid-measure clef changes.
 ///
 /// The latter three depend on something the visual tree does not own end to
@@ -40,15 +42,17 @@ pub trait ScoreArranger {
 /// The passes [`arrange_score`](crate::score::engrave::arrange_score) runs, in
 /// order.
 ///
-/// Page layout first, because nothing else has an absolute coordinate before
-/// it. Content placement next, because every note, rest and opening column
+/// Measuring first, because nothing can be placed before it has a size. Page
+/// layout next, because nothing else has an absolute coordinate before
+/// it. Content placement after, because every note, rest and opening column
 /// needs its container's final position and nothing downstream can run
 /// without them: beams move stem tips, ties and clef changes read noteheads
 /// and staves. Beams before ties because they move stem tips and nothing in
 /// the tie geometry reads a stem's length. Clef changes read noteheads and
 /// staves, which neither of the others touch, so their position in the list is
 /// free.
-pub const SCORE_ARRANGERS: [&dyn ScoreArranger; 5] = [
+pub const SCORE_ARRANGERS: [&dyn ScoreArranger; 6] = [
+    &ScoreMeasurement,
     &PageArranger,
     &ContentArranger,
     &BeamArranger,

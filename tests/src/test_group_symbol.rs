@@ -16,6 +16,7 @@ mod tests {
     use lib::score::engrave::{arrange_score, walk_document};
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
+    use lib::score::visual::arranger::{PageArranger, ScoreMeasurement};
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::render_fonts::RenderFonts;
@@ -75,14 +76,8 @@ mod tests {
             font: font(),
         };
         symbol.resolve_layout(params);
-        symbol.measure(
-            &XY {
-                x: f32::INFINITY,
-                y: span,
-            },
-            params,
-        );
-        symbol.arrange(&ORIGIN);
+        ScoreMeasurement.measure_group_symbol(&mut symbol, span);
+        PageArranger.arrange_group_symbol(&mut symbol, &ORIGIN);
 
         symbol
     }
@@ -482,14 +477,8 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            symbol.measure(
-                &XY {
-                    x: f32::INFINITY,
-                    y: SPAN,
-                },
-                params,
-            );
-            symbol.arrange(&ORIGIN);
+            ScoreMeasurement.measure_group_symbol(symbol, SPAN);
+            PageArranger.arrange_group_symbol(symbol, &ORIGIN);
         };
 
         lay_out(&mut symbol, &UserLayout::default());
@@ -529,13 +518,7 @@ mod tests {
                 font: font(),
             };
             symbol.resolve_layout(params);
-            symbol.measure(
-                &XY {
-                    x: f32::INFINITY,
-                    y: SPAN,
-                },
-                params,
-            );
+            ScoreMeasurement.measure_group_symbol(&mut symbol, SPAN);
             symbol.kind()
         };
 

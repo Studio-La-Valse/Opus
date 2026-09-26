@@ -83,45 +83,6 @@ impl Clef {
     /// change is written in front of.
     pub const COURTESY_GAP: f32 = 5.;
 
-    /// Places this clef against `anchor`, sitting on whichever line its own clef
-    /// names measured down from `staff_top`.
-    ///
-    /// The one rule for every clef the engine draws. Only the anchor differs
-    /// between them: an opening clef takes the column
-    /// [`System::arrange_measure_starts`](crate::score::visual::system::System)
-    /// hands it, a clef at a barline the right edge of its own measure, a
-    /// mid-measure change the left edge of the note or rest it precedes.
-    ///
-    /// Reads `width`, so the clef has to be sized before it is placed --
-    /// [`rescale`](Clef::rescale) if it was built after the measure pass, as the
-    /// ones
-    /// [`ClefChangeArranger`](crate::score::visual::arranger::ClefChangeArranger) builds
-    /// are.
-    /// A clef straight out of [`new`](Clef::new) has no width at all.
-    ///
-    /// `staff_scaling` is the *staff's* factor and not the clef's own, which for
-    /// a courtesy clef is already reduced by [`Clef::COURTESY_SCALE`]: the line
-    /// it sits on is a fact about the staff, not about how large the glyph is
-    /// drawn.
-    ///
-    /// Reports nothing back. A caller that has to say how far right the ink
-    /// reaches -- only `arrange_clef_start` does, for the next column -- works it
-    /// out from the offset it passed in, exactly as the key and time signature
-    /// beside it do.
-    pub fn place(&mut self, anchor: ClefAnchor, staff_top: f32, staff_scaling: f32) {
-        let x = match anchor {
-            ClefAnchor::LeftEdgeAt(x) => x,
-            ClefAnchor::GapBefore(x) => x - Clef::COURTESY_GAP - self.width,
-        };
-
-        let dy = self.clef.line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scaling;
-
-        self.arrange(&XY {
-            x,
-            y: staff_top + dy,
-        });
-    }
-
     pub fn new(clef: crate::smufl::glyphs::clef::Clef) -> Clef {
         Clef {
             xy: Default::default(),
@@ -140,18 +101,13 @@ impl Clef {
         self.scale_box(&self.clef.bbox)
     }
 
-    fn measure_size(&mut self) {
-        let bbox = self.scale_box(&self.clef.bbox);
-        self.width = bbox.width();
-        self.height = bbox.height();
-    }
-
-    /// Sets the scale and re-derives width/height from it, so callers that
-    /// rescale a clef after construction (e.g. courtesy clefs at 0.8x) don't
-    /// end up positioning against a stale, pre-rescale size.
+    /// Sets the scale (e.g. courtesy clefs at 0.8x). The width and height are
+    /// not re-derived here: they are the measure pass's to settle, so a caller
+    /// that positions against them straight after rescaling has to
+    /// [`measure_clef`](crate::score::visual::arranger::ScoreMeasurement::measure_clef)
+    /// first, or it positions against a stale, pre-rescale size.
     pub fn rescale(&mut self, scale: f32) {
         self.scale = scale;
-        self.measure_size();
     }
 }
 
@@ -167,13 +123,47 @@ impl Clef {
             .foreground_color
             .unwrap_or(app_defaults.foreground_color);
     }
+}
 
-    pub fn measure(&mut self, _available: &XY, _params: LayoutParams<'_>) {
-        self.measure_size();
-    }
+// ---- placement ----
 
-    /// Supplied origin x coordinate is left of clef, y coordinate is the line in the staff.
-    pub fn arrange(&mut self, origin: &XY) {
-        self.xy = *origin;
+impl Clef {
+    /// Places this clef against `anchor`, sitting on whichever line its own clef
+    /// names measured down from `staff_top`.
+    ///
+    /// The one rule for every clef the engine draws. Only the anchor differs
+    /// between them: an opening clef takes the column
+    /// [`arrange_system_measure_starts`](crate::score::visual::arranger::ContentArranger::arrange_system_measure_starts)
+    /// hands it, a clef at a barline the right edge of its own measure, a
+    /// mid-measure change the left edge of the note or rest it precedes.
+    ///
+    /// Reads `width`, so the clef has to be sized before it is placed --
+    /// [`rescale`](Clef::rescale) if it was built after the measure pass, as the
+    /// ones
+    /// [`ClefChangeArranger`](crate::score::visual::arranger::ClefChangeArranger) builds
+    /// are.
+    /// A clef straight out of [`new`](Clef::new) has no width at all.
+    ///
+    /// `staff_scaling` is the *staff's* factor and not the clef's own, which for
+    /// a courtesy clef is already reduced by [`Clef::COURTESY_SCALE`]: the line
+    /// it sits on is a fact about the staff, not about how large the glyph is
+    /// drawn.
+    ///
+    /// Reports nothing back. A caller that has to say how far right the ink
+    /// reaches -- only `arrange_staff_measure_clef_start` does, for the next
+    /// column -- works it out from the offset it passed in, exactly as the key
+    /// and time signature beside it do.
+    pub fn place(&mut self, anchor: ClefAnchor, staff_top: f32, staff_scaling: f32) {
+        let x = match anchor {
+            ClefAnchor::LeftEdgeAt(x) => x,
+            ClefAnchor::GapBefore(x) => x - Clef::COURTESY_GAP - self.width,
+        };
+
+        let dy = self.clef.line as f32 * (Staff::DEFAULT_SPACE_SIZE / 2.) * staff_scaling;
+
+        self.xy = XY {
+            x,
+            y: staff_top + dy,
+        };
     }
 }

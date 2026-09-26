@@ -6,6 +6,7 @@ mod tests {
     use lib::score::core::time_signature::TimeSignature as TimeSignatureCore;
     use lib::score::score_defaults::ScoreDefaults;
     use lib::score::user_layout::UserLayout;
+    use lib::score::visual::arranger::{ContentArranger, ScoreMeasurement};
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::time_signature::TimeSignature;
     use lib::smufl::smufl_font::SmuflFont;
@@ -105,14 +106,8 @@ mod tests {
             font: font(),
         };
         time_signature.resolve_layout(params);
-        time_signature.measure(
-            &XY {
-                x: 0.,
-                y: staff_height,
-            },
-            params,
-        );
-        time_signature.arrange(&XY::ZERO);
+        ScoreMeasurement.measure_time_signature(&mut time_signature, staff_height);
+        ContentArranger.arrange_time_signature(&mut time_signature, &XY::ZERO);
 
         time_signature
     }

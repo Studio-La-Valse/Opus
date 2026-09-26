@@ -1,5 +1,4 @@
 use crate::geometry::color::Color;
-use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::PageMargins;
@@ -114,44 +113,6 @@ impl Page {
 
         for system in self.systems.values_mut() {
             system.resolve_layout(params);
-        }
-    }
-
-    pub fn measure(&mut self, available: &XY, params: LayoutParams<'_>) {
-        for system in self.systems.values_mut() {
-            system.measure(available, params);
-        }
-    }
-
-    pub fn arrange(&mut self, origin: &XY) {
-        let m_left = self.margins.left;
-        let m_top = self.margins.top;
-
-        // top left of available space after margins
-        let mut origin = origin.mv(m_left, m_top);
-
-        let mut first = true;
-        for system in self.systems.values_mut() {
-            let s_m_left = system.m_left;
-            let s_left = origin.x + s_m_left;
-
-            // space on top of system is either its margin to previous if any,
-            // else the distance to top of margins
-            let mut s_m_top = system.distance;
-            if first {
-                s_m_top = system.top;
-                first = false
-            }
-
-            let s_top = origin.y + s_m_top;
-
-            let s_origin = XY {
-                x: s_left,
-                y: s_top,
-            };
-            system.arrange(&s_origin);
-
-            origin = origin.mv(0., system.height + s_m_top);
         }
     }
 }

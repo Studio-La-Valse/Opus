@@ -22,7 +22,6 @@ use std::collections::HashSet;
 
 use roxmltree::Document;
 
-use crate::geometry::xy::XY;
 use crate::musicxml::validation_issue::ValidationIssue;
 use crate::musicxml::visitor::{DefaultVisitor, Visitor};
 use crate::musicxml::visitors::builders::build_logging_visitor::BuildLoggingVisitor;
@@ -199,10 +198,8 @@ pub fn arrange_score(
 
     progress(Stage::ResolveLayout);
 
-    score.measure(&XY::INFINITE, params);
-
-    // Placing the pages has to come first: every other pass here needs an
-    // absolute coordinate to work with, and nothing in the tree has one until
+    // Measuring comes first, then placing the pages: every other pass here needs
+    // an absolute coordinate to work with, and nothing in the tree has one until
     // then. See `SCORE_ARRANGERS` for the full ordering.
     for arranger in SCORE_ARRANGERS {
         arranger.arrange(score, params);
