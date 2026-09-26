@@ -55,27 +55,6 @@ Small and well-specified. Each is a single change and none depend on each other.
 - Scale grace and cue notes' accidental, flag and beam group. Decide how to
   handle vecs of chords with mixed grace, cue and normal notes: validation is a must.
 
-- `assets/xmlsamples/__MACOSX/` holds 18 tracked `._*.musicxml` AppleDouble
-  resource forks, left over from extracting a zip on macOS. Harmless, but
-  every glob that walks `assets/xmlsamples/` — including the exhibition
-  site's sample generator (`scripts/lib/generate-samples-json.py`) — has to
-  know to exclude them. Delete the directory instead.
-
-- `wasm/pkg/` is not listed in the root `.gitignore`. It is a build artifact,
-  today ignored only by its own `wasm/pkg/.gitignore`, which `wasm-pack`
-  writes on first build — so a fresh clone that has never run
-  `scripts/build-wasm.sh` has no ignore rule for it in place yet. Add an
-  explicit `/wasm/pkg/` entry to the root `.gitignore`.
-
-- `WalkerCtx::user_layout` is never read: no visitor in either walk pass
-  consults it, so `walk_document`'s `user_layout` parameter exists only to fill
-  it, and the wasm constructor passes a default `UserLayout` for no reason but
-  the signature. Remove the field and the parameter.
-
-- `cargo doc -p lib` reports three broken intra-doc links: `Self::lookup` on
-  `ScorePart` in `score_defaults.rs`, `StaffCtx` in `staff_measure.rs`, and
-  `from_sources` / the private `ordered_bounds` in `tie.rs`.
-
 - Ledger lines are drawn at `staff.line_width` (`PartMeasure::ledger_thickness`),
   but SMuFL gives them their own weight: Bravura's `legerLineThickness` is 0.16
   staff spaces against `staffLineThickness` 0.13. Give them a layout option of

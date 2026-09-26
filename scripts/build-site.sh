@@ -27,9 +27,7 @@ stage_runtime "$STAGE_DIR"
 # fail in the browser (they render fine through the CLI, which sniffs the
 # BOM in read_musicxml). Delete this list once the component learns to do
 # the same. Everything else in assets/xmlsamples/ is discovered below, so a
-# new sample needs no edit here - and the __MACOSX/._*.musicxml AppleDouble
-# resource forks are skipped for free, since they live one directory deeper
-# than this non-recursive glob reaches.
+# new sample needs no edit here.
 EXCLUDED_SAMPLES=(
   "MozaChloSample.musicxml"
   "MozaVeilSample.musicxml"

@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 ///
 /// Not `Copy`: it carries the part's and its part-group's names as owned
 /// `String`s. It is only ever borrowed by the callers that read it, so the cost
-/// of that is the `..enclosing` struct-updates in [`lookup`](Self::lookup)
+/// of that is the `..enclosing` struct-updates in [`lookup`](ScoreDefaults::lookup)
 /// cloning rather than copying.
 #[derive(Default, Clone)]
 pub struct ScorePart {

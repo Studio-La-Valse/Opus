@@ -55,7 +55,8 @@ pub struct StaffMeasure {
 
     /// The line count of the staff this measure belongs to, mirrored the same
     /// way `scale` is so that a measure can hand a complete
-    /// [`StaffCtx`] to the elements it arranges.
+    /// [`StaffCtx`](crate::score::visual::staff_ctx::StaffCtx) to the elements
+    /// it arranges.
     pub lines: usize,
 
     pub rests: Vec<Rest>,

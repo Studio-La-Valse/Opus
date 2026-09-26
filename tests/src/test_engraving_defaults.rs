@@ -65,7 +65,7 @@ mod tests {
 
     fn engrave(xml: &str, font: &SmuflFont, user_layout: &UserLayout) -> Score {
         let document = Document::parse(xml).expect("score does not parse");
-        let (mut score, defaults, _) = walk_document(&document, font, user_layout, &mut |_| {});
+        let (mut score, defaults, _) = walk_document(&document, font, &mut |_| {});
         arrange_score(&mut score, &defaults, font, user_layout, &mut |_| {});
         score
     }

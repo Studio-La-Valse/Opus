@@ -134,8 +134,8 @@ pub struct TieMetrics {
     pub midpoint_thickness: f32,
     pub height_ratio: f32,
     /// Well-ordered by construction (`height_min <= height_max`) -- see
-    /// [`ordered_bounds`], which every `TieMetrics` built via [`from_sources`]
-    /// is folded through.
+    /// `ordered_bounds`, which every `TieMetrics` built via `from_sources` is
+    /// folded through.
     pub height_min: f32,
     pub height_max: f32,
     pub note_gap: f32,
