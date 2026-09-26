@@ -22,6 +22,7 @@ use self::layout_args::LayoutArgs;
 use self::paths::OutputTarget;
 
 pub mod layout_args;
+pub mod layout_file;
 pub mod paths;
 mod pdf;
 mod svg;
@@ -53,8 +54,15 @@ pub struct RenderArgs {
     #[arg(long, short, action)]
     debug: bool,
 
+    /// A TOML layout file: one table per option group, e.g. `[tie]` with
+    /// `height_max = 14`. Optional; every option it leaves out falls back to
+    /// the document and then the app default. The layout flags below override
+    /// it, option by option.
+    #[arg(long = "layout")]
+    layout_file: Option<String>,
+
     #[command(flatten)]
-    layout: LayoutArgs,
+    layout_args: LayoutArgs,
 }
 
 /// Output format for `opus render`, chosen as a subcommand: `render svg` or
@@ -91,7 +99,8 @@ pub fn run(format: RenderCommand) {
         meta,
         glyphs: glyph_names,
         debug,
-        layout: layout_args,
+        layout_file,
+        layout_args,
     } = args;
 
     let mut time = Instant::now();
@@ -128,7 +137,11 @@ pub fn run(format: RenderCommand) {
 
     println!("Validation: {}ms", time.elapsed().as_millis());
 
-    let user_layout = UserLayout::from(layout_args);
+    // The flags are the more specific of the two, so they win option by option.
+    let file_layout = layout_file.as_deref().map(layout_file::read);
+    let user_layout = file_layout
+        .unwrap_or_default()
+        .overlay(UserLayout::from(layout_args));
 
     // The pipeline itself does no timing -- `std::time::Instant` is
     // unimplemented on wasm32, so `lib` stays clock-free and the caller that

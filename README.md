@@ -98,8 +98,12 @@ cargo run -p cli -- validate --file path/to/score.musicxml
 ```
 
 `render` accepts a large number of additional options controlling colors,
-page orientation, spacing, and other layout parameters. Run
-`cargo run -p cli -- render svg --help` for the full list.
+spacing, group symbols, fonts and other layout parameters. They can be kept in
+an optional TOML file passed with `--layout`;
+[assets/layouts/defaults.toml](assets/layouts/defaults.toml) lists every option
+at its default. Each option also has a flag of its own, spelled after its place
+in the file (`[tie] height_max` is `--tie-height-max`), which overrides the
+file. Run `cargo run -p cli -- render svg --help` for the full list.
 
 ## Using the web component
 

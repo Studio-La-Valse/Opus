@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use lib::score::layout_options::UserLayout;
+    use clap::{Args, Command};
+    use cli::commands::render::layout_args::LayoutArgs;
+    use cli::commands::render::layout_file;
+    use lib::score::layout_options::{APP_DEFAULTS, UserLayout};
     use serde_json::Value;
     use std::collections::BTreeSet;
     use std::fs::read_to_string;
@@ -110,5 +113,55 @@ mod tests {
             user_layout_paths(),
             "LAYOUT_OPTIONS in web/music-xml.js must list exactly the UserLayout options"
         );
+    }
+
+    /// Every layout flag is named after the kebab-case of its option's path --
+    /// the same spelling a CSS custom property uses -- and there is one per
+    /// option. `LayoutArgs`' conversion into `UserLayout` is an exhaustive
+    /// struct literal, so a missing flag already fails to compile; this pins
+    /// the names.
+    #[test]
+    fn layout_flags_are_the_kebab_case_of_each_option_path() {
+        let command = LayoutArgs::augment_args(Command::new("layout"));
+        let flags: BTreeSet<String> = command
+            .get_arguments()
+            .filter_map(|arg| arg.get_long())
+            .map(str::to_string)
+            .collect();
+
+        let expected: BTreeSet<String> = user_layout_paths()
+            .iter()
+            .map(|path| path.replace(['.', '_'], "-"))
+            .collect();
+
+        assert_eq!(flags, expected);
+    }
+
+    /// `assets/layouts/defaults.toml` documents every option at its app default.
+    /// It must parse, set every option -- serializing it back leaves no `null`
+    /// -- and set each to exactly what `APP_DEFAULTS` holds, so the file cannot
+    /// fall behind a newly added option or a retuned default.
+    #[test]
+    fn the_defaults_layout_file_spells_out_app_defaults() {
+        let path = format!(
+            "{}/../assets/layouts/defaults.toml",
+            env!("CARGO_MANIFEST_DIR")
+        );
+        let source = read_to_string(&path).expect("failed to read defaults.toml");
+        let layout = layout_file::parse(&source)
+            .unwrap_or_else(|e| panic!("defaults.toml is not a valid layout: {e}"));
+
+        let from_file = serde_json::to_value(&layout).expect("UserLayout serializes");
+        let app_defaults = serde_json::to_value(&APP_DEFAULTS).expect("AppDefaults serializes");
+
+        for path in user_layout_paths() {
+            let (group, field) = path.split_once('.').expect("group.field");
+            let value = &from_file[group][field];
+            assert!(!value.is_null(), "defaults.toml leaves out {path}");
+            assert_eq!(
+                value, &app_defaults[group][field],
+                "defaults.toml disagrees with APP_DEFAULTS on {path}"
+            );
+        }
     }
 }

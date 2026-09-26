@@ -273,7 +273,10 @@ macro_rules! layout_options {
 
         /// The hard-coded fallback for every [`UserLayout`] option, read from
         /// the one [`APP_DEFAULTS`] const.
-        #[derive(Debug)]
+        ///
+        /// `Serialize` is derived only so a test can compare it against a
+        /// layout file, the way `UserLayout`'s is.
+        #[derive(Debug, Serialize)]
         pub struct AppDefaults {
             $(
                 $(#[$group_attr])*
@@ -307,7 +310,7 @@ macro_rules! layout_options {
             }
 
             $(#[$group_attr])*
-            #[derive(Debug)]
+            #[derive(Debug, Serialize)]
             pub struct $defaults {
                 $(
                     $(#[$field_attr])*

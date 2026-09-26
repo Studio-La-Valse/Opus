@@ -14,3 +14,5 @@ roxmltree = { workspace = true }
 # Stands in for the browser's options object: `UserLayout` deserializes the same
 # way from JSON here as it does from a JS value through serde-wasm-bindgen.
 serde_json = "1.0.150"
+# Enumerates the render command's flags to check them against `UserLayout`.
+clap = "4.6.7"
