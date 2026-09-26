@@ -138,40 +138,22 @@ start. Tentatively ordered by consecutive feature impact.
 - **Generalize bounding boxes**: every score element should have an inherent
   bounding box, always drawn when `--debug` is provided.
 
-- **Access SMuFL data from installed system-wide files** (as documented by SMuFL
-  itself), optionally providing the currently supported SMuFL (meta-)data through
-  cli args.
+- **Web formats for Leland and Finale Maestro.** Both ship only OTF, so the
+  site serves them as OTF (about 0.3 MB and 0.6 MB, loaded the first time
+  each is chosen) where Bravura gets woff2. Converting them once and committing
+  the woff2 files would roughly halve that.
 
-- **Support for other SMuFL fonts.** Bravura is the only font in use.
-  Leland and Finale Maestro sit in `assets/smufl` (untracked), with Edwin,
-  Leland's text companion. Direction agreed so far:
+- **`<music-font font-size>`.** The walk reads the family list and ignores the
+  size, which every sample writes. It should decide what one staff space is,
+  and so conflicts with the document's `<scaling>`; which one wins needs
+  deciding.
 
-  - **Discovery follows the SMuFL spec:** fonts and their metadata are
-    installed system-wide. Nothing is bundled into the lib as a built-in
-    catalog; see the entry above on system-wide files.
-  - **Resolved in a pass after the walk.** Today the walk needs the font:
-    `ClefVisitor` and `ContentVisitor` look glyphs up through `WalkerCtx::font`.
-    Those lookups move to a later pass, so the walk no longer depends on which
-    font is chosen. That also lets a wasm `Score` switch fonts without
-    re-walking.
-  - **Precedence: user → `<defaults><music-font font-family>` → Bravura.** The
-    document's value is a list to walk in order (`Maestro,engraved` in nine
-    samples). Match case-insensitively, plus an alias table for legacy names:
-    `Maestro` → `Finale Maestro`, as Finale maps it on import. Skip names that
-    match nothing, such as `engraved`.
-
-  Things that break or go missing with the other two fonts:
-
-  - Neither has `glyphAdvanceWidths`. `SmuflFont::brace` unwraps the brace's
-    advance and would panic; it wants the bounding-box fallback that
-    `number_digit` already uses.
-  - Finale Maestro has no `glyphsWithAlternates`, which is now optional, and no
-    `textFontFamily`.
-  - The PDF writer looks the music font up in the system fonts and panics when
-    it isn't installed.
-  - `web/music-xml.js` hardwires Bravura's woff and metadata URLs. Choosing a
-    font per document means loading them on demand, and the site staging
-    (`scripts/lib/stage-runtime.sh`) has to ship the other fonts too.
+- **`opus font install` beyond a local folder.** It installs a package already
+  on disk. Downloading upstream releases, and being called from package
+  installers (brew, MSI, deb) so `opus` can ship with its fonts, belongs with
+  the packaging work. On Windows it copies OTFs to the per-user font folder
+  without the registry entry Windows itself adds, so `opus` finds them but
+  other applications may not.
 
 - **Tuplets.** The number, the bracket and its hooks, nested tuplets, and
   `<time-modification>` feeding the duration maths. A tuplet bracket spans the
@@ -264,7 +246,9 @@ Open questions. Each wants an answer written down, and the answer may be "no".
   support. Prioritize the cli.
 
 - Publication of the visual score, smufl and musicxml crates, so users may embed
-  them in third party applications.
+  them in third party applications. The lib embeds `glyphnames.json` with an
+  `include_str!` reaching outside the crate into `assets/smufl/metadata`, which
+  a packaged crate cannot do; the file has to move into the crate first.
 
 - Full tablature support.
 
