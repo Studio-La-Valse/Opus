@@ -1,12 +1,10 @@
 use crate::musicxml::validation_issue::ValidationIssue;
-use crate::score::layout_options::UserLayout;
 use crate::score::score_defaults::ScoreDefaults;
 use crate::score::visual::score::Score;
 use crate::score::walk_cursor::WalkCursor;
 use crate::smufl::smufl_font::SmuflFont;
 
 pub struct WalkerCtx<'a> {
-    pub user_layout: &'a UserLayout,
     pub layout: &'a mut ScoreDefaults,
     pub cursor: &'a mut WalkCursor,
     pub visual_score: &'a mut Score,
@@ -21,7 +19,6 @@ pub struct WalkerCtx<'a> {
 
 impl<'a> WalkerCtx<'a> {
     pub fn new(
-        user_layout: &'a UserLayout,
         layout: &'a mut ScoreDefaults,
         cursor: &'a mut WalkCursor,
         visual_score: &'a mut Score,
@@ -29,7 +26,6 @@ impl<'a> WalkerCtx<'a> {
         messages: &'a mut Vec<ValidationIssue>,
     ) -> Self {
         Self {
-            user_layout,
             layout,
             cursor,
             visual_score,

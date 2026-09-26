@@ -55,15 +55,6 @@ Small and well-specified. Each is a single change and none depend on each other.
 - Scale grace and cue notes' accidental, flag and beam group. Decide how to
   handle vecs of chords with mixed grace, cue and normal notes: validation is a must.
 
-- `WalkerCtx::user_layout` is never read: no visitor in either walk pass
-  consults it, so `walk_document`'s `user_layout` parameter exists only to fill
-  it, and the wasm constructor passes a default `UserLayout` for no reason but
-  the signature. Remove the field and the parameter.
-
-- `cargo doc -p lib` reports three broken intra-doc links: `Self::lookup` on
-  `ScorePart` in `score_defaults.rs`, `StaffCtx` in `staff_measure.rs`, and
-  `from_sources` / the private `ordered_bounds` in `tie.rs`.
-
 - Ledger lines are drawn at `staff.line_width` (`PartMeasure::ledger_thickness`),
   but SMuFL gives them their own weight: Bravura's `legerLineThickness` is 0.16
   staff spaces against `staffLineThickness` 0.13. Give them a layout option of

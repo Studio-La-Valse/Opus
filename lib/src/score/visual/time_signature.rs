@@ -68,7 +68,7 @@ impl TimeSignature {
 
     /// Every digit of the numerator with the position to draw it at, laid out
     /// left to right and centred over the element's own width. See
-    /// [`placed`](Self::placed).
+    /// `placed`.
     pub fn num_digits(&self) -> impl Iterator<Item = (&NumberDigit, XY)> {
         self.placed(&self.num, self.num_xy())
     }

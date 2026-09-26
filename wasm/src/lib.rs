@@ -162,15 +162,9 @@ impl WasmScore {
         let document = Document::parse_with_options(musicxml, options)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-        // Only used to satisfy `WalkerCtx::new` during the walk passes; no
-        // visitor reads it, since it doesn't affect the document's structure.
-        // Every `render` call re-arranges the walked score for its real layout.
-        let user_layout = UserLayout::default();
-
         // The walk's log messages are dropped: the browser has nowhere to show
         // them, and nothing in the render path reads them back.
-        let (score, defaults, _messages) =
-            walk_document(&document, &font, &user_layout, &mut |_stage| {});
+        let (score, defaults, _messages) = walk_document(&document, &font, &mut |_stage| {});
 
         Ok(WasmScore {
             defaults,

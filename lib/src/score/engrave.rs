@@ -81,7 +81,7 @@ pub fn engrave(
     user_layout: &UserLayout,
     progress: &mut dyn FnMut(Stage),
 ) -> EngravedScore {
-    let (mut score, layout, messages) = walk_document(document, font, user_layout, progress);
+    let (mut score, layout, messages) = walk_document(document, font, progress);
     arrange_score(&mut score, &layout, font, user_layout, progress);
     EngravedScore {
         score,
@@ -91,15 +91,14 @@ pub fn engrave(
 }
 
 /// The two document walks that build the [`Score`] and [`ScoreDefaults`]. Nothing here
-/// depends on [`UserLayout`] beyond satisfying `WalkerCtx::new`, so the result
-/// can be cached and re-arranged for different user layouts.
+/// depends on [`UserLayout`], so the result can be cached and re-arranged for
+/// different user layouts.
 ///
 /// Emits [`Stage::FirstPass`] and [`Stage::SecondPass`], and returns whatever
 /// [`BuildLoggingVisitor`] had to say about the walk.
 pub fn walk_document(
     document: &Document,
     font: &SmuflFont,
-    user_layout: &UserLayout,
     progress: &mut dyn FnMut(Stage),
 ) -> (Score, ScoreDefaults, Vec<ValidationIssue>) {
     let mut cursor = WalkCursor::default();
@@ -117,14 +116,7 @@ pub fn walk_document(
             encountered: HashSet::new(),
         })
         .uses(BuildLoggingVisitor::default());
-    let mut ctx = WalkerCtx::new(
-        user_layout,
-        &mut layout,
-        &mut cursor,
-        &mut score,
-        font,
-        &mut messages,
-    );
+    let mut ctx = WalkerCtx::new(&mut layout, &mut cursor, &mut score, font, &mut messages);
     Walker::new(visitor).walk(document, &mut ctx);
 
     progress(Stage::FirstPass);
@@ -134,14 +126,7 @@ pub fn walk_document(
         .uses(ContentVisitor::new())
         .uses(TieVisitor::new())
         .uses(ClefVisitor::new());
-    let mut ctx = WalkerCtx::new(
-        user_layout,
-        &mut layout,
-        &mut cursor,
-        &mut score,
-        font,
-        &mut messages,
-    );
+    let mut ctx = WalkerCtx::new(&mut layout, &mut cursor, &mut score, font, &mut messages);
     Walker::new(visitor).walk(document, &mut ctx);
 
     progress(Stage::SecondPass);

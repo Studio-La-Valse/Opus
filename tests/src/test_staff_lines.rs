@@ -103,8 +103,7 @@ mod tests {
     /// Walk the document and arrange it, which is when ledger lines are placed.
     fn engrave(xml: &str) -> Score {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (mut score, defaults, _messages) =
-            walk_document(&document, font(), &UserLayout::default(), &mut |_stage| {});
+        let (mut score, defaults, _messages) = walk_document(&document, font(), &mut |_stage| {});
 
         arrange_score(
             &mut score,
