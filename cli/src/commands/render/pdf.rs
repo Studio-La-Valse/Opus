@@ -29,7 +29,10 @@ pub(super) fn write(
     // Own the bytes here so the parsed `Face`s and the slices `write_pdf` embeds
     // can borrow them for the rest of this function.
     let music_bytes = load_family_bytes(&db, fonts.music).unwrap_or_else(|| {
-        panic!("music font '{music_family}' not found in the system fonts; install it")
+        panic!(
+            "music font '{music_family}' has SMuFL metadata installed but no font file among \
+             the system fonts; install it with `opus font install <folder>`"
+        )
     });
     let title_bytes = load_family_bytes(&db, fonts.title);
     let lyric_bytes = load_family_bytes(&db, fonts.lyric);

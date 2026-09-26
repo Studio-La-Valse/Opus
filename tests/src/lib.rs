@@ -31,6 +31,7 @@ mod test_ray;
 mod test_render_paths;
 mod test_resolve_layout;
 mod test_scale;
+mod test_smufl_fonts;
 mod test_staff_details_validation;
 mod test_staff_lines;
 mod test_text_box;

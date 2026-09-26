@@ -1,3 +1,4 @@
+pub mod font;
 pub mod render;
 pub mod validate;
 

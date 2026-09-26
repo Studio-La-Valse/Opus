@@ -73,25 +73,43 @@ cargo test --workspace --all-targets
 
 ## Using the CLI
 
-The `opus` binary is built from [cli/](cli). It has two subcommands,
-`render` and `validate`. Both need a MusicXML file; `render` additionally
-needs SMuFL font metadata to resolve glyphs, which the repository ships for
-the Bravura font under [assets/smufl/](assets/smufl).
+The `opus` binary is built from [cli/](cli). It has three subcommands:
+`render` and `validate`, which take a MusicXML file, and `font`, which manages
+the SMuFL music fonts `render` engraves in.
+
+Music fonts are found where the SMuFL specification installs them: each font's
+metadata as `SMuFL/Fonts/<name>/<name>.json` under the per-user data directory
+(`~/Library/Application Support` on macOS, `%LOCALAPPDATA%` on Windows,
+`$XDG_DATA_HOME` on Linux) or a system-wide one, and the font itself as an
+ordinary installed font. `opus font install` puts a font package in those
+places; the repository ships Bravura, Leland and Finale Maestro under
+[assets/smufl/](assets/smufl).
 
 ```sh
+# Install the bundled music fonts (once), and list what is installed
+cargo run -p cli -- font install assets/smufl/bravura-bravura-1.392/redist
+cargo run -p cli -- font install assets/smufl/Leland-main
+cargo run -p cli -- font install assets/smufl/Maestro-main
+cargo run -p cli -- font list
+
 # Render a MusicXML file to SVG (one file per page)
 cargo run -p cli -- render svg \
   --file path/to/score.musicxml \
-  --meta assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json \  --out path/to/output/dir
+  --out path/to/output/dir
 
-# Render to a single multi-page PDF instead
+# Render to a single multi-page PDF instead, in a font of your choosing
 cargo run -p cli -- render pdf \
   --file path/to/score.musicxml \
-  --meta assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json \  --out path/to/output/dir
+  --music-font Leland \
+  --out path/to/output/dir
 
 # Parse a MusicXML file and report validation issues without rendering
 cargo run -p cli -- validate --file path/to/score.musicxml
 ```
+
+The music font is the one `--music-font` names; without it, the first
+installed font in the document's `<music-font>` list (`Maestro` meaning Finale
+Maestro); failing that, Bravura.
 
 `render` accepts a large number of additional options controlling colors,
 spacing, group symbols, fonts and other layout parameters. They can be kept in
