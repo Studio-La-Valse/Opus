@@ -63,7 +63,7 @@ mod tests {
             ..Default::default()
         };
 
-        let (mut score, defaults, _) = walk_document(&document, font(), &mut |_stage| {});
+        let (mut score, defaults, _) = walk_document(&document, &mut |_stage| {});
         arrange_score(
             &mut score,
             &defaults,

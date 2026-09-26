@@ -258,8 +258,7 @@ impl ScoreMeasurement {
     pub fn measure_note(&self, note: &mut Note) {
         note.height = Staff::DEFAULT_SPACE_SIZE * note.scale;
 
-        let glyph = &note.glyph;
-        let bbox = note.scale_box(&glyph.bbox);
+        let bbox = note.scale_box(&note.glyph().bbox);
 
         note.width = bbox.width();
 
@@ -278,8 +277,7 @@ impl ScoreMeasurement {
     pub fn measure_rest(&self, rest: &mut Rest) {
         rest.height = Staff::DEFAULT_SPACE_SIZE * rest.scale;
 
-        let glyph = &rest.glyph;
-        let bbox = rest.scale_box(&glyph.bbox);
+        let bbox = rest.scale_box(&rest.glyph().bbox);
 
         for dot in &mut rest.dots {
             self.measure_dot(dot);
@@ -295,7 +293,7 @@ impl ScoreMeasurement {
     }
 
     pub fn measure_flag(&self, flag: &mut Flag) {
-        let bbox = flag.scale_box(&flag.glyph.bbox);
+        let bbox = flag.scale_box(&flag.glyph().bbox);
         flag.width = bbox.width();
         flag.height = bbox.height();
     }
@@ -303,14 +301,14 @@ impl ScoreMeasurement {
     pub fn measure_dot(&self, _dot: &mut Dot) {}
 
     pub fn measure_accidental(&self, accidental: &mut Accidental) {
-        let bbox = accidental.glyph_bbox(&accidental.glyph.bbox);
+        let bbox = accidental.world_bbox();
 
         accidental.width = bbox.width();
         accidental.height = bbox.height();
     }
 
     pub fn measure_clef(&self, clef: &mut Clef) {
-        let bbox = clef.scale_box(&clef.clef.bbox);
+        let bbox = clef.scaled_box();
         clef.width = bbox.width();
         clef.height = bbox.height();
     }
@@ -335,7 +333,7 @@ impl ScoreMeasurement {
 
         let unit = time_signature.unit();
         time_signature.width =
-            (time_signature.num.advance() * unit).max(time_signature.denom.advance() * unit);
+            (time_signature.num().advance() * unit).max(time_signature.denom().advance() * unit);
     }
 
     /// `span` is how tall a run of staves this symbol binds. There is no width

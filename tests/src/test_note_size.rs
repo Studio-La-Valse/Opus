@@ -87,7 +87,7 @@ mod tests {
 
     fn walk(xml: &str) -> (Score, ScoreDefaults) {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (score, defaults, _messages) = walk_document(&document, font(), &mut |_stage| {});
+        let (score, defaults, _messages) = walk_document(&document, &mut |_stage| {});
 
         (score, defaults)
     }

@@ -205,7 +205,7 @@ impl RenderPass for DebugRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = &accidental.glyph;
+        let glyph = accidental.glyph();
         let bbox = accidental.glyph_bbox(&glyph.bbox);
 
         let rect: Rect = Rect {
@@ -252,7 +252,7 @@ impl RenderPass for DebugRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = &rest.glyph;
+        let glyph = rest.glyph();
         let bbox = rest.scale_box(&glyph.bbox);
 
         let rect = Rect {
@@ -280,7 +280,7 @@ impl RenderPass for DebugRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let glyph = &note.glyph;
+        let glyph = note.glyph();
         let bbox = note.scale_box(&glyph.bbox);
 
         let rect = Rect {
@@ -348,7 +348,7 @@ impl RenderPass for DebugRenderer {
         _fonts: &RenderFonts<'a>,
         out: &mut Vec<DrawableElement<'a>>,
     ) {
-        let bbox = flag.scale_box(&flag.glyph.bbox);
+        let bbox = flag.scale_box(&flag.glyph().bbox);
 
         let rect = Rect {
             xy: bbox.xy,

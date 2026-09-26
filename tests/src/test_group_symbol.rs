@@ -120,7 +120,7 @@ mod tests {
         )
         .expect("test document does not parse");
 
-        walk_document(&document, font(), &mut |_stage| {})
+        walk_document(&document, &mut |_stage| {})
     }
 
     fn arrange(score: &mut Score, defaults: &ScoreDefaults, user_layout: &UserLayout) {

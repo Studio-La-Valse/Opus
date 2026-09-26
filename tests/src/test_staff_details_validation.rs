@@ -15,25 +15,7 @@ mod tests {
     use lib::musicxml::walker::Walker;
     use lib::score::engrave::walk_document;
 
-    use lib::smufl::smufl_font::SmuflFont;
     use roxmltree::Document;
-    use std::fs::read_to_string;
-    use std::sync::OnceLock;
-
-    fn asset(relative_path: &str) -> String {
-        read_to_string(format!("{}/../{relative_path}", env!("CARGO_MANIFEST_DIR")))
-            .unwrap_or_else(|e| panic!("failed to read {relative_path}: {e}"))
-    }
-
-    fn font() -> &'static SmuflFont {
-        static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| {
-            SmuflFont::load(
-                &asset("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json"),
-                &asset("assets/smufl/metadata/glyphnames.json"),
-            )
-        })
-    }
 
     /// Wraps a `<staff-details>` in the `<attributes>` of a one-note measure,
     /// the only place it may appear.
@@ -148,7 +130,7 @@ mod tests {
             let xml = in_attributes(details);
             let walked = std::panic::catch_unwind(move || {
                 let document = Document::parse(&xml).expect("test document does not parse");
-                walk_document(&document, font(), &mut |_stage| {});
+                walk_document(&document, &mut |_stage| {});
             });
 
             assert!(

@@ -89,11 +89,10 @@ mod tests {
     }
 
     fn measured_on_staff(beats: u8, beat_type: u32, staff_height: f32) -> TimeSignature {
-        let (num, denom) = font().time_signature(TimeSignatureCore {
+        let mut time_signature = TimeSignature::new(TimeSignatureCore {
             time: beats,
             base: BaseDuration::from(beat_type),
         });
-        let mut time_signature = TimeSignature::new(num, denom);
 
         let score_defaults = ScoreDefaults::default();
         let user_layout = UserLayout::default();

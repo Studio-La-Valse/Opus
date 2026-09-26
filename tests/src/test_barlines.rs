@@ -85,7 +85,7 @@ mod tests {
 
     fn engrave(xml: &str) -> Score {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (mut score, defaults, _messages) = walk_document(&document, font(), &mut |_stage| {});
+        let (mut score, defaults, _messages) = walk_document(&document, &mut |_stage| {});
 
         arrange_score(
             &mut score,

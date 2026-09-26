@@ -96,7 +96,7 @@ mod tests {
         )
         .expect("test document does not parse");
 
-        let (score, defaults, _) = walk_document(&document, font(), &mut |_stage| {});
+        let (score, defaults, _) = walk_document(&document, &mut |_stage| {});
         (score, defaults)
     }
 

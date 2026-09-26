@@ -21,7 +21,6 @@ use crate::score::visual::flag::Flag as DrawableFlag;
 use crate::score::visual::time_signature::TimeSignature as VisualTimeSignature;
 
 use crate::score::visual::part::Part;
-use crate::smufl::smufl_font::SmuflFont;
 use roxmltree::Node;
 use std::collections::BTreeMap;
 
@@ -82,15 +81,22 @@ impl ContentVisitor {
         let dots: u8 = node.get_children("dot").len().try_into().unwrap();
 
         let rest = if is_measure {
-            let glyph = ctx.font.rest(BaseDuration::Whole.rest_glyph());
-            Rest::new(note_id, glyph, None, staff_idx, center_line, size, dots)
+            let glyph_name = BaseDuration::Whole.rest_glyph();
+            Rest::new(
+                note_id,
+                glyph_name,
+                None,
+                staff_idx,
+                center_line,
+                size,
+                dots,
+            )
         } else {
             let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
-            let glyph = ctx.font.rest(dur.rest_glyph());
             let default_x: f32 = node.req_attribute("default-x").req_parse();
             Rest::new(
                 note_id,
-                glyph,
+                dur.rest_glyph(),
                 Some(default_x),
                 staff_idx,
                 center_line,
@@ -136,12 +142,10 @@ impl ContentVisitor {
         let staff_line = clef.line_index_at_pitch(&pitch);
 
         let dur: BaseDuration = node.req_child("type").req_text().try_into().unwrap();
-        let notehead = dur.notehead_glyph();
-        let glyph = ctx.font.notehead(notehead);
         let dots: u8 = node.get_children("dot").len().try_into().unwrap();
         let mut note = Note::new(
             ctx.cursor.note_id,
-            glyph,
+            dur.notehead_glyph(),
             default_x,
             staff_idx,
             staff_line,
@@ -189,7 +193,7 @@ impl ContentVisitor {
                 .collect();
             if beams.is_empty() && stem.beams.is_empty() {
                 if let Some(flag_name) = dur.flag_glyph(&dir) {
-                    stem.flag = Some(DrawableFlag::new(ctx.font.flag(flag_name, &dir), size));
+                    stem.flag = Some(DrawableFlag::new(flag_name, dir, size));
                 }
             } else {
                 for beam in beams {
@@ -203,7 +207,6 @@ impl ContentVisitor {
         if let Some(accidental) = node.get_child("accidental") {
             let accidental = accidental.req_text();
             let accidental: AccidentalCore = accidental.try_into().unwrap();
-            let accidental = ctx.font.accidental(accidental);
             let accidental = DrawableAccidental::new(accidental);
             note.accidental = Some(accidental)
         }
@@ -218,7 +221,6 @@ impl ContentVisitor {
         measure_number: u32,
         key: Key,
         active_clef: &BTreeMap<StaffIdx, ClefCore>,
-        font: &SmuflFont,
     ) {
         let n_accidentals = key.accidentals();
 
@@ -247,8 +249,7 @@ impl ContentVisitor {
                     AccidentalCore::Flat
                 };
 
-                let smufl = font.accidental(accidental_type);
-                let drawable = DrawableAccidental::new(smufl);
+                let drawable = DrawableAccidental::new(accidental_type);
                 staff_measure
                     .key_signature_start
                     .accidentals
@@ -281,8 +282,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
                     time: ctx.cursor.beats,
                     base: ctx.cursor.beat_type,
                 };
-                let (num, denom) = ctx.font.time_signature(time_signature);
-                let visual = VisualTimeSignature::new(num, denom);
+                let visual = VisualTimeSignature::new(time_signature);
                 staff_measure.time_signature_start = Some(visual);
             }
 
@@ -298,8 +298,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
                         time: ctx.cursor.beats,
                         base: ctx.cursor.beat_type,
                     };
-                    let (num, denom) = ctx.font.time_signature(time_signature);
-                    let visual = VisualTimeSignature::new(num, denom);
+                    let visual = VisualTimeSignature::new(time_signature);
                     staff_measure.time_signature_end = Some(visual);
                 }
             }
@@ -324,13 +323,7 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
         let system = page.systems.get_mut(&system_index).unwrap();
         let part = system.locate_part_mut(part_id).unwrap();
 
-        self.populate_key_signature(
-            part,
-            measure_number,
-            key,
-            &ctx.cursor.staff.active_clef,
-            ctx.font,
-        );
+        self.populate_key_signature(part, measure_number, key, &ctx.cursor.staff.active_clef);
     }
 
     fn enter_note(&mut self, node: &Node, ctx: &mut WalkerCtx) {
@@ -367,12 +360,6 @@ impl<'a> Visitor<WalkerCtx<'a>> for ContentVisitor {
             &part_id,
         );
 
-        self.populate_key_signature(
-            part,
-            measure_number,
-            key,
-            &ctx.cursor.staff.active_clef,
-            ctx.font,
-        );
+        self.populate_key_signature(part, measure_number, key, &ctx.cursor.staff.active_clef);
     }
 }

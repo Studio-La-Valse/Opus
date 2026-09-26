@@ -1,6 +1,7 @@
 use crate::geometry::bounding_box::BoundingBox;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
+use crate::score::core::time_signature::TimeSignature as TimeSignatureCore;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::placed::Placed;
 use crate::smufl::glyphs::number::{Number, NumberDigit};
@@ -14,8 +15,11 @@ pub struct TimeSignature {
 
     pub color: Color,
 
-    pub num: Number,
-    pub denom: Number,
+    /// The signature itself, settled by the walk without knowing the font.
+    pub signature: TimeSignatureCore,
+    /// Numerator and denominator spelled in the font's digits, written by
+    /// `resolve_layout`.
+    digits: Option<(Number, Number)>,
 }
 
 impl Placed for TimeSignature {
@@ -29,16 +33,37 @@ impl Placed for TimeSignature {
 }
 
 impl TimeSignature {
-    pub fn new(num: Number, denom: Number) -> TimeSignature {
+    pub fn new(signature: TimeSignatureCore) -> TimeSignature {
         TimeSignature {
             xy: XY::ZERO,
             height: 0.,
             width: 0.,
             scale: 1.,
             color: Color::BLACK,
-            num,
-            denom,
+            signature,
+            digits: None,
         }
+    }
+
+    /// The numerator in the font the score is arranged with.
+    ///
+    /// # Panics
+    ///
+    /// Before `resolve_layout` has run: the walk that builds the signature does
+    /// not know the font.
+    pub fn num(&self) -> &Number {
+        &self.digits().0
+    }
+
+    /// The denominator; see [`num`](Self::num).
+    pub fn denom(&self) -> &Number {
+        &self.digits().1
+    }
+
+    fn digits(&self) -> &(Number, Number) {
+        self.digits
+            .as_ref()
+            .expect("time signature digits read before resolve_layout")
     }
 
     /// World-space bounding box of one digit drawn at `at`, for callers that
@@ -70,12 +95,12 @@ impl TimeSignature {
     /// left to right and centred over the element's own width. See
     /// `placed`.
     pub fn num_digits(&self) -> impl Iterator<Item = (&NumberDigit, XY)> {
-        self.placed(&self.num, self.num_xy())
+        self.placed(self.num(), self.num_xy())
     }
 
     /// Every digit of the denominator, laid out the same way.
     pub fn denom_digits(&self) -> impl Iterator<Item = (&NumberDigit, XY)> {
-        self.placed(&self.denom, self.denom_xy())
+        self.placed(self.denom(), self.denom_xy())
     }
 
     /// Steps `number`'s digits across from `origin`, centring the run within
@@ -115,6 +140,7 @@ impl TimeSignature {
 
 impl TimeSignature {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
+        self.digits = Some(params.font.time_signature(self.signature));
         self.color = params.foreground_color();
     }
 }

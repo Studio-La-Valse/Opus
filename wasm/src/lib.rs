@@ -164,7 +164,7 @@ impl WasmScore {
 
         // The walk's log messages are dropped: the browser has nowhere to show
         // them, and nothing in the render path reads them back.
-        let (score, defaults, _messages) = walk_document(&document, &font, &mut |_stage| {});
+        let (score, defaults, _messages) = walk_document(&document, &mut |_stage| {});
 
         Ok(WasmScore {
             defaults,

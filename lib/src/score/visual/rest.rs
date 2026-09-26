@@ -41,7 +41,11 @@ pub struct Rest {
 
     pub color: Color,
 
-    pub glyph: SmuflRest,
+    /// The SMuFL name of the rest glyph, which the walk settles without knowing
+    /// the font.
+    pub glyph_name: &'static str,
+    /// `glyph_name` looked up in the font, written by `resolve_layout`.
+    glyph: Option<SmuflRest>,
 
     pub dots: Vec<Dot>,
     /// Resolved centre-to-centre dot step (and rest-edge-to-first-dot gap), in
@@ -66,7 +70,7 @@ impl Rest {
 
     pub fn new(
         id: NoteId,
-        glyph: SmuflRest,
+        glyph_name: &'static str,
         default_x: Option<f32>,
         staff: StaffIdx,
         staff_line: i32,
@@ -75,7 +79,8 @@ impl Rest {
     ) -> Self {
         Rest {
             id,
-            glyph,
+            glyph_name,
+            glyph: None,
 
             default_x,
             staff,
@@ -94,6 +99,18 @@ impl Rest {
             color: Color::default(),
         }
     }
+
+    /// The rest glyph in the font the score is arranged with.
+    ///
+    /// # Panics
+    ///
+    /// Before `resolve_layout` has run: the walk that builds the rest does not
+    /// know the font.
+    pub fn glyph(&self) -> &SmuflRest {
+        self.glyph
+            .as_ref()
+            .expect("rest glyph read before resolve_layout")
+    }
 }
 
 impl Placed for Rest {
@@ -109,6 +126,7 @@ impl Placed for Rest {
 impl Rest {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
         self.scale = self.size.resolve(params);
+        self.glyph = Some(params.font.rest(self.glyph_name));
 
         self.color = params.foreground_color();
         self.dot_spacing = params

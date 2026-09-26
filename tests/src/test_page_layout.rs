@@ -3,7 +3,7 @@ mod tests {
     use lib::score::engrave::walk_document;
 
     use lib::score::score_defaults::{PageLayout, PageMargins, ScoreDefaults};
-    use lib::smufl::smufl_font::SmuflFont;
+
     use roxmltree::{Document, ParsingOptions};
     use std::fs::read_to_string;
 
@@ -180,12 +180,7 @@ mod tests {
         )
         .expect("sample does not parse");
 
-        let font = SmuflFont::load(
-            &asset("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json"),
-            &asset("assets/smufl/metadata/glyphnames.json"),
-        );
-
-        let (_score, defaults, _messages) = walk_document(&document, &font, &mut |_stage| {});
+        let (_score, defaults, _messages) = walk_document(&document, &mut |_stage| {});
 
         // One `<print><page-layout>` per page, each with its own top margin.
         let tops: Vec<f32> = (1..=4)
