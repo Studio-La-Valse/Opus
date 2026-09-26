@@ -9,11 +9,10 @@
 
 #[cfg(test)]
 mod tests {
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::note_kind::NoteKind;
     use lib::score::engrave::{arrange_score, walk_document};
+    use lib::score::layout_options::{APP_DEFAULTS, NoteSizeLayout, UserLayout};
     use lib::score::score_defaults::ScoreDefaults;
-    use lib::score::user_layout::UserLayout;
     use lib::score::visual::score::Score;
     use lib::smufl::smufl_font::SmuflFont;
     use roxmltree::Document;
@@ -88,13 +87,8 @@ mod tests {
 
     fn walk(xml: &str) -> (Score, ScoreDefaults) {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (score, defaults, _messages) = walk_document(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        let (score, defaults, _messages) =
+            walk_document(&document, font(), &UserLayout::default(), &mut |_stage| {});
 
         (score, defaults)
     }
@@ -109,14 +103,7 @@ mod tests {
     }
 
     fn arrange(score: &mut Score, defaults: &ScoreDefaults, user_layout: &UserLayout) {
-        arrange_score(
-            score,
-            defaults,
-            font(),
-            user_layout,
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        arrange_score(score, defaults, font(), user_layout, &mut |_stage| {});
     }
 
     /// Every note in the score, in document order.
@@ -227,7 +214,7 @@ mod tests {
     /// A document that declares no `<note-size>` gets the app default.
     #[test]
     fn an_undeclared_note_size_falls_back_to_the_app_default() {
-        let app = AppDefaults::default();
+        let app = &APP_DEFAULTS.note_size;
         let score = engrave(
             &score_xml(
                 "",
@@ -236,10 +223,7 @@ mod tests {
             &UserLayout::default(),
         );
 
-        assert_eq!(
-            note_scales(&score),
-            vec![app.note_size_grace, app.note_size_cue]
-        );
+        assert_eq!(note_scales(&score), vec![app.grace, app.cue]);
     }
 
     /// Rests carry the same reduction as notes -- a cue passage's rests are
@@ -284,8 +268,10 @@ mod tests {
         let score = engrave(
             &xml,
             &UserLayout {
-                note_size_grace: Some(0.25),
-                note_size_cue: Some(0.9),
+                note_size: NoteSizeLayout {
+                    grace: Some(0.25),
+                    cue: Some(0.9),
+                },
                 ..Default::default()
             },
         );
@@ -312,7 +298,10 @@ mod tests {
             &mut score,
             &defaults,
             &UserLayout {
-                note_size_grace: Some(0.8),
+                note_size: NoteSizeLayout {
+                    grace: Some(0.8),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
         );
@@ -384,7 +373,10 @@ mod tests {
             let score = engrave(
                 &score_xml("", &dotted_eighth("<grace/>", 80)),
                 &UserLayout {
-                    note_size_grace: Some(grace),
+                    note_size: NoteSizeLayout {
+                        grace: Some(grace),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
             );

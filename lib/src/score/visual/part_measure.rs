@@ -2,6 +2,7 @@ use crate::drawable::elements::line::Line;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::voice::Voice;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::chord::Chord;
 use crate::score::visual::layoutable::LayoutParams;
@@ -53,18 +54,16 @@ impl PartMeasure {
         let LayoutParams {
             score_defaults,
             user_layout,
-            app_defaults,
             ..
         } = params;
 
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+        self.color = params.foreground_color();
 
         self.ledger_thickness = user_layout
-            .staff_line_width
+            .staff
+            .line_width
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_width);
+            .unwrap_or(APP_DEFAULTS.staff.line_width);
 
         for chord in self.chords.values_mut().flatten() {
             chord.resolve_layout(params);

@@ -13,10 +13,9 @@ mod tests {
     use std::fs::read_to_string;
     use std::sync::OnceLock;
 
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::staff_idx::StaffIdx;
     use lib::score::engrave::{EngravedScore, engrave};
-    use lib::score::user_layout::UserLayout;
+    use lib::score::layout_options::UserLayout;
     use lib::score::visual::arranger::ScoreMeasurement;
     use lib::score::visual::clef::{Clef, ClefAnchor};
     use lib::score::visual::note::NoteId;
@@ -57,13 +56,7 @@ mod tests {
         )
         .expect("failed to parse fixture");
 
-        engrave(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_| {},
-        )
+        engrave(&document, font(), &UserLayout::default(), &mut |_| {})
     }
 
     /// Every clef drawn as a mid-measure change, across the whole score.
@@ -315,7 +308,6 @@ mod tests {
                 &defaults,
                 font(),
                 &UserLayout::default(),
-                &AppDefaults::default(),
                 &mut |_| {},
             );
 
@@ -345,7 +337,6 @@ mod tests {
             &engraved.layout,
             font(),
             &UserLayout::default(),
-            &AppDefaults::default(),
             &mut |_| {},
         );
 

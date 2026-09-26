@@ -13,11 +13,10 @@ mod tests {
     use std::sync::OnceLock;
 
     use cli::commands::read_musicxml;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::duration_base::BaseDuration;
     use lib::score::core::note_kind::NoteKind;
     use lib::score::engrave::engrave;
-    use lib::score::user_layout::UserLayout;
+    use lib::score::layout_options::UserLayout;
     use lib::score::visual::arranger::{BeamArranger, ScoreArranger};
     use lib::score::visual::beam::{
         Beamable, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
@@ -376,14 +375,7 @@ mod tests {
         let document =
             roxmltree::Document::parse_with_options(&source, options).expect("fixture parses");
 
-        engrave(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_| {},
-        )
-        .score
+        engrave(&document, font(), &UserLayout::default(), &mut |_| {}).score
     }
 
     /// One system's drawn beams, with the two things a span has to be read
@@ -581,13 +573,7 @@ mod tests {
         let document =
             roxmltree::Document::parse_with_options(&source, options).expect("fixture parses");
 
-        engrave(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_| {},
-        )
+        engrave(&document, font(), &UserLayout::default(), &mut |_| {})
     }
 
     /// Every stem length and beam span in the score, in document order, so a
@@ -628,11 +614,9 @@ mod tests {
         let mut score = engraved.score;
 
         let user_layout = UserLayout::default();
-        let app_defaults = AppDefaults::default();
         let params = LayoutParams {
             score_defaults: &engraved.layout,
             user_layout: &user_layout,
-            app_defaults: &app_defaults,
             font: font(),
         };
 

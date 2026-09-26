@@ -1,11 +1,10 @@
 #[cfg(test)]
 mod tests {
     use lib::geometry::xy::XY;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::duration_base::BaseDuration;
     use lib::score::core::time_signature::TimeSignature as TimeSignatureCore;
+    use lib::score::layout_options::UserLayout;
     use lib::score::score_defaults::ScoreDefaults;
-    use lib::score::user_layout::UserLayout;
     use lib::score::visual::arranger::{ContentArranger, ScoreMeasurement};
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::time_signature::TimeSignature;
@@ -98,11 +97,9 @@ mod tests {
 
         let score_defaults = ScoreDefaults::default();
         let user_layout = UserLayout::default();
-        let app_defaults = AppDefaults::default();
         let params = LayoutParams {
             score_defaults: &score_defaults,
             user_layout: &user_layout,
-            app_defaults: &app_defaults,
             font: font(),
         };
         time_signature.resolve_layout(params);

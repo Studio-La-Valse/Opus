@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::walk_document;
+    use lib::score::layout_options::UserLayout;
     use lib::score::score_defaults::{PageLayout, PageMargins, ScoreDefaults};
-    use lib::score::user_layout::UserLayout;
     use lib::smufl::smufl_font::SmuflFont;
     use roxmltree::{Document, ParsingOptions};
     use std::fs::read_to_string;
@@ -186,13 +185,8 @@ mod tests {
             &asset("assets/smufl/metadata/glyphnames.json"),
         );
 
-        let (_score, defaults, _messages) = walk_document(
-            &document,
-            &font,
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        let (_score, defaults, _messages) =
+            walk_document(&document, &font, &UserLayout::default(), &mut |_stage| {});
 
         // One `<print><page-layout>` per page, each with its own top margin.
         let tops: Vec<f32> = (1..=4)

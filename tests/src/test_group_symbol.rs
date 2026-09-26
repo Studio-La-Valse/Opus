@@ -11,11 +11,12 @@ mod tests {
     use lib::drawable::drawable_element::DrawableElement;
     use lib::geometry::bounding_box::BoundingBox;
     use lib::geometry::xy::XY;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::group_symbol::{GroupLevel, GroupSymbol as Kind};
     use lib::score::engrave::{arrange_score, walk_document};
+    use lib::score::layout_options::{
+        APP_DEFAULTS, GroupBracketLayout, PartGroupLayout, SectionLayout, UserLayout,
+    };
     use lib::score::score_defaults::ScoreDefaults;
-    use lib::score::user_layout::UserLayout;
     use lib::score::visual::arranger::{PageArranger, ScoreMeasurement};
     use lib::score::visual::group_symbol::{GroupSymbol, Shape};
     use lib::score::visual::layoutable::LayoutParams;
@@ -57,22 +58,17 @@ mod tests {
         level: GroupLevel,
         kind: Kind,
         span: f32,
-        user_layout: UserLayout,
+        mut user_layout: UserLayout,
     ) -> GroupSymbol {
-        let user_layout = UserLayout {
-            section_symbol: Some(kind),
-            part_group_symbol: Some(kind),
-            part_symbol: Some(kind),
-            ..user_layout
-        };
+        user_layout.section.symbol = Some(kind);
+        user_layout.part_group.symbol = Some(kind);
+        user_layout.part.symbol = Some(kind);
         let score_defaults = ScoreDefaults::default();
-        let app_defaults = AppDefaults::default();
 
         let mut symbol = GroupSymbol::new(level, None);
         let params = LayoutParams {
             score_defaults: &score_defaults,
             user_layout: &user_layout,
-            app_defaults: &app_defaults,
             font: font(),
         };
         symbol.resolve_layout(params);
@@ -124,24 +120,11 @@ mod tests {
         )
         .expect("test document does not parse");
 
-        walk_document(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        )
+        walk_document(&document, font(), &UserLayout::default(), &mut |_stage| {})
     }
 
     fn arrange(score: &mut Score, defaults: &ScoreDefaults, user_layout: &UserLayout) {
-        arrange_score(
-            score,
-            defaults,
-            font(),
-            user_layout,
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        arrange_score(score, defaults, font(), user_layout, &mut |_stage| {});
     }
 
     /// A fully engraved score, laid out with no overrides at all -- so what a
@@ -158,12 +141,10 @@ mod tests {
     fn default_gap(level: GroupLevel) -> f32 {
         let score_defaults = ScoreDefaults::default();
         let user_layout = UserLayout::default();
-        let app_defaults = AppDefaults::default();
 
         LayoutParams {
             score_defaults: &score_defaults,
             user_layout: &user_layout,
-            app_defaults: &app_defaults,
             font: font(),
         }
         .group_symbol_gap(level)
@@ -217,7 +198,10 @@ mod tests {
             Kind::Line,
             SPAN,
             UserLayout {
-                section_symbol_gap: Some(40.),
+                section: SectionLayout {
+                    symbol_gap: Some(40.),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
         );
@@ -248,11 +232,11 @@ mod tests {
 
     /// A bare vertical line at the `line` weight, spanning exactly the staves,
     /// with its right edge on the anchor. Which weight that is belongs to
-    /// [`AppDefaults`]; what is pinned here is that the stroke *is* that weight
+    /// [`APP_DEFAULTS`]; what is pinned here is that the stroke *is* that weight
     /// and that the box is exactly the stroke.
     #[test]
     fn line_is_one_stroke_of_sub_bracket_weight() {
-        let thickness = AppDefaults::default().group_line_thickness;
+        let thickness = APP_DEFAULTS.group_line.thickness;
         let symbol = laid_out(GroupLevel::Section, Kind::Line);
         let anchor = ORIGIN.x - default_gap(GroupLevel::Section);
 
@@ -285,7 +269,7 @@ mod tests {
     /// default weight happens to equal the glyph's.
     #[test]
     fn bracket_matches_the_geometry_it_had_before() {
-        let thickness = AppDefaults::default().group_bracket_thickness;
+        let thickness = APP_DEFAULTS.group_bracket.thickness;
         let symbol = laid_out(GroupLevel::Section, Kind::Bracket);
         let anchor = ORIGIN.x - default_gap(GroupLevel::Section);
 
@@ -336,13 +320,15 @@ mod tests {
         };
 
         // Twice the default, whatever the default happens to be.
-        let doubled = AppDefaults::default().group_bracket_thickness * 2.;
+        let doubled = APP_DEFAULTS.group_bracket.thickness * 2.;
         let symbol = laid_out_with(
             GroupLevel::Section,
             Kind::Bracket,
             SPAN,
             UserLayout {
-                group_bracket_thickness: Some(doubled),
+                group_bracket: GroupBracketLayout {
+                    thickness: Some(doubled),
+                },
                 ..Default::default()
             },
         );
@@ -373,9 +359,8 @@ mod tests {
     fn square_brackets_the_staves_with_two_arms() {
         // Both are tuned values, so what is pinned here is how the shape is built
         // out of them, not what they happen to be.
-        let app = AppDefaults::default();
-        let t = app.group_square_thickness;
-        let arm = app.group_square_arm;
+        let t = APP_DEFAULTS.group_square.thickness;
+        let arm = APP_DEFAULTS.group_square.arm;
 
         let symbol = laid_out(GroupLevel::Section, Kind::Square);
         let anchor = ORIGIN.x - default_gap(GroupLevel::Section);
@@ -466,14 +451,12 @@ mod tests {
     #[test]
     fn re_arranging_the_same_symbol_resolves_it_again() {
         let score_defaults = ScoreDefaults::default();
-        let app_defaults = AppDefaults::default();
         let mut symbol = GroupSymbol::new(GroupLevel::Section, None);
 
         let lay_out = |symbol: &mut GroupSymbol, user_layout: &UserLayout| {
             let params = LayoutParams {
                 score_defaults: &score_defaults,
                 user_layout,
-                app_defaults: &app_defaults,
                 font: font(),
             };
             symbol.resolve_layout(params);
@@ -487,7 +470,10 @@ mod tests {
         lay_out(
             &mut symbol,
             &UserLayout {
-                section_symbol: Some(Kind::Square),
+                section: SectionLayout {
+                    symbol: Some(Kind::Square),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
         );
@@ -503,18 +489,19 @@ mod tests {
     #[test]
     fn an_override_beats_the_document_which_beats_the_default() {
         let score_defaults = ScoreDefaults::default();
-        let app_defaults = AppDefaults::default();
 
         let resolve = |declared: Option<Kind>, user: Option<Kind>| {
             let user_layout = UserLayout {
-                section_symbol: user,
+                section: SectionLayout {
+                    symbol: user,
+                    ..Default::default()
+                },
                 ..Default::default()
             };
             let mut symbol = GroupSymbol::new(GroupLevel::Section, declared);
             let params = LayoutParams {
                 score_defaults: &score_defaults,
                 user_layout: &user_layout,
-                app_defaults: &app_defaults,
                 font: font(),
             };
             symbol.resolve_layout(params);
@@ -643,7 +630,10 @@ mod tests {
             &mut score,
             &defaults,
             &UserLayout {
-                section_symbol: Some(Kind::None),
+                section: SectionLayout {
+                    symbol: Some(Kind::None),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
         );
@@ -739,7 +729,10 @@ mod tests {
             &mut score,
             &defaults,
             &UserLayout {
-                part_group_symbol_gap: Some(widened),
+                part_group: PartGroupLayout {
+                    symbol_gap: Some(widened),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
         );

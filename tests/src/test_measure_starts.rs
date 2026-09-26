@@ -12,9 +12,8 @@
 
 #[cfg(test)]
 mod tests {
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::{arrange_score, walk_document};
-    use lib::score::user_layout::UserLayout;
+    use lib::score::layout_options::{APP_DEFAULTS, MeasureStartLayout, UserLayout};
     use lib::score::visual::score::Score;
     use lib::score::visual::staff_measure::StaffMeasure;
     use lib::smufl::smufl_font::SmuflFont;
@@ -76,22 +75,10 @@ mod tests {
 
     fn engrave(xml: &str, layout: &UserLayout) -> Score {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (mut score, defaults, _messages) = walk_document(
-            &document,
-            font(),
-            layout,
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        let (mut score, defaults, _messages) =
+            walk_document(&document, font(), layout, &mut |_stage| {});
 
-        arrange_score(
-            &mut score,
-            &defaults,
-            font(),
-            layout,
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        arrange_score(&mut score, &defaults, font(), layout, &mut |_stage| {});
 
         score
     }
@@ -213,8 +200,7 @@ mod tests {
         );
 
         let widest = widths[0].max(widths[1]);
-        let padding =
-            AppDefaults::default().measure_start_key_signature_padding * measures[0].scale;
+        let padding = APP_DEFAULTS.measure_start.key_signature_padding * measures[0].scale;
         assert_eq!(
             key_x(measures[0]),
             clef_x(measures[0]) + widest + padding,
@@ -231,10 +217,10 @@ mod tests {
         assert_eq!(measures.len(), 1);
 
         let measure = measures[0];
-        let defaults = AppDefaults::default();
-        let clef_padding = defaults.measure_start_clef_padding * measure.scale;
-        let key_padding = defaults.measure_start_key_signature_padding * measure.scale;
-        let time_padding = defaults.measure_start_time_signature_padding * measure.scale;
+        let defaults = &APP_DEFAULTS.measure_start;
+        let clef_padding = defaults.clef_padding * measure.scale;
+        let key_padding = defaults.key_signature_padding * measure.scale;
+        let time_padding = defaults.time_signature_padding * measure.scale;
 
         assert_eq!(clef_x(measure) - measure.xy.x, clef_padding);
         assert_eq!(
@@ -252,9 +238,11 @@ mod tests {
     #[test]
     fn each_padding_moves_only_its_own_column() {
         let layout = UserLayout {
-            measure_start_clef_padding: Some(3.),
-            measure_start_key_signature_padding: Some(11.),
-            measure_start_time_signature_padding: Some(23.),
+            measure_start: MeasureStartLayout {
+                clef_padding: Some(3.),
+                key_signature_padding: Some(11.),
+                time_signature_padding: Some(23.),
+            },
             ..UserLayout::default()
         };
         let score = engrave(&score_xml(&[(-3, TREBLE)]), &layout);
@@ -286,7 +274,10 @@ mod tests {
             - default_measure.key_signature_start.width;
 
         let raised_layout = UserLayout {
-            measure_start_clef_padding: Some(25.),
+            measure_start: MeasureStartLayout {
+                clef_padding: Some(25.),
+                ..Default::default()
+            },
             ..UserLayout::default()
         };
         let raised_score = engrave(&score_xml(&[(-3, TREBLE)]), &raised_layout);
@@ -315,7 +306,10 @@ mod tests {
     #[test]
     fn paddings_scale_with_the_staff() {
         let layout = UserLayout {
-            measure_start_clef_padding: Some(20.),
+            measure_start: MeasureStartLayout {
+                clef_padding: Some(20.),
+                ..Default::default()
+            },
             ..UserLayout::default()
         };
 

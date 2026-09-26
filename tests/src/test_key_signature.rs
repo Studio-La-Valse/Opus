@@ -9,9 +9,8 @@
 
 #[cfg(test)]
 mod tests {
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::{arrange_score, walk_document};
-    use lib::score::user_layout::UserLayout;
+    use lib::score::layout_options::UserLayout;
     use lib::score::visual::key_signature::KeySignature;
     use lib::score::visual::score::Score;
     use lib::score::visual::staff::Staff;
@@ -69,20 +68,14 @@ mod tests {
 
     fn engrave(xml: &str) -> Score {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (mut score, defaults, _messages) = walk_document(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        let (mut score, defaults, _messages) =
+            walk_document(&document, font(), &UserLayout::default(), &mut |_stage| {});
 
         arrange_score(
             &mut score,
             &defaults,
             font(),
             &UserLayout::default(),
-            &AppDefaults::default(),
             &mut |_stage| {},
         );
 

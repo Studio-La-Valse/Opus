@@ -1,6 +1,7 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::visual::accidental::Accidental;
 use crate::score::visual::dot::Dot;
 use crate::score::visual::layoutable::LayoutParams;
@@ -94,7 +95,7 @@ pub struct Note {
 
     pub dots: Vec<Dot>,
     /// Resolved centre-to-centre dot step (and notehead-edge-to-first-dot gap),
-    /// in world units; see [`AppDefaults::dot_spacing`](crate::score::app_defaults::AppDefaults).
+    /// in world units; see [`DotDefaults::spacing`](crate::score::layout_options::DotDefaults).
     pub dot_spacing: f32,
 
     pub glyph: Notehead,
@@ -147,18 +148,14 @@ impl Placed for Note {
 
 impl Note {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
-        let LayoutParams {
-            user_layout,
-            app_defaults,
-            ..
-        } = params;
-
         self.scale = self.size.resolve(params);
 
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
-        self.dot_spacing = user_layout.dot_spacing.unwrap_or(app_defaults.dot_spacing);
+        self.color = params.foreground_color();
+        self.dot_spacing = params
+            .user_layout
+            .dot
+            .spacing
+            .unwrap_or(APP_DEFAULTS.dot.spacing);
 
         if let Some(accidental) = self.accidental.as_mut() {
             accidental.resolve_layout(params);

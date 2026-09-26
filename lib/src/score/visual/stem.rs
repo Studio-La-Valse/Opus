@@ -3,6 +3,7 @@ use crate::geometry::ray::Ray;
 use crate::geometry::xy::XY;
 use crate::score::core::duration_base::BaseDuration;
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::visual::flag::Flag;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note_scale::NoteScale;
@@ -167,19 +168,17 @@ impl Stem {
         let LayoutParams {
             score_defaults,
             user_layout,
-            app_defaults,
             ..
         } = params;
 
         self.scale = self.size.resolve(params);
 
         self.thickness = user_layout
-            .stem_thickness
+            .stem
+            .thickness
             .or(score_defaults.appearance.stem)
-            .unwrap_or(app_defaults.stem_thickness);
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+            .unwrap_or(APP_DEFAULTS.stem.thickness);
+        self.color = params.foreground_color();
 
         if let Some(flag) = self.flag.as_mut() {
             flag.resolve_layout(params);

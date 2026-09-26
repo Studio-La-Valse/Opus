@@ -6,10 +6,9 @@ mod tests {
 
     use lib::geometry::color::Color;
     use lib::geometry::xy::XY;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::engrave;
+    use lib::score::layout_options::{APP_DEFAULTS, TieLayout, UserLayout};
     use lib::score::score_defaults::ScoreDefaults;
-    use lib::score::user_layout::UserLayout;
     use lib::score::visual::layoutable::LayoutParams;
     use lib::score::visual::note::{NoteAnchor, NoteId};
     use lib::score::visual::stem::UpDown;
@@ -37,12 +36,10 @@ mod tests {
 
     fn metrics_with(user_layout: UserLayout) -> TieMetrics {
         let score_defaults = ScoreDefaults::default();
-        let app_defaults = AppDefaults::default();
 
         TieMetrics::resolve(LayoutParams {
             score_defaults: &score_defaults,
             user_layout: &user_layout,
-            app_defaults: &app_defaults,
             font: font(),
         })
     }
@@ -161,8 +158,11 @@ mod tests {
     #[test]
     fn inverted_height_bounds_are_ordered() {
         let m = metrics_with(UserLayout {
-            tie_height_min: Some(30.),
-            tie_height_max: Some(16.),
+            tie: TieLayout {
+                height_min: Some(30.),
+                height_max: Some(16.),
+                ..Default::default()
+            },
             ..Default::default()
         });
 
@@ -178,13 +178,15 @@ mod tests {
     /// back to the app default rather than poisoning the clamp.
     #[test]
     fn non_finite_height_bounds_fall_back_to_defaults() {
-        let app_defaults = AppDefaults::default();
         let m = metrics_with(UserLayout {
-            tie_height_min: Some(f32::NAN),
+            tie: TieLayout {
+                height_min: Some(f32::NAN),
+                ..Default::default()
+            },
             ..Default::default()
         });
 
-        assert_eq!(m.height_min, app_defaults.tie_height_min);
+        assert_eq!(m.height_min, APP_DEFAULTS.tie.height_min);
         assert!(m.height(1.).is_finite());
         assert!(m.height(1000.).is_finite());
     }
@@ -509,13 +511,7 @@ mod tests {
         )
         .expect("failed to parse fixture");
 
-        engrave(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_| {},
-        )
+        engrave(&document, font(), &UserLayout::default(), &mut |_| {})
     }
 
     #[test]
@@ -599,7 +595,6 @@ mod tests {
             &engraved.layout,
             font(),
             &UserLayout::default(),
-            &AppDefaults::default(),
             &mut |_| {},
         );
 

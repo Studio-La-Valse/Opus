@@ -8,10 +8,9 @@
 
 use lib::drawable::canvas::CanvasPainter;
 use lib::drawable::canvas::flat_buffer::FlatBufferCanvas;
-use lib::score::app_defaults::AppDefaults;
 use lib::score::engrave::{arrange_score, walk_document};
+use lib::score::layout_options::{APP_DEFAULTS, UserLayout};
 use lib::score::score_defaults::ScoreDefaults;
-use lib::score::user_layout::UserLayout;
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
 use lib::score::visual::score;
@@ -93,6 +92,11 @@ impl RenderOutput {
 /// nothing else. Only the options that aren't part of the layout itself live
 /// at this level.
 ///
+/// `layout` is a single, already-merged [`UserLayout`]: a caller with several
+/// sources of overrides (say, a layout file and per-element tweaks) layers them
+/// with [`UserLayout::overlay`] before handing them over, exactly as the CLI
+/// layers its flags on top of `--layout`.
+///
 /// `deny_unknown_fields` doesn't do much on the browser path -- serde-wasm-bindgen
 /// deserializes a struct by looking up the field names it expects, so a key
 /// this struct doesn't declare is never seen, let alone rejected. It still
@@ -103,13 +107,6 @@ impl RenderOutput {
 pub struct RenderOptions {
     /// Overlay the debug pass (bounding boxes, anchors, guides).
     pub debug: bool,
-    /// Font family for titles / work-level text; falls back to the app default.
-    pub title_font: Option<String>,
-    /// Font family for lyrics; falls back to the app default.
-    pub lyric_font: Option<String>,
-    /// Font family for part / part-group names; falls back to the app default.
-    /// The size and padding knobs flow through `layout` as `UserLayout` fields.
-    pub group_name_font: Option<String>,
     pub layout: UserLayout,
 }
 
@@ -169,17 +166,11 @@ impl WasmScore {
         // visitor reads it, since it doesn't affect the document's structure.
         // Every `render` call re-arranges the walked score for its real layout.
         let user_layout = UserLayout::default();
-        let app_defaults: AppDefaults = Default::default();
 
         // The walk's log messages are dropped: the browser has nowhere to show
         // them, and nothing in the render path reads them back.
-        let (score, defaults, _messages) = walk_document(
-            &document,
-            &font,
-            &user_layout,
-            &app_defaults,
-            &mut |_stage| {},
-        );
+        let (score, defaults, _messages) =
+            walk_document(&document, &font, &user_layout, &mut |_stage| {});
 
         Ok(WasmScore {
             defaults,
@@ -193,8 +184,8 @@ impl WasmScore {
     /// layout-only change (e.g. a page colour tweak).
     ///
     /// `options` is a plain JS object; see [`RenderOptions`], whose `layout`
-    /// member accepts every field of
-    /// [`UserLayout`](lib::score::user_layout::UserLayout) in camelCase.
+    /// member accepts [`UserLayout`] as nested snake_case objects
+    /// (`{ tie: { height_max: 14 } }`).
     pub fn render(&mut self, options: JsValue) -> Result<RenderOutput, JsValue> {
         let options: RenderOptions = if options.is_undefined() || options.is_null() {
             RenderOptions::default()
@@ -211,29 +202,31 @@ impl WasmScore {
     /// Separate so Rust callers (the test crate) don't have to go through a
     /// `JsValue`.
     pub fn render_with(&mut self, options: &RenderOptions) -> RenderOutput {
-        let app_defaults: AppDefaults = Default::default();
+        let layout = &options.layout;
 
         arrange_score(
             &mut self.score,
             &self.defaults,
             &self.font,
-            &options.layout,
-            &app_defaults,
+            layout,
             &mut |_stage| {},
         );
 
-        let title_font = options
-            .title_font
+        let title_font = layout
+            .title
+            .font
             .as_deref()
-            .unwrap_or(&app_defaults.title_font);
-        let lyric_font = options
-            .lyric_font
+            .unwrap_or(APP_DEFAULTS.title.font);
+        let lyric_font = layout
+            .lyric
+            .font
             .as_deref()
-            .unwrap_or(&app_defaults.lyric_font);
-        let group_name_font = options
-            .group_name_font
+            .unwrap_or(APP_DEFAULTS.lyric.font);
+        let group_name_font = layout
+            .group_name
+            .font
             .as_deref()
-            .unwrap_or(&app_defaults.group_name_font);
+            .unwrap_or(APP_DEFAULTS.group_name.font);
         let fonts = RenderFonts::create(&self.font, title_font, lyric_font, group_name_font);
 
         // One page-preserving walk; the flat buffer concatenates the pages into

@@ -322,21 +322,14 @@ fn stroke_box(rect: &Rect) -> BoundingBox {
 
 impl GroupSymbol {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
-        let LayoutParams {
-            user_layout,
-            app_defaults,
-            font,
-            ..
-        } = params;
+        let LayoutParams { font, .. } = params;
 
         self.kind = params.group_symbol(self.level, self.declared);
         self.gap = params.group_symbol_gap(self.level);
         self.thickness = params.group_symbol_thickness(self.kind);
         self.arm = params.group_square_arm();
 
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+        self.color = params.foreground_color();
 
         // Read here rather than at construction: the walk that builds the tree
         // runs once, and the shape can change between two renders of it.

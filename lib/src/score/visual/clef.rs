@@ -113,15 +113,7 @@ impl Clef {
 
 impl Clef {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
-        let LayoutParams {
-            user_layout,
-            app_defaults,
-            ..
-        } = params;
-
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+        self.color = params.foreground_color();
     }
 }
 

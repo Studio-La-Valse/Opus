@@ -161,8 +161,8 @@ pub struct ResolvedPage {
 
 /// `<defaults><appearance>`'s `<line-width>` types and `<note-size>` types,
 /// each field named after its `type` attribute's value rather than after the
-/// matching [`AppDefaults`](crate::score::app_defaults::AppDefaults) /
-/// [`UserLayout`](crate::score::user_layout::UserLayout) field -- this struct
+/// matching [`AppDefaults`](crate::score::layout_options::AppDefaults) /
+/// [`UserLayout`](crate::score::layout_options::UserLayout) field -- this struct
 /// exists to hold what the document said, verbatim, so it stays spelled the
 /// document's way even where that diverges from the app's own option names.
 #[derive(Default, Clone)]

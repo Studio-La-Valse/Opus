@@ -2,6 +2,7 @@ use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::visual::clef::Clef;
 use crate::score::visual::group_symbol::GroupSymbol;
@@ -237,23 +238,22 @@ impl System {
         let LayoutParams {
             score_defaults,
             user_layout,
-            app_defaults,
             ..
         } = params;
 
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+        self.color = params.foreground_color();
 
         self.staff_line_thickness = user_layout
-            .staff_line_width
+            .staff
+            .line_width
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_width);
+            .unwrap_or(APP_DEFAULTS.staff.line_width);
 
         self.light_barline = user_layout
-            .light_barline
+            .barline
+            .light
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.light_barline);
+            .unwrap_or(APP_DEFAULTS.barline.light);
 
         for section in self.sections.values_mut() {
             section.resolve_layout(params);

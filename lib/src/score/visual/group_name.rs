@@ -114,10 +114,7 @@ impl GroupName {
     /// here -- see [`new`](Self::new). Mirrors
     /// [`GroupSymbol::resolve_layout`](crate::score::visual::group_symbol::GroupSymbol).
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
-        self.color = params
-            .user_layout
-            .foreground_color
-            .unwrap_or(params.app_defaults.foreground_color);
+        self.color = params.foreground_color();
         self.font_size = params.group_name_size();
         self.padding = params.group_name_padding();
     }

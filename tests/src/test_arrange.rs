@@ -7,10 +7,9 @@ mod tests {
     use std::fs::read_to_string;
     use std::sync::OnceLock;
 
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::group_symbol::GroupLevel;
+    use lib::score::layout_options::UserLayout;
     use lib::score::score_defaults::{PageMargins, ScoreDefaults};
-    use lib::score::user_layout::UserLayout;
     use lib::score::visual::arranger::{PageArranger, ScoreArranger};
     use lib::score::visual::group_name::GroupName;
     use lib::score::visual::group_symbol::GroupSymbol;
@@ -61,11 +60,9 @@ mod tests {
     fn arrange_pages(score: &mut Score) {
         let score_defaults = ScoreDefaults::default();
         let user_layout = UserLayout::default();
-        let app_defaults = AppDefaults::default();
         let params = LayoutParams {
             score_defaults: &score_defaults,
             user_layout: &user_layout,
-            app_defaults: &app_defaults,
             font: font(),
         };
 
