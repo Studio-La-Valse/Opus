@@ -7,10 +7,9 @@
 
 #[cfg(test)]
 mod tests {
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::{arrange_score, walk_document};
+    use lib::score::layout_options::{APP_DEFAULTS, GroupNameLayout, UserLayout};
     use lib::score::score_defaults::ScoreDefaults;
-    use lib::score::user_layout::UserLayout;
     use lib::score::visual::part::Part;
     use lib::score::visual::part_group::PartGroup;
     use lib::score::visual::score::Score;
@@ -97,25 +96,13 @@ mod tests {
         )
         .expect("test document does not parse");
 
-        let (score, defaults, _) = walk_document(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        let (score, defaults, _) =
+            walk_document(&document, font(), &UserLayout::default(), &mut |_stage| {});
         (score, defaults)
     }
 
     fn arrange(score: &mut Score, defaults: &ScoreDefaults, user_layout: &UserLayout) {
-        arrange_score(
-            score,
-            defaults,
-            font(),
-            user_layout,
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        arrange_score(score, defaults, font(), user_layout, &mut |_stage| {});
     }
 
     fn engrave_with(xml: &str, user_layout: &UserLayout) -> Score {
@@ -169,7 +156,7 @@ mod tests {
         let score = engrave(&score_xml(NAMED_GROUP, &["P1", "P2"], 1));
         let group = group(system(&score, 1));
 
-        let padding = AppDefaults::default().group_name_padding;
+        let padding = APP_DEFAULTS.group_name.padding;
 
         assert!(group.shows_symbol(), "the brace draws");
         assert!(group.shows_name(), "the group name draws");
@@ -198,7 +185,7 @@ mod tests {
         let score = engrave(&score_xml(part_list, &["P1", "P2"], 1));
         let group = group(system(&score, 1));
 
-        let padding = AppDefaults::default().group_name_padding;
+        let padding = APP_DEFAULTS.group_name.padding;
 
         assert!(!group.shows_symbol(), "an explicit 'none' draws nothing");
         assert!(group.shows_name());
@@ -272,14 +259,17 @@ mod tests {
     #[test]
     fn a_padding_override_moves_only_the_right_edge() {
         let extra = 20.;
-        let widened = AppDefaults::default().group_name_padding + extra;
+        let widened = APP_DEFAULTS.group_name.padding + extra;
 
         let xml = score_xml(NAMED_GROUP, &["P1", "P2"], 1);
         let base = engrave_with(&xml, &UserLayout::default());
         let wide = engrave_with(
             &xml,
             &UserLayout {
-                group_name_padding: Some(widened),
+                group_name: GroupNameLayout {
+                    padding: Some(widened),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
         );

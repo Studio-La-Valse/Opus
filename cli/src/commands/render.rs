@@ -1,6 +1,5 @@
 use crate::commands::{print_issues, read_musicxml};
 use clap::{Args, Subcommand};
-use lib::geometry::color::Color;
 use lib::musicxml::validate::ValidationCtx;
 use lib::musicxml::visitor::{DefaultVisitor, Visitor};
 use lib::musicxml::visitors::validators::beam_group_visitor::BeamGroupVisitor;
@@ -10,10 +9,8 @@ use lib::musicxml::visitors::validators::part_consistency_visitor::PartConsisten
 use lib::musicxml::visitors::validators::position_visitor::PositionVisitor;
 use lib::musicxml::visitors::validators::staff_details_visitor::StaffDetailsVisitor;
 use lib::musicxml::walker::Walker;
-use lib::score::app_defaults::AppDefaults;
-use lib::score::core::group_symbol::GroupSymbol;
 use lib::score::engrave::{EngravedScore, Stage, engrave};
-use lib::score::user_layout::UserLayout;
+use lib::score::layout_options::{APP_DEFAULTS, UserLayout};
 use lib::score::visual::render_compositor::RenderCompositor;
 use lib::score::visual::render_fonts::RenderFonts;
 use lib::smufl::smufl_font::SmuflFont;
@@ -21,8 +18,11 @@ use roxmltree::{Document, ParsingOptions};
 use std::fs::read_to_string;
 use std::time::Instant;
 
+use self::layout_args::LayoutArgs;
 use self::paths::OutputTarget;
 
+pub mod layout_args;
+pub mod layout_file;
 pub mod paths;
 mod pdf;
 mod svg;
@@ -54,147 +54,15 @@ pub struct RenderArgs {
     #[arg(long, short, action)]
     debug: bool,
 
-    #[arg(long)]
-    page_color: Option<Color>,
+    /// A TOML layout file: one table per option group, e.g. `[tie]` with
+    /// `height_max = 14`. Optional; every option it leaves out falls back to
+    /// the document and then the app default. The layout flags below override
+    /// it, option by option.
+    #[arg(long = "layout")]
+    layout_file: Option<String>,
 
-    #[arg(long)]
-    foreground_color: Option<Color>,
-
-    #[arg(long)]
-    staff_line: Option<f32>,
-
-    #[arg(long)]
-    light_barline: Option<f32>,
-
-    #[arg(long)]
-    heavy_barline: Option<f32>,
-
-    #[arg(long)]
-    beam_thickness: Option<f32>,
-
-    #[arg(long)]
-    beam_spacing: Option<f32>,
-
-    #[arg(long)]
-    stem_thickness: Option<f32>,
-
-    /// Fraction of full size a grace note is drawn at.
-    #[arg(long)]
-    note_size_grace: Option<f32>,
-
-    /// Fraction of full size a cue note is drawn at.
-    #[arg(long)]
-    note_size_cue: Option<f32>,
-
-    #[arg(long)]
-    dot_radius: Option<f32>,
-
-    #[arg(long)]
-    dot_spacing: Option<f32>,
-
-    /// Padding in tenths between a measure's left edge and the opening clef,
-    /// between the clef column and the key signature, and between the key
-    /// signature column and the time signature.
-    #[arg(long)]
-    measure_start_clef_padding: Option<f32>,
-
-    #[arg(long)]
-    measure_start_key_signature_padding: Option<f32>,
-
-    #[arg(long)]
-    measure_start_time_signature_padding: Option<f32>,
-
-    #[arg(long)]
-    tie_endpoint_thickness: Option<f32>,
-
-    #[arg(long)]
-    tie_midpoint_thickness: Option<f32>,
-
-    #[arg(long)]
-    tie_height_ratio: Option<f32>,
-
-    #[arg(long)]
-    tie_height_min: Option<f32>,
-
-    #[arg(long)]
-    tie_height_max: Option<f32>,
-
-    #[arg(long)]
-    tie_note_gap: Option<f32>,
-
-    #[arg(long)]
-    tie_vertical_offset: Option<f32>,
-
-    #[arg(long)]
-    tie_break_inset: Option<f32>,
-
-    #[arg(long)]
-    tie_break_fragment: Option<f32>,
-
-    /// Force one symbol on every section / part-group / part in the score,
-    /// overriding whatever its `<part-group>` declared: `none`, `brace`,
-    /// `bracket`, `line` or `square`. A part has no symbol of its own in
-    /// MusicXML, so `--part-symbol` is the only way to change what joins one
-    /// part's staves.
-    #[arg(long)]
-    section_symbol: Option<GroupSymbol>,
-
-    #[arg(long)]
-    part_group_symbol: Option<GroupSymbol>,
-
-    #[arg(long)]
-    part_symbol: Option<GroupSymbol>,
-
-    /// Tenths between the system's left edge and the right edge of that level's
-    /// symbol. Per level, since the three have to nest against each other.
-    #[arg(long)]
-    section_symbol_gap: Option<f32>,
-
-    #[arg(long)]
-    part_group_symbol_gap: Option<f32>,
-
-    #[arg(long)]
-    part_symbol_gap: Option<f32>,
-
-    /// Stroke thickness in tenths, per shape. A bracket's tip glyphs scale with
-    /// its stroke, so thickening one keeps it in proportion.
-    #[arg(long)]
-    group_bracket_thickness: Option<f32>,
-
-    #[arg(long)]
-    group_line_thickness: Option<f32>,
-
-    #[arg(long)]
-    group_square_thickness: Option<f32>,
-
-    /// How far a square symbol's arms reach toward the system, in tenths.
-    #[arg(long)]
-    group_square_arm: Option<f32>,
-
-    /// Font family for titles / work-level text. Defaults to the app default
-    /// (`serif`). For `render pdf` this family is resolved against the installed
-    /// system fonts and embedded.
-    #[arg(long)]
-    title_font: Option<String>,
-
-    /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
-    /// and embedded like `--title-font` for `render pdf`.
-    #[arg(long)]
-    lyric_font: Option<String>,
-
-    /// Font family for part / part-group names. Defaults to the app default
-    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
-    #[arg(long)]
-    group_name_font: Option<String>,
-
-    /// Font size in tenths for a part / part-group name.
-    #[arg(long)]
-    group_name_size: Option<f32>,
-
-    /// Padding in tenths between a part / part-group name's right edge and the
-    /// symbol it sits beside.
-    #[arg(long)]
-    group_name_padding: Option<f32>,
+    #[command(flatten)]
+    layout_args: LayoutArgs,
 }
 
 /// Output format for `opus render`, chosen as a subcommand: `render svg` or
@@ -231,45 +99,8 @@ pub fn run(format: RenderCommand) {
         meta,
         glyphs: glyph_names,
         debug,
-        page_color,
-        foreground_color,
-        staff_line,
-        light_barline,
-        heavy_barline,
-        beam_thickness,
-        beam_spacing,
-        stem_thickness,
-        note_size_grace,
-        note_size_cue,
-        dot_radius,
-        dot_spacing,
-        measure_start_clef_padding,
-        measure_start_key_signature_padding,
-        measure_start_time_signature_padding,
-        tie_endpoint_thickness,
-        tie_midpoint_thickness,
-        tie_height_ratio,
-        tie_height_min,
-        tie_height_max,
-        tie_note_gap,
-        tie_vertical_offset,
-        tie_break_inset,
-        tie_break_fragment,
-        section_symbol,
-        part_group_symbol,
-        part_symbol,
-        section_symbol_gap,
-        part_group_symbol_gap,
-        part_symbol_gap,
-        group_bracket_thickness,
-        group_line_thickness,
-        group_square_thickness,
-        group_square_arm,
-        title_font,
-        lyric_font,
-        group_name_font,
-        group_name_size,
-        group_name_padding,
+        layout_file,
+        layout_args,
     } = args;
 
     let mut time = Instant::now();
@@ -306,45 +137,11 @@ pub fn run(format: RenderCommand) {
 
     println!("Validation: {}ms", time.elapsed().as_millis());
 
-    let user_layout = UserLayout {
-        page_color,
-        foreground_color,
-        staff_line_width: staff_line,
-        light_barline,
-        heavy_barline,
-        beam_thickness,
-        beam_spacing,
-        stem_thickness,
-        note_size_grace,
-        note_size_cue,
-        dot_radius,
-        dot_spacing,
-        measure_start_clef_padding,
-        measure_start_key_signature_padding,
-        measure_start_time_signature_padding,
-        tie_endpoint_thickness,
-        tie_midpoint_thickness,
-        tie_height_ratio,
-        tie_height_min,
-        tie_height_max,
-        tie_note_gap,
-        tie_vertical_offset,
-        tie_break_inset,
-        tie_break_fragment,
-        section_symbol,
-        part_group_symbol,
-        part_symbol,
-        section_symbol_gap,
-        part_group_symbol_gap,
-        part_symbol_gap,
-        group_bracket_thickness,
-        group_line_thickness,
-        group_square_thickness,
-        group_square_arm,
-        group_name_size,
-        group_name_padding,
-    };
-    let app_defaults: AppDefaults = Default::default();
+    // The flags are the more specific of the two, so they win option by option.
+    let file_layout = layout_file.as_deref().map(layout_file::read);
+    let user_layout = file_layout
+        .unwrap_or_default()
+        .overlay(UserLayout::from(layout_args));
 
     // The pipeline itself does no timing -- `std::time::Instant` is
     // unimplemented on wasm32, so `lib` stays clock-free and the caller that
@@ -355,28 +152,22 @@ pub fn run(format: RenderCommand) {
         score: visual,
         layout,
         messages,
-    } = engrave(
-        &document,
-        &font,
-        &user_layout,
-        &app_defaults,
-        &mut |stage| {
-            let elapsed = stage_time.elapsed().as_millis();
-            stage_time = Instant::now();
+    } = engrave(&document, &font, &user_layout, &mut |stage| {
+        let elapsed = stage_time.elapsed().as_millis();
+        stage_time = Instant::now();
 
-            match stage {
-                Stage::FirstPass => {
-                    println!("First read pass: walking doc tree for layout: {elapsed}ms")
-                }
-                Stage::SecondPass => {
-                    println!("Second read pass: walking doc tree for content: {elapsed}ms")
-                }
-                Stage::Rebeam => println!("Rebeaming: {elapsed}ms"),
-                Stage::ResolveLayout => println!("Resolving layout: {elapsed}ms"),
-                Stage::LayoutPass => println!("Layout pass: {elapsed}ms"),
+        match stage {
+            Stage::FirstPass => {
+                println!("First read pass: walking doc tree for layout: {elapsed}ms")
             }
-        },
-    );
+            Stage::SecondPass => {
+                println!("Second read pass: walking doc tree for content: {elapsed}ms")
+            }
+            Stage::Rebeam => println!("Rebeaming: {elapsed}ms"),
+            Stage::ResolveLayout => println!("Resolving layout: {elapsed}ms"),
+            Stage::LayoutPass => println!("Layout pass: {elapsed}ms"),
+        }
+    });
 
     // Guarded because `print_issues` announces an empty list as "no issues
     // found", which would read as a validation verdict rather than as the walk
@@ -385,11 +176,21 @@ pub fn run(format: RenderCommand) {
         print_issues(&document, &messages);
     }
 
-    let title_font = title_font.as_deref().unwrap_or(&app_defaults.title_font);
-    let lyric_font = lyric_font.as_deref().unwrap_or(&app_defaults.lyric_font);
-    let group_name_font = group_name_font
+    let title_font = user_layout
+        .title
+        .font
         .as_deref()
-        .unwrap_or(&app_defaults.group_name_font);
+        .unwrap_or(APP_DEFAULTS.title.font);
+    let lyric_font = user_layout
+        .lyric
+        .font
+        .as_deref()
+        .unwrap_or(APP_DEFAULTS.lyric.font);
+    let group_name_font = user_layout
+        .group_name
+        .font
+        .as_deref()
+        .unwrap_or(APP_DEFAULTS.group_name.font);
 
     let time = Instant::now();
 

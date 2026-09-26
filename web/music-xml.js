@@ -125,11 +125,12 @@ function rgba(r, g, b, a) {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-// Every layout option the wasm `Score.render()` accepts, spelled the way its
-// `layout` object wants it (camelCase, matching a field on Rust's UserLayout).
-// Each one is read from the CSS custom property of the same name in kebab-case:
-// `pageColor` <- `--page-color`. Exposing a new UserLayout knob is a matter of
-// adding its name here; the value's type is worked out at read time, so there
+// Every layout option the wasm `Score.render()` accepts, as its path into the
+// nested `layout` object (snake_case, matching Rust's UserLayout: the group,
+// then the field). Each one is read from the CSS custom property spelled as
+// that path in kebab-case: `tie.height_max` <- `--tie-height-max` - the same
+// spelling as the CLI flag. Exposing a new UserLayout knob is a matter of
+// adding its path here; the value's type is worked out at read time, so there
 // is nothing else on this side to keep in step.
 //
 // Page arrangement (`--page-orientation`) is deliberately not here: it is a
@@ -145,46 +146,49 @@ function rgba(r, g, b, a) {
 // worth a look at the exhibition site's render page after adding one
 // (site/render/index.html, built by scripts/build-site.sh).
 const LAYOUT_OPTIONS = [
-  "pageColor",
-  "foregroundColor",
-  "staffLineWidth",
-  "lightBarline",
-  "heavyBarline",
-  "beamThickness",
-  "beamSpacing",
-  "stemThickness",
-  "noteSizeGrace",
-  "noteSizeCue",
-  "dotRadius",
-  "dotSpacing",
-  "measureStartClefPadding",
-  "measureStartKeySignaturePadding",
-  "measureStartTimeSignaturePadding",
-  "tieEndpointThickness",
-  "tieMidpointThickness",
-  "tieHeightRatio",
-  "tieHeightMin",
-  "tieHeightMax",
-  "tieNoteGap",
-  "tieVerticalOffset",
-  "tieBreakInset",
-  "tieBreakFragment",
-  "sectionSymbol",
-  "partGroupSymbol",
-  "partSymbol",
-  "sectionSymbolGap",
-  "partGroupSymbolGap",
-  "partSymbolGap",
-  "groupBracketThickness",
-  "groupLineThickness",
-  "groupSquareThickness",
-  "groupSquareArm",
-  "groupNameSize",
-  "groupNamePadding",
+  "page.color",
+  "foreground.color",
+  "staff.line_width",
+  "barline.light",
+  "barline.heavy",
+  "beam.thickness",
+  "beam.spacing",
+  "stem.thickness",
+  "note_size.grace",
+  "note_size.cue",
+  "dot.radius",
+  "dot.spacing",
+  "measure_start.clef_padding",
+  "measure_start.key_signature_padding",
+  "measure_start.time_signature_padding",
+  "tie.endpoint_thickness",
+  "tie.midpoint_thickness",
+  "tie.height_ratio",
+  "tie.height_min",
+  "tie.height_max",
+  "tie.note_gap",
+  "tie.vertical_offset",
+  "tie.break_inset",
+  "tie.break_fragment",
+  "section.symbol",
+  "section.symbol_gap",
+  "part_group.symbol",
+  "part_group.symbol_gap",
+  "part.symbol",
+  "part.symbol_gap",
+  "group_bracket.thickness",
+  "group_line.thickness",
+  "group_square.thickness",
+  "group_square.arm",
+  "group_name.font",
+  "group_name.size",
+  "group_name.padding",
+  "title.font",
+  "lyric.font",
 ];
 
 function cssPropertyFor(option) {
-  return option.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+  return option.replace(/[._]/g, "-");
 }
 
 // These are CSS custom properties only (`--page-color`, etc. - via an inline
@@ -444,11 +448,11 @@ export class MusicXmlElement extends HTMLElement {
     this._statusEl.textContent = message ?? "";
   }
 
-  // The full render() options object: debug, the three font properties, and
-  // every LAYOUT_OPTIONS entry this element actually sets - all read off this
-  // element's CSS custom properties (a stylesheet rule, class, or inline
-  // `style="--page-color: ..."`), via a single getComputedStyle() call reused
-  // for all lookups rather than one call per property.
+  // The full render() options object: debug, and every LAYOUT_OPTIONS entry
+  // this element actually sets - all read off this element's CSS custom
+  // properties (a stylesheet rule, class, or inline `style="--page-color:
+  // ..."`), via a single getComputedStyle() call reused for all lookups rather
+  // than one call per property.
   _renderOptions() {
     const computed = getComputedStyle(this);
     const cssVar = (name) => {
@@ -463,16 +467,15 @@ export class MusicXmlElement extends HTMLElement {
       // CSS custom properties are always strings, but the Rust side wants a
       // number for the numeric knobs - so send a number whenever the value is
       // one. That keeps this loop from having to know which option is which:
-      // "20" parses, "#ffffff" and "bracket" don't.
+      // "20" parses, "#ffffff", "bracket" and "serif" don't.
       const asNumber = Number(value);
-      layout[option] = Number.isFinite(asNumber) ? asNumber : value;
+      const [group, field] = option.split(".");
+      layout[group] ??= {};
+      layout[group][field] = Number.isFinite(asNumber) ? asNumber : value;
     }
 
     return {
       debug: this.hasAttribute("debug"),
-      titleFont: cssVar("title-font"),
-      lyricFont: cssVar("lyric-font"),
-      groupNameFont: cssVar("group-name-font"),
       layout,
     };
   }

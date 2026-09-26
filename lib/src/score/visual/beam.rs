@@ -9,6 +9,7 @@
 
 use crate::geometry::color::Color;
 use crate::score::core::note_kind::NoteKind;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::visual::chord::Chord;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::stem::{BeamType, Stem, UpDown};
@@ -59,22 +60,21 @@ impl BeamMetrics {
         let LayoutParams {
             score_defaults,
             user_layout,
-            app_defaults,
             ..
         } = params;
 
         Self {
             thickness: user_layout
-                .beam_thickness
+                .beam
+                .thickness
                 .or(score_defaults.appearance.beam)
-                .unwrap_or(app_defaults.beam_thickness),
+                .unwrap_or(APP_DEFAULTS.beam.thickness),
             spacing: user_layout
-                .beam_spacing
-                .unwrap_or(app_defaults.beam_spacing),
+                .beam
+                .spacing
+                .unwrap_or(APP_DEFAULTS.beam.spacing),
             grace_scale: params.note_size(NoteKind::Grace),
-            color: user_layout
-                .foreground_color
-                .unwrap_or(app_defaults.foreground_color),
+            color: params.foreground_color(),
         }
     }
 }

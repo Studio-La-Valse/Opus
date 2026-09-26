@@ -1,17 +1,18 @@
-use crate::score::app_defaults::AppDefaults;
+use crate::geometry::color::Color;
 use crate::score::core::group_symbol::{GroupLevel, GroupSymbol};
 use crate::score::core::note_kind::NoteKind;
+use crate::score::layout_options::{APP_DEFAULTS, UserLayout};
 use crate::score::score_defaults::ScoreDefaults;
-use crate::score::user_layout::UserLayout;
 use crate::smufl::smufl_font::SmuflFont;
 
 /// What every element resolves its own appearance and size from, threaded
 /// through each element's `measure` pass.
 ///
-/// Three of these are layout config, in falling precedence: the caller's
-/// overrides, the document's declared defaults, and the hard-coded fallbacks.
-/// The fourth, `font`, is not config but a resource -- the glyph metrics an
-/// element needs to size itself.
+/// Two of these are layout config: the caller's overrides and the document's
+/// declared defaults, in falling precedence, with
+/// [`APP_DEFAULTS`] as the hard-coded fallback beneath both. The third, `font`,
+/// is not config but a resource -- the glyph metrics an element needs to size
+/// itself.
 ///
 /// The font is here rather than being handed to elements at construction
 /// because *which* glyph an element draws is not always settled by then. A
@@ -23,11 +24,18 @@ use crate::smufl::smufl_font::SmuflFont;
 pub struct LayoutParams<'a> {
     pub score_defaults: &'a ScoreDefaults,
     pub user_layout: &'a UserLayout,
-    pub app_defaults: &'a AppDefaults,
     pub font: &'a SmuflFont,
 }
 
 impl LayoutParams<'_> {
+    /// The ink everything on the page is drawn in.
+    pub fn foreground_color(&self) -> Color {
+        self.user_layout
+            .foreground
+            .color
+            .unwrap_or(APP_DEFAULTS.foreground.color)
+    }
+
     /// The fraction of full size a note of this kind is drawn at.
     ///
     /// Lives here rather than on [`NoteKind`] because it is the one place the
@@ -37,18 +45,17 @@ impl LayoutParams<'_> {
     /// draws. Resolving it separately in each of those is how a grace note ends
     /// up with beams reduced by a different number than its noteheads.
     pub fn note_size(&self, kind: NoteKind) -> f32 {
+        let note_size = &self.user_layout.note_size;
         match kind {
             NoteKind::Normal => 1.,
-            NoteKind::Grace => self
-                .user_layout
-                .note_size_grace
+            NoteKind::Grace => note_size
+                .grace
                 .or(self.score_defaults.appearance.grace)
-                .unwrap_or(self.app_defaults.note_size_grace),
-            NoteKind::Cue => self
-                .user_layout
-                .note_size_cue
+                .unwrap_or(APP_DEFAULTS.note_size.grace),
+            NoteKind::Cue => note_size
+                .cue
                 .or(self.score_defaults.appearance.cue)
-                .unwrap_or(self.app_defaults.note_size_cue),
+                .unwrap_or(APP_DEFAULTS.note_size.cue),
         }
     }
 
@@ -64,16 +71,11 @@ impl LayoutParams<'_> {
     /// the first falls through to the default, the second is a declaration that
     /// nothing be drawn and stops here.
     pub fn group_symbol(&self, level: GroupLevel, declared: Option<GroupSymbol>) -> GroupSymbol {
+        let layout = self.user_layout;
         let (user, app_default) = match level {
-            GroupLevel::Section => (
-                self.user_layout.section_symbol,
-                self.app_defaults.section_symbol,
-            ),
-            GroupLevel::PartGroup => (
-                self.user_layout.part_group_symbol,
-                self.app_defaults.part_group_symbol,
-            ),
-            GroupLevel::Part => (self.user_layout.part_symbol, self.app_defaults.part_symbol),
+            GroupLevel::Section => (layout.section.symbol, APP_DEFAULTS.section.symbol),
+            GroupLevel::PartGroup => (layout.part_group.symbol, APP_DEFAULTS.part_group.symbol),
+            GroupLevel::Part => (layout.part.symbol, APP_DEFAULTS.part.symbol),
         };
 
         user.or(declared).unwrap_or(app_default)
@@ -84,19 +86,20 @@ impl LayoutParams<'_> {
     /// edge of the enclosing level's symbol for the other two. Per level, not
     /// per shape: see [`GroupLevel`].
     pub fn group_symbol_gap(&self, level: GroupLevel) -> f32 {
+        let layout = self.user_layout;
         match level {
-            GroupLevel::Section => self
-                .user_layout
-                .section_symbol_gap
-                .unwrap_or(self.app_defaults.section_symbol_gap),
-            GroupLevel::PartGroup => self
-                .user_layout
-                .part_group_symbol_gap
-                .unwrap_or(self.app_defaults.part_group_symbol_gap),
-            GroupLevel::Part => self
-                .user_layout
-                .part_symbol_gap
-                .unwrap_or(self.app_defaults.part_symbol_gap),
+            GroupLevel::Section => layout
+                .section
+                .symbol_gap
+                .unwrap_or(APP_DEFAULTS.section.symbol_gap),
+            GroupLevel::PartGroup => layout
+                .part_group
+                .symbol_gap
+                .unwrap_or(APP_DEFAULTS.part_group.symbol_gap),
+            GroupLevel::Part => layout
+                .part
+                .symbol_gap
+                .unwrap_or(APP_DEFAULTS.part.symbol_gap),
         }
     }
 
@@ -104,19 +107,20 @@ impl LayoutParams<'_> {
     /// per level: it describes the drawing rather than the placement. Zero for
     /// the shapes that have no stroke of their own.
     pub fn group_symbol_thickness(&self, symbol: GroupSymbol) -> f32 {
+        let layout = self.user_layout;
         match symbol {
-            GroupSymbol::Bracket => self
-                .user_layout
-                .group_bracket_thickness
-                .unwrap_or(self.app_defaults.group_bracket_thickness),
-            GroupSymbol::Line => self
-                .user_layout
-                .group_line_thickness
-                .unwrap_or(self.app_defaults.group_line_thickness),
-            GroupSymbol::Square => self
-                .user_layout
-                .group_square_thickness
-                .unwrap_or(self.app_defaults.group_square_thickness),
+            GroupSymbol::Bracket => layout
+                .group_bracket
+                .thickness
+                .unwrap_or(APP_DEFAULTS.group_bracket.thickness),
+            GroupSymbol::Line => layout
+                .group_line
+                .thickness
+                .unwrap_or(APP_DEFAULTS.group_line.thickness),
+            GroupSymbol::Square => layout
+                .group_square
+                .thickness
+                .unwrap_or(APP_DEFAULTS.group_square.thickness),
             // A brace's weight is the glyph's own, and nothing is drawn for
             // `None` to have a weight.
             GroupSymbol::Brace | GroupSymbol::None => 0.,
@@ -126,23 +130,26 @@ impl LayoutParams<'_> {
     /// How far a `square` symbol's arms reach toward the system, in tenths.
     pub fn group_square_arm(&self) -> f32 {
         self.user_layout
-            .group_square_arm
-            .unwrap_or(self.app_defaults.group_square_arm)
+            .group_square
+            .arm
+            .unwrap_or(APP_DEFAULTS.group_square.arm)
     }
 
     /// Font size in tenths for a part / part-group name. Two-tier
     /// (user -> app), like [`group_square_arm`](Self::group_square_arm).
     pub fn group_name_size(&self) -> f32 {
         self.user_layout
-            .group_name_size
-            .unwrap_or(self.app_defaults.group_name_size)
+            .group_name
+            .size
+            .unwrap_or(APP_DEFAULTS.group_name.size)
     }
 
     /// Padding in tenths between a part / part-group name's right edge and the
     /// left edge of the symbol it sits beside.
     pub fn group_name_padding(&self) -> f32 {
         self.user_layout
-            .group_name_padding
-            .unwrap_or(self.app_defaults.group_name_padding)
+            .group_name
+            .padding
+            .unwrap_or(APP_DEFAULTS.group_name.padding)
     }
 }

@@ -1,20 +1,19 @@
 // The option manifest for the render page's pane: one descriptor per knob the
-// <music-xml> element exposes, mirroring lib/src/score/user_layout.rs field
-// for field - with three exceptions, each noted at its own entry below:
-// titleFont/lyricFont/groupNameFont (UserLayout is Copy, so it excludes font
-// families) and pageOrientation (page arrangement is a component-level, CSS
-// concern now that the engine no longer arranges pages relative to each other
-// at all - there is no UserLayout field for it; the gap between pages is a
-// fixed 10px in the component and is not exposed here at all). Adding a
-// UserLayout knob here is the only change needed to add it to the pane -
-// render.js builds the whole thing by iterating this array, the same
-// data-driven intent UserLayout's own doc comment asks for ("Don't mirror it
-// into a parallel options struct").
+// <music-xml> element exposes, mirroring lib/src/score/layout_options.rs
+// option for option, each `name` being the option's `group.field` path - with
+// two exceptions, each noted at its own entry below: page_orientation (page
+// arrangement is a component-level, CSS concern now that the engine no longer
+// arranges pages relative to each other at all - there is no UserLayout field
+// for it; the gap between pages is a fixed 10px in the component and is not
+// exposed here at all) and debug (an HTML attribute). Adding a UserLayout knob
+// here is the only change needed to add it to the pane - render.js builds the
+// whole thing by iterating this array, the same data-driven intent
+// UserLayout's own doc comment asks for ("Don't mirror it into a parallel
+// options struct").
 //
-// Defaults are copied from `impl Default for AppDefaults`
-// (lib/src/score/app_defaults.rs) - they're also what each control shows as
-// its placeholder/rest value, since a control left at its default writes
-// nothing (see render.js).
+// Defaults are copied from `APP_DEFAULTS` (lib/src/score/layout_options.rs) -
+// they're also what each control shows as its placeholder/rest value, since a
+// control left at its default writes nothing (see render.js).
 //
 // `kind`:
 //   "color"  - <input type=color> + an alpha slider, composing #RRGGBBAA.
@@ -42,7 +41,7 @@ export const OPTIONS = [
   // --- Page ---------------------------------------------------------------
   {
     group: "Page",
-    name: "pageColor",
+    name: "page.color",
     kind: "color",
     default: "#ffffff",
     label: "Page colour",
@@ -50,7 +49,7 @@ export const OPTIONS = [
   },
   {
     group: "Page",
-    name: "foregroundColor",
+    name: "foreground.color",
     kind: "color",
     default: "#000000",
     label: "Foreground colour",
@@ -62,7 +61,7 @@ export const OPTIONS = [
     // _applyPageOrientation reads --page-orientation to flex-direction the
     // stacked page canvases, the CSS layout problem the engine used to solve
     // by arranging pages relative to each other.
-    name: "pageOrientation",
+    name: "page_orientation",
     kind: "enum",
     values: ["vertical", "horizontal"],
     // The site's own default (site/css/style.css sets --page-orientation:
@@ -77,7 +76,7 @@ export const OPTIONS = [
   // --- Staff & barlines -----------------------------------------------------
   {
     group: "Staff & barlines",
-    name: "staffLineWidth",
+    name: "staff.line_width",
     kind: "number",
     default: 1.1,
     min: 0,
@@ -89,7 +88,7 @@ export const OPTIONS = [
   },
   {
     group: "Staff & barlines",
-    name: "lightBarline",
+    name: "barline.light",
     kind: "number",
     default: 1.875,
     min: 0,
@@ -101,7 +100,7 @@ export const OPTIONS = [
   },
   {
     group: "Staff & barlines",
-    name: "heavyBarline",
+    name: "barline.heavy",
     kind: "number",
     default: 5,
     min: 0,
@@ -115,7 +114,7 @@ export const OPTIONS = [
   // --- Measure starts ---------------------------------------------------------
   {
     group: "Measure starts",
-    name: "measureStartClefPadding",
+    name: "measure_start.clef_padding",
     kind: "number",
     default: 5,
     min: 0,
@@ -127,7 +126,7 @@ export const OPTIONS = [
   },
   {
     group: "Measure starts",
-    name: "measureStartKeySignaturePadding",
+    name: "measure_start.key_signature_padding",
     kind: "number",
     default: 5,
     min: 0,
@@ -139,7 +138,7 @@ export const OPTIONS = [
   },
   {
     group: "Measure starts",
-    name: "measureStartTimeSignaturePadding",
+    name: "measure_start.time_signature_padding",
     kind: "number",
     default: 5,
     min: 0,
@@ -153,7 +152,7 @@ export const OPTIONS = [
   // --- Beams & stems --------------------------------------------------------
   {
     group: "Beams & stems",
-    name: "beamThickness",
+    name: "beam.thickness",
     kind: "number",
     default: 5,
     min: 0,
@@ -165,7 +164,7 @@ export const OPTIONS = [
   },
   {
     group: "Beams & stems",
-    name: "beamSpacing",
+    name: "beam.spacing",
     kind: "number",
     default: 1.5,
     min: 0,
@@ -177,7 +176,7 @@ export const OPTIONS = [
   },
   {
     group: "Beams & stems",
-    name: "stemThickness",
+    name: "stem.thickness",
     kind: "number",
     default: 1,
     min: 0,
@@ -191,7 +190,7 @@ export const OPTIONS = [
   // --- Note sizes & dots ------------------------------------------------------
   {
     group: "Note sizes & dots",
-    name: "noteSizeGrace",
+    name: "note_size.grace",
     kind: "number",
     default: 0.66,
     min: 0.1,
@@ -203,7 +202,7 @@ export const OPTIONS = [
   },
   {
     group: "Note sizes & dots",
-    name: "noteSizeCue",
+    name: "note_size.cue",
     kind: "number",
     default: 0.66,
     min: 0.1,
@@ -215,7 +214,7 @@ export const OPTIONS = [
   },
   {
     group: "Note sizes & dots",
-    name: "dotRadius",
+    name: "dot.radius",
     kind: "number",
     default: 2,
     min: 0,
@@ -227,7 +226,7 @@ export const OPTIONS = [
   },
   {
     group: "Note sizes & dots",
-    name: "dotSpacing",
+    name: "dot.spacing",
     kind: "number",
     default: 5,
     min: 0,
@@ -241,7 +240,7 @@ export const OPTIONS = [
   // --- Ties -----------------------------------------------------------------
   {
     group: "Ties",
-    name: "tieEndpointThickness",
+    name: "tie.endpoint_thickness",
     kind: "number",
     default: 1,
     min: 0,
@@ -253,7 +252,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieMidpointThickness",
+    name: "tie.midpoint_thickness",
     kind: "number",
     default: 2.2,
     min: 0,
@@ -265,7 +264,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieHeightRatio",
+    name: "tie.height_ratio",
     kind: "number",
     default: 0.15,
     min: 0,
@@ -277,7 +276,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieHeightMin",
+    name: "tie.height_min",
     kind: "number",
     default: 5,
     min: 0,
@@ -289,7 +288,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieHeightMax",
+    name: "tie.height_max",
     kind: "number",
     default: 16,
     min: 0,
@@ -301,7 +300,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieNoteGap",
+    name: "tie.note_gap",
     kind: "number",
     default: 2,
     min: 0,
@@ -313,7 +312,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieVerticalOffset",
+    name: "tie.vertical_offset",
     kind: "number",
     default: 5,
     min: 0,
@@ -325,7 +324,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieBreakInset",
+    name: "tie.break_inset",
     kind: "number",
     default: 10,
     min: 0,
@@ -337,7 +336,7 @@ export const OPTIONS = [
   },
   {
     group: "Ties",
-    name: "tieBreakFragment",
+    name: "tie.break_fragment",
     kind: "number",
     default: 20,
     min: 0,
@@ -351,7 +350,7 @@ export const OPTIONS = [
   // --- Group symbols ----------------------------------------------------------
   {
     group: "Group symbols",
-    name: "sectionSymbol",
+    name: "section.symbol",
     kind: "enum",
     values: GROUP_SYMBOL_VALUES,
     default: "bracket",
@@ -360,7 +359,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "partGroupSymbol",
+    name: "part_group.symbol",
     kind: "enum",
     values: GROUP_SYMBOL_VALUES,
     default: "brace",
@@ -369,7 +368,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "partSymbol",
+    name: "part.symbol",
     kind: "enum",
     values: GROUP_SYMBOL_VALUES,
     default: "brace",
@@ -378,7 +377,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "sectionSymbolGap",
+    name: "section.symbol_gap",
     kind: "number",
     default: 5,
     min: 0,
@@ -390,7 +389,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "partGroupSymbolGap",
+    name: "part_group.symbol_gap",
     kind: "number",
     default: 2,
     min: 0,
@@ -402,7 +401,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "partSymbolGap",
+    name: "part.symbol_gap",
     kind: "number",
     default: 5,
     min: 0,
@@ -414,7 +413,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "groupBracketThickness",
+    name: "group_bracket.thickness",
     kind: "number",
     default: 5,
     min: 0,
@@ -426,7 +425,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "groupLineThickness",
+    name: "group_line.thickness",
     kind: "number",
     default: 1.6,
     min: 0,
@@ -438,7 +437,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "groupSquareThickness",
+    name: "group_square.thickness",
     kind: "number",
     default: 1.2,
     min: 0,
@@ -450,7 +449,7 @@ export const OPTIONS = [
   },
   {
     group: "Group symbols",
-    name: "groupSquareArm",
+    name: "group_square.arm",
     kind: "number",
     default: 8,
     min: 0,
@@ -464,7 +463,7 @@ export const OPTIONS = [
   // --- Group names ------------------------------------------------------------
   {
     group: "Group names",
-    name: "groupNameSize",
+    name: "group_name.size",
     kind: "number",
     default: 16,
     min: 0,
@@ -476,7 +475,7 @@ export const OPTIONS = [
   },
   {
     group: "Group names",
-    name: "groupNamePadding",
+    name: "group_name.padding",
     kind: "number",
     default: 10,
     min: 0,
@@ -488,11 +487,9 @@ export const OPTIONS = [
   },
 
   // --- Fonts --------------------------------------------------------------
-  // Not UserLayout fields (it's Copy) - these three are separate CSS custom
-  // properties the component reads directly. See music-xml.js's _render().
   {
     group: "Fonts",
-    name: "titleFont",
+    name: "title.font",
     kind: "font",
     default: "serif",
     label: "Title font",
@@ -500,7 +497,7 @@ export const OPTIONS = [
   },
   {
     group: "Fonts",
-    name: "lyricFont",
+    name: "lyric.font",
     kind: "font",
     default: "serif",
     label: "Lyric font",
@@ -508,7 +505,7 @@ export const OPTIONS = [
   },
   {
     group: "Fonts",
-    name: "groupNameFont",
+    name: "group_name.font",
     kind: "font",
     default: "serif",
     label: "Group name font",
@@ -526,8 +523,9 @@ export const OPTIONS = [
   },
 ];
 
-// "pageColor" -> "page-color", matching music-xml.js's own cssPropertyFor -
-// the CSS custom property a "number"/"color"/"enum" option is read from.
+// "tie.height_max" -> "tie-height-max", matching music-xml.js's own
+// cssPropertyFor - the CSS custom property a "number"/"color"/"enum"/"font"
+// option is read from.
 export function cssPropertyFor(name) {
-  return name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+  return name.replace(/[._]/g, "-");
 }

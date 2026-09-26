@@ -8,13 +8,12 @@ mod tests {
     use lib::musicxml::visitors::validators::part_consistency_visitor::PartConsistencyVisitor;
     use lib::musicxml::visitors::validators::position_visitor::PositionVisitor;
     use lib::musicxml::walker::Walker;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::group_symbol::GroupSymbol;
     use lib::score::engrave::walk_document;
+    use lib::score::layout_options::UserLayout;
     use lib::score::part_list::builder::build_part_list;
     use lib::score::part_list::display::format_part_list_tree;
     use lib::score::part_list::tree::PartListNode;
-    use lib::score::user_layout::UserLayout;
     use lib::smufl::smufl_font::SmuflFont;
 
     const ACTOR_PRELUDE: &str = "assets/xmlsamples/ActorPreludeSample.musicxml";
@@ -525,13 +524,8 @@ mod tests {
         let font = SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES));
         let document = parse(xml);
 
-        let (_score, _defaults, messages) = walk_document(
-            &document,
-            &font,
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_| {},
-        );
+        let (_score, _defaults, messages) =
+            walk_document(&document, &font, &UserLayout::default(), &mut |_| {});
 
         assert!(
             messages.iter().all(|m| m.severity == Severity::Info),

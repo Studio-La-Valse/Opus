@@ -34,10 +34,9 @@ use crate::musicxml::visitors::builders::tie_visitor::TieVisitor;
 use crate::musicxml::visitors::builders::walk_cursor_visitor::WalkCursorVisitor;
 use crate::musicxml::walker::Walker;
 use crate::musicxml::walker_ctx::WalkerCtx;
-use crate::score::app_defaults::AppDefaults;
+use crate::score::layout_options::UserLayout;
 use crate::score::rebeam_strategy::{OnlyWhenRequiredRebeamStrategy, SimpleRebeamStrategy};
 use crate::score::score_defaults::ScoreDefaults;
-use crate::score::user_layout::UserLayout;
 use crate::score::visual::arranger::SCORE_ARRANGERS;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
@@ -80,19 +79,10 @@ pub fn engrave(
     document: &Document,
     font: &SmuflFont,
     user_layout: &UserLayout,
-    app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
 ) -> EngravedScore {
-    let (mut score, layout, messages) =
-        walk_document(document, font, user_layout, app_defaults, progress);
-    arrange_score(
-        &mut score,
-        &layout,
-        font,
-        user_layout,
-        app_defaults,
-        progress,
-    );
+    let (mut score, layout, messages) = walk_document(document, font, user_layout, progress);
+    arrange_score(&mut score, &layout, font, user_layout, progress);
     EngravedScore {
         score,
         layout,
@@ -110,7 +100,6 @@ pub fn walk_document(
     document: &Document,
     font: &SmuflFont,
     user_layout: &UserLayout,
-    app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
 ) -> (Score, ScoreDefaults, Vec<ValidationIssue>) {
     let mut cursor = WalkCursor::default();
@@ -131,7 +120,6 @@ pub fn walk_document(
     let mut ctx = WalkerCtx::new(
         user_layout,
         &mut layout,
-        app_defaults,
         &mut cursor,
         &mut score,
         font,
@@ -149,7 +137,6 @@ pub fn walk_document(
     let mut ctx = WalkerCtx::new(
         user_layout,
         &mut layout,
-        app_defaults,
         &mut cursor,
         &mut score,
         font,
@@ -178,7 +165,6 @@ pub fn arrange_score(
     score_defaults: &ScoreDefaults,
     font: &SmuflFont,
     user_layout: &UserLayout,
-    app_defaults: &AppDefaults,
     progress: &mut dyn FnMut(Stage),
 ) {
     let strategy = OnlyWhenRequiredRebeamStrategy {
@@ -191,7 +177,6 @@ pub fn arrange_score(
     let params = LayoutParams {
         score_defaults,
         user_layout,
-        app_defaults,
         font,
     };
     score.resolve_layout(params);

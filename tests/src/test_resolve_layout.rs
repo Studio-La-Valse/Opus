@@ -7,9 +7,8 @@
 #[cfg(test)]
 mod tests {
     use lib::geometry::color::Color;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::{arrange_score, walk_document};
-    use lib::score::user_layout::UserLayout;
+    use lib::score::layout_options::{ForegroundLayout, UserLayout};
     use lib::score::visual::chord::Chord;
     use lib::score::visual::note::Note;
     use lib::score::visual::rest::Rest;
@@ -58,24 +57,19 @@ mod tests {
         .expect("fixture does not parse");
 
         let user_layout = UserLayout {
-            foreground_color: Some(Color::RED),
+            foreground: ForegroundLayout {
+                color: Some(Color::RED),
+            },
             ..Default::default()
         };
-        let app_defaults = AppDefaults::default();
 
-        let (mut score, defaults, _) = walk_document(
-            &document,
-            font(),
-            &user_layout,
-            &app_defaults,
-            &mut |_stage| {},
-        );
+        let (mut score, defaults, _) =
+            walk_document(&document, font(), &user_layout, &mut |_stage| {});
         arrange_score(
             &mut score,
             &defaults,
             font(),
             &user_layout,
-            &app_defaults,
             &mut |_stage| {},
         );
 

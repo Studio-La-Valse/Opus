@@ -1,5 +1,6 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::visual::layoutable::LayoutParams;
 
 #[derive(Default)]
@@ -17,17 +18,15 @@ impl SectionMeasure {
         let LayoutParams {
             score_defaults,
             user_layout,
-            app_defaults,
             ..
         } = params;
 
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+        self.color = params.foreground_color();
 
         self.light_barline = user_layout
-            .light_barline
+            .barline
+            .light
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.light_barline)
+            .unwrap_or(APP_DEFAULTS.barline.light)
     }
 }

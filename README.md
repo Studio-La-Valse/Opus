@@ -98,8 +98,26 @@ cargo run -p cli -- validate --file path/to/score.musicxml
 ```
 
 `render` accepts a large number of additional options controlling colors,
-page orientation, spacing, and other layout parameters. Run
-`cargo run -p cli -- render svg --help` for the full list.
+spacing, group symbols, fonts and other layout parameters. They can be kept in
+an optional TOML file passed with `--layout`;
+[assets/layouts/defaults.toml](assets/layouts/defaults.toml) lists every option
+at its default. Each option also has a flag of its own, spelled after its place
+in the file (`[tie] height_max` is `--tie-height-max`), which overrides the
+file. Run `cargo run -p cli -- render svg --help` for the full list.
+
+Each option is resolved on its own, from the first of these that sets it:
+
+1. its command-line flag;
+2. the `--layout` file;
+3. the MusicXML document itself, for the few options it can declare — the
+   `<appearance>` line widths and note sizes, and each `<part-group>`'s
+   `<group-symbol>`;
+4. the app's built-in default, which always has a value.
+
+Everything above the built-in default is optional: `render` needs neither a
+layout file nor any layout flags. Because a layout file outranks the document,
+setting an option there replaces what the score declares — passing
+`defaults.toml` unchanged resets every line width and note size to the app's.
 
 ## Using the web component
 

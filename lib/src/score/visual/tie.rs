@@ -13,8 +13,7 @@ use std::collections::HashMap;
 use crate::drawable::elements::polygon::Polygon;
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
-use crate::score::user_layout::UserLayout;
+use crate::score::layout_options::{APP_DEFAULTS, TieDefaults, TieLayout};
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note::{NoteAnchor, NoteId};
 use crate::score::visual::stem::UpDown;
@@ -161,37 +160,27 @@ fn ordered_bounds(min: f32, max: f32, default_min: f32, default_max: f32) -> (f3
 
 impl TieMetrics {
     pub fn resolve(params: LayoutParams<'_>) -> Self {
-        let LayoutParams {
-            user_layout,
-            app_defaults,
-            ..
-        } = params;
-
-        Self::from_sources(user_layout, app_defaults)
+        Self::from_sources(&params.user_layout.tie, &APP_DEFAULTS.tie)
     }
 
-    fn from_sources(user: &UserLayout, app: &AppDefaults) -> Self {
+    fn from_sources(user: &TieLayout, app: &TieDefaults) -> Self {
         let (height_min, height_max) = ordered_bounds(
-            user.tie_height_min.unwrap_or(app.tie_height_min),
-            user.tie_height_max.unwrap_or(app.tie_height_max),
-            app.tie_height_min,
-            app.tie_height_max,
+            user.height_min.unwrap_or(app.height_min),
+            user.height_max.unwrap_or(app.height_max),
+            app.height_min,
+            app.height_max,
         );
 
         TieMetrics {
-            endpoint_thickness: user
-                .tie_endpoint_thickness
-                .unwrap_or(app.tie_endpoint_thickness),
-            midpoint_thickness: user
-                .tie_midpoint_thickness
-                .unwrap_or(app.tie_midpoint_thickness),
-            height_ratio: user.tie_height_ratio.unwrap_or(app.tie_height_ratio),
+            endpoint_thickness: user.endpoint_thickness.unwrap_or(app.endpoint_thickness),
+            midpoint_thickness: user.midpoint_thickness.unwrap_or(app.midpoint_thickness),
+            height_ratio: user.height_ratio.unwrap_or(app.height_ratio),
             height_min,
             height_max,
-            note_gap: user.tie_note_gap.unwrap_or(app.tie_note_gap),
-            vertical_offset: user.tie_vertical_offset.unwrap_or(app.tie_vertical_offset),
-            break_inset: user.tie_break_inset.unwrap_or(app.tie_break_inset),
-            break_fragment: user.tie_break_fragment.unwrap_or(app.tie_break_fragment),
+            note_gap: user.note_gap.unwrap_or(app.note_gap),
+            vertical_offset: user.vertical_offset.unwrap_or(app.vertical_offset),
+            break_inset: user.break_inset.unwrap_or(app.break_inset),
+            break_fragment: user.break_fragment.unwrap_or(app.break_fragment),
         }
     }
 

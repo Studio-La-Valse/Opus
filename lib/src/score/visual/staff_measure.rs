@@ -1,6 +1,5 @@
 use crate::geometry::xy::XY;
-use crate::score::app_defaults::AppDefaults;
-use crate::score::user_layout::UserLayout;
+use crate::score::layout_options::{APP_DEFAULTS, MeasureStartDefaults, MeasureStartLayout};
 use crate::score::visual::clef::Clef;
 use crate::score::visual::key_signature::KeySignature;
 use crate::score::visual::layoutable::LayoutParams;
@@ -28,26 +27,21 @@ pub struct MeasureStartPaddings {
 
 impl MeasureStartPaddings {
     pub fn resolve(params: LayoutParams<'_>) -> Self {
-        let LayoutParams {
-            user_layout,
-            app_defaults,
-            ..
-        } = params;
-
-        Self::from_sources(user_layout, app_defaults)
+        Self::from_sources(
+            &params.user_layout.measure_start,
+            &APP_DEFAULTS.measure_start,
+        )
     }
 
-    fn from_sources(user: &UserLayout, app: &AppDefaults) -> Self {
+    fn from_sources(user: &MeasureStartLayout, app: &MeasureStartDefaults) -> Self {
         MeasureStartPaddings {
-            clef: user
-                .measure_start_clef_padding
-                .unwrap_or(app.measure_start_clef_padding),
+            clef: user.clef_padding.unwrap_or(app.clef_padding),
             key_signature: user
-                .measure_start_key_signature_padding
-                .unwrap_or(app.measure_start_key_signature_padding),
+                .key_signature_padding
+                .unwrap_or(app.key_signature_padding),
             time_signature: user
-                .measure_start_time_signature_padding
-                .unwrap_or(app.measure_start_time_signature_padding),
+                .time_signature_padding
+                .unwrap_or(app.time_signature_padding),
         }
     }
 }

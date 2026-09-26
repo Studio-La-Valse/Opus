@@ -1,5 +1,6 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::staff_measure::StaffMeasure;
 use std::collections::BTreeMap;
@@ -140,28 +141,28 @@ impl Staff {
         let LayoutParams {
             score_defaults,
             user_layout,
-            app_defaults,
             ..
         } = params;
 
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+        self.color = params.foreground_color();
 
         self.line_width = user_layout
-            .staff_line_width
+            .staff
+            .line_width
             .or(score_defaults.appearance.staff)
-            .unwrap_or(app_defaults.staff_line_width);
+            .unwrap_or(APP_DEFAULTS.staff.line_width);
 
         self.light_barline = user_layout
-            .light_barline
+            .barline
+            .light
             .or(score_defaults.appearance.light_barline)
-            .unwrap_or(app_defaults.light_barline);
+            .unwrap_or(APP_DEFAULTS.barline.light);
 
         self.heavy_barline = user_layout
-            .heavy_barline
+            .barline
+            .heavy
             .or(score_defaults.appearance.heavy_barline)
-            .unwrap_or(app_defaults.heavy_barline);
+            .unwrap_or(APP_DEFAULTS.barline.heavy);
 
         for measure in self.measures.values_mut() {
             measure.resolve_layout(params);

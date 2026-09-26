@@ -1,0 +1,92 @@
+# Every layout option `opus render --layout` accepts, set to its app default.
+#
+# Copy this file and keep only what you want to change: every table and every
+# key is optional, and an option left out falls back to what the document
+# declares, then to the value shown here. An unknown table or key is an error.
+#
+# Don't pass this file as it stands unless that is what you mean: an option
+# set here overrides the document, so it would replace every line width and
+# note size the document declares in its <appearance> with these defaults.
+# Any `--<table>-<key>` flag on the command line (e.g. `--tie-height-max`)
+# overrides the file for that one option.
+#
+# Lengths are in tenths; a staff space is 10 tenths.
+
+[page]
+color = "#FFFFFF"             # background, #RRGGBB or #RRGGBBAA
+
+[foreground]
+color = "#000000"             # ink for staves, notation and text
+
+[staff]
+line_width = 1.1              # staff and ledger lines
+
+[barline]
+light = 1.875
+heavy = 5.0
+
+[beam]
+thickness = 5.0
+spacing = 1.5                 # gap between beam levels
+
+[stem]
+thickness = 1.0
+
+[note_size]
+grace = 0.66                  # fraction of full size
+cue = 0.66
+
+[dot]
+radius = 2.0
+spacing = 5.0                 # notehead to first dot, and dot to dot
+
+[measure_start]
+clef_padding = 5.0            # measure's left edge to the opening clef
+key_signature_padding = 5.0   # clef column to key signature
+time_signature_padding = 5.0  # key signature column to time signature
+
+[tie]
+endpoint_thickness = 1.0
+midpoint_thickness = 2.2
+height_ratio = 0.15           # arc height as a fraction of span, before clamping
+height_min = 5.0
+height_max = 16.0
+note_gap = 2.0                # notehead edge to tie tip
+vertical_offset = 5.0         # notehead centre to tie tip
+break_inset = 10.0            # barline to the end of a broken tie's first half
+break_fragment = 20.0         # length of a broken tie's second half
+
+# Group symbols: none, brace, bracket, line or square. Setting one here forces
+# it on every group of that level, overriding the document.
+[section]
+symbol = "bracket"
+symbol_gap = 5.0              # system's left edge to the symbol's stroke
+
+[part_group]
+symbol = "brace"
+symbol_gap = 2.0              # padding from the section symbol
+
+[part]
+symbol = "brace"
+symbol_gap = 5.0              # padding from the part-group symbol
+
+[group_bracket]
+thickness = 5.0
+
+[group_line]
+thickness = 1.6
+
+[group_square]
+thickness = 1.2
+arm = 8.0                     # how far the arms reach toward the system
+
+[group_name]
+font = "serif"                # a CSS family; resolved and embedded for PDF
+size = 16.0
+padding = 10.0                # name's right edge to its symbol
+
+[title]
+font = "serif"
+
+[lyric]
+font = "serif"

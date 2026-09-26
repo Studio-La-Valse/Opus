@@ -13,9 +13,8 @@ mod tests {
     use lib::musicxml::visitor::{DefaultVisitor, Visitor};
     use lib::musicxml::visitors::validators::group_symbol_visitor::GroupSymbolVisitor;
     use lib::musicxml::walker::Walker;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::engrave::walk_document;
-    use lib::score::user_layout::UserLayout;
+    use lib::score::layout_options::UserLayout;
     use lib::smufl::smufl_font::SmuflFont;
     use roxmltree::Document;
     use std::fs::read_to_string;
@@ -162,13 +161,7 @@ mod tests {
 
             let walked = std::panic::catch_unwind(move || {
                 let document = Document::parse(&xml).expect("test document does not parse");
-                walk_document(
-                    &document,
-                    font(),
-                    &UserLayout::default(),
-                    &AppDefaults::default(),
-                    &mut |_stage| {},
-                );
+                walk_document(&document, font(), &UserLayout::default(), &mut |_stage| {});
             });
 
             assert!(

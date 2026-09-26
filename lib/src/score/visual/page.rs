@@ -1,5 +1,6 @@
 use crate::geometry::color::Color;
 use crate::score::core::staff_idx::StaffIdx;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::rebeam_strategy::RebeamStrategy;
 use crate::score::score_defaults::PageMargins;
 use crate::score::visual::layoutable::LayoutParams;
@@ -98,7 +99,6 @@ impl Page {
         let LayoutParams {
             score_defaults,
             user_layout,
-            app_defaults,
             ..
         } = params;
 
@@ -106,10 +106,8 @@ impl Page {
         self.margins = page.margins;
         self.width = page.width;
         self.height = page.height;
-        self.color = user_layout.page_color.unwrap_or(app_defaults.page_color);
-        self.foreground = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
+        self.color = user_layout.page.color.unwrap_or(APP_DEFAULTS.page.color);
+        self.foreground = params.foreground_color();
 
         for system in self.systems.values_mut() {
             system.resolve_layout(params);

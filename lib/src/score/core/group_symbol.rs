@@ -22,7 +22,7 @@ use std::str::FromStr;
 /// three levels can differ. A bare `GroupSymbol::default()` would have to pick
 /// one of them and be wrong for the other two.
 ///
-/// `Serialize` is derived only so [`UserLayout`](crate::score::user_layout::UserLayout)
+/// `Serialize` is derived only so [`UserLayout`](crate::score::layout_options::UserLayout)
 /// can derive it in turn; nothing relies on its (plain variant name) output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "String")]

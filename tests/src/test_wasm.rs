@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use lib::score::layout_options::UserLayout;
     use std::fs::read_to_string;
     use wasm::{RenderOptions, RenderOutput, WasmScore};
 
@@ -39,7 +40,7 @@ mod tests {
                 // Doubled hashes because the JSON itself contains `"#`, which
                 // would close a single-hash raw string.
                 layout: serde_json::from_str(
-                    r##"{ "pageColor": "#ffffff", "foregroundColor": "#000000" }"##,
+                    r##"{ "page": { "color": "#ffffff" }, "foreground": { "color": "#000000" } }"##,
                 )
                 .expect("layout options failed to deserialize"),
                 ..Default::default()
@@ -156,8 +157,8 @@ mod tests {
     }
 
     /// The layout options are deserialized straight into `UserLayout`, so every
-    /// field it gains is exposed to callers for free, spelled in camelCase and
-    /// parsed by the same `FromStr` impls the CLI flags use.
+    /// field it gains is exposed to callers for free, nested by group, spelled
+    /// in snake_case and parsed by the same `FromStr` impls the CLI flags use.
     ///
     /// The unknown-name case only bites for a real map deserializer such as
     /// serde_json: serde-wasm-bindgen's struct deserializer looks up just the
@@ -166,22 +167,23 @@ mod tests {
     /// having for every other caller.
     #[test]
     fn layout_options_deserialize_by_userlayout_field_name() {
-        let layout: lib::score::user_layout::UserLayout =
-            serde_json::from_str(r##"{ "pageColor": "#112233", "tieHeightRatio": 0.25 }"##)
-                .expect("valid layout options failed to deserialize");
+        let layout: UserLayout = serde_json::from_str(
+            r##"{ "page": { "color": "#112233" }, "tie": { "height_ratio": 0.25 } }"##,
+        )
+        .expect("valid layout options failed to deserialize");
 
-        assert_eq!(layout.page_color.expect("page_color").to_hex(), "#112233FF");
-        assert_eq!(layout.tie_height_ratio, Some(0.25));
-        assert_eq!(layout.staff_line_width, None, "unset options stay None");
+        assert_eq!(layout.page.color.expect("page.color").to_hex(), "#112233FF");
+        assert_eq!(layout.tie.height_ratio, Some(0.25));
+        assert_eq!(layout.staff.line_width, None, "unset options stay None");
 
-        let unknown = serde_json::from_str::<lib::score::user_layout::UserLayout>(
-            r##"{ "pageColour": "#112233" }"##,
-        );
+        let unknown =
+            serde_json::from_str::<UserLayout>(r##"{ "page": { "colour": "#112233" } }"##);
         assert!(unknown.is_err(), "an unknown option name must be rejected");
 
-        let bad_color = serde_json::from_str::<lib::score::user_layout::UserLayout>(
-            r#"{ "pageColor": "nope" }"#,
-        );
+        let unknown_group = serde_json::from_str::<UserLayout>(r#"{ "pages": {} }"#);
+        assert!(unknown_group.is_err(), "an unknown group must be rejected");
+
+        let bad_color = serde_json::from_str::<UserLayout>(r#"{ "page": { "color": "nope" } }"#);
         assert!(bad_color.is_err(), "an unparseable colour must be rejected");
     }
 
@@ -189,13 +191,13 @@ mod tests {
     /// `arrange_score`, and on `wasm32` that panic traps without unwinding --
     /// see `TieMetrics::from_sources` / `ordered_bounds` in `tie.rs`. This
     /// pins the fix at the same boundary JS calls through: `render_with` must
-    /// return rather than abort when `tieHeightMin` > `tieHeightMax`.
+    /// return rather than abort when `tie.height_min` > `tie.height_max`.
     #[test]
     fn render_survives_inverted_tie_height_bounds() {
         let mut score = score("assets/xmlsamples/ActorPreludeSample.musicxml");
 
         let mut output = score.render_with(&RenderOptions {
-            layout: serde_json::from_str(r#"{ "tieHeightMin": 30, "tieHeightMax": 16 }"#)
+            layout: serde_json::from_str(r#"{ "tie": { "height_min": 30, "height_max": 16 } }"#)
                 .expect("layout options failed to deserialize"),
             ..Default::default()
         });
@@ -214,34 +216,34 @@ mod tests {
     fn group_symbol_options_deserialize_by_their_musicxml_spelling() {
         use lib::score::core::group_symbol::GroupSymbol;
 
-        let layout: lib::score::user_layout::UserLayout = serde_json::from_str(
-            r##"{ "sectionSymbol": "line", "partGroupSymbol": "square",
-                  "partSymbol": "none", "groupLineThickness": 3.5,
-                  "sectionSymbolGap": 20, "groupNameSize": 18, "groupNamePadding": 12 }"##,
+        let layout: UserLayout = serde_json::from_str(
+            r##"{ "section": { "symbol": "line", "symbol_gap": 20 },
+                  "part_group": { "symbol": "square" },
+                  "part": { "symbol": "none" },
+                  "group_line": { "thickness": 3.5 },
+                  "group_name": { "size": 18, "padding": 12 } }"##,
         )
         .expect("valid group symbol options failed to deserialize");
 
-        assert_eq!(layout.section_symbol, Some(GroupSymbol::Line));
-        assert_eq!(layout.part_group_symbol, Some(GroupSymbol::Square));
+        assert_eq!(layout.section.symbol, Some(GroupSymbol::Line));
+        assert_eq!(layout.part_group.symbol, Some(GroupSymbol::Square));
         assert_eq!(
-            layout.part_symbol,
+            layout.part.symbol,
             Some(GroupSymbol::None),
             "'none' is a symbol that draws nothing, not an absent option"
         );
-        assert_eq!(layout.group_line_thickness, Some(3.5));
-        assert_eq!(layout.section_symbol_gap, Some(20.));
-        assert_eq!(layout.group_name_size, Some(18.));
-        assert_eq!(layout.group_name_padding, Some(12.));
-        assert_eq!(layout.part_symbol_gap, None, "unset options stay None");
+        assert_eq!(layout.group_line.thickness, Some(3.5));
+        assert_eq!(layout.section.symbol_gap, Some(20.));
+        assert_eq!(layout.group_name.size, Some(18.));
+        assert_eq!(layout.group_name.padding, Some(12.));
+        assert_eq!(layout.part.symbol_gap, None, "unset options stay None");
 
-        let bare: lib::score::user_layout::UserLayout =
+        let bare: UserLayout =
             serde_json::from_str("{}").expect("an empty layout object deserializes");
-        assert_eq!(bare.group_name_size, None, "unset name knobs stay None");
-        assert_eq!(bare.group_name_padding, None);
+        assert_eq!(bare.group_name.size, None, "unset name knobs stay None");
+        assert_eq!(bare.group_name.padding, None);
 
-        let unknown = serde_json::from_str::<lib::score::user_layout::UserLayout>(
-            r#"{ "sectionSymbol": "curly" }"#,
-        );
+        let unknown = serde_json::from_str::<UserLayout>(r#"{ "section": { "symbol": "curly" } }"#);
         assert!(unknown.is_err(), "an unknown symbol name must be rejected");
     }
 }

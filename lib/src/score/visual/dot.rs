@@ -1,5 +1,6 @@
 use crate::geometry::color::Color;
 use crate::geometry::xy::XY;
+use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::note_scale::NoteScale;
 
@@ -42,17 +43,14 @@ impl Dot {
 
 impl Dot {
     pub fn resolve_layout(&mut self, params: LayoutParams<'_>) {
-        let LayoutParams {
-            user_layout,
-            app_defaults,
-            ..
-        } = params;
-
         self.scale = self.size.resolve(params);
 
-        self.color = user_layout
-            .foreground_color
-            .unwrap_or(app_defaults.foreground_color);
-        self.radius = user_layout.dot_radius.unwrap_or(app_defaults.dot_radius) * self.scale;
+        self.color = params.foreground_color();
+        self.radius = params
+            .user_layout
+            .dot
+            .radius
+            .unwrap_or(APP_DEFAULTS.dot.radius)
+            * self.scale;
     }
 }

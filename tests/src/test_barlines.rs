@@ -15,10 +15,9 @@
 mod tests {
     use lib::drawable::drawable_element::DrawableElement;
     use lib::drawable::elements::line::Line;
-    use lib::score::app_defaults::AppDefaults;
     use lib::score::core::staff_idx::StaffIdx;
     use lib::score::engrave::{arrange_score, walk_document};
-    use lib::score::user_layout::UserLayout;
+    use lib::score::layout_options::UserLayout;
     use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::render_pass::{BaseRenderer, RenderPass};
     use lib::score::visual::score::Score;
@@ -86,20 +85,14 @@ mod tests {
 
     fn engrave(xml: &str) -> Score {
         let document = Document::parse(xml).expect("test document does not parse");
-        let (mut score, defaults, _messages) = walk_document(
-            &document,
-            font(),
-            &UserLayout::default(),
-            &AppDefaults::default(),
-            &mut |_stage| {},
-        );
+        let (mut score, defaults, _messages) =
+            walk_document(&document, font(), &UserLayout::default(), &mut |_stage| {});
 
         arrange_score(
             &mut score,
             &defaults,
             font(),
             &UserLayout::default(),
-            &AppDefaults::default(),
             &mut |_stage| {},
         );
 
