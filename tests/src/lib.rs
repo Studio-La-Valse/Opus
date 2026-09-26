@@ -1,6 +1,7 @@
 mod test_arrange;
 mod test_barlines;
 mod test_bbox;
+mod test_beam_geometry;
 mod test_beam_group;
 mod test_beam_group_validation;
 mod test_beam_type;

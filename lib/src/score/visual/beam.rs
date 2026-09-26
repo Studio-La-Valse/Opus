@@ -280,3 +280,33 @@ pub fn beam_level_ends_at<'a>(
 
     LevelEnd::OpenAt(last_carrier)
 }
+
+/// How long a hook on the stem at `at` is drawn: half the gap to the nearest
+/// stemmed chord on the side the hook points to, `forward` meaning rightward,
+/// but never more than `max`.
+///
+/// Half, because the neighbour may well carry a hook pointing back the other
+/// way, and two hooks meeting in the middle would read as a beam. With no
+/// neighbour on that side -- a hook on the fragment's outermost stem -- there is
+/// no gap to measure and the hook gets its full length.
+pub fn hook_length(chords: &[&mut Chord], at: usize, forward: bool, max: f32) -> f32 {
+    let Some(stem) = chords[at].stem.as_ref() else {
+        return max;
+    };
+
+    let neighbour = if forward {
+        chords[at + 1..]
+            .iter()
+            .find_map(|chord| chord.stem.as_ref())
+    } else {
+        chords[..at]
+            .iter()
+            .rev()
+            .find_map(|chord| chord.stem.as_ref())
+    };
+
+    match neighbour {
+        Some(neighbour) => max.min((neighbour.xy.x - stem.xy.x).abs() / 2.),
+        None => max,
+    }
+}

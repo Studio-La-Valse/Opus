@@ -44,8 +44,8 @@ use crate::geometry::xy::XY;
 use crate::score::core::voice::Voice;
 use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::beam::{
-    BeamMetrics, Beamable, Cut, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
-    split_at_system_breaks,
+    BeamMetrics, Beamable, Cut, LevelEnd, beam_level_ends_at, create_beam_groups, hook_length,
+    infer_direction, split_at_system_breaks,
 };
 use crate::score::visual::chord::Chord;
 use crate::score::visual::layoutable::LayoutParams;
@@ -73,6 +73,7 @@ impl ScoreArranger for BeamArranger {
             let scale = if grace { metrics.grace_scale } else { 1. };
             let thickness = metrics.thickness * scale;
             let spacing = metrics.spacing * scale;
+            let max_hook = MAX_HOOK_LENGTH * scale;
 
             for group in create_beam_groups(run) {
                 // Inferred once for the whole group, so the beam stack grows the
@@ -101,6 +102,7 @@ impl ScoreArranger for BeamArranger {
                             &direction,
                             &thickness,
                             &spacing,
+                            max_hook,
                             &metrics.color,
                             fragment.cut,
                         ));
@@ -129,8 +131,11 @@ impl ScoreArranger for BeamArranger {
 /// Maximum vertical span a beam is allowed to slant before it is clamped.
 const MAX_BEAM_SLANT_DY: f32 = 20.;
 
-/// The length of a hook beam. TODO: infer from available space between two stems and clam to a max length.
-const HOOK_LENGTH: f32 = 7.5;
+/// The longest a hook beam is drawn: one staff space, about a notehead's width.
+/// Closer spacing shortens it -- see [`hook_length`]. The stub a level runs out
+/// to a system break follows the same rule: it has no neighbouring stem on its
+/// side, so it is always drawn at this full length.
+const MAX_HOOK_LENGTH: f32 = 10.;
 
 /// What gets beamed together: one voice of one part, with grace notes kept apart
 /// from the rest. Exactly the grouping `BeamGroupVisitor` validates against.
@@ -257,6 +262,7 @@ impl BeamArranger {
         direction: &UpDown,
         beam_thickness: &f32,
         beam_spacing: &f32,
+        max_hook: f32,
         color: &Color,
         cut: Cut,
     ) -> Vec<Polygon> {
@@ -302,7 +308,8 @@ impl BeamArranger {
                 .unwrap();
 
                 if arrives {
-                    left_point = self.point_along(left_point, -HOOK_LENGTH, &offset_ray);
+                    let length = hook_length(chords, i, false, max_hook);
+                    left_point = self.point_along(left_point, -length, &offset_ray);
                 }
 
                 let dy: f32 = match direction {
@@ -356,17 +363,27 @@ impl BeamArranger {
                                 .intersect(offset_ray)
                                 .unwrap()
                             }
-                            None => self.point_along(left_point, HOOK_LENGTH, &offset_ray),
+                            None => {
+                                let length = hook_length(chords, i, true, max_hook);
+                                self.point_along(left_point, length, &offset_ray)
+                            }
                         };
 
                         if departs {
-                            self.point_along(point, HOOK_LENGTH, &offset_ray)
+                            let length = hook_length(chords, len - 1, true, max_hook);
+                            self.point_along(point, length, &offset_ray)
                         } else {
                             point
                         }
                     }
-                    BeamType::HookStart => self.point_along(left_point, HOOK_LENGTH, &offset_ray),
-                    BeamType::HookEnd => self.point_along(left_point, -HOOK_LENGTH, &offset_ray),
+                    BeamType::HookStart => {
+                        let length = hook_length(chords, i, true, max_hook);
+                        self.point_along(left_point, length, &offset_ray)
+                    }
+                    BeamType::HookEnd => {
+                        let length = hook_length(chords, i, false, max_hook);
+                        self.point_along(left_point, -length, &offset_ray)
+                    }
                     _ => continue,
                 };
 
