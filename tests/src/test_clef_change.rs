@@ -26,7 +26,6 @@ mod tests {
     use lib::smufl::smufl_font::SmuflFont;
 
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     /// The official samples that actually write a clef part-way through a
     /// measure. Most do not: a clef almost always opens a measure, which is a
@@ -44,7 +43,7 @@ mod tests {
 
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES)))
+        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META)))
     }
 
     fn engraved(relative: &str) -> EngravedScore {

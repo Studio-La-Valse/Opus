@@ -145,15 +145,11 @@ pub struct WasmScore {
 
 #[wasm_bindgen(js_class = Score)]
 impl WasmScore {
-    /// Parses `musicxml` and walks it into a laid-out-on-demand score. The two
-    /// JSON arguments are the SMuFL metadata and glyph-name tables.
+    /// Parses `musicxml` and walks it into a laid-out-on-demand score.
+    /// `meta_json` is the SMuFL font's metadata file.
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        musicxml: &str,
-        meta_json: &str,
-        glyph_names_json: &str,
-    ) -> Result<WasmScore, JsValue> {
-        let font = SmuflFont::load(meta_json, glyph_names_json);
+    pub fn new(musicxml: &str, meta_json: &str) -> Result<WasmScore, JsValue> {
+        let font = SmuflFont::load(meta_json);
 
         let options = ParsingOptions {
             allow_dtd: true,

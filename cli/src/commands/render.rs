@@ -48,9 +48,6 @@ pub struct RenderArgs {
     #[arg(long)]
     meta: String,
 
-    #[arg(long)]
-    glyphs: String,
-
     #[arg(long, short, action)]
     debug: bool,
 
@@ -97,7 +94,6 @@ pub fn run(format: RenderCommand) {
         out,
         overwrite,
         meta,
-        glyphs: glyph_names,
         debug,
         layout_file,
         layout_args,
@@ -108,9 +104,7 @@ pub fn run(format: RenderCommand) {
     let data = read_musicxml(&file);
     let meta_content = read_to_string(&meta)
         .unwrap_or_else(|err| panic!("Failed to read metadata '{meta}': {err}"));
-    let glyph_names_content = read_to_string(&glyph_names)
-        .unwrap_or_else(|err| panic!("Failed to read glyph names '{glyph_names}': {err}"));
-    let font = SmuflFont::load(&meta_content, &glyph_names_content);
+    let font = SmuflFont::load(&meta_content);
 
     println!("Reading to string: {}ms", time.elapsed().as_millis());
     time = Instant::now();

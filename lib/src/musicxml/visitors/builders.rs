@@ -2,6 +2,7 @@ pub mod build_logging_visitor;
 pub mod clef_visitor;
 pub mod content_visitor;
 pub mod layout_visitor;
+pub mod music_font_visitor;
 pub mod print_layout_visitor;
 pub mod setup_visitor;
 pub mod tie_visitor;

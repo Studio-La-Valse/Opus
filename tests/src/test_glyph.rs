@@ -30,10 +30,9 @@ mod tests {
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
         FONT.get_or_init(|| {
-            SmuflFont::load(
-                &asset("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json"),
-                &asset("assets/smufl/metadata/glyphnames.json"),
-            )
+            SmuflFont::load(&asset(
+                "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+            ))
         })
     }
 
@@ -264,14 +263,33 @@ mod tests {
         ))
         .unwrap();
         meta.as_object_mut().unwrap().remove("glyphsWithAlternates");
-        let font = SmuflFont::load(
-            &meta.to_string(),
-            &asset("assets/smufl/metadata/glyphnames.json"),
-        );
+        let font = SmuflFont::load(&meta.to_string());
 
         let brace = font.brace(BraceStyle::Large);
         assert_eq!(brace.codepoint, '\u{E000}');
         assert_eq!(brace.advance, font.brace(BraceStyle::Default).advance);
+    }
+
+    fn leland() -> SmuflFont {
+        SmuflFont::load(&asset("assets/smufl/Leland-main/leland_metadata.json"))
+    }
+
+    /// Leland's metadata carries no advance widths at all, so the brace steps
+    /// back by its ink width instead.
+    #[test]
+    fn a_font_without_advance_widths_steps_the_brace_back_by_its_ink() {
+        let brace = leland().brace(BraceStyle::Default);
+        assert_eq!(brace.advance, brace.bbox.width());
+    }
+
+    /// Anchors are optional per glyph: Leland omits them for the double whole
+    /// notehead, which never carries a stem.
+    #[test]
+    fn a_notehead_without_anchors_has_no_cutouts_and_no_stem_anchors() {
+        let notehead = leland().notehead("noteheadDoubleWhole");
+        assert!(notehead.stem_anchor_left.is_none());
+        assert!(notehead.stem_anchor_right.is_none());
+        assert!(notehead.cutouts.nw.is_none() && notehead.cutouts.se.is_none());
     }
 
     #[test]

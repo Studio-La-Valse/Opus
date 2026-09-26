@@ -15,8 +15,7 @@ stage_runtime() {
   mkdir -p \
     "$dest/web" \
     "$dest/wasm/pkg" \
-    "$dest/assets/smufl/bravura-bravura-1.392/redist/woff" \
-    "$dest/assets/smufl/metadata"
+    "$dest/assets/smufl/bravura-bravura-1.392/redist/woff"
 
   cp web/music-xml.js "$dest/web/"
 
@@ -28,5 +27,4 @@ stage_runtime() {
   cp assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff \
      assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff2 \
      "$dest/assets/smufl/bravura-bravura-1.392/redist/woff/"
-  cp assets/smufl/metadata/glyphnames.json "$dest/assets/smufl/metadata/"
 }

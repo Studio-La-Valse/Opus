@@ -82,16 +82,12 @@ the Bravura font under [assets/smufl/](assets/smufl).
 # Render a MusicXML file to SVG (one file per page)
 cargo run -p cli -- render svg \
   --file path/to/score.musicxml \
-  --meta assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json \
-  --glyphs assets/smufl/metadata/glyphnames.json \
-  --out path/to/output/dir
+  --meta assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json \  --out path/to/output/dir
 
 # Render to a single multi-page PDF instead
 cargo run -p cli -- render pdf \
   --file path/to/score.musicxml \
-  --meta assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json \
-  --glyphs assets/smufl/metadata/glyphnames.json \
-  --out path/to/output/dir
+  --meta assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json \  --out path/to/output/dir
 
 # Parse a MusicXML file and report validation issues without rendering
 cargo run -p cli -- validate --file path/to/score.musicxml

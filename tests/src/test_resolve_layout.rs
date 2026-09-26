@@ -33,10 +33,9 @@ mod tests {
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
         FONT.get_or_init(|| {
-            SmuflFont::load(
-                &asset("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json"),
-                &asset("assets/smufl/metadata/glyphnames.json"),
-            )
+            SmuflFont::load(&asset(
+                "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
+            ))
         })
     }
 

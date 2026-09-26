@@ -14,9 +14,8 @@ mod tests {
     fn score(musicxml_path: &str) -> WasmScore {
         let musicxml = fixture(musicxml_path);
         let meta_json = fixture("assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json");
-        let glyph_names_json = fixture("assets/smufl/metadata/glyphnames.json");
 
-        WasmScore::new(&musicxml, &meta_json, &glyph_names_json).expect("failed to build score")
+        WasmScore::new(&musicxml, &meta_json).expect("failed to build score")
     }
 
     /// These tests go through `render_with` rather than the `render(JsValue)`

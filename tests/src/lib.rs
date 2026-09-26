@@ -20,6 +20,7 @@ mod test_key_signature;
 mod test_layout_file;
 mod test_layout_options;
 mod test_measure_starts;
+mod test_music_font;
 mod test_musicxml_source;
 mod test_note_size;
 mod test_page_layout;

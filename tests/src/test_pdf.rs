@@ -35,7 +35,6 @@ mod tests {
 
     const BRAVURA_OTF: &str = "assets/smufl/bravura-bravura-1.392/redist/otf/Bravura.otf";
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     /// `gClef`, the treble clef -- a glyph Bravura is guaranteed to carry.
     const G_CLEF: char = '\u{E050}';
@@ -51,7 +50,7 @@ mod tests {
     }
 
     fn smufl_font() -> SmuflFont {
-        SmuflFont::load(&fixture_string(BRAVURA_META), &fixture_string(GLYPH_NAMES))
+        SmuflFont::load(&fixture_string(BRAVURA_META))
     }
 
     /// Renders one page's worth of (already page-local) elements through

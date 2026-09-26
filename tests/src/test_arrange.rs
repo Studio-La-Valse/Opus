@@ -20,7 +20,6 @@ mod tests {
     use lib::smufl::smufl_font::SmuflFont;
 
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     fn fixture(relative: &str) -> String {
         read_to_string(format!("{}/../{relative}", env!("CARGO_MANIFEST_DIR")))
@@ -29,7 +28,7 @@ mod tests {
 
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META), &fixture(GLYPH_NAMES)))
+        FONT.get_or_init(|| SmuflFont::load(&fixture(BRAVURA_META)))
     }
 
     /// An unmeasured symbol: these tests are about where a container puts its

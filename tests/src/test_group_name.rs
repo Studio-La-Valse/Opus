@@ -19,7 +19,6 @@ mod tests {
     use std::sync::OnceLock;
 
     const BRAVURA_META: &str = "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json";
-    const GLYPH_NAMES: &str = "assets/smufl/metadata/glyphnames.json";
 
     /// A braced two-part group, named and abbreviated, nested inside an outer
     /// bracket so it reaches the visual tree as a part-group rather than a
@@ -44,7 +43,7 @@ mod tests {
 
     fn font() -> &'static SmuflFont {
         static FONT: OnceLock<SmuflFont> = OnceLock::new();
-        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_META), &asset(GLYPH_NAMES)))
+        FONT.get_or_init(|| SmuflFont::load(&asset(BRAVURA_META)))
     }
 
     /// A `<score-partwise>` around `part_list`, giving every part in `parts`

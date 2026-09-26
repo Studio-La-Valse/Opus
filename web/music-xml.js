@@ -65,7 +65,6 @@ const BRAVURA_METADATA_URL = new URL(
   "../assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
   import.meta.url,
 );
-const GLYPHNAMES_URL = new URL("../assets/smufl/metadata/glyphnames.json", import.meta.url);
 const BRAVURA_WOFF2_URL = new URL(
   "../assets/smufl/bravura-bravura-1.392/redist/woff/Bravura.woff2",
   import.meta.url,
@@ -94,15 +93,14 @@ async function bootstrap() {
   // can't resolve it - tell them to leave it alone rather than warn/fail.
   const wasmPromise = import(/* @vite-ignore */ WASM_JS_URL);
   const metaJsonPromise = fetch(BRAVURA_METADATA_URL).then((r) => r.text());
-  const glyphNamesJsonPromise = fetch(GLYPHNAMES_URL).then((r) => r.text());
   const fontPromise = loadBravuraFont();
 
   const wasm = await wasmPromise;
   await wasm.default();
-  const [metaJson, glyphNamesJson] = await Promise.all([metaJsonPromise, glyphNamesJsonPromise]);
+  const metaJson = await metaJsonPromise;
   await fontPromise;
 
-  return { wasm, metaJson, glyphNamesJson };
+  return { wasm, metaJson };
 }
 
 // Shared across every <music-xml> instance on the page: the wasm module, the
@@ -393,7 +391,7 @@ export class MusicXmlElement extends HTMLElement {
     this._setStatus("Loading…");
 
     try {
-      const { wasm, metaJson, glyphNamesJson } = await ensureBootstrapped();
+      const { wasm, metaJson } = await ensureBootstrapped();
       if (seq !== this._loadSeq) return;
 
       const response = await fetch(fileUrl);
@@ -403,7 +401,7 @@ export class MusicXmlElement extends HTMLElement {
       const musicxml = await response.text();
       if (seq !== this._loadSeq) return;
 
-      this._score = new wasm.Score(musicxml, metaJson, glyphNamesJson);
+      this._score = new wasm.Score(musicxml, metaJson);
       this._setStatus("");
       this._render();
       this.dispatchEvent(new CustomEvent("load"));

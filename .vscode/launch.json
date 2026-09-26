@@ -12,9 +12,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug",
                 "--page-color", "#112233",
                 "--foreground-color", "#d9d5cc"
             ],
@@ -34,9 +32,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/BrahWiMeSample.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug",
                 //"--page-color", "#112233",
                 //"--foreground-color", "#44556677"
             ],
@@ -56,9 +52,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/BrahWiMeSample.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--layout", "assets/layouts/defaults.toml",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--layout", "assets/layouts/defaults.toml",
                 // Overrides the file's own value for this one option.
                 "--tie-height-max", "24"
             ],
@@ -78,9 +72,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/BeetAnGeSample.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -98,8 +90,7 @@
                 "pdf",
                 "--file", "assets/xmlsamples/ActorPreludeSample.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -118,9 +109,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/Telemann.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -139,9 +128,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/Binchois.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -162,9 +149,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/BrookeWestSample.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -183,9 +168,7 @@
                 "svg",
                 "--file", "assets/xmlsamples/MozaChloSample.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -208,9 +191,7 @@
                 "svg",
                 "--file", "assets/xmlfixtures/beams.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -231,9 +212,7 @@
                 "svg",
                 "--file", "assets/xmlfixtures/timesigs.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -255,9 +234,7 @@
                 "svg",
                 "--file", "assets/xmlfixtures/stafflines.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -278,9 +255,7 @@
                 "svg",
                 "--file", "assets/xmlfixtures/unclosed-beam.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -328,9 +303,7 @@
                 "svg",
                 "--out", "assets/xmltest",
                 "--file", "assets/xmlfixtures/stresstest.musicxml",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--overwrite",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--overwrite",
                 "--debug",
             ],
             "cwd": "${workspaceRoot}",
@@ -367,9 +340,7 @@
                 "svg",
                 "--file", "assets/xmlfixtures/group-symbols.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [
@@ -390,9 +361,7 @@
                 "svg",
                 "--file", "assets/xmlfixtures/group-symbols.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--section-symbol", "square",
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--section-symbol", "square",
                 "--part-group-symbol", "square",
                 "--part-symbol", "square",
                 "--debug"
@@ -418,9 +387,7 @@
                 "svg",
                 "--file", "assets/xmlfixtures/crazy-beams.musicxml",
                 "--out", "assets/xmltest", "--overwrite",
-                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",
-                "--glyphs", "assets/smufl/metadata/glyphnames.json",
-                "--debug"
+                "--meta", "assets/smufl/bravura-bravura-1.392/redist/bravura_metadata.json",                "--debug"
             ],
             "cwd": "${workspaceRoot}",
             "sourceLanguages": [

@@ -28,6 +28,7 @@ use crate::musicxml::visitors::builders::build_logging_visitor::BuildLoggingVisi
 use crate::musicxml::visitors::builders::clef_visitor::ClefVisitor;
 use crate::musicxml::visitors::builders::content_visitor::ContentVisitor;
 use crate::musicxml::visitors::builders::layout_visitor::LayoutVisitor;
+use crate::musicxml::visitors::builders::music_font_visitor::MusicFontVisitor;
 use crate::musicxml::visitors::builders::print_layout_visitor::PrintLayoutVisitor;
 use crate::musicxml::visitors::builders::setup_visitor::SetupVisitor;
 use crate::musicxml::visitors::builders::tie_visitor::TieVisitor;
@@ -110,6 +111,7 @@ pub fn walk_document(
     let visitor = DefaultVisitor {}
         .uses(WalkCursorVisitor {})
         .uses(SetupVisitor {})
+        .uses(MusicFontVisitor {})
         .uses(PrintLayoutVisitor {})
         .uses(LayoutVisitor {
             encountered: HashSet::new(),
