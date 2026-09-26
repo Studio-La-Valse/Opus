@@ -14,7 +14,8 @@
 //! The line thicknesses a SMuFL font defines in `engravingDefaults` resolve
 //! through the font before they reach [`APP_DEFAULTS`] -- see
 //! [`UserLayout::from_engraving_defaults`]. Their app defaults are Bravura's
-//! values, so they only matter for a font whose metadata leaves a key out.
+//! values, so they only matter for a font whose metadata leaves a key out. The
+//! text faces resolve through the font's `textFontFamily` the same way.
 
 use crate::geometry::color::Color;
 use crate::score::core::group_symbol::GroupSymbol;
@@ -216,8 +217,10 @@ layout_options! {
 
     /// Part and part-group names.
     group_name: GroupNameLayout, GroupNameDefaults {
-        /// Font family. A generic CSS family so both a browser and a system
-        /// font database can resolve it.
+        /// Font family, or a CSS family list to fall through
+        /// (`Edwin, 'Century Schoolbook', serif`). Resolves user -> the font's
+        /// `textFontFamily` -> this default, a generic CSS family so both a
+        /// browser and a system font database can resolve it.
         font: String as &'static str = "serif",
         /// Font size in tenths. About 1.6 staff spaces, a staff space being 10
         /// tenths.
@@ -249,8 +252,13 @@ impl UserLayout {
     /// [`APP_DEFAULTS`]: options resolve user -> document -> font -> app. It is
     /// a `UserLayout` only because that is the partial layout type; nothing
     /// about it comes from a user.
+    ///
+    /// `textFontFamily` becomes every text face at once, as one CSS family list
+    /// rather than its first entry: the faces a font recommends are rarely
+    /// installed, so the renderer is left to fall through them.
     pub fn from_engraving_defaults(font: &EngravingDefaults) -> UserLayout {
         let tenths = |spaces: Option<f32>| spaces.map(|s| s * Staff::DEFAULT_SPACE_SIZE);
+        let text_font = font.text_font_family.as_deref().map(css_family_list);
 
         UserLayout {
             staff: StaffLayout {
@@ -279,9 +287,37 @@ impl UserLayout {
             group_line: GroupLineLayout {
                 thickness: tenths(font.sub_bracket_thickness),
             },
+            group_name: GroupNameLayout {
+                font: text_font.clone(),
+                ..Default::default()
+            },
+            title: TitleLayout {
+                font: text_font.clone(),
+            },
+            lyric: LyricLayout { font: text_font },
             ..Default::default()
         }
     }
+}
+
+/// `families` as one CSS `font-family` value. A name that isn't a single
+/// identifier -- `Century Schoolbook` -- is quoted; a generic keyword such as
+/// `serif` must stay bare, and being one word it does.
+fn css_family_list(families: &[String]) -> String {
+    families
+        .iter()
+        .map(|family| {
+            let bare = family
+                .chars()
+                .all(|c| c.is_alphanumeric() || c == '-' || c == '_');
+            if bare {
+                family.clone()
+            } else {
+                format!("'{family}'")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 /// Generates, from one list of groups, [`UserLayout`], [`AppDefaults`],

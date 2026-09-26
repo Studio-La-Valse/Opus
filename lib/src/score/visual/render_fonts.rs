@@ -1,4 +1,5 @@
 use crate::drawable::elements::text::FontSpec;
+use crate::score::layout_options::{APP_DEFAULTS, UserLayout};
 use crate::smufl::smufl_font::SmuflFont;
 
 /// The fonts a render pass draws text in: the SMuFL music font (for glyphs)
@@ -17,36 +18,38 @@ pub struct RenderFonts<'a> {
 }
 
 impl<'a> RenderFonts<'a> {
-    /// Builds the set from the music font plus explicit text specs.
-    fn new(
-        smufl: &'a SmuflFont,
-        title: FontSpec<'a>,
-        lyric: FontSpec<'a>,
-        group_name: FontSpec<'a>,
-    ) -> RenderFonts<'a> {
+    /// Builds the set from the music font and `user_layout`'s text faces, each
+    /// resolved user -> the font's `textFontFamily` -> app.
+    ///
+    /// The font's tier is a whole CSS family list rather than one name -- its
+    /// recommended faces are rarely installed, so the renderer is handed every
+    /// one of them to fall through. See
+    /// [`UserLayout::from_engraving_defaults`].
+    pub fn resolve(smufl: &'a SmuflFont, user_layout: &'a UserLayout) -> RenderFonts<'a> {
+        let font = &smufl.layout;
+        let resolve = |user: &'a Option<String>, font: &'a Option<String>, app: &'static str| {
+            FontSpec::plain(user.as_deref().or(font.as_deref()).unwrap_or(app))
+        };
+
         RenderFonts {
             music: FontSpec::plain(&smufl.meta.font),
             smufl,
-            title,
-            lyric,
-            group_name,
+            title: resolve(
+                &user_layout.title.font,
+                &font.title.font,
+                APP_DEFAULTS.title.font,
+            ),
+            lyric: resolve(
+                &user_layout.lyric.font,
+                &font.lyric.font,
+                APP_DEFAULTS.lyric.font,
+            ),
+            group_name: resolve(
+                &user_layout.group_name.font,
+                &font.group_name.font,
+                APP_DEFAULTS.group_name.font,
+            ),
         }
-    }
-
-    /// Builds the set from the music font and the (already default-resolved)
-    /// title / lyric / group-name families.
-    pub fn create(
-        smufl: &'a SmuflFont,
-        title_font: &'a str,
-        lyric_font: &'a str,
-        group_name_font: &'a str,
-    ) -> RenderFonts<'a> {
-        RenderFonts::new(
-            smufl,
-            FontSpec::plain(title_font),
-            FontSpec::plain(lyric_font),
-            FontSpec::plain(group_name_font),
-        )
     }
 
     /// Convenience for callers that only render music glyphs: every text face

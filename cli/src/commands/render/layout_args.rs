@@ -142,8 +142,8 @@ pub struct LayoutArgs {
     #[arg(long)]
     group_square_arm: Option<f32>,
 
-    /// Font family for part / part-group names. Defaults to the app default
-    /// (`serif`). Resolved and embedded like `--title-font` for `render pdf`.
+    /// Font family for part / part-group names. Defaults like `--title-font`,
+    /// and is resolved and embedded like it for `render pdf`.
     #[arg(long)]
     group_name_font: Option<String>,
 
@@ -156,14 +156,15 @@ pub struct LayoutArgs {
     #[arg(long)]
     group_name_padding: Option<f32>,
 
-    /// Font family for titles / work-level text. Defaults to the app default
-    /// (`serif`). For `render pdf` this family is resolved against the installed
-    /// system fonts and embedded.
+    /// Font family for titles / work-level text, or a CSS family list to fall
+    /// through. Defaults to the SMuFL font's `textFontFamily` list, then
+    /// `serif`. For `render pdf` the first installed family in the list is
+    /// embedded.
     #[arg(long)]
     title_font: Option<String>,
 
-    /// Font family for lyrics. Defaults to the app default (`serif`). Resolved
-    /// and embedded like `--title-font` for `render pdf`.
+    /// Font family for lyrics. Defaults like `--title-font`, and is resolved
+    /// and embedded like it for `render pdf`.
     #[arg(long)]
     lyric_font: Option<String>,
 }

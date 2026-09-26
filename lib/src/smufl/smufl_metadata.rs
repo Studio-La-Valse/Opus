@@ -35,7 +35,8 @@ pub struct SmuflMetadata {
     pub engraving_defaults: EngravingDefaults,
 }
 
-/// The `engravingDefaults` keys this crate reads, verbatim, in staff spaces.
+/// The `engravingDefaults` keys this crate reads, verbatim: line thicknesses in
+/// staff spaces, and the recommended text faces.
 ///
 /// Only the keys some layout option is resolved from; the spec defines more.
 /// Every key is optional, per the spec: an absent one falls through to
@@ -56,6 +57,9 @@ pub struct EngravingDefaults {
     pub tie_midpoint_thickness: Option<f32>,
     pub bracket_thickness: Option<f32>,
     pub sub_bracket_thickness: Option<f32>,
+    /// The text faces the font is designed to sit beside, most preferred
+    /// first. Bravura's ends in the generic `serif`.
+    pub text_font_family: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

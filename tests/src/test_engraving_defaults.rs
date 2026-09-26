@@ -8,8 +8,10 @@
 
 #[cfg(test)]
 mod tests {
+    use lib::drawable::elements::text::FontSpec;
     use lib::score::engrave::{arrange_score, walk_document};
-    use lib::score::layout_options::{APP_DEFAULTS, StaffLayout, UserLayout};
+    use lib::score::layout_options::{APP_DEFAULTS, StaffLayout, TitleLayout, UserLayout};
+    use lib::score::visual::render_fonts::RenderFonts;
     use lib::score::visual::score::Score;
     use lib::score::visual::staff::Staff;
     use lib::smufl::smufl_font::SmuflFont;
@@ -270,6 +272,63 @@ mod tests {
             &UserLayout::default(),
         );
         assert_close(resolved, 1.6, "ledger line width");
+    }
+
+    /// Bravura's `textFontFamily` reaches every text face as the whole list,
+    /// multi-word names quoted, so a renderer can fall through all of it.
+    #[test]
+    fn text_faces_resolve_through_the_fonts_family_list() {
+        let user_layout = UserLayout::default();
+        let fonts = RenderFonts::resolve(bravura(), &user_layout);
+        let expected = "Academico, 'Century Schoolbook', Edwin, serif";
+
+        assert_eq!(fonts.title.family, expected);
+        assert_eq!(fonts.lyric.family, expected);
+        assert_eq!(fonts.group_name.family, expected);
+    }
+
+    #[test]
+    fn a_user_text_face_outranks_the_fonts() {
+        let user_layout = UserLayout {
+            title: TitleLayout {
+                font: Some("Times New Roman".to_string()),
+            },
+            ..Default::default()
+        };
+        let fonts = RenderFonts::resolve(bravura(), &user_layout);
+
+        assert_eq!(fonts.title.family, "Times New Roman");
+        assert_ne!(fonts.lyric.family, "Times New Roman");
+    }
+
+    #[test]
+    fn a_font_without_a_text_family_falls_back_to_the_app() {
+        let font = edited_bravura(|meta| {
+            meta["engravingDefaults"]
+                .as_object_mut()
+                .unwrap()
+                .remove("textFontFamily");
+        });
+        let user_layout = UserLayout::default();
+        let fonts = RenderFonts::resolve(&font, &user_layout);
+
+        assert_eq!(fonts.title.family, APP_DEFAULTS.title.font);
+        assert_eq!(fonts.lyric.family, APP_DEFAULTS.lyric.font);
+        assert_eq!(fonts.group_name.family, APP_DEFAULTS.group_name.font);
+    }
+
+    /// What a PDF writer walks to find the first installed face: the list's
+    /// names, in order, without their CSS quotes.
+    #[test]
+    fn a_family_list_splits_into_unquoted_names() {
+        let spec = FontSpec::plain("Academico, 'Century Schoolbook', \"Edwin\" ,serif");
+        let names: Vec<&str> = spec.families().collect();
+
+        assert_eq!(names, ["Academico", "Century Schoolbook", "Edwin", "serif"]);
+        assert_eq!(
+            FontSpec::plain("serif").families().collect::<Vec<_>>(),
+            ["serif"]
+        );
     }
 
     /// The stroke a bracket's tip glyphs are scaled against is the font's own
