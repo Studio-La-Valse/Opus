@@ -44,13 +44,14 @@ use crate::geometry::xy::XY;
 use crate::score::core::voice::Voice;
 use crate::score::visual::arranger::ScoreArranger;
 use crate::score::visual::beam::{
-    BeamMetrics, Beamable, Cut, LevelEnd, beam_level_ends_at, create_beam_groups, infer_direction,
-    split_at_system_breaks,
+    BeamAnchor, BeamMetrics, Beamable, Cut, LevelEnd, beam_level_ends_at, create_beam_groups,
+    fit_beam, hook_length, infer_direction, split_at_system_breaks,
 };
 use crate::score::visual::chord::Chord;
 use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::score::Score;
-use crate::score::visual::stem::{BeamType, UpDown};
+use crate::score::visual::staff::Staff;
+use crate::score::visual::stem::{BeamType, Stem, UpDown};
 use crate::score::visual::system::SystemKey;
 use crate::score::walk_cursor::Visibility;
 
@@ -73,6 +74,7 @@ impl ScoreArranger for BeamArranger {
             let scale = if grace { metrics.grace_scale } else { 1. };
             let thickness = metrics.thickness * scale;
             let spacing = metrics.spacing * scale;
+            let max_hook = MAX_HOOK_LENGTH * scale;
 
             for group in create_beam_groups(run) {
                 // Inferred once for the whole group, so the beam stack grows the
@@ -87,9 +89,13 @@ impl ScoreArranger for BeamArranger {
                 // own stems -- which is what makes the slant right on both
                 // systems.
                 for mut fragment in split_at_system_breaks(group) {
-                    let Some(ray) =
-                        self.create_ray(&fragment.chords, &direction, &thickness, &spacing)
-                    else {
+                    let Some(ray) = self.create_ray(
+                        &fragment.chords,
+                        fragment.space,
+                        scale,
+                        &thickness,
+                        &spacing,
+                    ) else {
                         continue;
                     };
 
@@ -101,6 +107,7 @@ impl ScoreArranger for BeamArranger {
                             &direction,
                             &thickness,
                             &spacing,
+                            max_hook,
                             &metrics.color,
                             fragment.cut,
                         ));
@@ -126,11 +133,26 @@ impl ScoreArranger for BeamArranger {
 
 // ---- internals ----
 
-/// Maximum vertical span a beam is allowed to slant before it is clamped.
+/// Maximum vertical span a cross-staff beam is allowed to slant before it is
+/// clamped. Every other beam's slant comes from [`fit_beam`].
 const MAX_BEAM_SLANT_DY: f32 = 20.;
 
-/// The length of a hook beam. TODO: infer from available space between two stems and clam to a max length.
-const HOOK_LENGTH: f32 = 7.5;
+/// The y of the chord's note nearest a beam on stems pointing `stems`: its
+/// highest note for stems up, its lowest for stems down.
+fn nearest_note_y(chord: &Chord, stems: UpDown) -> f32 {
+    let ys = chord.notes.iter().map(|note| note.xy.y);
+
+    match stems {
+        UpDown::Up => ys.fold(f32::MAX, f32::min),
+        UpDown::Down => ys.fold(f32::MIN, f32::max),
+    }
+}
+
+/// The longest a hook beam is drawn: one staff space, about a notehead's width.
+/// Closer spacing shortens it -- see [`hook_length`]. The stub a level runs out
+/// to a system break follows the same rule: it has no neighbouring stem on its
+/// side, so it is always drawn at this full length.
+const MAX_HOOK_LENGTH: f32 = 10.;
 
 /// What gets beamed together: one voice of one part, with grace notes kept apart
 /// from the rest. Exactly the grouping `BeamGroupVisitor` validates against.
@@ -179,8 +201,21 @@ impl BeamArranger {
                                     for chord in chords.iter_mut() {
                                         chord.place_stem(&staff_ctx);
 
+                                        // A stemless chord never anchors a beam, so
+                                        // the space it is given does not matter.
+                                        let space = Staff::DEFAULT_SPACE_SIZE
+                                            * chord
+                                                .stem
+                                                .as_ref()
+                                                .and_then(|stem| staff_ctx.get(&stem.staff))
+                                                .map_or(1., |ctx| ctx.scaling);
+
                                         let run = (part_id.clone(), *voice, chord.grace);
-                                        runs.entry(run).or_default().push(Beamable { key, chord });
+                                        runs.entry(run).or_default().push(Beamable {
+                                            key,
+                                            space,
+                                            chord,
+                                        });
                                     }
                                 }
                             }
@@ -193,43 +228,62 @@ impl BeamArranger {
         runs
     }
 
+    /// The line the fragment's outermost beam lies on.
+    ///
+    /// Only chords that *have* a stem count: a chord without one carries no beam
+    /// and so can neither bound the span nor push the beam. It used to be safe to
+    /// assume the group's own ends had stems, because a group was flushed at the
+    /// barline; a group carrying on into the next measure can now be closed by a
+    /// stemless chord arriving there.
     fn create_ray(
         &self,
         chords: &[&mut Chord],
-        _direction: &UpDown,
+        space: f32,
+        scale: f32,
         beam_thickness: &f32,
         beam_spacing: &f32,
     ) -> Option<Ray> {
-        // Between the outermost chords that *have* a stem, not the outermost chords:
-        // a chord without one carries no beam and so cannot bound the span. It used
-        // to be safe to assume the group's own ends had stems, because a group was
-        // flushed at the barline; a group carrying on into the next measure can now
-        // be closed by a stemless chord arriving there.
-        let mut stems = chords.iter().filter_map(|chord| chord.stem.as_ref());
-        let first_stem = stems.next()?;
-        let last_stem = stems.next_back();
+        let stemmed: Vec<(&Chord, &Stem)> = chords
+            .iter()
+            .filter_map(|chord| chord.stem.as_ref().map(|stem| (&**chord, stem)))
+            .collect();
 
-        let sign = if first_stem.direction != UpDown::Up {
-            1.0
-        } else {
-            -1.0
+        let (_, first_stem) = stemmed.first()?;
+        let stems = first_stem.direction;
+
+        // Every stem's natural tip, pushed out by room for the levels it carries.
+        let reach = |stem: &Stem| {
+            let outward = match stem.direction {
+                UpDown::Up => -1.,
+                UpDown::Down => 1.,
+            };
+
+            stem.tip().mv(
+                0.,
+                stem.beams.len() as f32 * (beam_spacing + beam_thickness) * outward,
+            )
         };
 
-        let mut left = first_stem.tip().mv(
-            0.,
-            first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
-        );
+        if stemmed.iter().all(|(_, stem)| stem.direction == stems) {
+            let anchors: Vec<BeamAnchor> = stemmed
+                .iter()
+                .map(|(chord, stem)| BeamAnchor {
+                    x: stem.xy.x,
+                    note_y: nearest_note_y(chord, stems),
+                    reach_y: reach(stem).y,
+                })
+                .collect();
 
-        // One stem is no span at all, so the ray is level: there is nothing to slant
-        // between.
-        let Some(last_stem) = last_stem else {
-            return Some(Ray::from_dir(left, XY { x: 1.0, y: 0.0 }));
-        };
+            return fit_beam(&anchors, stems, space, scale);
+        }
 
-        let mut right = last_stem.tip().mv(
-            0.,
-            first_stem.beams.len() as f32 * (beam_spacing + beam_thickness) * sign,
-        );
+        // A cross-staff group: the stems point both ways, so there is no one
+        // side for the beam to be pushed out to. The line runs between the outer
+        // stems' tips, both pushed the way the first stem's reach is, and is only
+        // clamped.
+        let (_, last_stem) = stemmed.last()?;
+        let mut left = reach(first_stem);
+        let mut right = last_stem.tip().mv(0., left.y - first_stem.tip().y);
 
         let dy = (right.y - left.y).abs();
 
@@ -257,6 +311,7 @@ impl BeamArranger {
         direction: &UpDown,
         beam_thickness: &f32,
         beam_spacing: &f32,
+        max_hook: f32,
         color: &Color,
         cut: Cut,
     ) -> Vec<Polygon> {
@@ -302,7 +357,8 @@ impl BeamArranger {
                 .unwrap();
 
                 if arrives {
-                    left_point = self.point_along(left_point, -HOOK_LENGTH, &offset_ray);
+                    let length = hook_length(chords, i, false, max_hook);
+                    left_point = self.point_along(left_point, -length, &offset_ray);
                 }
 
                 let dy: f32 = match direction {
@@ -356,17 +412,27 @@ impl BeamArranger {
                                 .intersect(offset_ray)
                                 .unwrap()
                             }
-                            None => self.point_along(left_point, HOOK_LENGTH, &offset_ray),
+                            None => {
+                                let length = hook_length(chords, i, true, max_hook);
+                                self.point_along(left_point, length, &offset_ray)
+                            }
                         };
 
                         if departs {
-                            self.point_along(point, HOOK_LENGTH, &offset_ray)
+                            let length = hook_length(chords, len - 1, true, max_hook);
+                            self.point_along(point, length, &offset_ray)
                         } else {
                             point
                         }
                     }
-                    BeamType::HookStart => self.point_along(left_point, HOOK_LENGTH, &offset_ray),
-                    BeamType::HookEnd => self.point_along(left_point, -HOOK_LENGTH, &offset_ray),
+                    BeamType::HookStart => {
+                        let length = hook_length(chords, i, true, max_hook);
+                        self.point_along(left_point, length, &offset_ray)
+                    }
+                    BeamType::HookEnd => {
+                        let length = hook_length(chords, i, false, max_hook);
+                        self.point_along(left_point, -length, &offset_ray)
+                    }
                     _ => continue,
                 };
 
