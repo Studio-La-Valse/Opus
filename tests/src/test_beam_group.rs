@@ -82,7 +82,11 @@ mod tests {
         chords
             .iter_mut()
             .zip(keys)
-            .map(|(chord, key)| Beamable { key: *key, chord })
+            .map(|(chord, key)| Beamable {
+                key: *key,
+                space: 10.,
+                chord,
+            })
             .collect()
     }
 

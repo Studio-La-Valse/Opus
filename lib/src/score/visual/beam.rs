@@ -8,6 +8,8 @@
 //! what lets them be unit-tested without an arranged score.
 
 use crate::geometry::color::Color;
+use crate::geometry::ray::Ray;
+use crate::geometry::xy::XY;
 use crate::score::core::note_kind::NoteKind;
 use crate::score::layout_options::APP_DEFAULTS;
 use crate::score::visual::chord::Chord;
@@ -15,10 +17,12 @@ use crate::score::visual::layoutable::LayoutParams;
 use crate::score::visual::stem::{BeamType, Stem, UpDown};
 use crate::score::visual::system::SystemKey;
 
-/// One chord in a part's beamable sequence, with the one thing the beam pass
-/// needs to know about where it ended up.
+/// One chord in a part's beamable sequence, with what the beam pass needs to
+/// know about where it ended up: the system it landed on, and the line space of
+/// the staff it sits on.
 pub struct Beamable<'a> {
     pub key: SystemKey,
+    pub space: f32,
     pub chord: &'a mut Chord,
 }
 
@@ -39,8 +43,25 @@ pub struct Cut {
 /// know about that.
 pub struct Fragment<'a> {
     pub key: SystemKey,
+    /// The line space of the staff the fragment's first chord sits on, which
+    /// the slant rule measures intervals and caps in.
+    pub space: f32,
     pub chords: Vec<&'a mut Chord>,
     pub cut: Cut,
+}
+
+/// One stem of a beamed fragment, reduced to the three numbers the slant rule
+/// reads.
+#[derive(Copy, Clone, Debug)]
+pub struct BeamAnchor {
+    /// Where the stem stands.
+    pub x: f32,
+    /// The chord's note nearest the beam: its highest for stems up, its lowest
+    /// for stems down.
+    pub note_y: f32,
+    /// How far out the beam has to lie for this stem to keep its natural
+    /// length: the natural tip, pushed out by room for every level it carries.
+    pub reach_y: f32,
 }
 
 /// Everything the drawn beams look like, resolved once from [`LayoutParams`]
@@ -185,6 +206,7 @@ pub fn split_at_system_breaks<'a>(group: Vec<Beamable<'a>>) -> Vec<Fragment<'a>>
             Some(fragment) if fragment.key == beamable.key => fragment.chords.push(beamable.chord),
             _ => fragments.push(Fragment {
                 key: beamable.key,
+                space: beamable.space,
                 chords: vec![beamable.chord],
                 cut: Cut::default(),
             }),
@@ -309,4 +331,81 @@ pub fn hook_length(chords: &[&mut Chord], at: usize, forward: bool, max: f32) ->
         Some(neighbour) => max.min((neighbour.xy.x - stem.xy.x).abs() / 2.),
         None => max,
     }
+}
+
+/// The line a fragment's outermost beam lies on, for stems that all point
+/// `stems`: its slant decided by the notes, its height by the stems.
+///
+/// The slant, as the vertical distance between the outer stems:
+///
+/// 1. **Flat** when there is only one stem, when the outer notes sit at the
+///    same staff position, or when an inner note lies nearer the beam than both
+///    outer ones -- a beam following the outer notes would then run into the
+///    inner note's stem.
+/// 2. Otherwise **a quarter space per staff step** between the outer notes,
+///    rising or falling with them.
+/// 3. **At most two spaces** for a two-note group and **one space** for three
+///    or more, since a longer group reads as steep at a smaller angle.
+/// 4. **At most a quarter** of the horizontal distance between the outer stems,
+///    so closely spaced groups do not come out near vertical.
+///
+/// Both caps are multiplied by `max_scale`, the factor a grace group is drawn
+/// at. Staff-line quantization -- nudging each end to sit on, straddle or hang
+/// from a line -- is not applied.
+///
+/// The height is then whatever keeps every stem at least as long as its
+/// natural length: the line is pushed out until it clears every anchor's
+/// `reach_y`. That is where the notes' position on the staff enters: an inner
+/// note standing out towards the beam lifts the whole beam rather than having
+/// its stem cut short.
+pub fn fit_beam(anchors: &[BeamAnchor], stems: UpDown, space: f32, max_scale: f32) -> Option<Ray> {
+    let first = anchors.first()?;
+    let last = anchors.last()?;
+
+    // `outward * y` grows the further a point lies towards the beam: upward (a
+    // smaller y) for stems up, downward for stems down.
+    let outward = match stems {
+        UpDown::Up => -1.,
+        UpDown::Down => 1.,
+    };
+
+    let span = last.x - first.x;
+    let slope = if span > f32::EPSILON {
+        let dy = slant(anchors, outward, space, max_scale).min(span / 4.);
+        (last.note_y - first.note_y).signum() * dy / span
+    } else {
+        0.
+    };
+
+    // The line's height at the first stem, taken as far out as the most
+    // demanding anchor requires.
+    let height = anchors
+        .iter()
+        .map(|anchor| anchor.reach_y - slope * (anchor.x - first.x))
+        .max_by(|a, b| (outward * a).total_cmp(&(outward * b)))?;
+
+    Some(Ray::from_dir(
+        XY {
+            x: first.x,
+            y: height,
+        },
+        XY { x: 1., y: slope },
+    ))
+}
+
+/// The unsigned slant [`fit_beam`] applies, before the span cap: rules 1 to 3.
+fn slant(anchors: &[BeamAnchor], outward: f32, space: f32, max_scale: f32) -> f32 {
+    let [first, inner @ .., last] = anchors else {
+        return 0.;
+    };
+
+    let ends = (outward * first.note_y).max(outward * last.note_y);
+    if inner.iter().any(|anchor| outward * anchor.note_y > ends) {
+        return 0.;
+    }
+
+    let steps = ((last.note_y - first.note_y).abs() / (space / 2.)).round();
+    let cap = if anchors.len() == 2 { 2. } else { 1. } * space * max_scale;
+
+    (steps * space / 4.).min(cap)
 }
